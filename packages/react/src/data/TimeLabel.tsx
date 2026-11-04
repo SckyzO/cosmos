@@ -12,6 +12,7 @@ import { formatDateTime } from './time';
 export const TimeLabel = ({
   timestamp,
   text,
+  detail,
   tooltip,
   locale,
   timeZone,
@@ -19,6 +20,8 @@ export const TimeLabel = ({
 }: {
   timestamp: number;
   text: string;
+  /** A second line under `text`, muted: the time under the date, in a stacked `DateTime`. */
+  detail?: string;
   tooltip: boolean;
   locale?: string;
   timeZone?: string;
@@ -30,11 +33,15 @@ export const TimeLabel = ({
       dateTime={new Date(timestamp).toISOString()}
       tabIndex={tooltip ? 0 : undefined}
       className={clsx(
+        detail !== undefined && 'inline-flex flex-col',
         tooltip && 'focus-visible:focus-indicator cursor-default rounded-sm',
         className
       )}
     >
       <bdi>{text}</bdi>
+      {detail !== undefined && (
+        <bdi className="text-xs text-[var(--color-text-muted)]">{detail}</bdi>
+      )}
     </time>
   );
   if (!tooltip) return time;

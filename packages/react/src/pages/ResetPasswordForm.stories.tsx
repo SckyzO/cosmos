@@ -140,6 +140,47 @@ export const SentViewShowsEmail: Story = {
   },
 };
 
+// The host that shows the `sent` view once the form is submitted, and a button outside it that
+// shows it too.
+const SendingHost = () => {
+  const [sent, setSent] = useState(false);
+  return (
+    <>
+      <ResetPasswordForm sent={sent} sentEmail="john@example.com" onSubmit={() => setSent(true)} />
+      <button type="button" onClick={() => setSent(true)}>
+        Pretend it was sent
+      </button>
+    </>
+  );
+};
+
+/** The button that was pressed is gone with the form: the focus goes to the new heading. */
+export const FocusMovesToTheSentHeading: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  render: () => <SendingHost />,
+  play: async ({ canvas }) => {
+    // The form takes no focus when it mounts.
+    await expect(canvas.getByRole('heading', { level: 1 })).not.toHaveFocus();
+    await userEvent.type(canvas.getByLabelText(/^Email/), 'john@example.com');
+    await userEvent.click(canvas.getByRole('button', { name: /send reset link/i }));
+    await expect(canvas.getByRole('heading', { level: 1, name: 'Check your inbox' })).toHaveFocus();
+  },
+};
+
+/** Focus the person had moved elsewhere on the page stays where it is. */
+export const FocusElsewhereIsLeftWhenSentSwitches: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  render: () => <SendingHost />,
+  play: async ({ canvas }) => {
+    const outside = canvas.getByRole('button', { name: 'Pretend it was sent' });
+    await userEvent.click(outside);
+    await expect(canvas.getByRole('heading', { level: 1, name: 'Check your inbox' })).toBeVisible();
+    await expect(outside).toHaveFocus();
+  },
+};
+
 // The back arrow points along the line, so it turns around in right to left; the address is the
 // host's and keeps its own order inside the sentence.
 export const SentViewMirrorsInRightToLeft: Story = {

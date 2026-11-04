@@ -36,3 +36,21 @@ spins a quarter arc, except under reduced motion.
   68%
 </ProgressRing>
 ```
+
+## Tooltip
+
+Storybook: [Tooltip](https://sckyzo.github.io/cosmos/?path=/docs/feedback-tooltip--docs).
+
+A `Tooltip` fades in over `--cosmos-motion-fast` (120ms) and out over `--cosmos-motion-exit` (80ms),
+and slides 4px out from its trigger: it waits that far toward the trigger, on the side it opened
+on as the screen sees it, so `start` and `end` mirror in right to left. It stays mounted while it
+is hidden, since `aria-describedby` points at it.
+
+## Cookie banner
+
+Storybook: [Cookie Banner](https://sckyzo.github.io/cosmos/?path=/docs/feedback-cookie-banner--docs).
+
+A `CookieBanner` rises in from the edge it is fixed to (the bottom, the top, or the bottom with a
+1rem gap when `position="floating"`) as it fades in, over 200ms, and leaves the same way on
+Accept or Deny, over 120ms. While it leaves it is `inert` and takes no clicks; it is removed at
+once when nothing animates (reduced motion).

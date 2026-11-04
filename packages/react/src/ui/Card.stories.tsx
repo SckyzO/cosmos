@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity, ArrowRight, Bell, Mail, MessageSquare, Server, Zap } from 'lucide-react';
-import { expect } from 'storybook/test';
+import { expect, userEvent } from 'storybook/test';
 import {
   bothDirections,
   directionBox,
@@ -9,6 +9,14 @@ import {
   expectMirrored,
   mirroredIcon,
 } from '../storybook-helpers';
+import {
+  expectLiftsOnHover,
+  expectStaysUnderHover,
+  LIFTED,
+  tokenMs,
+  transitionMs,
+  transitions,
+} from '../storybook-motion';
 import { Avatar } from './Avatar';
 import { Card } from './Card';
 import { Button } from './Button';
@@ -188,6 +196,7 @@ export const WithIcon: Story = {
 };
 
 export const Interactive: Story = {
+  parameters: { settleMotion: false },
   render: () => (
     <Wrap>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -492,8 +501,8 @@ export const InteractiveFocusShowsRingOnTheCardInDark: Story = {
 };
 
 export const InteractiveFocusShowsRingOnTheCardInLight: Story = {
-  tags: ['!dev'],
   ...InteractiveFocusShowsRingOnTheCardInDark,
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 
@@ -535,8 +544,8 @@ export const BorderIsStrongerInDark: Story = {
 };
 
 export const BorderKeepsThemeColorInLight: Story = {
-  tags: ['!dev'],
   ...BorderIsStrongerInDark,
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
   play: async ({ canvas }) => {
     const card = canvas.getByText('Body').parentElement!;
@@ -570,5 +579,74 @@ export const HorizontalImageSitsAtTheStart: Story = {
       const box = directionBox(canvasElement, dir);
       expectBeyondEnd(box.querySelector('h3')!, box.querySelector('img')!.parentElement!);
     }
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+const RaisedAndStill = () => (
+  <Wrap>
+    <div className="grid gap-4 sm:grid-cols-2">
+      <Card interactive padding="lg">
+        <a href="#raised" className="text-sm font-medium">
+          Raised link
+        </a>
+      </Card>
+      <Card padding="lg">
+        <a href="#still" className="text-sm font-medium">
+          Still link
+        </a>
+      </Card>
+    </div>
+  </Wrap>
+);
+
+const cardOf = (link: HTMLElement) => link.parentElement as HTMLElement;
+
+/** An interactive card rises 2px with a soft shadow under the pointer, and on keyboard focus. */
+export const InteractiveCardLifts: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <RaisedAndStill />,
+  play: async ({ canvas }) => {
+    const raised = cardOf(canvas.getByRole('link', { name: 'Raised link' }));
+    const still = cardOf(canvas.getByRole('link', { name: 'Still link' }));
+    expectLiftsOnHover(raised);
+    // A card that is not interactive stays where it is, hovered or focused.
+    expectStaysUnderHover(still);
+
+    await userEvent.tab();
+    await expect(canvas.getByRole('link', { name: 'Raised link' })).toHaveFocus();
+    await expect(getComputedStyle(raised).translate).toBe(LIFTED);
+    await userEvent.tab();
+    await expect(canvas.getByRole('link', { name: 'Still link' })).toHaveFocus();
+    await expect(getComputedStyle(raised).translate).toBe('none');
+    await expect(getComputedStyle(still).translate).toBe('none');
+  },
+};
+
+/** At its real speed the card moves over the base duration, 200 ms, in the shadow's step. */
+export const InteractiveLiftMovesOnTheBaseToken: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <RaisedAndStill />,
+  play: async ({ canvas }) => {
+    const raised = cardOf(canvas.getByRole('link', { name: 'Raised link' }));
+    await expect(tokenMs('--cosmos-motion-base')).toBe(200);
+    await expect(transitionMs(raised)).toBe(200);
+    await expect(transitions(raised, 'translate', 'box-shadow')).toBe(true);
+  },
+};
+
+/** With the reduced setting the card is lifted at once, with no length to move over. */
+export const InteractiveLiftSkipsMotionWhenReduced: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <RaisedAndStill />,
+  play: async ({ canvas }) => {
+    const raised = cardOf(canvas.getByRole('link', { name: 'Raised link' }));
+    await expect(transitionMs(raised)).toBe(0);
+    await userEvent.tab();
+    await expect(getComputedStyle(raised).translate).toBe(LIFTED);
   },
 };

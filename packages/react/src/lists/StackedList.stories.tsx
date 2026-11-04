@@ -594,6 +594,18 @@ export const WithTruncatedDescription: Story = {
   ),
 };
 
+/** The timestamps end at the row's end, all at the same edge, whatever the length of the text. */
+export const TimestampsAlignWithoutTrailingContent: Story = {
+  ...WithTruncatedDescription,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const list = canvasElement.querySelector('ul')!;
+    const times = [...canvasElement.querySelectorAll('time')];
+    await expect(times.length).toBeGreaterThan(1);
+    for (const time of times) await expect(Math.abs(endOffset(time, list))).toBeLessThanOrEqual(1);
+  },
+};
+
 // ── On a card: header slots and rank ─────────────────────────────────────────
 
 export const InCard: Story = {
@@ -1003,7 +1015,7 @@ const alphaOf = (color: string) => {
 
 /** A sticky header must be opaque in dark themes, or the rows scrolling under it show through. */
 export const StickyHeaderIsOpaqueInDarkThemes: Story = {
-  tags: ['!dev'],
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'dark' },
   render: () => (
     <StackedList>
@@ -1467,6 +1479,34 @@ export const InboxActionsAreReachableWhileHidden: Story = {
   },
 };
 
+/**
+ * An action that is not shown takes no tap: a touch screen that reports `(hover: hover)` would hit
+ * it by a tap near the timestamp. It takes the pointer back as soon as it is shown, by the row's
+ * hover or by focus, which is how a keyboard reaches it.
+ */
+export const InboxHiddenActionsTakeNoTap: Story = {
+  ...Inbox,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const row = within(mailRows(canvas)[1]!);
+    const archive = row.getByRole('button', { name: 'Archive Ops on-call' });
+    const strip = archive.parentElement!;
+    await expect(getComputedStyle(strip).opacity).toBe('0');
+    await expect(getComputedStyle(strip).pointerEvents).toBe('none');
+    // A tap on one of them lands on what is under it: the title's overlay, not the action.
+    await expect(strip.contains(hitAt(archive))).toBe(false);
+
+    // Focus shows them, and gives them the pointer.
+    archive.focus();
+    await waitFor(() => expect(getComputedStyle(strip).opacity).toBe('1'));
+    await expect(getComputedStyle(strip).pointerEvents).toBe('auto');
+    await expect(archive.contains(hitAt(archive))).toBe(true);
+    // The next row's stay out.
+    const next = within(mailRows(canvas)[2]!).getByRole('button', { name: 'Archive Li Wei' });
+    await expect(getComputedStyle(next.parentElement!).pointerEvents).toBe('none');
+  },
+};
+
 /** The open row has `aria-current` on its title, a tint and a 3px bar at its start edge. */
 export const InboxOpenRowIsMarked: Story = {
   ...Inbox,
@@ -1568,6 +1608,8 @@ export const InboxHitAreas: Story = {
     await expect(box.contains(hitAt(box))).toBe(true);
     for (const name of ['Star Ana Ruiz', 'Archive Ana Ruiz', 'Delete Ana Ruiz']) {
       const control = row.getByRole('button', { name });
+      // The actions take the pointer once shown: by focus here, by the row's hover for a mouse.
+      control.focus();
       await expect(control.contains(hitAt(control)), name).toBe(true);
     }
   },
@@ -1848,6 +1890,8 @@ export const ActionsRunTheirCallback: Story = {
     const remove = canvas.getByRole('button', { name: 'Delete Disk alert' });
     await expect(archive.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
     await expect(remove).toBeDisabled();
+    // Shown by the row's hover for a mouse, by focus for the keyboard: until then it takes no click.
+    archive.focus();
     await userEvent.click(archive);
     await userEvent.click(archive);
     await expect(canvas.getByRole('status')).toHaveTextContent('archive, archive');

@@ -255,6 +255,61 @@ export const TooltipOnABeat: Story = {
   },
 };
 
+// The horizontal centre of an element.
+const centreX = (element: Element) => {
+  const box = element.getBoundingClientRect();
+  return box.left + box.width / 2;
+};
+
+/**
+ * The tooltip stays on the beat it describes when the focus or the pointer moves from one beat to
+ * the next without it ever closing: the arrows batch the blur of one beat with the focus of the
+ * next, and the pointer goes from a beat to its neighbour with nothing between them.
+ */
+export const TooltipFollowsTheBeat: Story = {
+  tags: ['!dev', '!autodocs'],
+  // Centred, so the tooltip has room on both sides in either direction: next to an edge of the
+  // page it moves back inside and is no longer centred on its beat.
+  render: (args) => (
+    <div className="mx-auto" style={{ width: 200 }}>
+      <HeartbeatBar {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    const marks = marksOf(canvasElement);
+    const sits = (mark: HTMLElement) => async () => {
+      const tip = body.getByRole('tooltip');
+      await expect(
+        Math.abs(centreX(tip) - centreX(mark)),
+        'tooltip centred on the beat'
+      ).toBeLessThan(2);
+    };
+
+    await userEvent.tab();
+    await expect(marks.at(-1)).toHaveFocus();
+    await waitFor(sits(marks.at(-1)!));
+    await userEvent.keyboard('{ArrowLeft}');
+    await expect(marks.at(-2)).toHaveFocus();
+    await waitFor(sits(marks.at(-2)!));
+    await userEvent.keyboard('{ArrowLeft}{ArrowLeft}');
+    await waitFor(sits(marks.at(-4)!));
+    await userEvent.keyboard('{ArrowRight}');
+    await waitFor(sits(marks.at(-3)!));
+    await expect(body.getAllByRole('tooltip')).toHaveLength(1);
+
+    // The pointer, from one beat to the next.
+    await userEvent.keyboard('{Escape}');
+    await userEvent.hover(marks.at(-1)!);
+    await waitFor(sits(marks.at(-1)!));
+    await userEvent.hover(marks.at(-2)!);
+    await waitFor(sits(marks.at(-2)!));
+    await userEvent.hover(marks.at(-5)!);
+    await waitFor(sits(marks.at(-5)!));
+    await expect(body.getAllByRole('tooltip')).toHaveLength(1);
+  },
+};
+
 /** Every status is in the name of its beat and in the legend, whatever its colour. */
 export const StatusesReadWithoutColour: Story = {
   tags: ['!dev', '!autodocs'],

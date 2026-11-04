@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { Check, Copy, RotateCcw } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import type { BackdropVariant } from '../ui/Backdrop';
 import { Drawer, type DrawerSize } from '../ui/Drawer';
 import { Button } from '../ui/Button';
 import { SegmentedControl } from '../forms/SegmentedControl';
@@ -13,6 +14,7 @@ import {
   COSMOS_ACCENTS,
   COSMOS_DENSITIES,
   COSMOS_FONTS,
+  COSMOS_MOTIONS,
   COSMOS_RADII,
   COSMOS_TEXT_SIZES,
   COSMOS_THEMES,
@@ -23,6 +25,7 @@ import {
   type CosmosDirection,
   type CosmosFont,
   type CosmosFontMeta,
+  type CosmosMotionMeta,
   type CosmosRadiusMeta,
   type CosmosSystemThemeMeta,
   type CosmosTextSizeMeta,
@@ -59,6 +62,7 @@ export type CustomizerSection =
   | 'textSize'
   | 'density'
   | 'radius'
+  | 'motion'
   | 'direction'
   | 'layout'
   | 'sidebar'
@@ -81,6 +85,7 @@ export const CUSTOMIZER_SECTIONS: CustomizerSection[] = [
   'textSize',
   'density',
   'radius',
+  'motion',
   'direction',
   'layout',
   'sidebar',
@@ -95,6 +100,7 @@ export const CUSTOMIZER_DEFAULT_VALUE = {
   textSize: 'md',
   density: 'default',
   radius: 'default',
+  motion: 'full',
   direction: 'ltr',
   layout: 'vertical',
   sidebar: 'expanded',
@@ -109,6 +115,7 @@ const DEFAULT_LABELS: Record<CustomizerSection, string> = {
   textSize: 'Text size',
   density: 'Density',
   radius: 'Corner radius',
+  motion: 'Animations',
   direction: 'Direction',
   layout: 'Layout',
   sidebar: 'Sidebar',
@@ -152,6 +159,8 @@ export type CustomizerProps = {
   densities?: CosmosDensityMeta[];
   /** Corner radii to offer. Default: all of `COSMOS_RADII`. */
   radii?: CosmosRadiusMeta[];
+  /** Motion settings to offer. Default: all of `COSMOS_MOTIONS`. */
+  motions?: CosmosMotionMeta[];
   /** Headings of the sections, by section. Default: English names ("Accent color", "Text size"…). */
   labels?: Partial<Record<CustomizerSection, string>>;
   /** Title of the panel. Default `'Customize'`. */
@@ -160,6 +169,11 @@ export type CustomizerProps = {
   subtitle?: string;
   /** Width of the panel. Default `lg`. */
   size?: DrawerSize;
+  /**
+   * The scrim behind the panel: `dim` (default) is the colour alone, `blur` blurs the page by
+   * 8px under a light veil, `blur-dark` under a dark one. See `Backdrop`.
+   */
+  backdrop?: BackdropVariant;
 };
 
 // ── Previews ─────────────────────────────────────────────────────────────────
@@ -331,15 +345,15 @@ const ANNOUNCE_MS = 1500;
 
 /**
  * Customizer — a panel on the end side where a user shapes the app: theme, accent, font, text
- * size, density, corner radius, direction, and the shell's layout, sidebar mode and container, with optional
- * presets, a Reset and a "Copy config" that puts the value on the clipboard as JSON. Built on
- * `Drawer`, `PalettePicker`, `AccentPicker` and `OptionPicker`.
+ * size, density, corner radius, animations, direction, and the shell's layout, sidebar mode and
+ * container, with optional presets, a Reset and a "Copy config" that puts the value on the
+ * clipboard as JSON. Built on `Drawer`, `PalettePicker`, `AccentPicker` and `OptionPicker`.
  *
  * It only holds the choice, and applies nothing: it is controlled (`value`, `onChange`) and the
  * host does the rest, on every change:
  *
  * - `applyAppearance(value)` sets the theme, accent, font, text size, density, radius
- *   (`data-radius`) and direction (`dir`) on `<html>`;
+ *   (`data-radius`), motion (`data-motion`) and direction (`dir`) on `<html>`;
  * - `value.container` is `Shell`'s `container`;
  * - `value.sidebar` drives `Shell` and `Sidebar`: `collapsed` is `Shell`'s `sidebarCollapsed`,
  *   `hover` is collapsed plus `expandOnHover="overlay"`, `compact` is `Sidebar`'s
@@ -363,10 +377,12 @@ export const Customizer = ({
   textSizes = COSMOS_TEXT_SIZES,
   densities = COSMOS_DENSITIES,
   radii = COSMOS_RADII,
+  motions = COSMOS_MOTIONS,
   labels,
   title = 'Customize',
   subtitle = 'Changes apply at once.',
   size = 'lg',
+  backdrop,
 }: CustomizerProps) => {
   const [announcement, setAnnouncement] = useState('');
   const announceTimer = useRef<number | null>(null);
@@ -405,7 +421,7 @@ export const Customizer = ({
   };
 
   return (
-    <Drawer open={open} onClose={onClose} side="end" size={size}>
+    <Drawer open={open} onClose={onClose} side="end" size={size} backdrop={backdrop}>
       <Drawer.Header title={title} description={subtitle} onClose={onClose} />
       <Drawer.Body className="space-y-6">
         {shown('presets') && presets.length > 0 && (
@@ -504,6 +520,19 @@ export const Customizer = ({
                 value={current.radius}
                 onChange={(id) => set({ radius: id })}
                 options={radii.map((r) => ({ value: r.id, label: r.label }))}
+              />
+            )}
+          </Group>
+        )}
+        {shown('motion') && (
+          <Group title={label('motion')}>
+            {(labelledBy) => (
+              <SegmentedControl
+                aria-labelledby={labelledBy}
+                size="sm"
+                value={current.motion}
+                onChange={(id) => set({ motion: id })}
+                options={motions.map((m) => ({ value: m.id, label: m.label }))}
               />
             )}
           </Group>

@@ -12,7 +12,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'soft' | 'link';
  * or a destructive action (`danger`).
  */
 export type ButtonIntent = Extract<Intent, 'brand' | 'success' | 'warning' | 'danger'>;
-export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
 /**
  * Corner radius shape. Default `rounded` (TUI default `rounded-md`).
  * Use `pill` for fully-rounded (TUI "Rounded primary/secondary"), and
@@ -34,6 +34,10 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
    * `secondary` and `ghost`. `success` turns any variant green, `warning` amber, `danger` red.
    */
   intent?: ButtonIntent;
+  /**
+   * Seven steps, `xs` (28px) to `3xl` (64px), `md` (36px) by default. The height follows
+   * `data-density`: 4px less in `compact`, 4px more in `comfortable`.
+   */
   size?: ButtonSize;
   shape?: ButtonShape;
   icon?: ElementType;
@@ -110,6 +114,8 @@ const TEXT_CLASS: Record<ButtonSize, string> = {
   md: 'text-sm gap-2',
   lg: 'text-base gap-2',
   xl: 'text-base gap-2.5',
+  '2xl': 'text-lg gap-3',
+  '3xl': 'text-xl gap-3',
 };
 
 const HEIGHT_CLASS: Record<ButtonSize, string> = {
@@ -118,6 +124,8 @@ const HEIGHT_CLASS: Record<ButtonSize, string> = {
   md: 'h-ctrl-36',
   lg: 'h-ctrl-44',
   xl: 'h-ctrl-48',
+  '2xl': 'h-ctrl-56',
+  '3xl': 'h-ctrl-64',
 };
 
 // Horizontal padding, for every shape but `circle` and `square`. Kept apart from HEIGHT_CLASS:
@@ -129,6 +137,8 @@ const PADDING_X: Record<ButtonSize, string> = {
   md: 'px-3.5',
   lg: 'px-5',
   xl: 'px-6',
+  '2xl': 'px-7',
+  '3xl': 'px-8',
 };
 
 // Width of an icon-only button (`circle` and `square`): the height of its size, with no
@@ -139,6 +149,8 @@ const ICON_ONLY_WIDTH: Record<ButtonSize, string> = {
   md: 'w-ctrl-36',
   lg: 'w-ctrl-44',
   xl: 'w-ctrl-48',
+  '2xl': 'w-ctrl-56',
+  '3xl': 'w-ctrl-64',
 };
 
 const SHAPE_CLASS: Record<ButtonShape, string> = {
@@ -157,8 +169,16 @@ const ICON_SIZE: Record<ButtonSize, string> = {
   md: 'h-4 w-4',
   lg: 'h-5 w-5',
   xl: 'h-5 w-5',
+  '2xl': 'h-6 w-6',
+  '3xl': 'h-6 w-6',
 };
 
+/**
+ * Button — the action control. While pressed it sits 1px lower and comes back in
+ * `--cosmos-motion-exit`; a `disabled` or `loading` button, and the `link` variant (no box to
+ * push), stay still. Every component that renders a `Button` (`StatefulSaveButton`, the modals'
+ * actions, the forms) presses the same way.
+ */
 export const Button = ({
   variant = 'primary',
   intent = 'brand',
@@ -181,12 +201,17 @@ export const Button = ({
     className={clsx(
       // A label on one line in a button of fixed height: a row too narrow for it wraps or
       // scrolls the buttons, not the text.
-      'focus-visible:focus-indicator inline-flex items-center justify-center font-medium whitespace-nowrap transition-colors',
+      'focus-visible:focus-indicator inline-flex items-center justify-center font-medium whitespace-nowrap',
+      // The colours and the press share the exit duration: 80 ms, to be pushed in and to come back.
+      'transition-[color,background-color,border-color,text-decoration-color,translate] duration-(--cosmos-motion-exit) ease-(--cosmos-ease-out)',
       VARIANT_CLASS[variant][intent],
       TEXT_CLASS[size],
       variant === 'link'
         ? LINK_CLASS
         : [
+            // A press pushes the button 1px down, along the block axis (a `translate`, so the
+            // layout does not move). Not a disabled or loading one: it takes no press.
+            'enabled:active:translate-y-px',
             HEIGHT_CLASS[size],
             SHAPE_CLASS[shape],
             shape === 'circle' || shape === 'square' ? ICON_ONLY_WIDTH[size] : PADDING_X[size],

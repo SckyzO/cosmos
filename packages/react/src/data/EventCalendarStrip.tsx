@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import { SectionLabel } from '../ui/SectionLabel';
 import { isoDate, sameDay, type CalendarFormats } from './calendar-dates';
 import type { CalendarEvent } from './EventCalendar';
 import { INTENT_DOT } from './EventCalendarChip';
@@ -34,12 +35,9 @@ export const EventCalendarStrip = ({
         it would be visible text its name does not hold. */}
     <div aria-hidden className="grid grid-cols-7 pt-2">
       {days.map((day, i) => (
-        <span
-          key={isoDate(day)}
-          className="text-2xs text-center font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
-        >
+        <SectionLabel key={isoDate(day)} as="span" size="md" className="text-center">
           {fmt.weekdaysNarrow[i]}
-        </span>
+        </SectionLabel>
       ))}
     </div>
     <div className="grid grid-cols-7">

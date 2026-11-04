@@ -208,6 +208,42 @@ export const OrderedRendersAsOl: Story = {
   },
 };
 
+/**
+ * An ordered number sits clear of its text, two-digit ones included: the list reserves 24px for the
+ * marker and each item pushes its text 6px further. The marker is a pseudo-element, so its width is
+ * measured on the same text drawn in the item's font.
+ */
+export const OrderedNumbersKeepOffTheText: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <List variant="ordered">
+      {Array.from({ length: 12 }, (_, i) => (
+        <List.Item key={i}>Step {i + 1}</List.Item>
+      ))}
+    </List>
+  ),
+  play: ({ canvasElement }) => {
+    const ol = canvasElement.querySelector('ol')!;
+    const items = canvasElement.querySelectorAll('li');
+    expect(parseFloat(getComputedStyle(ol).paddingInlineStart), 'list indent').toBe(24);
+    for (const li of items) {
+      expect(parseFloat(getComputedStyle(li).paddingInlineStart), 'item indent').toBe(6);
+    }
+    const context = document.createElement('canvas').getContext('2d')!;
+    const style = getComputedStyle(items[9]!);
+    context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    const marker = context.measureText('10. ').width;
+    expect(marker, 'a two-digit marker fits in the indent').toBeLessThanOrEqual(24);
+    const text = items[9]!.firstChild as Text;
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    expect(
+      range.getBoundingClientRect().left - ol.getBoundingClientRect().left,
+      'the text starts after the indent and the item padding'
+    ).toBeGreaterThanOrEqual(30);
+  },
+};
+
 // ── Right to left ───────────────────────────────────────────────────────────
 
 /**

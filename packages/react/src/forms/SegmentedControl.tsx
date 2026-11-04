@@ -1,8 +1,10 @@
 import { clsx } from 'clsx';
-import type { ElementType, ReactNode, Ref } from 'react';
+import { useRef, type ElementType, type ReactNode, type Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { onRadioGroupKeyDown, radioTabIndex } from './radioGroupA11y';
 import { useControllableState } from '../hooks/useControllableState';
+import { useIndicator } from '../hooks/useIndicator';
+import { SlidingIndicator } from '../ui/SlidingIndicator';
 import { Tooltip } from '../ui/Tooltip';
 
 export type SegmentOption<T extends string> = {
@@ -33,8 +35,9 @@ export type SegmentedControlProps<T extends string> = FieldA11yProps & {
   size?: 'sm' | 'md';
   /**
    * Draws each option as its `icon` alone, in a square segment: a grid / list switch. The `label`
-   * stays the radio's accessible name, and shows as a tooltip on hover and keyboard focus. An
-   * option with no `icon` keeps its text and its `badge`. Default `false`.
+   * stays the radio's accessible name, and shows as a tooltip on hover and keyboard focus (a
+   * visual one: it is not read again as the description). An option with no `icon` keeps its text
+   * and its `badge`. Default `false`.
    */
   iconOnly?: boolean;
   /** Icon shown in a cell before the first option, for the whole group. */
@@ -76,12 +79,23 @@ export const SegmentedControl = <T extends string>({
   const anyChecked = options.some((opt) => opt.value === value);
   const pills = appearance === 'pills';
   const sm = size === 'sm';
+  // The accent fill of the selected option is one element that slides from option to option.
+  const groupRef = useRef<HTMLDivElement>(null);
+  const marker = useIndicator(groupRef, {
+    active: '[role="radio"][aria-checked="true"]',
+    options: '[role="radio"]',
+  });
+  // Until it is in place (server render, the first frame of a hydration) the option fills itself.
+  const marked = marker.box !== null;
   return (
     <div
+      ref={groupRef}
       role="radiogroup"
       {...fieldA11y}
       onKeyDown={onRadioGroupKeyDown}
       className={clsx(
+        // `relative isolate`: the fill is placed against the group and sits behind the options.
+        'relative isolate',
         fullWidth ? 'flex w-full' : 'inline-flex',
         'overflow-hidden rounded-lg border',
         pills
@@ -90,6 +104,11 @@ export const SegmentedControl = <T extends string>({
         className
       )}
     >
+      <SlidingIndicator
+        marker={marker}
+        axes="both"
+        className={clsx('bg-brand-500', pills && 'rounded-md')}
+      />
       {GroupIcon && (
         <span
           aria-hidden="true"
@@ -146,7 +165,10 @@ export const SegmentedControl = <T extends string>({
                     i > 0 && 'border-s border-gray-200 dark:border-gray-700'
                   ),
               isActive
-                ? 'bg-brand-500 focus-visible:focus-indicator-on-accent text-white'
+                ? clsx(
+                    'focus-visible:focus-indicator-on-accent text-white',
+                    !marked && 'bg-brand-500'
+                  )
                 : clsx(
                     'focus-visible:focus-indicator',
                     pills
@@ -175,7 +197,13 @@ export const SegmentedControl = <T extends string>({
         );
         return glyph ? (
           <span key={opt.value} className={clsx('flex', edge)}>
-            <Tooltip content={opt.label}>{segment}</Tooltip>
+            {/* The tooltip points `aria-describedby` at itself on the element it wraps. On the radio
+                that would read the label a second time, as its description: it goes on a wrapper
+                that draws nothing, and the tooltip stays what a sighted pointer or keyboard user
+                gets. */}
+            <Tooltip content={opt.label}>
+              <span className="contents">{segment}</span>
+            </Tooltip>
           </span>
         ) : (
           segment

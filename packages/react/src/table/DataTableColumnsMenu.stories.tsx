@@ -3,7 +3,13 @@ import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 import { DataTable } from './DataTable';
-import type { ColumnDef } from './types';
+import {
+  PEOPLE,
+  patchColumns,
+  peopleColumns,
+  pickColumns,
+  type Person,
+} from './storybook-fixtures';
 
 // The columns menu of DataTable lives in its own file, with the same `Tables/DataTable` family:
 // DataTable.stories.tsx is already one of the largest stories files of the package.
@@ -18,39 +24,13 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-type User = { id: string; name: string; email: string; role: string; team: string; city: string };
+// The shared people, with five of their columns: City starts hidden, and Name, which names the row,
+// cannot be hidden.
+const rows = PEOPLE;
 
-const rows: User[] = [
-  ['Ada Lovelace', 'Engineer', 'Core', 'London'],
-  ['Grace Hopper', 'Admiral', 'Navy', 'New York'],
-  ['Linus Torvalds', 'Engineer', 'Kernel', 'Portland'],
-  ['Margaret Hamilton', 'Director', 'Core', 'Boston'],
-  ['Alan Turing', 'Researcher', 'Crypto', 'Manchester'],
-].map(([name, role, team, city], i) => ({
-  id: `user-${i + 1}`,
-  name,
-  email: `${name.toLowerCase().replace(' ', '.')}@example.com`,
-  role,
-  team,
-  city,
-}));
-
-const columns: ColumnDef<User>[] = [
-  {
-    key: 'name',
-    label: 'Name',
-    hideable: false,
-    searchValue: (r) => r.name,
-    render: (r) => <span className="font-medium text-gray-900 dark:text-white">{r.name}</span>,
-  },
-  { key: 'email', label: 'Email', render: (r) => r.email },
-  { key: 'role', label: 'Role', render: (r) => r.role },
-  { key: 'team', label: 'Team', render: (r) => r.team },
-  { key: 'city', label: 'City', defaultHidden: true, render: (r) => r.city },
-];
-
-const Wrap = ({ children }: { children: React.ReactNode }) => (
-  <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
+const columns = patchColumns(
+  pickColumns(peopleColumns, ['name', 'email', 'role', 'team', 'city']),
+  { name: { hideable: false }, city: { defaultHidden: true } }
 );
 
 // The menu is a portal: it is queried from the body, not the canvas.
@@ -69,16 +49,14 @@ const headers = (canvas: Canvas) =>
 /** `columnsMenu` adds the Columns button after the search field. `City` starts hidden. */
 export const ColumnsMenu: Story = {
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        columnsMenu
-        defaultSearchValue=""
-        searchPlaceholder="Search users…"
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      columnsMenu
+      defaultSearchValue=""
+      searchPlaceholder="Search users…"
+    />
   ),
 };
 
@@ -96,11 +74,7 @@ export const ColumnsMenuChecks: Story = {
 
 /** Without a search field the toolbar still shows, for the button alone. */
 export const ColumnsMenuWithoutSearch: Story = {
-  render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} columnsMenu />
-    </Wrap>
-  ),
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} columnsMenu />,
 };
 
 export const ColumnsMenuWithoutSearchChecks: Story = {
@@ -115,11 +89,7 @@ export const ColumnsMenuWithoutSearchChecks: Story = {
 /** A table without `columnsMenu` has no button and no toolbar of its own. */
 export const NoColumnsMenuByDefault: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} />
-    </Wrap>
-  ),
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} />,
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('button', { name: 'Columns' })).toBeNull();
     // `defaultHidden` is a menu feature too: without the prop the table is as before.
@@ -130,11 +100,7 @@ export const NoColumnsMenuByDefault: Story = {
 /** The menu lists every column; `hideable: false` shows checked and disabled, `defaultHidden` unchecked. */
 export const MenuStates: Story = {
   tags: ['!autodocs'],
-  render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} columnsMenu />
-    </Wrap>
-  ),
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} columnsMenu />,
   // The menu open, to show its states.
   play: async ({ canvas }) => {
     await openMenu(canvas);
@@ -168,11 +134,7 @@ export const MenuStatesChecks: Story = {
 /** Unchecking an item hides the column and checking it brings it back; the menu stays open. */
 export const HidingAndShowingAColumn: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} columnsMenu />
-    </Wrap>
-  ),
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} columnsMenu />,
   play: async ({ canvas }) => {
     const panel = within(await openMenu(canvas));
     const email = panel.getByRole('menuitemcheckbox', { name: 'Email' });
@@ -193,11 +155,7 @@ export const HidingAndShowingAColumn: Story = {
 /** Space toggles an item from the keyboard, and the menu stays open. */
 export const ColumnsMenuKeyboard: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} columnsMenu />
-    </Wrap>
-  ),
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} columnsMenu />,
   play: async ({ canvas }) => {
     canvas.getByRole('button', { name: 'Columns' }).focus();
     await userEvent.keyboard('{Enter}');
@@ -216,15 +174,8 @@ export const ColumnsMenuKeyboard: Story = {
 };
 
 const FewColumns = () => {
-  const two: ColumnDef<User>[] = [
-    { key: 'name', label: 'Name', render: (r) => r.name },
-    { key: 'email', label: 'Email', render: (r) => r.email },
-  ];
-  return (
-    <Wrap>
-      <DataTable rows={rows} columns={two} rowKey={(r) => r.id} columnsMenu />
-    </Wrap>
-  );
+  const two = pickColumns(peopleColumns, ['name', 'email']);
+  return <DataTable rows={rows} columns={two} rowKey={(r) => r.id} columnsMenu />;
 };
 
 /** The last shown column cannot be hidden: its item is disabled while it is the only one left. */
@@ -251,11 +202,7 @@ export const LastColumnIsProtected: Story = {
 /** `hideable: false` keeps the column: checked, disabled, and a click changes nothing. */
 export const NonHideableColumn: Story = {
   tags: ['!autodocs'],
-  render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} columnsMenu />
-    </Wrap>
-  ),
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} columnsMenu />,
 };
 
 export const NonHideableColumnChecks: Story = {
@@ -275,16 +222,14 @@ export const Uncontrolled: Story = {
   tags: ['!autodocs'],
   args: { onColumnVisibilityChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        columnsMenu
-        defaultColumnVisibility={{ role: false, city: true }}
-        onColumnVisibilityChange={args.onColumnVisibilityChange}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      columnsMenu
+      defaultColumnVisibility={{ role: false, city: true }}
+      onColumnVisibilityChange={args.onColumnVisibilityChange}
+    />
   ),
 };
 
@@ -309,7 +254,7 @@ export const UncontrolledChecks: Story = {
 const ControlledTable = ({ locked }: { locked?: boolean }) => {
   const [visibility, setVisibility] = useState<Record<string, boolean>>({ email: false });
   return (
-    <Wrap>
+    <>
       <DataTable
         rows={rows}
         columns={columns}
@@ -328,7 +273,7 @@ const ControlledTable = ({ locked }: { locked?: boolean }) => {
             .join(', ') || 'none'}
         </span>
       </p>
-    </Wrap>
+    </>
   );
 };
 
@@ -372,18 +317,16 @@ export const HiddenColumnsLeaveTheSearch: Story = {
   render: () => {
     const searchable = columns.map((c) => ({
       ...c,
-      filterValue: (r: User) => String(r[c.key as keyof User]),
+      filterValue: (r: Person) => String(r[c.key as keyof Person]),
     }));
     return (
-      <Wrap>
-        <DataTable
-          rows={rows}
-          columns={searchable}
-          rowKey={(r) => r.id}
-          columnsMenu
-          defaultSearchValue=""
-        />
-      </Wrap>
+      <DataTable
+        rows={rows}
+        columns={searchable}
+        rowKey={(r) => r.id}
+        columnsMenu
+        defaultSearchValue=""
+      />
     );
   },
   play: async ({ canvas }) => {
@@ -401,15 +344,13 @@ export const HiddenColumnsLeaveTheSearch: Story = {
 export const Mobile: Story = {
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        columnsMenu
-        defaultSearchValue=""
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      columnsMenu
+      defaultSearchValue=""
+    />
   ),
 };
 

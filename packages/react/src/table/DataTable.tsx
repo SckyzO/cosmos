@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { ChevronDown, Download, Search, X } from 'lucide-react';
+import { Download, Search, X } from 'lucide-react';
 import { Fragment, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnHeader } from './ColumnHeader';
 import { DataTableColumnsMenu } from './DataTableColumnsMenu';
@@ -14,7 +14,8 @@ import { Pagination } from '../navigation/Pagination';
 import { Checkbox } from '../forms/Checkbox';
 import { Button } from '../ui/Button';
 import { Sk } from '../feedback/Skeleton';
-import { DIMMED, LoadingVeil } from './LoadingVeil';
+import { DIMMED, LoadingVeil, UNDIMMED } from './LoadingVeil';
+import { useAfterSkeleton } from '../feedback/useAfterSkeleton';
 import { AppLink } from '../ui/AppLink';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
@@ -46,6 +47,8 @@ import { rowInitials, triggerId } from './editing';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import { pinEdges, pinnedCell, pinOffsets, pinStyle } from './pinned';
 import { usePinnedWidths } from './usePinnedWidths';
+import { DataTableSelectionBar } from './DataTableSelectionBar';
+import { DetailRow } from './ExpandedDetail';
 import { RowChevron } from './RowChevron';
 import { useScrollEdges } from '../hooks/useScrollEdges';
 import type {
@@ -687,6 +690,8 @@ export const DataTable = <T,>({
   const hasRows = sortedRows.length > 0;
   const showSkeleton = loading && !hasRows;
   const dimRows = loading && hasRows;
+  // The first load ends: the rows fade in where the placeholders were.
+  const arrive = useAfterSkeleton(showSkeleton);
 
   const columnCount =
     columns.length + (expandable ? 1 : 0) + (selectable ? 1 : 0) + (actionColumn ? 1 : 0);
@@ -971,6 +976,9 @@ export const DataTable = <T,>({
     </div>
   );
 
+  // The tinted toolbar with the count and the bulk actions, while a row is ticked.
+  const selectionBar = selectable && selection.size > 0;
+
   const renderRow = (row: T, index: number) => {
     const key = rowKey(row);
     const isSelected = selection.has(key);
@@ -1036,6 +1044,8 @@ export const DataTable = <T,>({
               : (isOpen || rowInEdit) && 'bg-gray-50 dark:bg-white/[0.03]',
             // The detail or error row below is part of it: no divider between the two.
             (isOpen || rowInEdit?.error) && 'border-b-0',
+            // ... and while the detail still folds back, after the row has closed.
+            'has-[+[data-detail-row]]:border-b-0',
             (onRowClick || href) && 'cursor-pointer',
             'group/row',
             focusableRow && 'focus-visible:focus-indicator focus-visible:ring-inset',
@@ -1057,7 +1067,7 @@ export const DataTable = <T,>({
                 variant="ghost"
                 size="sm"
                 shape="square"
-                icon={isOpen ? ChevronDown : RowChevron}
+                icon={RowChevron}
                 aria-expanded={isOpen}
                 // Only while the detail row exists: an id that is not there names nothing.
                 aria-controls={isOpen ? detailId : undefined}
@@ -1213,12 +1223,13 @@ export const DataTable = <T,>({
         {rowInEdit?.error && (
           <RowEditError id={rowErrorId} message={rowInEdit.error} colSpan={columnCount} />
         )}
-        {isOpen && renderExpandedRow && (
-          <tr id={detailId} className="bg-gray-50 dark:bg-white/[0.03] print:break-inside-avoid">
-            <td colSpan={columnCount} className="ps-15 pe-4 pt-1 pb-5 text-sm">
-              {renderExpandedRow(row)}
-            </td>
-          </tr>
+        {expandable && renderExpandedRow && (
+          <DetailRow
+            id={detailId}
+            open={isOpen}
+            colSpan={columnCount}
+            render={() => renderExpandedRow(row)}
+          />
         )}
       </Fragment>
     );
@@ -1245,85 +1256,91 @@ export const DataTable = <T,>({
         </div>
       )}
 
-      {/* Top toolbar: the search and the controls, on a tinted row with the selection's count and
-          actions on the start side while rows are selected. */}
-      {selectable && selection.size > 0 ? (
-        <div className="bg-brand-50 dark:bg-brand-500/10 @container border-b border-gray-100 dark:border-gray-800 print:hidden">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2">
-            <div
-              className={clsx(
-                // The actions go to the next line when the count leaves them too little room.
-                'flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2',
-                mobileCards && 'max-sm:flex-1'
-              )}
-            >
-              <span className="text-brand-700 dark:text-brand-300 text-sm font-medium whitespace-nowrap">
-                <bdi>{selection.size} selected</bdi>
-              </span>
-              <button
-                type="button"
-                onClick={clearSelection}
-                className="focus-visible:focus-indicator rounded-sm text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                Clear
-              </button>
-              {(bulkActionItems || bulkActions) && (
-                <div className="flex min-w-0 flex-auto flex-wrap items-center gap-2 ps-1">
-                  {bulkActionItems && (
-                    <DataTableBulkActions
-                      items={bulkActionItems}
-                      selectedRows={selectedRows}
-                      phoneIcons={mobileCards}
-                    />
+      {/* Top toolbar: the search and the controls. While rows are selected a tinted row with the
+          selection's count and actions on the start side takes its place: it fades in with the
+          first row ticked, and out over the toolbar when the last one is cleared. */}
+      <div className="relative">
+        <DataTableSelectionBar open={selectionBar}>
+          {selectionBar ? (
+            <div className="bg-brand-50 dark:bg-brand-500/10 @container border-b border-gray-100 dark:border-gray-800 print:hidden">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2">
+                <div
+                  className={clsx(
+                    // The actions go to the next line when the count leaves them too little room.
+                    'flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2',
+                    mobileCards && 'max-sm:flex-1'
                   )}
-                  {bulkActions?.(selectedRows)}
+                >
+                  <span className="text-brand-700 dark:text-brand-300 text-sm font-medium whitespace-nowrap">
+                    <bdi>{selection.size} selected</bdi>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearSelection}
+                    className="focus-visible:focus-indicator rounded-sm text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    Clear
+                  </button>
+                  {(bulkActionItems || bulkActions) && (
+                    <div className="flex min-w-0 flex-auto flex-wrap items-center gap-2 ps-1">
+                      {bulkActionItems && (
+                        <DataTableBulkActions
+                          items={bulkActionItems}
+                          selectedRows={selectedRows}
+                          phoneIcons={mobileCards}
+                        />
+                      )}
+                      {bulkActions?.(selectedRows)}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            {(searchEnabled || hasToolbarControls) && (
-              <div
-                className={clsx(
-                  'ms-auto flex min-w-0 items-center gap-2 @max-[639px]:w-full',
-                  !searchEnabled && mobileCards && 'max-sm:hidden'
-                )}
-              >
-                {searchEnabled &&
-                  searchField(
-                    'min-w-0 flex-1 @min-[640px]:w-44 @min-[640px]:flex-none @min-[1360px]:w-70'
-                  )}
-                {mobileCards ? (
-                  <div className="max-sm:hidden">{toolbarControls(COMPACT_TOOLBAR)}</div>
-                ) : (
-                  toolbarControls(COMPACT_TOOLBAR)
+                {(searchEnabled || hasToolbarControls) && (
+                  <div
+                    className={clsx(
+                      'ms-auto flex min-w-0 items-center gap-2 @max-[639px]:w-full',
+                      !searchEnabled && mobileCards && 'max-sm:hidden'
+                    )}
+                  >
+                    {searchEnabled &&
+                      searchField(
+                        'min-w-0 flex-1 @min-[640px]:w-44 @min-[640px]:flex-none @min-[1360px]:w-70'
+                      )}
+                    {mobileCards ? (
+                      <div className="max-sm:hidden">{toolbarControls(COMPACT_TOOLBAR)}</div>
+                    ) : (
+                      toolbarControls(COMPACT_TOOLBAR)
+                    )}
+                  </div>
                 )}
               </div>
+            </div>
+          ) : null}
+        </DataTableSelectionBar>
+        {selectionBar ? null : searchEnabled ? (
+          <div
+            className={clsx(
+              'border-b border-gray-100 px-4 py-2 dark:border-gray-800 print:hidden',
+              hasToolbarControls && 'flex items-center gap-2'
+            )}
+          >
+            {searchField(hasToolbarControls ? 'min-w-0 flex-1' : '')}
+            {mobileCards ? (
+              <div className="max-sm:hidden">{toolbarControls()}</div>
+            ) : (
+              toolbarControls()
             )}
           </div>
-        </div>
-      ) : searchEnabled ? (
-        <div
-          className={clsx(
-            'border-b border-gray-100 px-4 py-2 dark:border-gray-800 print:hidden',
-            hasToolbarControls && 'flex items-center gap-2'
-          )}
-        >
-          {searchField(hasToolbarControls ? 'min-w-0 flex-1' : '')}
-          {mobileCards ? (
-            <div className="max-sm:hidden">{toolbarControls()}</div>
-          ) : (
-            toolbarControls()
-          )}
-        </div>
-      ) : hasToolbarControls ? (
-        <div
-          className={clsx(
-            'flex justify-end border-b border-gray-100 px-4 py-2 dark:border-gray-800 print:hidden',
-            mobileCards && 'max-sm:hidden'
-          )}
-        >
-          {toolbarControls()}
-        </div>
-      ) : null}
+        ) : hasToolbarControls ? (
+          <div
+            className={clsx(
+              'flex justify-end border-b border-gray-100 px-4 py-2 dark:border-gray-800 print:hidden',
+              mobileCards && 'max-sm:hidden'
+            )}
+          >
+            {toolbarControls()}
+          </div>
+        ) : null}
+      </div>
 
       {mobileCards && (mobileSortable || hasToolbarControls || showFilters) && (
         <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-2 sm:hidden dark:border-gray-800 print:hidden">
@@ -1511,7 +1528,12 @@ export const DataTable = <T,>({
             </thead>
             <tbody
               inert={dimRows || undefined}
-              className={clsx('divide-y divide-gray-100 dark:divide-gray-800', dimRows && DIMMED)}
+              onAnimationEnd={arrive.onAnimationEnd}
+              className={clsx(
+                'divide-y divide-gray-100 dark:divide-gray-800',
+                dimRows ? DIMMED : UNDIMMED,
+                arrive.className
+              )}
             >
               {showSkeleton ? (
                 Array.from({ length: loadingRows }, (_, i) => (

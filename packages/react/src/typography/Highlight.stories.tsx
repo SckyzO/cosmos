@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
+import { useState, type CSSProperties } from 'react';
 import { expect, userEvent, within } from 'storybook/test';
 import { SearchInput } from '../forms/SearchInput';
 import { COSMOS_ACCENTS } from '../settings/appearance';
@@ -12,21 +12,22 @@ const meta = {
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: { text: 'Disk alert cleared on rack B4', query: 'alert' },
-  decorators: [
-    (Story) => (
-      <p className="max-w-prose text-sm text-[var(--color-text-secondary)]">
-        <Story />
-      </p>
-    ),
-  ],
 } satisfies Meta<typeof Highlight>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// `Highlight` is inline text, so the stories that show it alone sit in a paragraph. The ones with
+// blocks of their own (a list, headings) do not: a block inside a `<p>` is invalid markup.
+const InParagraph: Decorator = (Story) => (
+  <p className="max-w-prose text-sm text-[var(--color-text-secondary)]">
+    <Story />
+  </p>
+);
+
 const marks = (box: Element) => [...box.querySelectorAll('mark')].map((mark) => mark.textContent);
 
-export const Default: Story = {};
+export const Default: Story = { decorators: [InParagraph] };
 
 export const DefaultChecks: Story = {
   ...Default,
@@ -41,6 +42,7 @@ export const DefaultChecks: Story = {
 
 /** Each word of the query is marked on its own, whatever its case. */
 export const SeveralWords: Story = {
+  decorators: [InParagraph],
   args: {
     text: 'Disk alert cleared on rack B4, and the DISK usage is back to normal',
     query: 'disk b4',
@@ -56,6 +58,7 @@ export const SeveralWordsChecks: Story = {
 };
 
 export const EmptyQueryMarksNothing: Story = {
+  decorators: [InParagraph],
   args: { query: '' },
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
@@ -68,6 +71,7 @@ export const EmptyQueryMarksNothing: Story = {
 
 /** The query is text: `(a+` and `.*` are searched for as they are. */
 export const QueryIsNotAPattern: Story = {
+  decorators: [InParagraph],
   args: { text: 'Matches (a+ b) but not aab, and keeps .* as is', query: '(a+ .*' },
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
@@ -77,6 +81,7 @@ export const QueryIsNotAPattern: Story = {
 
 /** Markup in the text shows as written: it is never parsed, matched or not. */
 export const HtmlInTextRendersAsText: Story = {
+  decorators: [InParagraph],
   args: {
     text: '<img src=x onerror="document.title=\'pwned\'"> alert <b>bold</b>',
     query: 'img bold',
@@ -90,6 +95,90 @@ export const HtmlInTextRendersAsText: Story = {
       '<img src=x onerror="document.title=\'pwned\'"> alert <b>bold</b>'
     );
     await expect(document.title).not.toBe('pwned');
+  },
+};
+
+/**
+ * `ignoreAccents` compares the letters without their accents, on both sides: `ete` finds `été`
+ * and `cafe` finds `café`. The text is drawn as written. Off by default.
+ */
+export const IgnoreAccents: Story = {
+  decorators: [InParagraph],
+  args: {
+    text: 'Un été à Zürich, un café crème',
+    query: 'ete zurich cafe',
+    ignoreAccents: true,
+  },
+};
+
+export const IgnoreAccentsChecks: Story = {
+  ...IgnoreAccents,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    await expect(marks(canvasElement)).toEqual(['été', 'Zürich', 'café']);
+    await expect(canvasElement.querySelector('p')!.textContent).toBe(
+      'Un été à Zürich, un café crème'
+    );
+  },
+};
+
+export const AccentsCountByDefault: Story = {
+  ...IgnoreAccents,
+  args: { ...IgnoreAccents.args, ignoreAccents: false },
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.querySelector('mark')).toBeNull();
+  },
+};
+
+/** The mark follows the accent: one line per accent, each under its own `data-accent`. */
+export const OnEveryAccent: Story = {
+  render: (args) => (
+    <div className="max-w-prose space-y-2 text-sm text-[var(--color-text-secondary)]">
+      {COSMOS_ACCENTS.map(({ id, label, hex }) => (
+        <div
+          key={id}
+          data-accent={id}
+          // Blue is the default: it has no rule of its own, so under another accent it would
+          // inherit that one. Its own brand-500 is set where the mark can read it.
+          style={id === 'blue' ? ({ '--color-brand-500': hex } as CSSProperties) : undefined}
+          className="flex items-baseline gap-3"
+        >
+          <span className="w-20 shrink-0 text-xs text-[var(--color-text-muted)]">{label}</span>
+          <p>
+            <Highlight {...args} />
+          </p>
+        </div>
+      ))}
+    </div>
+  ),
+};
+
+export const OnEveryAccentChecks: Story = {
+  ...OnEveryAccent,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const root = document.documentElement;
+    const saved = root.getAttribute('data-accent');
+    // The lines only: `<html>` can carry a `data-accent` too, and every mark is inside it.
+    const tints = () =>
+      [...canvasElement.querySelectorAll('[data-accent]')].map(
+        (line) => getComputedStyle(line.querySelector('mark')!).backgroundColor
+      );
+    try {
+      // Whatever accent the page has, each line keeps its own tint.
+      for (const accent of [null, 'teal']) {
+        if (accent === null) root.removeAttribute('data-accent');
+        else root.setAttribute('data-accent', accent);
+        const seen = tints();
+        expect(new Set(seen).size, `${accent ?? 'blue'}: one tint per accent`).toBe(
+          COSMOS_ACCENTS.length
+        );
+      }
+    } finally {
+      if (saved === null) root.removeAttribute('data-accent');
+      else root.setAttribute('data-accent', saved);
+    }
   },
 };
 
@@ -147,13 +236,14 @@ const Results = ({ initialQuery }: { initialQuery: string }) => {
 /** A search box filtering a list: the words typed are marked in each title and snippet. */
 export const SearchResults: Story = {
   render: () => <Results initialQuery="disk alert" />,
-  decorators: [],
 };
 
 export const SearchResultsChecks: Story = {
   ...SearchResults,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
+    // The headings, the list and the snippets are blocks: none of them sits inside a paragraph.
+    await expect(canvasElement.querySelector('p h3, p ul, p div, p p')).toBeNull();
     const results = within(canvas.getByRole('list', { name: 'Results' }));
     // "disk alert": both words in the first two results' text, only the first has both.
     await expect(results.getAllByRole('listitem')).toHaveLength(1);

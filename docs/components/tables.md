@@ -52,9 +52,9 @@ buttons and links out of that column). A click on a control inside the row (the
 checkbox, the action column, a link or button in another cell) never counts as a
 row click. `RowActionsMenu` is the ⋮ button and menu of a row, for
 `renderRowAction`: give it `Menu.Item`s, a destructive one with
-`intent="danger"`. On a narrow screen the edge of a table that scrolls sideways
-fades, and `Table`'s `stickyFirstColumn` pins its first column (`DataTable` pins
-columns with `pin`, below). `TableIdentityCell`, `TableIdCell`, `TableDescriptionCell` and
+`intent="danger"`. A table wider than its box (a narrow screen, many columns) scrolls
+sideways, and the edge that has more content fades; `Table`'s `stickyFirstColumn` pins its
+first column (`DataTable` pins columns with `pin`, below). `TableIdentityCell`, `TableIdCell`, `TableDescriptionCell` and
 `TableAmountCell` are the cells tables keep rebuilding. `TableAmountCell` is an `Amount` (see
 [Data](data.md)) with a plus in front of a gain, so it writes a figure like the rest of the page.
 
@@ -92,7 +92,9 @@ an icon button named by its `label`. `bulkActions(selectedRows)` still renders
 any node after them, as given at every width. While rows are selected the
 toolbar's Export follows them ("Export 3" downloads those rows, in the table's
 sort order, and `onExport` gets their keys as `selection`); with none selected it
-exports the filtered rows.
+exports the filtered rows. The bar of the count and the actions fades in and slides 4px
+in 120 ms when the first row is ticked, and out in 80 ms over the search row when the
+last one is cleared; while it leaves it is inert and still reads what it read.
 
 `emptyAction` puts a call to action under the empty state ("Create the first
 order"). When a search or filters hide every row it gives way to a "Clear
@@ -107,6 +109,11 @@ selection: `expandedRows`, `defaultExpandedRows` and
 click on it. Limit: with `virtualize` nothing expands (its rows have one fixed
 height), and the prop is ignored. With `mobileLayout="cards"` the chevron sits on
 the card's title line and the content opens inside the card, under its fields.
+The detail unfolds in 200 ms, in its row or its card, while the content fades in and
+slides 4px and the chevron (the same icon, turned a quarter) follows; closing plays the
+same backwards, then the detail is removed. It is inert and out of the accessibility
+tree from the moment it starts to close, and `renderExpandedRow` is only called for the
+rows that are open. A row open from the first render is simply there.
 
 `pin: 'start' | 'end'` on a column keeps it in place while the table scrolls
 sideways, several per side: list the `start` ones first and the `end` ones last
@@ -303,7 +310,12 @@ is on page 1 already).
 `loading` with rows on screen keeps them, dimmed and inert (nothing in them can
 be clicked meanwhile), under a centered spinner, with the pager still there and
 `aria-busy` on the table; with no rows yet it draws the `loadingRows`
-placeholders as before. Use it for every request, the first or the next page.
+placeholders as before. Use it for every request, the first or the next page. The dimming and the
+spinner show after 150ms and fade in over 120ms, so a reload that answers at once shows neither;
+the busy state, the "Loading…" status and the inert rows are there at once. The wait is not a
+movement and stays under the reduced motion setting, where the fade is 0ms. When the first load
+ends, the rows (or the cards, on a phone) fade in over 200ms where the placeholders were; rows
+drawn from the first render fade in nothing.
 
 ```tsx
 const [sort, setSort] = useState<DataTableSort>(null);
@@ -358,6 +370,32 @@ page's by default),
 `striped`, `stickyHeader` (give the wrapper a height with
 `containerClassName`, e.g. `max-h-80`) and `stickyFirstColumn`. While data
 loads, `TableSkeletonRows` fills the `TableBody` under the header row. Cells take `align` and `numeric`
-(`start`, `center` or `end`; `numeric` aligns to the end, with tabular figures). `TableHeaderCell` sets `scope` to `col` in the
+(`start`, `center` or `end`; `numeric` aligns to the end, with tabular figures, and a `numeric`
+`TableCell` keeps its value on one line with its unit). `TableHeaderCell` sets `scope` to `col` in the
 head and `row` elsewhere. The wrapper scrolls horizontally, so a wide table
-stays inside the page on small screens.
+stays inside the page on small screens. In a narrow column a cell wraps at every space and
+hyphen: put `whitespace-nowrap` in the `className` of a cell that holds a host name or any
+identifier, so the table scrolls sideways before it breaks the name.
+
+An empty `Table` is a row with one cell that spans the columns. That cell is as wide as the table,
+which scrolls on a phone, so an `EmptyState` in it is centred on the whole table and its text can
+sit under the fade of the end edge. Put `containerClassName="@container"` on the `Table` and the
+empty state in a block that sticks to the start of the part in view:
+
+```tsx
+<Table containerClassName="@container">
+  <TableBody>
+    <TableRow>
+      <TableCell colSpan={5}>
+        <div className="inset-s-4 sticky w-[calc(100cqw-2rem)] px-6">
+          <EmptyState title="No nodes" description="No node reports to this site yet." />
+        </div>
+      </TableCell>
+    </TableRow>
+  </TableBody>
+</Table>
+```
+
+`100cqw` is the width of the wrapper: the block is that wide less the 2rem of padding of the cell,
+sticks 1rem from the start of the part in view, and `px-6` clears the fade. It adds nothing to the
+width of the table.

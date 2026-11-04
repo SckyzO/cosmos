@@ -460,12 +460,14 @@ export const HeadingMenuSetsTheLevel: Story = {
     await userEvent.click(items[1]!);
     await waitFor(() => expect(args.onChange).toHaveBeenLastCalledWith('<h1>Title</h1>'));
     await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
-    await expect(text).toHaveFocus();
-    await expect(trigger).toHaveAttribute('aria-pressed', 'true');
+    // Tiptap's `focus()` runs in a `requestAnimationFrame`, after the closing menu has put the focus
+    // back on its button: a late frame leaves it there for a while, so wait for the text (#607).
+    await waitFor(() => expect(text).toHaveFocus());
+    await waitFor(() => expect(trigger).toHaveAttribute('aria-pressed', 'true'));
 
     // The checked item follows the caret; choosing the checked one keeps it.
     const again = within(await openMenu(canvas, 'Heading')).getAllByRole('menuitemradio');
-    await expect(again[1]).toHaveAttribute('aria-checked', 'true');
+    await waitFor(() => expect(again[1]).toHaveAttribute('aria-checked', 'true'));
     await userEvent.click(again[1]!);
     await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
     await expect(args.onChange).toHaveBeenLastCalledWith('<h1>Title</h1>');
@@ -476,7 +478,7 @@ export const HeadingMenuSetsTheLevel: Story = {
     const last = within(await openMenu(canvas, 'Heading')).getAllByRole('menuitemradio');
     await userEvent.click(last[0]!);
     await waitFor(() => expect(args.onChange).toHaveBeenLastCalledWith('<p>Title</p>'));
-    await expect(trigger).toHaveAttribute('aria-pressed', 'false');
+    await waitFor(() => expect(trigger).toHaveAttribute('aria-pressed', 'false'));
   },
 };
 
@@ -501,7 +503,7 @@ export const HeadingMenuOpensFromTheKeyboard: Story = {
     await within(document.body).findByRole('menu', { name: 'Heading' });
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
-    await expect(trigger).toHaveFocus();
+    await waitFor(() => expect(trigger).toHaveFocus());
   },
 };
 
@@ -529,11 +531,11 @@ export const AlignMenuAlignsTheBlock: Story = {
       expect(args.onChange).toHaveBeenLastCalledWith('<p style="text-align: center;">Line</p>')
     );
     await expect(text.querySelector('p')).toHaveStyle({ textAlign: 'center' });
-    await expect(trigger).toHaveAttribute('aria-pressed', 'true');
-    await expect(text).toHaveFocus();
+    await waitFor(() => expect(trigger).toHaveAttribute('aria-pressed', 'true'));
+    await waitFor(() => expect(text).toHaveFocus());
 
     const second = within(await openMenu(canvas, 'Text alignment')).getAllByRole('menuitemradio');
-    await expect(second[1]).toHaveAttribute('aria-checked', 'true');
+    await waitFor(() => expect(second[1]).toHaveAttribute('aria-checked', 'true'));
     await userEvent.click(second[2]!);
     await waitFor(() =>
       expect(args.onChange).toHaveBeenLastCalledWith('<p style="text-align: end;">Line</p>')
@@ -543,7 +545,7 @@ export const AlignMenuAlignsTheBlock: Story = {
     const third = within(await openMenu(canvas, 'Text alignment')).getAllByRole('menuitemradio');
     await userEvent.click(third[0]!);
     await waitFor(() => expect(args.onChange).toHaveBeenLastCalledWith('<p>Line</p>'));
-    await expect(trigger).toHaveAttribute('aria-pressed', 'false');
+    await waitFor(() => expect(trigger).toHaveAttribute('aria-pressed', 'false'));
   },
 };
 
@@ -1105,7 +1107,7 @@ export const ImageFormInsertsAnImageWithItsDescription: Story = {
     );
     await expect(await within(text).findByRole('img', { name: 'Network diagram' })).toBeVisible();
     await waitFor(() => expect(within(document.body).queryByRole('dialog')).toBeNull());
-    await expect(text).toHaveFocus();
+    await waitFor(() => expect(text).toHaveFocus());
   },
 };
 
@@ -1257,13 +1259,13 @@ export const BubbleHeadingMenuKeepsTheBubbleAndGivesBackItsButton: Story = {
     await expect(toolbar).toBeVisible();
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(within(document.body).queryByRole('menu')).toBeNull());
-    await expect(trigger).toHaveFocus();
+    await waitFor(() => expect(trigger).toHaveFocus());
     await expect(toolbar).toBeVisible();
 
     const items = within(await openMenu(within(toolbar), 'Heading')).getAllByRole('menuitemradio');
     await userEvent.click(items[2]!);
     await waitFor(() => expect(args.onChange).toHaveBeenLastCalledWith('<h2>Pick</h2>'));
-    await expect(text).toHaveFocus();
+    await waitFor(() => expect(text).toHaveFocus());
   },
 };
 
@@ -1559,6 +1561,7 @@ export const DisabledDoesNothing: Story = {
 /** In a form, `name` posts the value as on a Textarea: a read-only editor posts it, a disabled one does not. */
 export const FormPostsWhatATextareaPosts: Story = {
   ...test,
+  tags: ['!dev', '!autodocs'],
   render: () => (
     <form aria-label="Notes">
       <RichTextEditor name="open" label="Open" defaultValue="<p>Kept</p>" />

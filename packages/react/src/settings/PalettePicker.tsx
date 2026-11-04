@@ -18,8 +18,10 @@ export type PalettePickerProps = FieldA11yProps & {
 };
 
 /**
- * PalettePicker — responsive grid of `<PaletteCard>` previews. Use one for
- * the light theme set and another for the dark theme set.
+ * PalettePicker — responsive grid of `<PaletteCard>` previews, one per theme.
+ * Feed it `COSMOS_THEMES`, the four themes of `@sckyzo/cosmos-theme` (with
+ * `COSMOS_SYSTEM_THEME` first for a "System" choice); any `PaletteMeta[]`
+ * works too.
  */
 export const PalettePicker = ({
   palettes,

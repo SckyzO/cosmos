@@ -519,6 +519,41 @@ export const KeyboardModel: Story = {
   },
 };
 
+/**
+ * Up and Down keep the column through a group's header row, which has one cell: the way out of it
+ * goes back to the column the focus was moving along, until a key or a click picks another.
+ */
+export const ColumnSurvivesAGroupRow: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    box(canvas, 'Refunds, Create').focus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(box(canvas, 'Select all for Customers')).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(box(canvas, 'Customer records, Create')).toHaveFocus();
+
+    // And back up, through the same row.
+    await userEvent.keyboard('{ArrowUp}');
+    await expect(box(canvas, 'Select all for Customers')).toHaveFocus();
+    await userEvent.keyboard('{ArrowUp}');
+    await expect(box(canvas, 'Refunds, Create')).toHaveFocus();
+
+    // A key along the row picks the column: the one it lands on is kept from then on.
+    await userEvent.keyboard('{End}');
+    await expect(document.activeElement).toHaveTextContent('Refunds, Delete: not applicable');
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}');
+    await expect(box(canvas, 'Customer records, Delete')).toHaveFocus();
+
+    // A click picks it as well, over the column the keys were keeping.
+    await userEvent.keyboard('{ArrowDown}');
+    await userEvent.click(box(canvas, 'Notes, Create'));
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(box(canvas, 'Select all for Workspace')).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(box(canvas, 'Team members, Create')).toHaveFocus();
+  },
+};
+
 /** Left and Right follow the reading direction, whichever way the page was set. */
 export const ArrowsFollowTheDirectionOfThePage: Story = {
   tags: ['!dev', '!autodocs'],

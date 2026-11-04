@@ -40,6 +40,12 @@ const MENUS = [
     check: (html: Element) => html.getAttribute('data-radius') === 'lg',
   },
   {
+    description: 'Motion',
+    label: 'Motion:',
+    pick: 'Motion: Reduced',
+    check: (html: Element) => html.getAttribute('data-motion') === 'reduced',
+  },
+  {
     description: 'Text direction',
     label: 'Direction:',
     pick: 'Direction: Right to left',

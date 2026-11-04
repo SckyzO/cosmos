@@ -2,8 +2,17 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import { nextFrame, isFading, tokenMs, transitionDelayMs, transitionMs } from '../storybook-motion';
 import { DataTable } from './DataTable';
-import type { ColumnDef, DataTableSort } from './types';
+import {
+  ORDER_STATUSES,
+  makeOrders,
+  orderColumns,
+  patchColumns,
+  pickColumns,
+  type Order,
+} from './storybook-fixtures';
+import type { DataTableSort } from './types';
 
 // The server mode of DataTable (`manual`, `rowCount`, `filterOptions`, the controlled sort and
 // page, and `loading` with rows on screen) has its own file, in the `Tables/DataTable` family.
@@ -18,18 +27,11 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-type Order = { id: string; customer: string; status: string; total: number };
-
-const STATUSES = ['Paid', 'Pending', 'Refunded', 'Failed'];
 const ORDER_COUNT = 10_000;
 
-// 10,000 orders with nothing random in them: the same server on every run.
-const ORDERS: Order[] = Array.from({ length: ORDER_COUNT }, (_, i) => ({
-  id: `ord-${String(i + 1).padStart(5, '0')}`,
-  customer: `Customer ${String((i * 7919) % 1000).padStart(3, '0')}`,
-  status: STATUSES[(i * 3 + Math.floor(i / 7)) % STATUSES.length],
-  total: ((i * 7919) % 49_900) / 100 + 5,
-}));
+// The server's 10,000 orders, from the shared fixtures: `BK-20421` down to `BK-10422`, the same on
+// every run.
+const ORDERS = makeOrders(ORDER_COUNT);
 
 type Query = {
   search: string;
@@ -56,37 +58,10 @@ const queryOrders = ({ search, status, sort, page, pageSize }: Query) => {
   return { rows: found.slice((page - 1) * pageSize, page * pageSize), total: found.length };
 };
 
-const columns: ColumnDef<Order>[] = [
-  { key: 'id', label: 'Order', sortable: true, sortValue: (o) => o.id, render: (o) => o.id },
-  {
-    key: 'customer',
-    label: 'Customer',
-    sortable: true,
-    sortValue: (o) => o.customer,
-    render: (o) => o.customer,
-  },
-  {
-    key: 'status',
-    label: 'Status',
-    filterable: true,
-    // A page holds a few statuses only: the server says which exist.
-    filterOptions: STATUSES,
-    filterValue: (o) => o.status,
-    render: (o) => o.status,
-  },
-  {
-    key: 'total',
-    label: 'Total',
-    align: 'end',
-    sortable: true,
-    sortValue: (o) => o.total,
-    render: (o) => `$${o.total.toFixed(2)}`,
-  },
-];
-
-const Wrap = ({ children }: { children: React.ReactNode }) => (
-  <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
-);
+// A page holds a few statuses only: the server says which exist.
+const columns = patchColumns(pickColumns(orderColumns, ['id', 'customer', 'status', 'total']), {
+  status: { filterOptions: ORDER_STATUSES },
+});
 
 // A host that keeps what the table reports and asks the server for the page. `latency` is the
 // time the "network" takes, in ms; none answers in the same render.
@@ -151,32 +126,20 @@ const ServerTable = ({ latency }: { latency: number }) => {
  */
 export const FakeServer: Story = {
   tags: ['no-capture'],
-  render: () => (
-    <Wrap>
-      <ServerTable latency={600} />
-    </Wrap>
-  ),
+  render: () => <ServerTable latency={600} />,
 };
 
 /** The same host with a server that answers at once, so the page is always the same one. */
 export const FakeServerWithoutLatency: Story = {
   tags: ['!autodocs'],
-  render: () => (
-    <Wrap>
-      <ServerTable latency={0} />
-    </Wrap>
-  ),
+  render: () => <ServerTable latency={0} />,
 };
 
 /** At 375px the table scrolls in its own area, the pager and the page size select wrap. */
 export const OnAPhone: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
-  render: () => (
-    <Wrap>
-      <ServerTable latency={0} />
-    </Wrap>
-  ),
+  render: () => <ServerTable latency={0} />,
 };
 
 export const OnAPhoneChecks: Story = {
@@ -194,25 +157,23 @@ export const OnAPhoneChecks: Story = {
  */
 export const ReloadingWithRows: Story = {
   render: () => (
-    <Wrap>
-      <DataTable
-        manual
-        rows={queryOrders({ search: '', status: [], sort: null, page: 1, pageSize: 6 }).rows}
-        rowCount={ORDER_COUNT}
-        columns={columns}
-        rowKey={(o) => o.id}
-        pageSize={6}
-        loading
-        aria-label="Orders"
-      />
-    </Wrap>
+    <DataTable
+      manual
+      rows={queryOrders({ search: '', status: [], sort: null, page: 1, pageSize: 6 }).rows}
+      rowCount={ORDER_COUNT}
+      columns={columns}
+      rowKey={(o) => o.id}
+      pageSize={6}
+      loading
+      aria-label="Orders"
+    />
   ),
 };
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 // A page as the host gives it: in an order no sort of ours would produce.
-const PAGE: Order[] = ['ord-00007', 'ord-00002', 'ord-00009', 'ord-00001', 'ord-00005'].map((id) =>
+const PAGE: Order[] = ['BK-20415', 'BK-20420', 'BK-20413', 'BK-20421', 'BK-20417'].map((id) =>
   ORDERS.find((o) => o.id === id)!
 );
 
@@ -229,13 +190,11 @@ export const ManualSortReportsAndKeepsTheOrder: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onSortChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable {...args} manual rows={PAGE} columns={columns} rowKey={(o) => o.id} />
-    </Wrap>
+    <DataTable {...args} manual rows={PAGE} columns={columns} rowKey={(o) => o.id} />
   ),
   play: async ({ canvas, args }) => {
     const given = ids(canvas);
-    await expect(given).toEqual(['ord-00007', 'ord-00002', 'ord-00009', 'ord-00001', 'ord-00005']);
+    await expect(given).toEqual(['BK-20415', 'BK-20420', 'BK-20413', 'BK-20421', 'BK-20417']);
     await userEvent.click(canvas.getByRole('button', { name: /Order/ }));
     await expect(args.onSortChange).toHaveBeenLastCalledWith({ key: 'id', direction: 'asc' });
     await expect(ids(canvas)).toEqual(given);
@@ -257,17 +216,15 @@ export const RowCountDrivesThePagerAndAPageChangeReports: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onPageChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        {...args}
-        manual
-        rows={PAGE}
-        rowCount={95}
-        pageSize={10}
-        columns={columns}
-        rowKey={(o) => o.id}
-      />
-    </Wrap>
+    <DataTable
+      {...args}
+      manual
+      rows={PAGE}
+      rowCount={95}
+      pageSize={10}
+      columns={columns}
+      rowKey={(o) => o.id}
+    />
   ),
   play: async ({ canvas, args }) => {
     const info = (range: string) =>
@@ -294,16 +251,14 @@ export const RowCountDrivesThePagerAndAPageChangeReports: Story = {
 export const WithoutRowCountThePagerCountsTheRows: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        manual
-        rows={PAGE}
-        pageSize={10}
-        columns={columns}
-        rowKey={(o) => o.id}
-        aria-label="Orders"
-      />
-    </Wrap>
+    <DataTable
+      manual
+      rows={PAGE}
+      pageSize={10}
+      columns={columns}
+      rowKey={(o) => o.id}
+      aria-label="Orders"
+    />
   ),
   play: async ({ canvas }) => {
     await expect(
@@ -325,16 +280,14 @@ export const ManualSearchAndFiltersReportWithoutFiltering: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onSearchChange: fn(), onFiltersChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        {...args}
-        manual
-        rows={PAGE}
-        columns={columns}
-        rowKey={(o) => o.id}
-        defaultSearchValue=""
-      />
-    </Wrap>
+    <DataTable
+      {...args}
+      manual
+      rows={PAGE}
+      columns={columns}
+      rowKey={(o) => o.id}
+      defaultSearchValue=""
+    />
   ),
   play: async ({ canvas, args }) => {
     const given = ids(canvas);
@@ -344,10 +297,10 @@ export const ManualSearchAndFiltersReportWithoutFiltering: Story = {
 
     await userEvent.click(canvas.getByRole('button', { name: 'Filter Status' }));
     const dropdown = within(document.body);
-    // The four statuses the server knows, in its order, whatever the five rows hold.
-    await expect(dropdown.getAllByRole('checkbox')).toHaveLength(4);
-    await userEvent.click(dropdown.getByRole('checkbox', { name: 'Refunded' }));
-    await expect(args.onFiltersChange).toHaveBeenLastCalledWith({ status: new Set(['Refunded']) });
+    // The five statuses the server knows, in its order, whatever the five rows hold.
+    await expect(dropdown.getAllByRole('checkbox')).toHaveLength(5);
+    await userEvent.click(dropdown.getByRole('checkbox', { name: 'Cancelled' }));
+    await expect(args.onFiltersChange).toHaveBeenLastCalledWith({ status: new Set(['Cancelled']) });
     await expect(ids(canvas)).toEqual(given);
   },
 };
@@ -356,21 +309,19 @@ export const ManualSearchAndFiltersReportWithoutFiltering: Story = {
 export const FilterOptionsReplaceTheValuesOfTheRows: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={PAGE.filter((o) => o.status === 'Paid')}
-        columns={columns}
-        rowKey={(o) => o.id}
-        aria-label="Orders"
-      />
-    </Wrap>
+    <DataTable
+      rows={PAGE.filter((o) => o.status === 'Packed')}
+      columns={columns}
+      rowKey={(o) => o.id}
+      aria-label="Orders"
+    />
   ),
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Filter Status' }));
     const labels = within(document.body)
       .getAllByRole('checkbox')
       .map((c) => c.closest('label')!.textContent);
-    await expect(labels).toEqual(STATUSES);
+    await expect(labels).toEqual(ORDER_STATUSES);
   },
 };
 
@@ -378,18 +329,16 @@ export const FilterOptionsReplaceTheValuesOfTheRows: Story = {
 export const LoadingWithRowsKeepsThemDimmed: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        manual
-        rows={PAGE}
-        rowCount={95}
-        pageSize={10}
-        columns={columns}
-        rowKey={(o) => o.id}
-        loading
-        aria-label="Orders"
-      />
-    </Wrap>
+    <DataTable
+      manual
+      rows={PAGE}
+      rowCount={95}
+      pageSize={10}
+      columns={columns}
+      rowKey={(o) => o.id}
+      loading
+      aria-label="Orders"
+    />
   ),
   play: async ({ canvas }) => {
     const table = canvas.getByRole('table', { name: 'Orders' });
@@ -413,17 +362,15 @@ export const LoadingWithRowsKeepsThemDimmed: Story = {
 export const LoadingWithoutRowsShowsSkeletons: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        manual
-        rows={[]}
-        columns={columns}
-        rowKey={(o) => o.id}
-        loading
-        loadingRows={4}
-        aria-label="Orders"
-      />
-    </Wrap>
+    <DataTable
+      manual
+      rows={[]}
+      columns={columns}
+      rowKey={(o) => o.id}
+      loading
+      loadingRows={4}
+      aria-label="Orders"
+    />
   ),
   play: async ({ canvas }) => {
     const table = canvas.getByRole('table', { name: 'Orders' });
@@ -443,7 +390,7 @@ export const RowsArrivingEndTheWait: Story = {
     const Host = () => {
       const [state, setState] = useState<'first' | 'rows' | 'again'>('first');
       return (
-        <Wrap>
+        <>
           <button type="button" onClick={() => setState((s) => (s === 'first' ? 'rows' : 'again'))}>
             Next
           </button>
@@ -455,7 +402,7 @@ export const RowsArrivingEndTheWait: Story = {
             loading={state !== 'rows'}
             aria-label="Orders"
           />
-        </Wrap>
+        </>
       );
     };
     return <Host />;
@@ -463,15 +410,15 @@ export const RowsArrivingEndTheWait: Story = {
   play: async ({ canvas }) => {
     const table = () => canvas.getByRole('table', { name: 'Orders' });
     await expect(table().querySelector('tbody')!.inert).toBe(false);
-    await expect(canvas.queryByText('ord-00007')).toBeNull();
+    await expect(canvas.queryByText('BK-20415')).toBeNull();
     await userEvent.click(canvas.getByRole('button', { name: 'Next' }));
     await waitFor(() => expect(table()).not.toHaveAttribute('aria-busy'));
-    await expect(canvas.getByText('ord-00007')).toBeInTheDocument();
+    await expect(canvas.getByText('BK-20415')).toBeInTheDocument();
     await expect(table().querySelector('tbody')!.inert).toBe(false);
     await userEvent.click(canvas.getByRole('button', { name: 'Next' }));
     // Reloading: the rows stay, dimmed.
     await expect(table()).toHaveAttribute('aria-busy', 'true');
-    await expect(canvas.getByText('ord-00007')).toBeInTheDocument();
+    await expect(canvas.getByText('BK-20415')).toBeInTheDocument();
     await expect(table().querySelector('tbody')!.inert).toBe(true);
   },
 };
@@ -481,28 +428,20 @@ export const ControlledSortWorksInMemory: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onSortChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        {...args}
-        rows={PAGE}
-        columns={columns}
-        rowKey={(o) => o.id}
-        sort={{ key: 'id', direction: 'desc' }}
-      />
-    </Wrap>
+    <DataTable
+      {...args}
+      rows={PAGE}
+      columns={columns}
+      rowKey={(o) => o.id}
+      sort={{ key: 'id', direction: 'desc' }}
+    />
   ),
   play: async ({ canvas, args }) => {
-    await expect(ids(canvas)).toEqual([
-      'ord-00009',
-      'ord-00007',
-      'ord-00005',
-      'ord-00002',
-      'ord-00001',
-    ]);
+    await expect(ids(canvas)).toEqual(['BK-20421', 'BK-20420', 'BK-20417', 'BK-20415', 'BK-20413']);
     // The host owns the sort: a click reports the next one and the table stays as it is.
     await userEvent.click(canvas.getByRole('button', { name: /Order/ }));
     await expect(args.onSortChange).toHaveBeenLastCalledWith(null);
-    await expect(ids(canvas)[0]).toBe('ord-00009');
+    await expect(ids(canvas)[0]).toBe('BK-20421');
   },
 };
 
@@ -510,21 +449,20 @@ export const ControlledSortWorksInMemory: Story = {
 export const DefaultSortAndDefaultPage: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={ORDERS.slice(0, 30)}
-        columns={columns}
-        rowKey={(o) => o.id}
-        defaultSort={{ key: 'id', direction: 'desc' }}
-        defaultPage={2}
-        pageSize={10}
-        aria-label="Orders"
-      />
-    </Wrap>
+    <DataTable
+      rows={ORDERS.slice(0, 30)}
+      columns={columns}
+      rowKey={(o) => o.id}
+      defaultSort={{ key: 'id', direction: 'desc' }}
+      defaultPage={2}
+      pageSize={10}
+      aria-label="Orders"
+    />
   ),
   play: async ({ canvas }) => {
-    // 30 orders, newest first, 10 a page: the second page holds ord-00020 down to ord-00011.
-    await expect(ids(canvas)[0]).toBe('ord-00020');
+    // 30 orders, the highest number first, 10 a page: the second page holds BK-20411 down to
+    // BK-20402.
+    await expect(ids(canvas)[0]).toBe('BK-20411');
     await expect(ids(canvas)).toHaveLength(10);
     await expect(canvas.getByRole('button', { name: 'Page 2' })).toHaveAttribute(
       'aria-current',
@@ -541,19 +479,17 @@ export const ChangesGoBackToPageOne: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onPageChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        {...args}
-        rows={ORDERS.slice(0, 60)}
-        columns={columns}
-        rowKey={(o) => o.id}
-        page={3}
-        pageSize={10}
-        pageSizeOptions={[10, 20]}
-        onPageSizeChange={fn()}
-        defaultSearchValue=""
-      />
-    </Wrap>
+    <DataTable
+      {...args}
+      rows={ORDERS.slice(0, 60)}
+      columns={columns}
+      rowKey={(o) => o.id}
+      page={3}
+      pageSize={10}
+      pageSizeOptions={[10, 20]}
+      onPageSizeChange={fn()}
+      defaultSearchValue=""
+    />
   ),
   play: async ({ canvas, args }) => {
     const onPage = args.onPageChange as ReturnType<typeof fn>;
@@ -568,7 +504,7 @@ export const ChangesGoBackToPageOne: Story = {
     await expect(onPage).toHaveBeenLastCalledWith(1);
     onPage.mockClear();
     await userEvent.click(canvas.getByRole('button', { name: 'Filter Status' }));
-    await userEvent.click(within(document.body).getByRole('checkbox', { name: 'Paid' }));
+    await userEvent.click(within(document.body).getByRole('checkbox', { name: 'Packed' }));
     await expect(onPage).toHaveBeenLastCalledWith(1);
   },
 };
@@ -578,20 +514,284 @@ export const NoPageChangeFromPageOne: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onPageChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        {...args}
-        rows={ORDERS.slice(0, 60)}
-        columns={columns}
-        rowKey={(o) => o.id}
-        pageSize={10}
-        defaultSearchValue=""
-      />
-    </Wrap>
+    <DataTable
+      {...args}
+      rows={ORDERS.slice(0, 60)}
+      columns={columns}
+      rowKey={(o) => o.id}
+      pageSize={10}
+      defaultSearchValue=""
+    />
   ),
   play: async ({ canvas, args }) => {
     await userEvent.type(canvas.getByRole('searchbox', { name: 'Search rows' }), 'ord');
     await userEvent.click(canvas.getByRole('button', { name: /Order/ }));
     await expect(args.onPageChange).not.toHaveBeenCalled();
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+// A table of orders the host reloads: it keeps its rows, and `loading` is what the buttons turn on.
+// "Quick reload" is one that answers within a couple of frames.
+const ReloadHost = () => {
+  const [loading, setLoading] = useState(false);
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <button
+          type="button"
+          className="rounded-md border border-gray-300 px-3 py-1 text-sm"
+          onClick={() => setLoading(true)}
+        >
+          Reload
+        </button>
+        <button
+          type="button"
+          className="rounded-md border border-gray-300 px-3 py-1 text-sm"
+          onClick={() => setLoading(false)}
+        >
+          Done
+        </button>
+        <button
+          type="button"
+          className="rounded-md border border-gray-300 px-3 py-1 text-sm"
+          onClick={() => {
+            setLoading(true);
+            void nextFrame()
+              .then(nextFrame)
+              .then(() => setLoading(false));
+          }}
+        >
+          Quick reload
+        </button>
+      </div>
+      <DataTable
+        manual
+        rows={PAGE}
+        rowCount={95}
+        pageSize={10}
+        columns={columns}
+        rowKey={(o) => o.id}
+        loading={loading}
+        aria-label="Orders"
+      />
+    </div>
+  );
+};
+
+/**
+ * A reload with rows on screen dims them and shows the spinner after 150 ms, fading in over 120
+ * ms, so one that answers at once shows neither. Press Reload and wait, then Done; Quick reload
+ * answers in two frames. The table is `aria-busy` from the first moment either way.
+ */
+export const ReloadWaitsBeforeTheVeil: Story = {
+  parameters: { settleMotion: false },
+  render: () => <ReloadHost />,
+};
+
+const veilOf = (canvas: ReturnType<typeof within>) =>
+  (canvas.getByRole('status', { hidden: true, name: 'Loading' }) as HTMLElement).closest(
+    '[aria-hidden="true"]'
+  ) as HTMLElement;
+
+/**
+ * The wait is in the CSS of the dimming and of the spinner: 150 ms, then a fade over the fast
+ * token. The table is busy at once (`aria-busy`, the status, inert rows), and shows the veil once
+ * the wait is over; when the rows are back it goes at once.
+ */
+export const VeilWaitsThenFades: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <ReloadHost />,
+  play: async ({ canvas }) => {
+    const table = canvas.getByRole('table', { name: 'Orders' });
+    const body = table.querySelector('tbody')!;
+    await expect(table).not.toHaveAttribute('aria-busy');
+    await expect(getComputedStyle(body).opacity).toBe('1');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Reload' }));
+    // At once: the announced state, and the rows out of reach.
+    await expect(table).toHaveAttribute('aria-busy', 'true');
+    await expect(canvas.getByRole('status')).toHaveTextContent('Loading…');
+    await expect(body.inert).toBe(true);
+    // Not yet: the wait, then the fade.
+    const veil = veilOf(canvas);
+    await expect(getComputedStyle(veil).opacity).toBe('0');
+    await expect(getComputedStyle(body).opacity).toBe('1');
+    await expect(transitionDelayMs(veil)).toBe(150);
+    await expect(transitionMs(veil)).toBe(tokenMs('--cosmos-motion-fast'));
+    await expect(transitionDelayMs(body)).toBe(150);
+    await expect(transitionMs(body)).toBe(tokenMs('--cosmos-motion-fast'));
+
+    await waitFor(() => expect(getComputedStyle(veil).opacity).toBe('1'), { timeout: 3000 });
+    await waitFor(() => expect(getComputedStyle(body).opacity).toBe('0.5'), { timeout: 3000 });
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Done' }));
+    await expect(table).not.toHaveAttribute('aria-busy');
+    await expect(canvas.queryByRole('status', { hidden: true, name: 'Loading' })).toBeNull();
+    await expect(body.inert).toBe(false);
+    // The rows come back to full opacity without waiting.
+    await expect(transitionDelayMs(body)).toBe(0);
+    await waitFor(() => expect(getComputedStyle(body).opacity).toBe('1'), { timeout: 3000 });
+  },
+};
+
+/** A reload that answers in two frames never dims the rows and never shows the spinner. */
+export const QuickReloadShowsNoVeil: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <ReloadHost />,
+  play: async ({ canvas }) => {
+    const table = canvas.getByRole('table', { name: 'Orders' });
+    const body = table.querySelector('tbody')!;
+    await userEvent.click(canvas.getByRole('button', { name: 'Quick reload' }));
+    // Busy at once, though nothing shows.
+    await expect(table).toHaveAttribute('aria-busy', 'true');
+    let darkest = 1;
+    let brightestVeil = 0;
+    while (table.hasAttribute('aria-busy')) {
+      darkest = Math.min(darkest, Number(getComputedStyle(body).opacity));
+      const veil = canvas.queryByRole('status', { hidden: true, name: 'Loading' });
+      if (veil)
+        brightestVeil = Math.max(brightestVeil, Number(getComputedStyle(veilOf(canvas)).opacity));
+      await nextFrame();
+    }
+    await expect(darkest).toBe(1);
+    await expect(brightestVeil).toBe(0);
+    await expect(canvas.queryByRole('status', { hidden: true, name: 'Loading' })).toBeNull();
+    await expect(getComputedStyle(body).opacity).toBe('1');
+  },
+};
+
+/**
+ * With the reduced setting the fade is 0 ms and nothing moves, and the wait stays: it is not a
+ * movement, and a short reload still shows nothing.
+ */
+export const VeilKeepsItsWaitUnderReducedMotion: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <ReloadHost />,
+  play: async ({ canvas }) => {
+    const table = canvas.getByRole('table', { name: 'Orders' });
+    const body = table.querySelector('tbody')!;
+    await userEvent.click(canvas.getByRole('button', { name: 'Reload' }));
+    await expect(table).toHaveAttribute('aria-busy', 'true');
+    const veil = veilOf(canvas);
+    await expect(transitionMs(veil)).toBe(0);
+    await expect(transitionDelayMs(veil)).toBe(150);
+    await expect(transitionMs(body)).toBe(0);
+    await waitFor(() => expect(getComputedStyle(veil).opacity).toBe('1'), { timeout: 3000 });
+    await expect(getComputedStyle(body).opacity).toBe('0.5');
+    // No fade to wait for: the wait ended, it was there.
+    await expect(isFading(veil)).toBe(false);
+  },
+};
+
+// A table that loads for the first time: the placeholders, then the rows.
+const FirstLoadHost = ({ withRowsAtStart = false }: { withRowsAtStart?: boolean }) => {
+  const [rows, setRows] = useState<Order[]>(withRowsAtStart ? PAGE : []);
+  const [loading, setLoading] = useState(!withRowsAtStart);
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <button
+          type="button"
+          className="rounded-md border border-gray-300 px-3 py-1 text-sm"
+          onClick={() => {
+            setRows(PAGE);
+            setLoading(false);
+          }}
+        >
+          Rows arrive
+        </button>
+        <button
+          type="button"
+          className="rounded-md border border-gray-300 px-3 py-1 text-sm"
+          onClick={() => setLoading(true)}
+        >
+          Reload
+        </button>
+      </div>
+      <DataTable
+        manual
+        rows={rows}
+        columns={columns}
+        rowKey={(o) => o.id}
+        loading={loading}
+        loadingRows={4}
+        aria-label="Orders"
+      />
+    </div>
+  );
+};
+
+/** The first load swaps the placeholders for the rows, which fade in instead of replacing them. */
+export const RowsFadeInAfterThePlaceholders: Story = {
+  parameters: { settleMotion: false },
+  render: () => <FirstLoadHost />,
+};
+
+/**
+ * The rows fade in over the base token when they replace the placeholders, once: the animation is
+ * gone when it has played, so a reload dims them as it does any rows. Rows drawn from the first
+ * render fade in nothing.
+ */
+export const RowsFadeInOnlyAfterPlaceholders: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <FirstLoadHost />,
+  play: async ({ canvas }) => {
+    const table = canvas.getByRole('table', { name: 'Orders' });
+    const body = () => table.querySelector('tbody')!;
+    await expect(canvas.queryByText('BK-20415')).toBeNull();
+    await expect(isFading(body())).toBe(false);
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Rows arrive' }));
+    await expect(canvas.getByText('BK-20415')).toBeInTheDocument();
+    await expect(table).not.toHaveAttribute('aria-busy');
+    const animation = body()
+      .getAnimations()
+      .find((a) => 'animationName' in a) as CSSAnimation;
+    await expect(animation.animationName).toBe('cosmos-fade-in');
+    await expect(Number((animation.effect as KeyframeEffect).getTiming().duration)).toBe(
+      tokenMs('--cosmos-motion-base')
+    );
+    await waitFor(() => expect(body().getAnimations()).toHaveLength(0), { timeout: 3000 });
+    await expect(getComputedStyle(body()).opacity).toBe('1');
+
+    // Then it is a table like any: a reload dims the rows, nothing holds their opacity.
+    await userEvent.click(canvas.getByRole('button', { name: 'Reload' }));
+    await waitFor(() => expect(getComputedStyle(body()).opacity).toBe('0.5'), { timeout: 3000 });
+  },
+};
+
+/** Rows that are there from the first render, with no placeholders before them, fade in nothing. */
+export const RowsFromTheStartFadeInNothing: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <FirstLoadHost withRowsAtStart />,
+  play: async ({ canvas }) => {
+    const body = canvas.getByRole('table', { name: 'Orders' }).querySelector('tbody')!;
+    await expect(canvas.getByText('BK-20415')).toBeInTheDocument();
+    await expect(isFading(body)).toBe(false);
+    await expect(body.getAnimations()).toHaveLength(0);
+  },
+};
+
+/** With the reduced setting the rows arrive with no fade to play. */
+export const RowsArriveAtOnceUnderReducedMotion: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <FirstLoadHost />,
+  play: async ({ canvas }) => {
+    const body = canvas.getByRole('table', { name: 'Orders' }).querySelector('tbody')!;
+    await userEvent.click(canvas.getByRole('button', { name: 'Rows arrive' }));
+    await expect(canvas.getByText('BK-20415')).toBeInTheDocument();
+    await expect(isFading(body)).toBe(false);
+    await waitFor(() => expect(body.getAnimations()).toHaveLength(0));
+    await expect(getComputedStyle(body).opacity).toBe('1');
   },
 };

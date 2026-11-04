@@ -479,6 +479,12 @@ const SIDE_ALLOWED: { file: string; holder: string; reason: string }[] = [
     holder: 'AnchorRect',
     reason: 'the keys of a DOMRect, which are physical by definition',
   },
+  {
+    file: 'packages/react/src/status/nodeGridModel.ts',
+    holder: 'Box',
+    reason:
+      'the keys of a DOMRect: the up and down keys pick a mark by its rendered column, in screen coordinates',
+  },
 ];
 
 const SIDE_LITERAL = /(?:^|-)(?:left|right)(?:-|$)/;
@@ -745,6 +751,318 @@ test('every corner of the package goes through the radius scale', () => {
     expect(
       found.some(matches(entry)),
       `RADIUS_ALLOWED entry no longer needed: ${entry.file}: ${entry.token}`
+    ).toBe(true);
+  }
+});
+
+// ── Stories on a docs page ──────────────────────────────────────────────────
+
+// A docs page renders its inline stories in one document, so a story that pins `globals.theme`
+// rewrites the class of the `<html>` the whole page shares: the chrome follows the toolbar and the
+// examples follow whichever story rendered last (#612). A story that only tests takes
+// `!autodocs`; one that stays visible draws its own surface, or its own iframe. A story in an
+// iframe of its own (`portalDocsParams`, `inline: false`) pins that iframe's theme and nothing
+// else, so it is not listed.
+const STORY_THEME_ALLOWED: { file: string; story: string; reason: string }[] = [];
+
+type Props = { known: Map<string, ts.Node>; opaque: boolean };
+
+const unwrapped = (node: ts.Expression): ts.Expression => {
+  let current = node;
+  while (
+    ts.isParenthesizedExpression(current) ||
+    ts.isAsExpression(current) ||
+    ts.isSatisfiesExpression(current) ||
+    ts.isNonNullExpression(current)
+  )
+    current = current.expression;
+  return current;
+};
+
+const keyOf = (property: ts.ObjectLiteralElementLike) =>
+  property.name && (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name))
+    ? property.name.text
+    : undefined;
+
+/**
+ * What a stories file says about each story, read as Storybook reads it at run time, next to what
+ * its static indexer reads. The indexer (`index.json`: sidebar, docs page, tag filters) looks at
+ * the properties written in the object a story is exported as and skips a `...Base` or a
+ * `...helper()` in it, so a story that gets its `tags` from one is listed as visible while it
+ * runs hidden. `known` holds the properties a spread, a name or a helper call in the file gives;
+ * `opaque` is set when something the file does not declare could add more.
+ */
+const readStories = (file: string, source: string) => {
+  const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const values = new Map<string, ts.Expression>();
+  const returned = new Map<string, ts.Expression>();
+  const exported: { name: string; value: ts.Expression }[] = [];
+  let metaValue: ts.Expression | undefined;
+
+  /** What a function returns: the body of an arrow, or the last `return` of a block. */
+  const returnOf = (node: ts.Node) => {
+    if (!ts.isArrowFunction(node) && !ts.isFunctionDeclaration(node)) return undefined;
+    if (node.body && !ts.isBlock(node.body)) return node.body;
+    return node.body?.statements.filter(ts.isReturnStatement).at(-1)?.expression;
+  };
+  for (const statement of tree.statements) {
+    if (ts.isFunctionDeclaration(statement) && statement.name) {
+      const value = returnOf(statement);
+      if (value) returned.set(statement.name.text, value);
+    } else if (ts.isVariableStatement(statement)) {
+      const isExported = statement.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword);
+      for (const { name, initializer } of statement.declarationList.declarations) {
+        if (!ts.isIdentifier(name) || !initializer) continue;
+        values.set(name.text, initializer);
+        const value = returnOf(unwrapped(initializer));
+        if (value) returned.set(name.text, value);
+        if (isExported) exported.push({ name: name.text, value: initializer });
+      }
+    } else if (ts.isExportAssignment(statement)) {
+      metaValue = statement.expression;
+    }
+  }
+  if (metaValue && ts.isIdentifier(metaValue)) metaValue = values.get(metaValue.text);
+
+  /** The properties of what an expression evaluates to, as far as this file declares it. */
+  const propsOf = (expression: ts.Expression, depth = 0): Props => {
+    const node = unwrapped(expression);
+    if (ts.isArrowFunction(node) || ts.isFunctionExpression(node))
+      return { known: new Map(), opaque: false };
+    if (!ts.isObjectLiteralExpression(node)) {
+      const next = ts.isIdentifier(node)
+        ? values.get(node.text)
+        : ts.isCallExpression(node) && ts.isIdentifier(node.expression)
+          ? returned.get(node.expression.text)
+          : undefined;
+      return next && depth < 8 ? propsOf(next, depth + 1) : { known: new Map(), opaque: true };
+    }
+    const props: Props = { known: new Map(), opaque: false };
+    for (const property of node.properties) {
+      const inner: Props | undefined = ts.isSpreadAssignment(property)
+        ? propsOf(property.expression, depth + 1)
+        : keyOf(property) === undefined
+          ? { known: new Map(), opaque: true }
+          : undefined;
+      if (inner) {
+        // Something unknown may overwrite what came before it.
+        if (inner.opaque) props.known.clear();
+        props.opaque ||= inner.opaque;
+        for (const [key, value] of inner.known) props.known.set(key, value);
+      } else {
+        props.known.set(
+          keyOf(property)!,
+          ts.isPropertyAssignment(property) ? property.initializer : property
+        );
+      }
+    }
+    return props;
+  };
+
+  /** The strings of an array literal, of a name that holds one, or of a spread of either. */
+  const stringsOf = (node: ts.Node, depth = 0): string[] | undefined => {
+    if (!ts.isExpression(node) || depth > 8) return undefined;
+    const expression = unwrapped(node);
+    if (ts.isIdentifier(expression) && values.has(expression.text))
+      return stringsOf(values.get(expression.text)!, depth + 1);
+    if (!ts.isArrayLiteralExpression(expression)) return undefined;
+    const strings: string[] = [];
+    for (const element of expression.elements) {
+      const inner = ts.isSpreadElement(element)
+        ? stringsOf(element.expression, depth + 1)
+        : ts.isStringLiteralLike(element)
+          ? [element.text]
+          : undefined;
+      if (!inner) return undefined;
+      strings.push(...inner);
+    }
+    return strings;
+  };
+
+  /** Storybook's `combineTags`: a `!tag` takes `tag` away, whatever came before it. */
+  const combined = (...lists: string[][]) => {
+    const tags = new Set<string>();
+    for (const tag of lists.flat()) {
+      if (tag.startsWith('!')) tags.delete(tag.slice(1));
+      else tags.add(tag);
+    }
+    return tags;
+  };
+
+  const meta = metaValue ? propsOf(metaValue) : { known: new Map<string, ts.Node>(), opaque: true };
+  const metaTags = meta.known.has('tags') ? stringsOf(meta.known.get('tags')!) : [];
+
+  return exported.map(({ name, value }) => {
+    const props = propsOf(value);
+    const tags = props.known.has('tags')
+      ? stringsOf(props.known.get('tags')!)
+      : props.opaque
+        ? undefined
+        : [];
+    const written = unwrapped(value);
+    const indexed = ts.isObjectLiteralExpression(written)
+      ? written.properties.find(
+          (p): p is ts.PropertyAssignment => ts.isPropertyAssignment(p) && keyOf(p) === 'tags'
+        )
+      : undefined;
+    const settings = (key: string) =>
+      [meta.known.get(key), props.known.get(key)].filter((node): node is ts.Node => !!node);
+    return {
+      name,
+      /** Every tag the story ends up with, or `undefined` when something hides some from the file. */
+      tags: metaTags && tags ? combined(metaTags, tags) : undefined,
+      /** The `!tag`s the story adds, at run time and in the object the indexer reads. */
+      hides: (tags ?? []).filter((tag) => tag.startsWith('!')),
+      indexedHides: ((indexed && stringsOf(indexed.initializer)) ?? []).filter((tag) =>
+        tag.startsWith('!')
+      ),
+      pinsTheme: settings('globals').some(
+        (node) => ts.isExpression(node) && propsOf(node).known.has('theme')
+      ),
+      ownIframe: /\bportalDocsParams\b|\binline:\s*false\b/.test(
+        settings('parameters')
+          .map((node) => node.getText())
+          .join('\n')
+      ),
+    };
+  });
+};
+
+/**
+ * The stories of `source` that break a docs page: one that pins the theme while it is on the page,
+ * and one hidden by a spread or a call that the indexer does not read, so it stays in the sidebar
+ * and the docs.
+ */
+const storyHazards = (file: string, source: string) =>
+  readStories(file, source).flatMap((story) => {
+    const hits: { story: string; problem: string }[] = [];
+    if (story.pinsTheme && story.tags?.has('autodocs') && !story.ownIframe) {
+      hits.push({ story: story.name, problem: 'pins globals.theme and is on the docs page' });
+    }
+    const unseen = story.hides.filter((tag) => !story.indexedHides.includes(tag));
+    if (unseen.length > 0) {
+      hits.push({
+        story: story.name,
+        problem: `gets ${unseen.join(', ')} from a spread or a call the indexer does not read`,
+      });
+    }
+    return hits;
+  });
+
+const storySources = () =>
+  ['packages/react/src', 'packages/charts/src', 'apps/storybook/stories']
+    .flatMap((root) =>
+      readdirSync(new URL(`../../../${root}`, import.meta.url), {
+        recursive: true,
+        encoding: 'utf8',
+      }).map((path) => `${root}/${path}`)
+    )
+    .filter((path) => path.endsWith('.stories.tsx'))
+    .sort();
+
+test('the story check sees what breaks a docs page and lets the rest through', () => {
+  const hazards = (body: string, meta = "{ title: 'A/B', tags: ['autodocs'] }") =>
+    storyHazards('A.stories.tsx', `const meta = ${meta}; export default meta;\n${body}`);
+  const pins = (story: string) => ({
+    story,
+    problem: 'pins globals.theme and is on the docs page',
+  });
+  const unread = (story: string, tags: string) => ({
+    story,
+    problem: `gets ${tags} from a spread or a call the indexer does not read`,
+  });
+
+  // A theme pinned by a story that stays on the docs page, in each way of writing it.
+  for (const body of [
+    "export const Light = { globals: { theme: 'light' } };",
+    "export const Light = { tags: ['!dev'], globals: { theme: 'light' } };",
+    "export const Light = { globals: { ...PHONE, theme: 'light' } };",
+    "const BASE = { theme: 'light' };\nexport const Light = { globals: BASE };",
+    "const Base = { globals: { theme: 'light' } };\nexport const Light = { ...Base, args: {} };",
+    "const themed = (theme: string) => ({ globals: { theme } });\nexport const Light = themed('light');",
+    "const themed = (theme: string) => { return { globals: { theme } }; };\nexport const Light = themed('light');",
+  ]) {
+    expect(hazards(body), body).toEqual([pins('Light')]);
+  }
+  // A story gets the theme its meta pins, and a story of a page without `autodocs` is on no page
+  // unless it asks for it.
+  expect(
+    hazards('export const Light = {};', "{ tags: ['autodocs'], globals: { theme: 'sand' } }")
+  ).toEqual([pins('Light')]);
+  expect(
+    hazards("export const Light = { tags: ['autodocs'], globals: { theme: 'sand' } };", '{}')
+  ).toEqual([pins('Light')]);
+
+  // Hidden from the docs, in an iframe of its own, on no docs page, or not a theme: nothing to flag.
+  for (const [body, meta] of [
+    ["export const Light = { tags: ['!dev', '!autodocs'], globals: { theme: 'light' } };"],
+    [
+      "const HIDDEN = ['!dev', '!autodocs'];\nexport const Light = { tags: HIDDEN, globals: { theme: 'light' } };",
+    ],
+    ["export const Light = { parameters: portalDocsParams.sm(), globals: { theme: 'light' } };"],
+    [
+      "export const Light = { parameters: { docs: { story: { inline: false } } }, globals: { theme: 'light' } };",
+    ],
+    ["export const Light = { globals: { theme: 'light' } };", "{ title: 'A/B' }"],
+    ["export const Light = { globals: { viewport: 'mobile' } };"],
+    ["export const Light = { args: { theme: 'light' } };"],
+    // A spread of what the file does not declare may carry tags: nothing can be said.
+    ["export const Light = { ...imported, globals: { theme: 'light' } };"],
+  ] as [string, string?][]) {
+    expect(hazards(body, meta), body).toEqual([]);
+  }
+
+  // Tags the indexer cannot read: a helper's result, a spread of another story, and a spread that
+  // takes over the `tags` written before it.
+  const helper = "const at = (n: number) => ({ tags: ['!dev', '!autodocs'], args: { n } });\n";
+  const base = "export const Base = { tags: ['!dev', '!autodocs'] };\n";
+  for (const body of [
+    `${helper}export const Hidden = at(2);`,
+    `${helper}export const Hidden = { ...at(2), name: 'x' };`,
+    `${base}export const Hidden = { ...Base, args: {} };`,
+  ]) {
+    expect(hazards(body), body).toEqual([unread('Hidden', '!dev, !autodocs')]);
+  }
+  expect(hazards(`${base}export const Hidden = { tags: ['!dev'], ...Base };`)).toEqual([
+    unread('Hidden', '!autodocs'),
+  ]);
+  expect(
+    hazards(`${helper}export const Hidden = { ...at(2), tags: ['!dev'] };`),
+    "a literal `tags` replaces the helper's"
+  ).toEqual([]);
+  // Written at the export, the indexer reads them.
+  for (const body of [
+    "const at = () => ({ args: {} });\nexport const Hidden = { ...at(), tags: ['!dev', '!autodocs'] };",
+    "const HIDE = ['!dev', '!autodocs'];\nexport const Hidden = { ...Other, tags: HIDE };",
+    "export const Hidden = { tags: ['!dev', '!autodocs'], render: () => null };",
+    'export const Visible = { ...Other, args: {} };',
+    'export const Visible = other();',
+    "export const Visible = { ...Base, args: {} };\nexport const Base = { tags: ['no-capture'] };",
+  ]) {
+    expect(hazards(body), body).toEqual([]);
+  }
+});
+
+test('no story pins the theme on a docs page, and every hidden story says so where the indexer reads it', () => {
+  const files = storySources();
+  expect(files.length, 'stories files').toBeGreaterThan(200);
+
+  const found = files.flatMap((file) =>
+    storyHazards(file, read(file)).map((hit) => ({ file, ...hit }))
+  );
+  const allowed = (hit: { file: string; story: string; problem: string }) =>
+    hit.problem.startsWith('pins') &&
+    STORY_THEME_ALLOWED.some(({ file, story }) => file === hit.file && story === hit.story);
+  expect(
+    found.filter((hit) => !allowed(hit)).map((hit) => `${hit.file}: ${hit.story} ${hit.problem}`),
+    'a story on a docs page that sets globals.theme turns the whole page into that theme: tag it `!autodocs`, or give it a surface (a wrapper carrying the theme class) or an iframe of its own (portalDocsParams); a hidden story takes its `!dev` and `!autodocs` in a literal `tags` at the export, or the sidebar and the docs list it'
+  ).toEqual([]);
+
+  for (const { file, story, reason } of STORY_THEME_ALLOWED) {
+    expect(reason, `${file}: ${story}`).not.toBe('');
+    expect(
+      found.some((hit) => hit.file === file && hit.story === story),
+      `STORY_THEME_ALLOWED entry no longer needed: ${file}: ${story}`
     ).toBe(true);
   }
 });

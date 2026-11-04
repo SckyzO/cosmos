@@ -1,6 +1,6 @@
 # Appearance
 
-Seven settings restyle every component at once. Each one is a class or an attribute on the
+Eight settings restyle every component at once. Each one is a class or an attribute on the
 `<html>` element, so a component never carries a per-theme class. Storybook has a toolbar menu for
 each; the
 [Foundations/Appearance](https://sckyzo.github.io/cosmos/?path=/docs/foundations-appearance--docs)
@@ -14,6 +14,7 @@ page shows them side by side.
 | Text size         | `data-text-size` | `sm`, `lg`, `xl`                                                                                    | the default   |
 | Density           | `data-density`   | `compact`, `comfortable`                                                                            | the default   |
 | Corner radius     | `data-radius`    | `none`, `sm`, `lg`                                                                                  | the default   |
+| Animations        | `data-motion`    | `reduced`                                                                                           | full motion   |
 | Reading direction | `dir`            | `rtl`                                                                                               | left to right |
 
 ```html
@@ -24,12 +25,13 @@ page shows them side by side.
   data-text-size="lg"
   data-density="compact"
   data-radius="lg"
+  data-motion="reduced"
   dir="rtl"
 ></html>
 ```
 
-The font, text size, density and radius attributes also work on an element below `<html>`, for
-one part of a page.
+The font, text size, density, radius and motion attributes also work on an element below
+`<html>`, for one part of a page.
 
 ## Themes
 
@@ -87,7 +89,7 @@ user's choice wins.
 
 | Token                          | Default    | `compact` | `comfortable` | Used by                     |
 | ------------------------------ | ---------- | --------- | ------------- | --------------------------- |
-| `h-ctrl-28` … `h-ctrl-48`      | 28–48px    | 4px less  | 4px more      | buttons, fields, segments   |
+| `h-ctrl-28` … `h-ctrl-64`      | 28–64px    | 4px less  | 4px more      | buttons, fields, segments   |
 | `py-row-4` … `py-row-24`       | 4–24px     | 2px less  | 2px more      | list rows, menu items, tabs |
 | `py-cell-head`, `py-cell-body` | 12px, 14px | 8px, 10px | 16px, 20px    | table cells                 |
 
@@ -120,6 +122,35 @@ value, through the variable); an arbitrary `rounded-[10px]` is fixed too, and
 `rounded-[calc(var(--radius-lg)*1.25)]` is not. `data-radius="default"` on an element opts a part
 of the page out of its parent's radius.
 
+## Animations
+
+Cosmos animates a little, and only to show where something comes from or goes: a panel that opens
+fades and grows out of its trigger, a window fades over a scrim, the drawer slides. Every duration
+is a token (`--cosmos-motion-fast` 120ms, `--cosmos-motion-exit` 80ms, `--cosmos-motion-exit-lg`
+120ms, `--cosmos-motion-base` 200ms, `--cosmos-motion-slow` 300ms, see
+[Tokens and focus](tokens.md#motion)), and the animations are CSS only.
+
+`data-motion="reduced"` sets every one of those durations to 0, for a reader who wants it in this
+app. It sits on top of the device's `prefers-reduced-motion`, which does the same, so a visitor
+who asked their system for less motion gets it with no attribute. With both off, motion is on by
+default. A panel that closes unmounts at once when nothing is left to play, so nothing waits for
+an animation that does not run.
+
+Some small ones answer an action or a state, and follow the same tokens. A pressed `Button` sits 1px
+lower and comes back over 80ms (`variant="link"`, a disabled and a loading button stay still).
+A card that can be clicked, a `Card` with `interactive`, a `KpiCard` with `href` or `onClick`, the
+cards of `OptionPicker` and `PalettePicker`, rises 2px with a soft shadow under the pointer, and
+2px on keyboard focus, over 200ms. The copy icon of `Clipboard` (and of the copy button of
+`CodeBlock`) cross-fades into a check over 120ms and back after its 1.5 seconds, and the icons of
+`ThemeToggle` turn a quarter as one theme gives way to the next. Content takes the place of a
+skeleton with a fade over 200ms (`KpiCard`, `BarList`, `KanbanBoard` and `SectionCard`, on their
+`loading` prop), unless it was there from the first render: nothing fades when a page loads.
+
+The decorative loops, which never end (the ping of `HealthDot` and of the `NotificationsPanel`
+count, the pulse of `Skeleton`, of the auto refresh dot, of `StatefulSaveButton` when it has
+unsaved changes and of the `Lightbox` while a picture loads), stop under either. Spinners keep
+turning: they say "in progress", which reduced motion does not take away.
+
 ## Reading direction
 
 Set the native `dir` attribute on `<html>` or on any ancestor. Tailwind's `rtl:` variant is redefined to
@@ -131,13 +162,14 @@ flipped. It does not follow `dir="auto"`, nor a `dir="rtl"` nested inside such a
 
 `@sckyzo/cosmos-react` exports `applyAppearance`, which sets the class and the attributes on
 `<html>` (or on the element you pass as its second argument), and removes each one for its default
-value. A `font`, `textSize`, `density`, `radius` or `direction` you leave out keeps its attribute
-as it is. It does nothing during server rendering.
+value (`full` for `motion`). A `font`, `textSize`, `density`, `radius`, `motion` or `direction` you
+leave out keeps its attribute as it is. It does nothing during server rendering.
 
 ```tsx
 import { applyAppearance } from '@sckyzo/cosmos-react';
 
 applyAppearance({ theme: 'sand', accent: 'teal', density: 'compact', direction: 'rtl' });
+applyAppearance({ theme: 'sand', accent: 'teal', motion: 'reduced' }); // data-motion="reduced"
 ```
 
 For `direction`, `'rtl'` sets `dir="rtl"` and `'ltr'` removes `dir`, like the other defaults.
@@ -147,13 +179,29 @@ the attributes in its root layout instead, as the
 
 ### Pickers
 
-- **`AppearanceSettings`** renders the theme and accent pickers, plus the font, text size and
-  density ones when their `on…Change` handlers are set. It holds nothing: you keep the state and
-  apply it. It has no radius or direction picker; `Customizer` has both.
+- **`AppearanceSettings`** renders the theme and accent pickers, plus the font, text size, density
+  and animations ones (normal or reduced) when their `on…Change` handlers are set. It holds
+  nothing: you keep the state and apply it. It has no radius or direction picker; `Customizer` has
+  both.
 - **`AppearanceMenu`** takes the same props and puts the pickers in a panel behind an icon button,
   for example in `Topbar`'s `endActions`. Set `onReset` to add a Reset button under the groups.
 - **`Customizer`** is a panel on the end side (a `Drawer`) with every choice above, plus the
   shell's layout, sidebar mode and container ([below](#customizer)).
+- **`ThemeToggle`** is one icon button for the theme alone, for a topbar. It cycles through the
+  `themes` you list, light and dark by default, and its icon shows the current one (a sun, a
+  sunset for sand, a moon, a moon with a star for deep blue, a monitor for `system`). The icons
+  turn a quarter and fade from one theme to the next, and the turn mirrors in right to left. It is
+  controlled: `onChange` gets the next theme, and you apply it.
+
+```tsx
+const [theme, setTheme] = useState<CosmosThemeChoice>('light');
+useEffect(() => applyAppearance({ theme, accent: 'blue' }), [theme]);
+
+<ThemeToggle theme={theme} themes={['light', 'dark', 'deep-blue']} onChange={setTheme} />;
+```
+
+`labels` renames the button for the theme a click goes to ("Switch to dark theme" by default), for
+an app in another language.
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -183,15 +231,15 @@ function Appearance() {
 ```
 
 Pass `fonts` to offer only the fonts whose CSS the app imports
-(`@sckyzo/cosmos-theme/fonts/<name>`). `themes`, `accents`, `textSizes` and `densities` narrow the
-other groups the same way.
+(`@sckyzo/cosmos-theme/fonts/<name>`). `themes`, `accents`, `textSizes`, `densities` and `motions`
+narrow the other groups the same way.
 
 ### A System theme
 
 To offer a **System** choice that follows the device's `prefers-color-scheme`, add
 `COSMOS_SYSTEM_THEME` to the themes and apply again when the device switches (it resolves to
 `light` or `dark`; set `systemThemes` for another pair). Nothing changes for an app that doesn't
-opt in (`ThemeToggleTri` takes a `system` prop for the same choice at the end of its cycle):
+opt in (`ThemeToggle` offers the same choice when its `themes` list `'system'`):
 
 ```tsx
 const [appearance, setAppearance] = useState<CosmosAppearance>({ theme: 'system', accent: 'blue' });
@@ -239,21 +287,22 @@ const { layout, sidebar, container } = { ...CUSTOMIZER_DEFAULT_VALUE, ...value }
 <Customizer open={open} onClose={() => setOpen(false)} value={value} onChange={setValue} />
 ```
 
-| Value                                                                   | What the host does                                                               |
-| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `theme`, `accent`, `font`, `textSize`, `density`, `radius`, `direction` | `applyAppearance(value)`                                                         |
-| `container`                                                             | `Shell`'s `container`                                                            |
-| `sidebar: 'collapsed'`                                                  | `Shell`'s `sidebarCollapsed`                                                     |
-| `sidebar: 'hover'`                                                      | collapsed, plus `Sidebar`'s `expandOnHover="overlay"`                            |
-| `sidebar: 'compact'`                                                    | `Sidebar`'s `variant="compact"` (and `collapseControl="sidebar"` on the `Shell`) |
-| `layout: 'horizontal'`                                                  | a `Navbar` in `Shell`'s `topbar` in place of the `Sidebar`                       |
+| Value                                                                             | What the host does                                                               |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `theme`, `accent`, `font`, `textSize`, `density`, `radius`, `motion`, `direction` | `applyAppearance(value)`                                                         |
+| `container`                                                                       | `Shell`'s `container`                                                            |
+| `sidebar: 'collapsed'`                                                            | `Shell`'s `sidebarCollapsed`                                                     |
+| `sidebar: 'hover'`                                                                | collapsed, plus `Sidebar`'s `expandOnHover="overlay"`                            |
+| `sidebar: 'compact'`                                                              | `Sidebar`'s `variant="compact"` (and `collapseControl="sidebar"` on the `Shell`) |
+| `layout: 'horizontal'`                                                            | a `Navbar` in `Shell`'s `topbar` in place of the `Sidebar`                       |
 
 Keep the `Customizer` outside what `layout` swaps, so the panel keeps its focus as the shell
 re-renders. Cosmos ships no presets: pass `presets` (`{ id, label, value }`, the value being
 a part of the whole) to show the section. `sections` lists the sections to show (a host with a
 fixed layout leaves out `layout`, `sidebar` and `container`), `defaultValue` is what Reset
-restores, and `themes`, `accents`, `fonts`, `textSizes`, `densities` and `radii` narrow the choices as
-they do on `AppearanceSettings`. The
+restores, and `themes`, `accents`, `fonts`, `textSizes`, `densities`, `radii` and `motions` narrow
+the choices as they do on `AppearanceSettings`. `backdrop` picks the scrim behind the panel
+(`dim`, `blur` or `blur-dark`, see [Scrims](tokens.md#scrims)). The
 [Settings/Customizer](https://sckyzo.github.io/cosmos/?path=/docs/settings-customizer--docs)
 stories wire all of it, with local storage.
 
@@ -268,6 +317,6 @@ instance). Import the fonts and the variables, and read the variables yourself:
 /* Then reference vars: var(--color-brand-500), var(--color-bg-base), etc. */
 ```
 
-The themes, accents, fonts, text sizes, densities and radii are all in `/vars`, so the attributes
-above work the same way. What only Tailwind can read is in `/tailwind`: the `@theme` block, the
+The themes, accents, fonts, text sizes, densities, radii and the motion setting are all in
+`/vars`, so the attributes above work the same way. What only Tailwind can read is in `/tailwind`: the `@theme` block, the
 `dark:` and `rtl:` variants and the focus utilities of [Tokens and focus](tokens.md).

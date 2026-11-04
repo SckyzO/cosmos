@@ -111,6 +111,21 @@ that depend on the count ("field" and "fields", "needs" and "need") and how the 
 />
 ```
 
+## Messages under a field
+
+Storybook: [Field errors](https://sckyzo.github.io/cosmos/?path=/docs/forms-field-errors--docs).
+
+The line under a field (its `description`, `error` or `success` message) is the same piece in
+`Input`, `Select`, `Combobox`, `MultiSelect`, `PhoneInput`, `ColorInput`, `DatePicker`,
+`FileInput`, `TimePicker`, the card fields and the `CheckboxGroup` and `RadioGroup`. A message that
+shows after the first render, such as an error after a submit, unfolds under the field in 200ms
+instead of pushing the rest of the form down at once, and folds back and is removed when it clears.
+A field that has its message from the first render simply has it, and an error that takes the place
+of a description changes its text in place. How it is read does not change: it is the same element
+with the same `id` and `aria-live`, in the accessibility tree and named by the field from the
+render that shows it, and out of both from the render that hides it. `Textarea` keeps a line for
+its message and counter, so its error shows in place and nothing moves.
+
 ## Date range presets
 
 Storybook: [Date Picker](https://sckyzo.github.io/cosmos/?path=/docs/forms-date-picker--docs).
@@ -180,9 +195,29 @@ a field that suggests (a catalogue, a list of tags) and lets the user write thei
   first match. With no option active, Enter closes the list and goes on to submit the form around
   the field; with one active, it picks it and the form stays put.
 - When no option matches, the list stays closed: the text is accepted. `emptyMessage` opens it with
-  that message ("Press Enter to use this text").
+  that message ("Press Enter to use this text"). Without `allowCustomValue` the list opens on
+  "No matches found." (`emptyMessage` changes it). The message is a status line under the list, not
+  an option, so the input points at nothing and a screen reader reads it when the list turns empty.
+  `MultiSelect` says it the same way.
 - Without a visible `label`, `aria-label` names the input, as for a field in a row of lines. A
   `label` wins: the name is the one on screen.
+
+## Select
+
+Storybook: [Select](https://sckyzo.github.io/cosmos/?path=/docs/forms-select--docs).
+
+`Select` is a native `<select>`: `onChange` gets the native event, `ref` is the `<select>`, and a
+form, a label and the platform's keyboard and phone picker work as they do for any select. The
+closed field is drawn by Cosmos in every browser. The open list is the browser's:
+
+- Where the browser can draw it from CSS (`appearance: base-select`, Chromium for now), the list
+  takes the look of the `Combobox` list: the same panel, rows of `py-row-8 px-3` (36px at the
+  default density), a check mark on the picked option, the accent under the pointer or the
+  keyboard focus. Nothing changes for the closed field.
+- Elsewhere, and in a phone's picker, the list is the system's own, native and unstyled by us: its
+  rows are as tall as the platform makes them.
+- For a list that looks the same in every browser, with typing to filter, descriptions or an icon on
+  each option, use [`Combobox`](#combobox-with-typed-text).
 
 ## Number input
 
@@ -207,6 +242,9 @@ comes before it: a currency sign, a protocol.
 - `prefix` takes text or a node. It sits on the start edge of the value (the right one in right to
   left, in a `<bdi>` of its own), small and dimmed like `unit`. It is part of neither the value nor
   the accessible name: name the field with `aria-label` or a `FormRow`.
+- A field made wider than its content, by a width in `className` or by `fullWidth`, gives the room
+  to the value: the arrows stay on the end edge (with `controls="sides"`, the buttons stay on both
+  edges and the value is centred between them).
 - `error` marks the field invalid: a red border and `aria-invalid`. It carries no message, a
   `NumberInput` having no text of its own: write it under the field and point `aria-describedby` at
   it (a `FormRow` does the same with its description).
@@ -248,7 +286,8 @@ const [lines, setLines] = useState<LineItem[]>([]);
   2450 cents). `value`, `defaultValue` and `onChange(lines, { subtotal })` follow the usual
   controlled and uncontrolled pair; only `undefined` means uncontrolled. The editor starts with no
   line (`defaultValue` to change that) and gives an `id` to every line it adds: use it as the key of
-  your own data. `onChange` fires on every keystroke, a pick, a line added or a line removed.
+  your own data. `onChange` fires on every keystroke, a pick, a line added or a line removed. A pick
+  from the catalogue is one call, with the label and the rate together.
 - **Layout.** From 42rem of its own width (a container query, so a card beside a summary switches on
   its own width, not the window's) the lines are a grid with the amounts aligned in a column, and
   the titles are drawn once above it. Narrower, each line is a card with the titles of its fields in
@@ -306,6 +345,14 @@ each cell. It is the same grid either way, read in the other direction. The valu
 granted cells, each written `cellKey(rowId, columnId)` (the row id, a colon, the column id), with
 `defaultValue` and `onChange(value)` as for every control.
 
+Ids are how the grid tells things apart, so each must be unique: a row id across the whole grid
+(not only inside its group), a group id among the groups, a column id among the columns. Two rows
+with one id share their cells, and two groups with one id merge their box and their count. Build
+the keys with `cellKey` rather than by hand: it escapes a colon or a backslash in a column id (and
+a backslash in a row id) with a backslash, so `('a:b', 'c')` and `('a', 'b:c')` are two cells.
+For any other id, a row id with colons such as `invoices:edit` included, the key is plain
+`row:column`.
+
 ```tsx
 const columns = [
   { id: 'admin', label: 'Admin', readOnly: true }, // built in: shown, not editable
@@ -351,7 +398,7 @@ const groups = [
   Tab stop, and the arrow keys move between cells (Left and Right follow the reading direction),
   Home and End go to the ends of the row, Ctrl+Home and Ctrl+End to the ends of the grid, and Space
   toggles the box in focus. A group's header row has one cell, so moving down onto it lands on its
-  box. Nothing wraps. The focus goes to the box itself, so a screen reader announces its name and
+  box, and moving on takes the focus back to the column it came along. Nothing wraps. The focus goes to the box itself, so a screen reader announces its name and
   state; a read-only or empty cell takes the focus itself. The whole cell is the click target, not
   only the 18px box.
 - **Announcements.** After a box that grants or clears several cells, a polite status says how many
@@ -373,9 +420,10 @@ Storybook: [Password Strength Meter](https://sckyzo.github.io/cosmos/?path=/docs
 `PasswordPolicyChecker` lists the rules a password must meet, each with a tick or a cross; a screen
 reader also hears "met" or "not met" after each label (`labels` translates both words).
 `PasswordStrengthMeter` is the other half: how strong the password is, not whether it follows the
-rules. `score` is 0 to 4 (zxcvbn's scale): that many of the four segments of a `ProgressBar` light
-up, and the level reads above them ("Password strength: Fair"). `labels` takes the words to
-translate:
+rules. `score` is 0 to 4 (zxcvbn's scale): that many of the four slots of the bar fill, and the
+level reads above them ("Password strength: Fair"). A slot grows in from the start edge when the
+score reaches it, and the colour fades from one level to the next, over 300 ms; with reduced motion
+each level shows at once. `labels` takes the words to translate:
 
 ```tsx
 <PasswordStrengthMeter
@@ -552,3 +600,26 @@ containers.
   {/* the expiry and the code, one column each */}
 </fieldset>
 ```
+
+## Calendar month
+
+Storybook: [Calendar](https://sckyzo.github.io/cosmos/?path=/docs/forms-calendar--docs), [Date Picker](https://sckyzo.github.io/cosmos/?path=/docs/forms-date-picker--docs).
+
+The month slides when it changes, in `Calendar` and so in `DatePicker`: react-day-picker's own
+`animate` option is on, over `--cosmos-motion-base` (200ms) with the in-out easing, and the next
+month comes in from the end of the line. Both are set inline on the root from the theme's tokens
+(`--rdp-animation_duration`, `--rdp-animation_timing`), so `data-motion="reduced"` and the device's
+`prefers-reduced-motion` take the length to 0. The month that leaves is a copy the library keeps
+until the slide has played; it is inert, and with `captionLayout="dropdown"` its dropdowns are
+hidden, so two sets never overlap. `<Calendar animate={false} />` turns the slide off.
+
+## Segmented control, checkbox and radio
+
+Storybook: [Segmented Control](https://sckyzo.github.io/cosmos/?path=/docs/forms-segmented-control--docs), [Checkbox](https://sckyzo.github.io/cosmos/?path=/docs/forms-checkbox--docs), [Radio](https://sckyzo.github.io/cosmos/?path=/docs/forms-radio--docs).
+
+The accent fill of a `SegmentedControl` is one element that slides to the option you pick, in
+200ms, easing in and out, along the line (so it follows the reading direction). It is measured
+again when an option changes size, with the text size or a web font, and it is placed with no
+transition the first time. Until it is measured (a server render) the selected option draws its own
+fill. In a `Checkbox` and a `Radio` the check, the dash of the indeterminate state and the dot grow
+from half their size as they fade in, in 120ms, and shrink back as they fade out.

@@ -185,6 +185,11 @@ export const EventCalendarTimeGrid = ({
   const [cursor, setCursor] = useState<SlotCursor | null>(null);
   const [active, setActive] = useState(false);
   const [hover, setHover] = useState<{ key: string; minutes: number } | null>(null);
+  // The pointer moving inside one slot is no change: the same object keeps the grid from drawing.
+  const hoverSlot = (next: { key: string; minutes: number } | null) =>
+    setHover((current) =>
+      current?.key === next?.key && current?.minutes === next?.minutes ? current : next
+    );
   const interactive = onSlotClick !== undefined;
   const count = days.length;
 
@@ -208,12 +213,28 @@ export const EventCalendarTimeGrid = ({
   );
   const bars = useMemo(() => layoutAllDay(events, days), [events, days]);
 
-  // Opens on 7 AM, or the hour before the first event. Only when the grid appears: moving on to
-  // another week keeps the scroll.
-  const [opensAt] = useState(() => openHour(firstStart(events, days)));
+  // Opens on 7 AM, or the hour before the first event. When the grid appears, and when the events
+  // of the days it shows arrive or change after that (a fetch's answer) as long as the person has
+  // not scrolled it themselves. Moving on to another week keeps the scroll.
+  const opensAt = openHour(firstStart(events, days));
+  const period = `${isoDate(days[0])}/${days.length}`;
+  const opened = useRef<{ period: string; hour: number } | null>(null);
+  // The scroll position the grid put itself at, to tell the scroll event it causes from a person's.
+  const placed = useRef<number | null>(null);
+  const takenOver = useRef(false);
   useLayoutEffect(() => {
-    if (scroller.current) scroller.current.scrollTop = opensAt * HOUR_HEIGHT;
-  }, [opensAt]);
+    const last = opened.current;
+    opened.current = { period, hour: opensAt };
+    const box = scroller.current;
+    const follows =
+      last === null || (last.period === period && last.hour !== opensAt && !takenOver.current);
+    if (!box || !follows) return;
+    box.scrollTop = opensAt * HOUR_HEIGHT;
+    placed.current = box.scrollTop;
+  }, [opensAt, period]);
+  const onScroll = () => {
+    if (scroller.current?.scrollTop !== placed.current) takenOver.current = true;
+  };
 
   const shownCursor = cursor && days.some((day) => sameDay(day, cursor.date)) ? cursor : null;
   useEffect(() => {
@@ -246,7 +267,8 @@ export const EventCalendarTimeGrid = ({
     if (!shownCursor) return;
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onSlotClick(slotStart(shownCursor.date, shownCursor.minutes), { allDay: false });
+      if (shownCursor.allDay) onSlotClick(startOfDay(shownCursor.date), { allDay: true });
+      else onSlotClick(slotStart(shownCursor.date, shownCursor.minutes), { allDay: false });
       return;
     }
     if (!CURSOR_KEYS.has(e.key)) return;
@@ -254,6 +276,7 @@ export const EventCalendarTimeGrid = ({
     const next = moveCursor(shownCursor, e.key as CursorKey, {
       periodDays,
       rtl: directionOf(e.currentTarget) === 'rtl',
+      allDayRow: true,
     });
     setCursor(next);
     if (!days.some((day) => sameDay(day, next.date))) onShowDay(next.date);
@@ -283,16 +306,19 @@ export const EventCalendarTimeGrid = ({
   const nowInView = days.some((day) => sameDay(day, now));
   const status =
     active && shownCursor
-      ? `${fmt.fullDate(shownCursor.date)}, ${fmt.time(slotStart(shownCursor.date, shownCursor.minutes))}. Press Enter to choose this time.`
+      ? shownCursor.allDay
+        ? `${fmt.fullDate(shownCursor.date)}, all-day. Press Enter to choose this day.`
+        : `${fmt.fullDate(shownCursor.date)}, ${fmt.time(slotStart(shownCursor.date, shownCursor.minutes))}. Press Enter to choose this time.`
       : '';
 
   return (
     <>
       <div
         ref={scroller}
-        role={interactive ? 'application' : 'group'}
+        role="group"
         aria-label={label}
         tabIndex={0}
+        onScroll={onScroll}
         onKeyDown={onKeyDown}
         onFocus={onFocus}
         onBlur={onBlur}
@@ -366,7 +392,12 @@ export const EventCalendarTimeGrid = ({
                     }
                     className={clsx(
                       'border-s border-gray-200 dark:border-gray-800',
-                      onSlotClick && 'hover:bg-brand-500/10'
+                      onSlotClick && 'hover:bg-brand-500/10',
+                      // The keyboard cursor on the all-day row of this day.
+                      active &&
+                        shownCursor?.allDay &&
+                        sameDay(shownCursor.date, day) &&
+                        'ring-brand-500 ring-2 ring-inset'
                     )}
                   />
                 ))}
@@ -443,11 +474,11 @@ export const EventCalendarTimeGrid = ({
                   interactive
                     ? (e) => {
                         if (e.pointerType !== 'mouse') return;
-                        setHover(overSlot(e) ? { key, minutes: slotUnder(e) } : null);
+                        hoverSlot(overSlot(e) ? { key, minutes: slotUnder(e) } : null);
                       }
                     : undefined
                 }
-                onPointerLeave={interactive ? () => setHover(null) : undefined}
+                onPointerLeave={interactive ? () => hoverSlot(null) : undefined}
                 onClick={
                   onSlotClick
                     ? (e) => {
@@ -503,7 +534,7 @@ export const EventCalendarTimeGrid = ({
                       events={dayEvents}
                       timeOn={(event) => timeOn(event, day)}
                       onEventClick={onEventClick}
-                      triggerClassName="text-2xs absolute z-10 h-[18px] min-w-6 rounded-full border border-gray-200 bg-gray-100 px-1 font-semibold text-gray-700 hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                      triggerClassName="text-2xs h-ctrl-28 min-w-ctrl-28 absolute z-10 rounded-full border border-gray-200 bg-gray-100 px-1 font-semibold text-gray-700 hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                       triggerStyle={{ top: minutesToPx(group.startMin) + 2, insetInlineEnd: 1 }}
                     >
                       <bdi>+{group.indices.length}</bdi>
@@ -532,7 +563,7 @@ export const EventCalendarTimeGrid = ({
                     {fmt.time(slotStart(day, hover.minutes))}
                   </div>
                 )}
-                {active && shownCursor && sameDay(shownCursor.date, day) && (
+                {active && shownCursor && !shownCursor.allDay && sameDay(shownCursor.date, day) && (
                   <div
                     ref={cursorBox}
                     aria-hidden

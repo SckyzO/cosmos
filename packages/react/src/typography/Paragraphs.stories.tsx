@@ -2,7 +2,15 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta = {
   title: 'Typography/Paragraphs',
-  parameters: { layout: 'padded' },
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Body text as Tailwind classes on a plain `<p>`: the default paragraph, a lead, a drop cap, inline emphasis, two columns and the alignments. `max-w-prose` keeps the lines at a readable length.',
+      },
+    },
+  },
   tags: ['autodocs'],
 };
 export default meta;

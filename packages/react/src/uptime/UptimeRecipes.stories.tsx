@@ -6,13 +6,17 @@ import { ResponseTimeChart } from '../storybook-response-time';
 import { responseSeries } from '../storybook-uptime';
 import { AlertBanner } from '../ui/AlertBanner';
 
-// Three things the uptime components do not draw themselves: a response-time chart with the down
-// periods shaded, the timeline of an incident and the notice of a planned maintenance. Each is a
-// composition of components that already exist.
-
 const meta = {
   title: 'Monitoring/Uptime Recipes',
-  parameters: { layout: 'padded' },
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Three things the uptime components do not draw themselves: a response-time chart with the down periods shaded, the timeline of an incident and the notice of a planned maintenance. Each is a composition of components that already exist.',
+      },
+    },
+  },
   tags: ['autodocs'],
 } satisfies Meta;
 

@@ -1,4 +1,6 @@
 import { clsx } from 'clsx';
+import { Badge, type BadgeAppearance } from '../ui/Badge';
+import type { Intent } from '../ui/intent';
 import { parseLogLevel } from './log-lines';
 import type { LogLevelKey } from './types';
 
@@ -29,27 +31,28 @@ export const LOG_LEVEL_LABEL: Record<LogLevelKey, string> = {
   unknown: 'UNKNOWN',
 };
 
-// Each pair holds 4.5:1 on its own fill, and the fill on the ground it sits on: the terminal ones
-// use the fixed palette (the themes redefine gray), the surface ones step up in the dark themes.
-const BADGE: Record<LogTone, Record<LogLevelKey, string>> = {
-  terminal: {
-    trace: 'bg-slate-800 text-slate-400',
-    debug: 'bg-slate-800 text-slate-300',
-    info: 'bg-sky-950 text-sky-300',
-    warn: 'bg-amber-950 text-amber-300',
-    error: 'bg-red-950 text-red-300',
-    fatal: 'bg-red-600 text-white',
-    unknown: 'bg-slate-800 text-slate-300',
-  },
-  surface: {
-    trace: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-    debug: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-    info: 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
-    warn: 'bg-amber-50 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300',
-    error: 'bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-300',
-    fatal: 'bg-red-600 text-white',
-    unknown: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-  },
+// The terminal tone is its own recipe: a dark panel in every theme, so the pairs come from the
+// fixed palette (the themes redefine gray) and each holds 4.5:1 on its own fill and on the panel.
+const TERMINAL_BADGE: Record<LogLevelKey, string> = {
+  trace: 'bg-slate-800 text-slate-400',
+  debug: 'bg-slate-800 text-slate-300',
+  info: 'bg-sky-950 text-sky-300',
+  warn: 'bg-amber-950 text-amber-300',
+  error: 'bg-red-950 text-red-300',
+  fatal: 'bg-red-600 text-white',
+  unknown: 'bg-slate-800 text-slate-300',
+};
+
+// The surface tone is a `Badge`, like `StatusBadge` beside it: the level picks its intent, and
+// `fatal` is the solid one.
+const SURFACE_BADGE: Record<LogLevelKey, { intent: Intent; appearance?: BadgeAppearance }> = {
+  trace: { intent: 'neutral' },
+  debug: { intent: 'neutral' },
+  info: { intent: 'info' },
+  warn: { intent: 'warning' },
+  error: { intent: 'danger' },
+  fatal: { intent: 'danger', appearance: 'solid' },
+  unknown: { intent: 'neutral' },
 };
 
 /** The colour of a line's message, by level, on each tone. Internal to the package. */
@@ -77,16 +80,26 @@ export const LOG_MESSAGE_CLASS: Record<LogTone, Record<LogLevelKey, string>> = {
 /**
  * LogLevelBadge — the level of a log line as a short label in its colour (`ERROR`, `WARN`…). The
  * word carries the level, the colour only backs it. Use it in a table cell, a detail panel or a
- * card; `LogViewer` draws it in every row.
+ * card; `LogViewer` draws it in every row. On the `surface` tone it is a `Badge`, a pill like
+ * `StatusBadge`; on the `terminal` tone it keeps the monospace face of the panel.
  */
 export const LogLevelBadge = ({ level, tone = 'surface', className }: LogLevelBadgeProps) => {
   const key = parseLogLevel(level);
+  if (tone === 'surface')
+    return (
+      // `data-level` goes on a wrapper: a `Badge` takes no attributes of its own.
+      <span data-level={key} className={clsx('inline-flex shrink-0', className)}>
+        <Badge size="sm" className="min-w-14 justify-center" {...SURFACE_BADGE[key]}>
+          {LOG_LEVEL_LABEL[key]}
+        </Badge>
+      </span>
+    );
   return (
     <span
       data-level={key}
       className={clsx(
         'text-3xs inline-block min-w-[7ch] shrink-0 rounded-sm px-1.5 text-center font-mono leading-[1.125rem] font-semibold',
-        BADGE[tone][key],
+        TERMINAL_BADGE[key],
         className
       )}
     >

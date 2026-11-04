@@ -16,7 +16,8 @@ drawer over a scrim (`defaultSidebarOpen`, or `sidebarOpen` and `onSidebarOpenCh
 to control it). It is always expanded there, with a close button in `Sidebar.Brand`, and it
 closes on the scrim, Escape, a swipe toward its edge, a click on a `Sidebar.Item` and when the
 viewport grows past `lg`. Pass the product logo as the Topbar's `brand` to keep it in
-view while the sidebar is off screen. Any `Drawer` can close on a swipe too, with
+view while the sidebar is off screen. `drawerBackdrop` picks the drawer's scrim (`dim` by default,
+`blur` or `blur-dark`, see [Scrims](../guides/tokens.md#scrims)). Any `Drawer` can close on a swipe too, with
 `swipeToClose`: toward its edge on `side="start"` and `side="end"` (the left and right, swapped
 under `dir="rtl"`), downward on `side="bottom"`, the
 bottom sheet (full width, as tall as its content up to 85% of the viewport, a grab `handle`
@@ -37,6 +38,18 @@ brings them to 10px, the logo, the titles and the footer following. Both go thro
 draws a thin line along its rows, under the parent's icon or just before its label;
 `subMenuGuides={false}` leaves the lines out, in the collapsed rail's panel and the compact rail's
 flyout too, and the indent alone shows the depth.
+
+A `Sidebar.SubMenu` or a `Sidebar.Group` unfolds and folds back in 200 ms: its height runs from 0
+to its natural size while its rows fade in and slide 4px, and the chevron turns with it. A closed
+list stays mounted, `inert` and hidden from assistive technology from the moment it starts to
+close, so a `Sidebar.Group` no longer unmounts its rows. The width that follows the labels is the
+one of the end state: it counts the rows of a list as it opens and leaves them out as it closes,
+whatever the height is doing. Collapsing the sidebar to its rail keeps the 300 ms of the width; the
+labels, badges, section titles and the name next to the logo fade out in 120 ms as it narrows, and
+come back once it has widened by a third. The rows draw the rail when the fade has played, and the
+labels are out of the tab order and of the accessibility tree there, as they were. All of it
+follows the motion setting: `prefers-reduced-motion`, or `data-motion="reduced"` on `<html>`, takes
+the durations to 0 and everything happens at once.
 
 `<Shell variant="floating">` sets the sidebar and the page apart as two cards on the base
 background, 10px from the window and from each other: the sidebar with a border all round,
@@ -75,7 +88,8 @@ hotkey as a key hint, `⌘K` on Apple platforms and `Ctrl K` elsewhere) that ope
 `CommandPalette`. It is not an input: the palette holds the field, so a screen reader announces a
 button that opens a dialog. Put it in the Topbar's `center` slot. Below `sm` it is a square icon
 button, and the placeholder stays as its accessible name. `size` takes the form fields' `sm`, `md`
-and `lg`.
+and `lg`. From `sm` up the `center` slot asks for 12rem: a long `pageTitle` is cut before the
+search is squeezed.
 
 The palette owns the hotkey (`hotkey`, `mod+k` by default) and the open state; the button
 registers no listener of its own. Open the palette from its `onClick`, and pass the same hotkey
@@ -179,7 +193,8 @@ error.
 ```
 
 - `loading` draws a skeleton, sets `aria-busy` on the card and adds a status line for screen
-  readers ("Loading Revenue over time…").
+  readers ("Loading Revenue over time…"). When it ends, the body fades in over 200ms; a card that
+  never loaded does not fade.
 - `error` shows an `ErrorState` (announced as an alert); `onRetry` adds the "Try again" button.
   `errorMessage` defaults to "Something went wrong.", and `errorDescription` adds a line under it.
 - `empty` shows an `EmptyState` titled `emptyMessage` (default "No data"), with `emptyAction`
@@ -257,6 +272,10 @@ description is dropped), the links of the column with its title kept for screen 
 copyright and legal links, and the `Aside` at the end of the line. Below `lg` the parts stack and
 wrap. `SiteFooter.Banner` is for the `full` variant.
 
+For a simple footer, give `compact` a `SiteFooter.Bottom` and nothing else. Alone, it spreads over
+the line by itself: the copyright at the start, the legal links at the end, and the two stack on a
+phone.
+
 `theme` is `light` (default, follows the page theme like the light `Navbar`) or `dark`, which
 stays dark in every theme, the usual footer of a storefront with a light page. Keep the same
 `theme` on the `Navbar` and the footer to have the two match. `maxWidth` is `7xl` (default, the
@@ -278,7 +297,11 @@ chat, a file manager). It fills the height of its parent and each pane scrolls o
 `collapseBelow` (`md`, `lg` by default, `xl`) only the active pane shows. Control it with
 `activePane` and `onActivePaneChange`, or start it with `defaultActivePane` and switch from
 inside with `useSplitView()`; the pane that appears takes focus. A Back button is yours to
-place.
+place. Below `collapseBelow` a change of pane moves the later of the two panes over the other: it
+slides in from the end of the line in 300ms (from the left in right to left), and slides out the
+same way when the view goes back to an earlier pane. The pane that stays is under it, out of reach
+and of the accessibility tree, until the slide has played. Side by side nothing moves, and under
+the reduced motion setting the panes change at once.
 
 ```tsx
 <SplitView activePane={pane} onActivePaneChange={setPane}>
@@ -353,6 +376,12 @@ is part of it), not on every key, and a screen reader announces it as it appears
 confirmed in words. `expired` is the link that no longer works: it offers `requestHref` to ask for
 another and `signInHref` to go back. `done` thanks the person and links to `signInHref`. Each view
 has one `h1`; `loading` and `error` follow the request, as on the other auth forms.
+
+When you switch `view` (or `sent`, on `ResetPasswordForm`), the button that was pressed leaves with
+its screen and the focus would fall to the page. The form moves it to the heading of the new
+screen instead, so a keyboard or screen reader user starts reading from the top of it. It does so
+only when the focus was lost with the old screen: if the person had moved it elsewhere on the page,
+it stays there, and the first screen never takes the focus when it mounts (it would scroll the page).
 
 The password policy is `rules`, a function of the password that returns the rules to list (the
 `PasswordRule`s of `PasswordPolicyChecker`). It defaults to `defaultPasswordRules`; an empty list

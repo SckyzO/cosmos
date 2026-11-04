@@ -22,6 +22,7 @@ import {
   portalDocsParams,
   startOffset,
 } from '../storybook-helpers';
+import { reduceMotion, scrimLook, themeColor } from '../storybook-motion';
 import { Button } from './Button';
 import { CommandPalette } from './CommandPalette';
 import { Modal } from './Modal';
@@ -443,10 +444,22 @@ const headingContrastIn = (theme: string): Story => ({
   },
 });
 
-export const GroupHeadingContrastInLight = headingContrastIn('light');
-export const GroupHeadingContrastInSand = headingContrastIn('sand');
-export const GroupHeadingContrastInDark = headingContrastIn('dark');
-export const GroupHeadingContrastInDeepBlue = headingContrastIn('deep-blue');
+export const GroupHeadingContrastInLight: Story = {
+  ...headingContrastIn('light'),
+  tags: ['!dev', '!autodocs'],
+};
+export const GroupHeadingContrastInSand: Story = {
+  ...headingContrastIn('sand'),
+  tags: ['!dev', '!autodocs'],
+};
+export const GroupHeadingContrastInDark: Story = {
+  ...headingContrastIn('dark'),
+  tags: ['!dev', '!autodocs'],
+};
+export const GroupHeadingContrastInDeepBlue: Story = {
+  ...headingContrastIn('deep-blue'),
+  tags: ['!dev', '!autodocs'],
+};
 
 // A bare-key hotkey like `/` opened the palette while typing in a field (#151).
 export const BareHotkeyIgnoredWhileTyping: Story = {
@@ -658,6 +671,114 @@ export const CentredAndShortcutsKeepTheirOrder: Story = {
         expect(endOffset(shortcut, item)).toBeLessThan(startOffset(shortcut, item));
         expectReadsLeftToRight(shortcut);
       });
+    }
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+const overlayOf = () => document.querySelector<HTMLElement>('[cmdk-overlay]');
+const paletteOf = () => document.querySelector<HTMLElement>('[cmdk-dialog]');
+
+/**
+ * The palette at its real speed: the scrim fades and the panel fades and scales up from 95% while
+ * dropping 8px, in 200 ms; it fades out and shrinks back in 120 ms. Radix keeps it mounted for
+ * the keyframes to play, so the exits are animations here and not transitions.
+ */
+export const OpensAndLeavesWithMotion: Story = {
+  parameters: { settleMotion: false },
+  render: TriggeredByButton.render,
+};
+
+/** Open, the scrim and the palette are fully shown. */
+export const OpenIsAtRest: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: TriggeredByButton.render,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: /Open palette/ }));
+    await waitFor(() => expect(paletteOf()).not.toBeNull());
+    await expect(getComputedStyle(paletteOf()!).opacity).toBe('1');
+    await expect(getComputedStyle(overlayOf()!).opacity).toBe('1');
+  },
+};
+
+/** At its real speed the palette is still there, closing, for the length of its exit, then gone. */
+export const StaysMountedWhileItsExitPlays: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: TriggeredByButton.render,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: /Open palette/ }));
+    await waitFor(() => expect(getComputedStyle(paletteOf()!).opacity).toBe('1'));
+    await userEvent.keyboard('{Escape}');
+    await expect(paletteOf()).toHaveAttribute('data-state', 'closed');
+    await expect(overlayOf()).toHaveAttribute('data-state', 'closed');
+    await waitFor(() => expect(paletteOf()).toBeNull());
+    await expect(overlayOf()).toBeNull();
+  },
+};
+
+/** Under reduced motion there is no keyframe to wait for: the palette unmounts in the render that closes it. */
+export const ClosesAtOnceUnderReducedMotion: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: TriggeredByButton.render,
+  play: async ({ canvas }) => {
+    const restore = reduceMotion();
+    try {
+      await userEvent.click(canvas.getByRole('button', { name: /Open palette/ }));
+      await waitFor(() => expect(paletteOf()).not.toBeNull());
+      await userEvent.keyboard('{Escape}');
+      await expect(paletteOf()).toBeNull();
+      await expect(overlayOf()).toBeNull();
+    } finally {
+      restore();
+    }
+  },
+};
+
+/** The `backdrop` prop picks the scrim, as `Backdrop`'s `variant` does: colour, and blur or none. */
+export const BackdropPropPicksTheScrim: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: function Render() {
+    const [variant, setVariant] = useState<'dim' | 'blur' | 'blur-dark'>('dim');
+    return (
+      <>
+        {(['dim', 'blur', 'blur-dark'] as const).map((v) => (
+          <Button key={v} onClick={() => setVariant(v)}>
+            {v}
+          </Button>
+        ))}
+        <CommandPalette open onOpenChange={() => {}} backdrop={variant}>
+          <CommandPalette.Input placeholder="Search" />
+          <CommandPalette.List>
+            <CommandPalette.Item value="hello">Hello</CommandPalette.Item>
+          </CommandPalette.List>
+        </CommandPalette>
+      </>
+    );
+  },
+  play: async () => {
+    await waitFor(() => expect(overlayOf()).not.toBeNull());
+    await expect(scrimLook(overlayOf()!)).toEqual({
+      colour: themeColor('--color-scrim-dim'),
+      filter: 'none',
+    });
+    // The palette's own buttons are outside the dialog Radix opened: they take no pointer events.
+    for (const [variant, filter] of [
+      ['blur', 'blur(8px)'],
+      ['blur-dark', 'blur(8px)'],
+    ] as const) {
+      const button = [...document.querySelectorAll<HTMLElement>('button')].find(
+        (b) => b.textContent === variant
+      )!;
+      button.click();
+      await waitFor(() =>
+        expect(scrimLook(overlayOf()!)).toEqual({
+          colour: themeColor(`--color-scrim-${variant}`),
+          filter,
+        })
+      );
     }
   },
 };

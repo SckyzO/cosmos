@@ -5,9 +5,13 @@ import { chromeThemeFor } from './cosmos-theme';
 
 type Context = DocsContainerProps['context'];
 
-const themeOnLoad = (context: Context): unknown => {
+const themeNow = (context: Context): unknown => {
   try {
-    return context.getStoryContext(context.storyById()).globals.theme;
+    // The preview's own globals: the URL's on load, the toolbar's after. Not the primary story's
+    // `globals`, which a story may pin, and not the channel: the stories that render in a frame of
+    // their own (`portalDocsParams`) report their globals on it, and those start on the default
+    // theme.
+    return context.getStoryContext(context.storyById()).userGlobals.theme;
   } catch {
     // A docs page without a story (plain MDX) has no story context: read the
     // globals the preview last sent, SET_GLOBALS at startup (URL globals
@@ -20,18 +24,20 @@ const themeOnLoad = (context: Context): unknown => {
 
 /**
  * Docs page chrome (prose, prop tables, code blocks) in the theme picked in
- * the toolbar. The value on load comes from the page's primary story, which
- * already holds the URL globals, or from the channel on a page without
- * stories; later changes arrive on the channel.
+ * the toolbar. The value comes from the preview's globals, which already hold
+ * the URL's, or from the channel on a page without stories; each change of the
+ * toolbar's globals reads it again.
  */
 export const CosmosDocsContainer = ({
   context,
   children,
 }: PropsWithChildren<DocsContainerProps>) => {
-  const [theme, setTheme] = useState(() => themeOnLoad(context));
+  const [theme, setTheme] = useState(() => themeNow(context));
 
   useEffect(() => {
-    const onUpdate = ({ globals }: { globals: Record<string, unknown> }) => setTheme(globals.theme);
+    // The payload is not read: a story frame of the page sends its own on the same channel.
+    const onUpdate = ({ globals }: { globals: Record<string, unknown> }) =>
+      setTheme(themeNow(context) ?? globals.theme);
     context.channel.on(GLOBALS_UPDATED, onUpdate);
     return () => context.channel.off(GLOBALS_UPDATED, onUpdate);
   }, [context]);

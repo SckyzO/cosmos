@@ -14,6 +14,7 @@ import {
   startOffset,
   withCanvasPadding,
 } from '../storybook-helpers';
+import { monthAnimations, monthSlideNames, tokenMs } from '../storybook-motion';
 import { Calendar } from './Calendar';
 import { DatePicker, type DateRange, type DateRangePreset } from './DatePicker';
 
@@ -126,6 +127,18 @@ export const RangePreselected: Story = {
       return { from, to };
     })(),
   },
+};
+
+/** `fullWidth` stretches the trigger to the width of its parent. */
+export const FullWidth: Story = {
+  args: { label: 'Due date', fullWidth: true },
+  decorators: [
+    (Story) => (
+      <div className="w-80 max-w-full">
+        <Story />
+      </div>
+    ),
+  ],
 };
 
 export const RangeFullWidth: Story = {
@@ -310,6 +323,20 @@ export const ErrorTextContrastInLight: Story = {
   globals: { theme: 'light' },
   play: async ({ canvas }) => {
     expectTextContrast(canvas.getByText('Date must be in the future.'));
+  },
+};
+
+/** A single date with `fullWidth` fills its parent: the trigger is a button, which does not stretch alone. */
+export const FullWidthFillsTheParent: Story = {
+  ...FullWidth,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: /due date/i });
+    const parent = trigger.parentElement!;
+    await expect(trigger.getBoundingClientRect().width).toBeCloseTo(
+      parent.getBoundingClientRect().width,
+      0
+    );
   },
 };
 
@@ -826,5 +853,47 @@ export const RangeClickOnAFinishedRangeStartsANewOne: Story = {
     await userEvent.click(dialog.getByRole('button', { name: /January 22/ }));
     await expect(args.onChange).toHaveBeenLastCalledWith({ from: day(1, 20), to: day(1, 22) });
     await waitFor(() => expect(calendarDialog()).toBeNull());
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+/** The month slides in the picker's calendar, over the theme's base duration. */
+export const MonthSlidesInThePicker: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  args: { label: 'Pick', defaultValue: new Date(2026, 4, 7) },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: /pick/i }));
+    const calendar = await within(document.body).findByRole('dialog');
+    const root = calendar.querySelector<HTMLElement>('.rdp-root')!;
+    await within(calendar).findByRole('grid', { name: 'May 2026' });
+    await userEvent.click(within(calendar).getByRole('button', { name: 'Go to the Next Month' }));
+    await expect(within(calendar).getByRole('grid', { name: 'June 2026' })).toBeVisible();
+    const running = monthAnimations(root);
+    await expect(running.map(({ name }) => name)).toEqual(
+      expect.arrayContaining(monthSlideNames(root, 'next'))
+    );
+    for (const { duration } of running)
+      await expect(duration).toBe(tokenMs('--cosmos-motion-base'));
+    await waitFor(() => expect(root.querySelectorAll('[data-animated-month]')).toHaveLength(1));
+  },
+};
+
+/** With the reduced setting the picker's month changes with a slide of no length. */
+export const MonthChangesAtOnceInThePickerWhenReduced: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  args: { label: 'Pick', defaultValue: new Date(2026, 4, 7) },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: /pick/i }));
+    const calendar = await within(document.body).findByRole('dialog');
+    const root = calendar.querySelector<HTMLElement>('.rdp-root')!;
+    await within(calendar).findByRole('grid', { name: 'May 2026' });
+    await userEvent.click(within(calendar).getByRole('button', { name: 'Go to the Next Month' }));
+    await expect(within(calendar).getByRole('grid', { name: 'June 2026' })).toBeVisible();
+    for (const { duration } of monthAnimations(root)) await expect(duration).toBe(0);
+    await waitFor(() => expect(root.querySelectorAll('[data-animated-month]')).toHaveLength(1));
   },
 };

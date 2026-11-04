@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -12,10 +13,12 @@ import {
   type ReactElement,
   type ReactNode,
   type Ref,
+  type RefObject,
 } from 'react';
-import { ChevronDown, ChevronRight, X } from 'lucide-react';
+import { ChevronRight, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { AppLink } from '../ui/AppLink';
+import { Fold } from '../ui/Fold';
 import { mergeRefs } from '../ui/mergeRefs';
 import { Popover } from '../ui/Popover';
 import { Tooltip } from '../ui/Tooltip';
@@ -76,7 +79,14 @@ const COMPACT_WIDTH = 88;
 type RowInset = 'wide' | 'tight' | 'none';
 
 type SidebarContextValue = {
+  /** Whether the rows draw the rail: icons alone, in a rail-wide column. */
   collapsed: boolean;
+  /**
+   * Whether the text of the rows (labels, badges, section titles, the brand's name) is hidden, or
+   * fading out or in. It runs ahead of `collapsed` by the fade: out before the rows draw the rail,
+   * and in only once the rows draw the full width again.
+   */
+  faded: boolean;
   /** The compact rail: top-level rows stack their icon over a short label. */
   compact: boolean;
   inDrawer: boolean;
@@ -92,6 +102,7 @@ type SidebarContextValue = {
 
 const SidebarContext = createContext<SidebarContextValue>({
   collapsed: false,
+  faded: false,
   compact: false,
   inDrawer: false,
   inset: 'wide',
@@ -110,9 +121,116 @@ const useSidebarCollapsed = (override?: boolean): boolean => {
   return override ?? ctx.collapsed;
 };
 
+// Whether the text of a row is hidden (see `SidebarContextValue.faded`).
+const useSidebarFaded = (override?: boolean): boolean => {
+  const ctx = useContext(SidebarContext);
+  return override ?? ctx.faded;
+};
+
+// ─── Labels in a collapse ─────────────────────────────────────────────────────
+// The width takes `--cosmos-motion-slow`; the text of the rows fades out in `fast` as the sidebar
+// narrows, and comes back once it has widened by a third, instead of going at once. While it fades
+// the rows still draw their full width, with their labels in place: they draw the rail when the
+// fade has played (`useRailPhase`). The elements that fade carry `data-sidebar-fade`.
+const FADE_ATTR = { 'data-sidebar-fade': '' };
+const TEXT_HIDDEN =
+  'opacity-0 transition-opacity duration-(--cosmos-motion-fast) ease-(--cosmos-ease-in)';
+const TEXT_SHOWN =
+  'opacity-100 transition-opacity duration-(--cosmos-motion-fast) ease-(--cosmos-ease-out) delay-[calc(var(--cosmos-motion-slow)/3)]';
+const labelFade = (faded: boolean) => (faded ? TEXT_HIDDEN : TEXT_SHOWN);
+
+type RailPhase = 'open' | 'leaving' | 'rail' | 'entering';
+
+const playsOpacity = (animation: Animation) =>
+  animation instanceof CSSTransition && animation.transitionProperty === 'opacity';
+
+/**
+ * What the rows draw while the sidebar goes to its rail and back, given whether it is `rail`:
+ *
+ * - `open`: the full width, the text shown.
+ * - `leaving`: the sidebar narrows to the rail, the rows still draw the full width and their text
+ *   fades out. The phase ends when the fade has played, at once when nothing animates (`0s`
+ *   durations, reduced motion).
+ * - `rail`: the rows draw the rail, with no text.
+ * - `entering`: the rows draw the full width again with their text still hidden; it fades in a
+ *   frame later (a transition needs a state to leave), at once when nothing animates.
+ */
+const useRailPhase = (rail: boolean, navRef: RefObject<HTMLElement | null>) => {
+  const [phase, setPhase] = useState<RailPhase>(rail ? 'rail' : 'open');
+  // The phase follows `rail` in the render that changes it, so no frame draws the old one.
+  const [wasRail, setWasRail] = useState(rail);
+  if (rail !== wasRail) {
+    setWasRail(rail);
+    setPhase(rail ? 'leaving' : phase === 'rail' ? 'entering' : 'open');
+  }
+
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    if (phase === 'leaving') {
+      const fades = [...(nav?.querySelectorAll('[data-sidebar-fade]') ?? [])].flatMap((element) =>
+        element.getAnimations().filter(playsOpacity)
+      );
+      if (fades.length === 0) {
+        setPhase('rail');
+        return;
+      }
+      let live = true;
+      void Promise.allSettled(fades.map((fade) => fade.finished)).then(() => {
+        if (live) setPhase('rail');
+      });
+      return () => {
+        live = false;
+      };
+    }
+    if (phase === 'entering') {
+      const shown = nav?.querySelector('[data-sidebar-fade]');
+      const moves =
+        shown &&
+        getComputedStyle(shown)
+          .transitionDuration.split(',')
+          .some((d) => parseFloat(d) > 0);
+      if (!moves) {
+        setPhase('open');
+        return;
+      }
+      // Two frames: the first paints the hidden text, the second starts its transition.
+      let frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => setPhase('open'));
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [phase, navRef]);
+
+  return { rows: phase === 'rail', faded: phase !== 'open' };
+};
+
 // Nesting level: each Sidebar.SubMenu gives its children its own depth + 1, so
 // nested items indent without a `depth` prop.
 const SidebarDepthContext = createContext(0);
+
+// The rows of a folded list stay mounted, and an inert row has a box: the width that follows the
+// labels would grow for them. A row below a folded list leaves its label out of that measure, as
+// when the list was `display: none`.
+const FoldedContext = createContext(false);
+
+// A list of rows that unfolds and folds (a sub-menu's, a group's), and tells the rows in it
+// whether it is folded.
+const SidebarFold = ({
+  id,
+  open,
+  children,
+}: {
+  id?: string;
+  open: boolean;
+  children: ReactNode;
+}) => {
+  const folded = useContext(FoldedContext);
+  return (
+    <Fold id={id} open={open}>
+      <FoldedContext.Provider value={folded || !open}>{children}</FoldedContext.Provider>
+    </Fold>
+  );
+};
 
 // Margin of a row, the width a `<button>` row needs to keep it (an `<a>` row is a block and fills
 // the rest by itself), and the margin as a CSS length. Rows stand 4 px apart (`mb-1`: one margin,
@@ -451,11 +569,14 @@ const SidebarRoot = ({
     max: maxWidth,
     enabled: !rail && !inDrawer && !compact,
   });
+  // The width moves as soon as `rail` does; the rows draw the rail once their text has faded.
+  const phase = useRailPhase(rail, navRef);
   const context: SidebarContextValue = {
-    collapsed: rail,
+    collapsed: phase.rows,
+    faded: phase.faded,
     compact,
     inDrawer,
-    inset: rail || compact ? 'tight' : 'wide',
+    inset: phase.rows || compact ? 'tight' : 'wide',
     activeStyle,
     subMenuGuides,
     truncated: fit.truncated,
@@ -485,7 +606,7 @@ const SidebarRoot = ({
         fit.animated &&
           clsx(
             overlay ? 'transition-[width,box-shadow]' : 'transition-[width]',
-            'duration-300 ease-in-out'
+            'duration-(--cosmos-motion-slow) ease-(--cosmos-ease-in-out)'
           ),
         // Over the page, out of the layout: the wrapper below keeps the rail's place.
         overlay && 'inset-s-0 absolute inset-y-0',
@@ -519,14 +640,16 @@ const SidebarRoot = ({
         <div
           className={clsx(
             'shrink-0 overflow-hidden',
-            compact ? 'p-2' : rail ? 'p-3' : 'py-3',
+            compact ? 'p-2' : phase.rows ? 'p-3' : 'py-3',
             FOOTER_DIVIDER[footerDivider]
           )}
           // Expanded, the footer's rows (8 px in) line up with the others, at the gutter.
-          style={compact || rail ? undefined : { paddingInline: `max(0px, calc(${GUTTER} - 8px))` }}
+          style={
+            compact || phase.rows ? undefined : { paddingInline: `max(0px, calc(${GUTTER} - 8px))` }
+          }
         >
           <SidebarContext.Provider
-            value={{ ...context, inset: rail || compact ? 'none' : 'tight' }}
+            value={{ ...context, inset: phase.rows || compact ? 'none' : 'tight' }}
           >
             {footer}
           </SidebarContext.Provider>
@@ -558,7 +681,8 @@ const SidebarRoot = ({
           <div
             className={clsx(
               'relative z-30 h-full shrink-0',
-              fit.animated && 'transition-[width] duration-300 ease-in-out'
+              fit.animated &&
+                'transition-[width] duration-(--cosmos-motion-slow) ease-(--cosmos-ease-in-out)'
             )}
             style={{ width: collapsed ? collapsedWidth : fit.width }}
           >
@@ -608,6 +732,12 @@ export type SidebarBrandProps = {
 
 export type SidebarLogoStyle = 'tint' | 'solid' | 'none';
 
+// The name beside the logo narrows with the sidebar (`slow`) while it fades like the other text.
+const BRAND_NAME_HIDDEN =
+  'max-w-0 opacity-0 [transition:max-width_var(--cosmos-motion-slow)_var(--cosmos-ease-in-out),opacity_var(--cosmos-motion-fast)_var(--cosmos-ease-in)]';
+const BRAND_NAME_SHOWN =
+  'max-w-[200px] opacity-100 [transition:max-width_var(--cosmos-motion-slow)_var(--cosmos-ease-in-out),opacity_var(--cosmos-motion-fast)_var(--cosmos-ease-out)_calc(var(--cosmos-motion-slow)/3)]';
+
 const LOGO_SQUARE: Record<Exclude<SidebarLogoStyle, 'none'>, string> = {
   tint: 'bg-brand-500/10 text-brand-500',
   solid: 'bg-brand-500 text-white',
@@ -628,6 +758,7 @@ const SidebarBrand = ({
   // The compact rail shows the logo alone, like the collapsed one.
   const compact = ctx.compact && collapsedProp === undefined;
   const collapsed = useSidebarCollapsed(collapsedProp) || compact;
+  const faded = useSidebarFaded(collapsedProp) || compact;
   const shell = useShell();
   // In the Shell's drawer the brand row also holds the close button, a sibling of the brand's own
   // link or button (which can't contain one).
@@ -648,9 +779,10 @@ const SidebarBrand = ({
           </div>
         ))}
       <div
+        {...FADE_ATTR}
         className={clsx(
-          'min-w-0 overflow-hidden text-start transition-[max-width,opacity] duration-300',
-          collapsed ? 'max-w-0 opacity-0' : 'max-w-[200px] opacity-100'
+          'min-w-0 overflow-hidden text-start',
+          faded ? BRAND_NAME_HIDDEN : BRAND_NAME_SHOWN
         )}
       >
         <p className="truncate text-base font-bold tracking-tight text-[var(--color-text-primary)]">
@@ -786,9 +918,11 @@ const SidebarItem = ({
   ref,
 }: SidebarItemProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
+  const faded = useSidebarFaded(collapsedProp);
   const contextDepth = useContext(SidebarDepthContext);
   const depth = depthProp ?? contextDepth;
   const labelId = useId();
+  const folded = useContext(FoldedContext);
   const [compactLabel, setCompactLabel] = useState<HTMLSpanElement | null>(null);
   const clamped = useClamped(compactLabel);
   useReportActive(active);
@@ -833,10 +967,18 @@ const SidebarItem = ({
       {!nested && <Icon className="size-4 shrink-0" />}
       {!collapsed && (
         <>
-          <span className="flex-1 truncate" {...fitLabel(labelId)}>
+          <span
+            {...FADE_ATTR}
+            className={clsx('flex-1 truncate', labelFade(faded))}
+            {...(folded ? undefined : fitLabel(labelId))}
+          >
             {label}
           </span>
-          {badge && <span className="shrink-0">{badge}</span>}
+          {badge && (
+            <span {...FADE_ATTR} className={clsx('shrink-0', labelFade(faded))}>
+              {badge}
+            </span>
+          )}
         </>
       )}
     </>
@@ -943,6 +1085,7 @@ const SidebarSubMenu = ({
   children,
 }: SidebarSubMenuProps) => {
   const collapsed = useSidebarCollapsed(collapsedProp);
+  const faded = useSidebarFaded(collapsedProp);
   const ctx = useContext(SidebarContext);
   const shell = useShell();
   const inset = useRowInset(collapsed);
@@ -950,6 +1093,7 @@ const SidebarSubMenu = ({
   const depth = useContext(SidebarDepthContext);
   const listId = useId();
   const labelId = useId();
+  const folded = useContext(FoldedContext);
   // The trigger is a new element when the sidebar collapses or expands: focus follows it.
   const triggerRef = useKeepFocus();
   const [open, setOpen] = useControllableState({
@@ -1006,6 +1150,7 @@ const SidebarSubMenu = ({
           <SidebarContext.Provider
             value={{
               collapsed: false,
+              faded: false,
               compact: false,
               inDrawer: false,
               inset: 'tight',
@@ -1055,17 +1200,25 @@ const SidebarSubMenu = ({
   const content = (
     <>
       {!nested && <Icon className="size-4 shrink-0" />}
-      <span className="flex-1 truncate" {...fitLabel(labelId)}>
+      <span
+        {...FADE_ATTR}
+        className={clsx('flex-1 truncate', labelFade(faded))}
+        {...(folded ? undefined : fitLabel(labelId))}
+      >
         {label}
       </span>
-      {badge && <span className="shrink-0">{badge}</span>}
+      {badge && (
+        <span {...FADE_ATTR} className={clsx('shrink-0', labelFade(faded))}>
+          {badge}
+        </span>
+      )}
     </>
   );
   const chevron = (
     <ChevronRight
       aria-hidden
       className={clsx(
-        'h-4 w-4 shrink-0 text-[var(--color-text-muted)] transition-transform',
+        'h-4 w-4 shrink-0 text-[var(--color-text-muted)] transition-transform duration-(--cosmos-motion-base) ease-(--cosmos-ease-in-out)',
         // Closed it points to the end of the line (turned around where that is the left); open it
         // points down in both directions.
         open ? 'rotate-90' : 'rtl:rotate-180'
@@ -1152,18 +1305,20 @@ const SidebarSubMenu = ({
       <LabelTip id={labelId} label={label}>
         {trigger}
       </LabelTip>
-      <div id={listId} hidden={!open} className="relative">
-        {ctx.subMenuGuides && (
-          <span
-            aria-hidden
-            className="absolute top-0 bottom-0 w-px bg-[var(--color-border)]"
-            style={{ insetInlineStart: geometry.guideStart(depth) }}
-          />
-        )}
-        <SidebarDepthContext.Provider value={depth + 1}>
-          <TrailContext.Provider value={report}>{children}</TrailContext.Provider>
-        </SidebarDepthContext.Provider>
-      </div>
+      <SidebarFold id={listId} open={open}>
+        <div className="relative">
+          {ctx.subMenuGuides && (
+            <span
+              aria-hidden
+              className="absolute top-0 bottom-0 w-px bg-[var(--color-border)]"
+              style={{ insetInlineStart: geometry.guideStart(depth) }}
+            />
+          )}
+          <SidebarDepthContext.Provider value={depth + 1}>
+            <TrailContext.Provider value={report}>{children}</TrailContext.Provider>
+          </SidebarDepthContext.Provider>
+        </div>
+      </SidebarFold>
     </div>
   );
 };
@@ -1195,6 +1350,7 @@ const SidebarGroup = ({
   // The compact rail has no room for a header either: the rows run on, as collapsed.
   const compact = useContext(SidebarContext).compact;
   const collapsed = useSidebarCollapsed(collapsedProp) || compact;
+  const faded = useSidebarFaded(collapsedProp);
   const [open, setOpen] = useControllableState({
     value: openProp,
     defaultValue: defaultOpen,
@@ -1213,20 +1369,25 @@ const SidebarGroup = ({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
+        {...FADE_ATTR}
         className={clsx(
           'focus-visible:focus-indicator py-row-4 flex items-center gap-2 rounded-lg px-3 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]',
           ROW_INSET.wide.margin,
-          ROW_INSET.wide.width
+          ROW_INSET.wide.width,
+          labelFade(faded)
         )}
       >
-        {open ? (
-          <ChevronDown className="h-3 w-3" />
-        ) : (
-          <ChevronRight className="h-3 w-3 rtl:-scale-x-100" />
-        )}
+        <ChevronRight
+          aria-hidden
+          className={clsx(
+            'h-3 w-3 transition-transform duration-(--cosmos-motion-base) ease-(--cosmos-ease-in-out)',
+            // As the sub-menus' chevron: closed it points to the end of the line, open it points down.
+            open ? 'rotate-90' : 'rtl:rotate-180'
+          )}
+        />
         {label}
       </button>
-      {open && <div>{children}</div>}
+      <SidebarFold open={open}>{children}</SidebarFold>
     </div>
   );
 };
@@ -1250,9 +1411,22 @@ export type SidebarSectionProps = {
 
 // The title of a block: quiet, as the label the reader finds the block by, and on the column of the
 // row icons.
-const SectionTitle = ({ label, className }: { label: string; className: string }) => (
+const SectionTitle = ({
+  label,
+  faded,
+  className,
+}: {
+  label: string;
+  faded: boolean;
+  className: string;
+}) => (
   <p
-    className={clsx('text-xs font-medium text-[var(--color-text-muted)]', className)}
+    {...FADE_ATTR}
+    className={clsx(
+      'text-xs font-medium text-[var(--color-text-muted)]',
+      labelFade(faded),
+      className
+    )}
     style={{ paddingInline: `calc(${GUTTER} + ${ROW_PADDING}px) ${GUTTER}` }}
   >
     {label}
@@ -1268,10 +1442,11 @@ const SidebarSection = ({
   // The compact rail has no room for a title: a "···" mark keeps the blocks apart, as collapsed.
   const compact = useContext(SidebarContext).compact;
   const collapsed = useSidebarCollapsed(collapsedProp) || compact;
+  const faded = useSidebarFaded(collapsedProp);
   if (divider) {
     return (
       <div className="my-2 border-t border-[var(--color-border)] pt-2 [[data-sidebar-brand]+&]:mt-0 [[data-sidebar-brand]+&]:border-t-0">
-        {label && !collapsed && <SectionTitle label={label} className="py-1.5" />}
+        {label && !collapsed && <SectionTitle label={label} faded={faded} className="py-1.5" />}
         <div>{children}</div>
       </div>
     );
@@ -1305,7 +1480,7 @@ const SidebarSection = ({
               </svg>
             </div>
           )
-        : label && <SectionTitle label={label} className="mb-1.5" />}
+        : label && <SectionTitle label={label} faded={faded} className="mb-1.5" />}
       <div>{children}</div>
     </div>
   );

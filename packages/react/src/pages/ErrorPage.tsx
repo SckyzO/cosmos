@@ -66,7 +66,7 @@ export const ErrorPage = ({
       >
         {watermark === undefined && code}
       </p>
-      <h1 className="-mt-4 text-2xl font-bold text-gray-900 dark:text-white">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
         <span className="sr-only">{code}: </span>
         {title}
       </h1>

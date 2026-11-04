@@ -828,6 +828,7 @@ export const ErrorLinksFocusTheirField: Story = {
 export const ExtremeContentTruncates: Story = {
   ...ExtremeContent,
   ...hidden,
+  tags: ['!dev', '!autodocs'],
 };
 
 export const ExtremeContentTruncatesChecks: Story = {

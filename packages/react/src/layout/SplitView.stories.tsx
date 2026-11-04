@@ -13,6 +13,8 @@ import {
   mobileViewport,
   startOffset,
 } from '../storybook-helpers';
+import { SlowFolds } from '../storybook-folds';
+import { isFading, tokenMs, transitionMs } from '../storybook-motion';
 import { Shell } from './Shell';
 import { Sidebar } from './Sidebar';
 import { SplitView, useSplitView } from './SplitView';
@@ -507,5 +509,315 @@ export const PanesFollowTheReadingDirection: Story = {
     // The divider is the list's border on its end side, the left.
     await expect(getComputedStyle(list).borderLeftWidth).toBe('1px');
     await expect(getComputedStyle(list).borderRightWidth).toBe('0px');
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+// A list that opens a message, and a Back button in the message, through `useSplitView`.
+const OpenRow = () => {
+  const { setActivePane } = useSplitView();
+  return (
+    <StackedList.Item
+      className="px-4"
+      title="Ana Ruiz"
+      subtitle="Nightly backup finished"
+      onClick={() => setActivePane('detail')}
+    />
+  );
+};
+
+const BackToTheList = () => {
+  const { setActivePane } = useSplitView();
+  return <Message mail={mails[0]!} onBack={() => setActivePane('list')} />;
+};
+
+const PhoneMail = () => (
+  <Frame height={360}>
+    <SplitView defaultActivePane="list">
+      <SplitView.Pane id="list" label="Messages" width="w-80">
+        <StackedList>
+          <OpenRow />
+        </StackedList>
+      </SplitView.Pane>
+      <SplitView.Pane id="detail" label="Message">
+        <BackToTheList />
+      </SplitView.Pane>
+    </SplitView>
+  </Frame>
+);
+
+/**
+ * On a narrow screen the message slides in over the list from the end of the line in 300 ms, and
+ * back out the same way when Back is pressed (from the left in right to left). Side by side
+ * nothing moves. With the reduced setting the panes change at once.
+ */
+export const DetailSlidesOverTheList: Story = {
+  globals: mobileViewport,
+  parameters: { settleMotion: false },
+  render: () => <PhoneMail />,
+};
+
+// The left edge inside the border of the view, which a pane at rest sits on.
+const innerLeft = (view: HTMLElement) => view.getBoundingClientRect().left + view.clientLeft;
+
+// Where the pane sits along the line in its view: its distance from the start edge of the view.
+const fromStart = (el: HTMLElement) => startOffset(el, el.parentElement!);
+
+/**
+ * Opening the message: it is reachable and has focus at once, it comes in over the list from the
+ * end of the line, and the list, still under it, is out of reach; once the slide has played the
+ * list is out of the layout and the message is in the flow, at rest.
+ */
+export const DetailComesInFromTheEnd: Story = {
+  ...DetailSlidesOverTheList,
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <SlowFolds tokens={['--cosmos-motion-slow']}>
+      <PhoneMail />
+    </SlowFolds>
+  ),
+  play: async ({ canvas }) => {
+    const list = pane(canvas, 'Messages');
+    const view = list.parentElement!;
+    await expect(isFading(view)).toBe(false);
+    await expect(transitionMs(list)).toBe(0);
+
+    await userEvent.click(canvas.getByRole('button', { name: /Ana Ruiz/ }));
+    const detail = canvas.getByRole('region', { name: 'Message' });
+    await expect(detail).toHaveFocus();
+    // Moving: over the list, which is still there, but out of reach and out of the tree.
+    await expect(isFading(view)).toBe(true);
+    // On the slowed token of the story.
+    await expect(transitionMs(detail)).toBe(2000);
+    await expect(list).toHaveAttribute('aria-hidden', 'true');
+    await expect(list.inert).toBe(true);
+    await expect(canvas.queryByRole('region', { name: 'Messages' })).toBeNull();
+    await expect(getComputedStyle(list).display).not.toBe('none');
+    await waitFor(() => expect(fromStart(detail)).toBeGreaterThan(1));
+    await expect(fromStart(detail)).toBeLessThanOrEqual(view.clientWidth + view.clientLeft);
+    // The root scrolled nowhere to reach it.
+    await expect(view.scrollLeft).toBe(0);
+
+    // Then: at rest. The list is gone from the layout, the message fills the view.
+    await waitFor(() => expect(getComputedStyle(list).display).toBe('none'), { timeout: 6000 });
+    await expect(isFading(view)).toBe(false);
+    await expect(getComputedStyle(detail).translate).toBe('none');
+    await expect(detail.getBoundingClientRect().width).toBe(view.clientWidth);
+    await expect(fromStart(detail)).toBeLessThanOrEqual(1);
+    await expect(getComputedStyle(detail).marginInlineStart).toBe('0px');
+    await expect(detail).not.toHaveAttribute('aria-hidden');
+    await expect(detail).toHaveFocus();
+  },
+};
+
+/**
+ * Going back: the list is the pane in place at once, reachable, with focus; the message leaves
+ * toward the end of the line, out of reach, and is out of the layout when it has gone.
+ */
+export const DetailLeavesToTheEnd: Story = {
+  ...DetailSlidesOverTheList,
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <SlowFolds tokens={['--cosmos-motion-slow']}>
+      <PhoneMail />
+    </SlowFolds>
+  ),
+  play: async ({ canvas }) => {
+    const list = pane(canvas, 'Messages');
+    const view = list.parentElement!;
+    await userEvent.click(canvas.getByRole('button', { name: /Ana Ruiz/ }));
+    const detail = canvas.getByRole('region', { name: 'Message' });
+    await waitFor(() => expect(getComputedStyle(list).display).toBe('none'), { timeout: 6000 });
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Back' }));
+    // The list is back, in place and not moving; the message is the one going.
+    await expect(list).toHaveFocus();
+    await expect(list).not.toHaveAttribute('aria-hidden');
+    await expect(list.inert).toBe(false);
+    await expect(getComputedStyle(list).translate).toBe('none');
+    await expect(list.getBoundingClientRect().width).toBe(view.clientWidth);
+    await expect(detail).toHaveAttribute('aria-hidden', 'true');
+    await expect(detail.inert).toBe(true);
+    await expect(isFading(view)).toBe(true);
+    await waitFor(() => expect(fromStart(detail)).toBeGreaterThan(1));
+
+    await waitFor(() => expect(getComputedStyle(detail).display).toBe('none'), { timeout: 6000 });
+    await expect(isFading(view)).toBe(false);
+    await expect(canvas.queryByRole('region', { name: 'Message' })).toBeNull();
+    await expect(list).toHaveFocus();
+  },
+};
+
+/** The slide runs on the slow token of the theme, 300 ms, and the old pane goes when it has played. */
+export const DetailSlidesOnTheSlowToken: Story = {
+  ...DetailSlidesOverTheList,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const list = pane(canvas, 'Messages');
+    await userEvent.click(canvas.getByRole('button', { name: /Ana Ruiz/ }));
+    const detail = canvas.getByRole('region', { name: 'Message' });
+    await expect(transitionMs(detail)).toBe(tokenMs('--cosmos-motion-slow'));
+    await expect(isFading(list.parentElement!)).toBe(true);
+    await waitFor(() => expect(getComputedStyle(list).display).toBe('none'), { timeout: 3000 });
+    await expect(isFading(list.parentElement!)).toBe(false);
+  },
+};
+
+/** In right to left the message comes from the left and leaves by it: the end of that line. */
+export const DetailComesFromTheLeftInRightToLeft: Story = {
+  ...DetailSlidesOverTheList,
+  tags: ['!dev', '!autodocs'],
+  globals: { ...mobileViewport, direction: 'rtl' },
+  render: () => (
+    <SlowFolds tokens={['--cosmos-motion-slow']}>
+      <PhoneMail />
+    </SlowFolds>
+  ),
+  play: async ({ canvas }) => {
+    const list = pane(canvas, 'Messages');
+    const view = list.parentElement!;
+    await expect(getComputedStyle(view).direction).toBe('rtl');
+    await userEvent.click(canvas.getByRole('button', { name: /Ana Ruiz/ }));
+    const detail = canvas.getByRole('region', { name: 'Message' });
+    // Moving: shifted toward the left edge, with its start (the right) still inside the view.
+    await waitFor(() => expect(startOffset(detail, view)).toBeGreaterThan(1));
+    await expect(detail.getBoundingClientRect().left).toBeLessThan(innerLeft(view));
+    await waitFor(() => expect(getComputedStyle(list).display).toBe('none'), { timeout: 6000 });
+    await expect(startOffset(detail, view)).toBeLessThanOrEqual(1);
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Back' }));
+    await waitFor(() => expect(startOffset(detail, view)).toBeGreaterThan(1));
+    await expect(detail.getBoundingClientRect().left).toBeLessThan(innerLeft(view));
+    await waitFor(() => expect(getComputedStyle(detail).display).toBe('none'), { timeout: 6000 });
+  },
+};
+
+/** With the reduced setting the panes change at once: nothing slides, and the old pane is gone. */
+export const PanesChangeAtOnceUnderReducedMotion: Story = {
+  ...DetailSlidesOverTheList,
+  tags: ['!dev', '!autodocs'],
+  globals: { ...mobileViewport, motion: 'reduced' },
+  play: async ({ canvas }) => {
+    const list = pane(canvas, 'Messages');
+    const view = list.parentElement!;
+    await userEvent.click(canvas.getByRole('button', { name: /Ana Ruiz/ }));
+    const detail = canvas.getByRole('region', { name: 'Message' });
+    await expect(isFading(view)).toBe(false);
+    await expect(getComputedStyle(list).display).toBe('none');
+    await expect(getComputedStyle(detail).translate).toBe('none');
+    await expect(detail).toHaveFocus();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Back' }));
+    await expect(isFading(view)).toBe(false);
+    await expect(getComputedStyle(detail).display).toBe('none');
+    await expect(list).toHaveFocus();
+  },
+};
+
+/** Side by side nothing moves when the view changes pane: both stay, reachable, as they are. */
+export const WideViewDoesNotMove: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: laptop,
+  parameters: { settleMotion: false },
+  render: () => {
+    const Wide = () => {
+      const [active, setActive] = useState('list');
+      return (
+        <div className="space-y-3">
+          <Button size="sm" onClick={() => setActive((id) => (id === 'list' ? 'detail' : 'list'))}>
+            Switch
+          </Button>
+          <Frame height={240}>
+            <SplitView activePane={active}>
+              <SplitView.Pane id="list" label="Messages" width="w-80">
+                <MailList onSelect={() => {}} />
+              </SplitView.Pane>
+              <SplitView.Pane id="detail" label="Message">
+                <Message mail={mails[0]!} />
+              </SplitView.Pane>
+            </SplitView>
+          </Frame>
+        </div>
+      );
+    };
+    return <Wide />;
+  },
+  play: async ({ canvas }) => {
+    const list = pane(canvas, 'Messages');
+    const detail = pane(canvas, 'Message');
+    const view = list.parentElement!;
+    const before = [list, detail].map((el) => el.getBoundingClientRect().toJSON());
+    for (let n = 0; n < 2; n++) {
+      await userEvent.click(canvas.getByRole('button', { name: 'Switch' }));
+      await expect(isFading(view)).toBe(false);
+      for (const el of [list, detail]) {
+        await expect(el).not.toHaveAttribute('aria-hidden');
+        await expect(el.inert).toBe(false);
+        await expect(getComputedStyle(el).translate).toBe('none');
+        await expect(getComputedStyle(el).marginInlineStart).toBe('0px');
+        await expect(transitionMs(el)).toBe(0);
+      }
+      await expect([list, detail].map((el) => el.getBoundingClientRect().toJSON())).toEqual(before);
+    }
+  },
+};
+
+/** Three panes: back from the last one to the first leaves the last toward the end, the first in place. */
+export const ThreePanesMoveTheLaterOne: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  parameters: { settleMotion: false },
+  render: () => {
+    const Panes = () => {
+      const [active, setActive] = useState('folders');
+      return (
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            {['folders', 'list', 'detail'].map((id) => (
+              <Button key={id} size="sm" onClick={() => setActive(id)}>
+                {`Show ${id}`}
+              </Button>
+            ))}
+          </div>
+          <Frame height={240}>
+            <SplitView activePane={active}>
+              <SplitView.Pane id="folders" label="Folders">
+                <FolderList />
+              </SplitView.Pane>
+              <SplitView.Pane id="list" label="Messages">
+                <MailList onSelect={() => {}} />
+              </SplitView.Pane>
+              <SplitView.Pane id="detail" label="Message">
+                <Message mail={mails[0]!} />
+              </SplitView.Pane>
+            </SplitView>
+          </Frame>
+        </div>
+      );
+    };
+    return <Panes />;
+  },
+  play: async ({ canvas, canvasElement }) => {
+    // By id: a pane that is not shown has no name for the accessibility tree.
+    const panes = ['folders', 'list', 'detail'].map((id) =>
+      canvasElement.querySelector<HTMLElement>(`[data-split-pane="${id}"]`)!
+    );
+    const settled = async (shown: number) => {
+      for (const [i, el] of panes.entries()) {
+        if (i === shown) await expect(getComputedStyle(el).display).not.toBe('none');
+        else
+          await waitFor(() => expect(getComputedStyle(el).display).toBe('none'), { timeout: 3000 });
+      }
+    };
+    await userEvent.click(canvas.getByRole('button', { name: 'Show detail' }));
+    await settled(2);
+    await userEvent.click(canvas.getByRole('button', { name: 'Show folders' }));
+    // The last pane is the one that leaves, over the first, which is reachable at once.
+    await expect(panes[2]!).toHaveAttribute('aria-hidden', 'true');
+    await expect(panes[0]!).not.toHaveAttribute('aria-hidden');
+    await settled(0);
+    await userEvent.click(canvas.getByRole('button', { name: 'Show list' }));
+    await settled(1);
   },
 };

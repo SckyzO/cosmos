@@ -297,7 +297,11 @@ const AppTopbar = ({
               )}
             </NotificationsPanel.Content>
           </NotificationsPanel>
-          <ThemeToggle isDark={isDark} onChange={setDark} className="max-sm:hidden" />
+          <ThemeToggle
+            theme={isDark ? 'dark' : 'light'}
+            onChange={(theme) => setDark(theme === 'dark')}
+            className="max-sm:hidden"
+          />
           <UserMenu>
             {/* Name hidden: a name of any length would push the search aside. */}
             <UserMenu.Trigger name={user.name} hideName />
@@ -806,10 +810,10 @@ const oneH1Per = (state: keyof typeof ONE_H1): Story => ({
   },
 });
 
-export const EmptyHasOneH1: Story = oneH1Per('empty');
-export const LoadingHasOneH1: Story = oneH1Per('loading');
-export const ErrorHasOneH1: Story = oneH1Per('error');
-export const ExtremeHasOneH1: Story = oneH1Per('extreme');
+export const EmptyHasOneH1: Story = { ...oneH1Per('empty'), tags: ['!dev', '!autodocs'] };
+export const LoadingHasOneH1: Story = { ...oneH1Per('loading'), tags: ['!dev', '!autodocs'] };
+export const ErrorHasOneH1: Story = { ...oneH1Per('error'), tags: ['!dev', '!autodocs'] };
+export const ExtremeHasOneH1: Story = { ...oneH1Per('extreme'), tags: ['!dev', '!autodocs'] };
 
 /** On the phone the Topbar hides its title; the page header is still the one `h1`. */
 export const PhoneHasOneH1: Story = {
@@ -844,9 +848,7 @@ export const HamburgerTogglesTheSidebar: Story = {
     await expect(within(dialog).getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
     await expect(within(dialog).getByText('Fernhill Studio')).toBeVisible();
     await expect(hamburger).toHaveAttribute('aria-expanded', 'true');
-    const backdrop = document.body.querySelector<HTMLElement>(
-      'div[aria-hidden][class*="bg-gray-500"]'
-    );
+    const backdrop = document.body.querySelector<HTMLElement>('[data-slot="backdrop"]');
     await expect(backdrop).not.toBeNull();
 
     await userEvent.click(backdrop!);
@@ -925,6 +927,38 @@ export const ErrorKeepsTheNavAndRetries: Story = {
     await userEvent.click(within(alert).getByRole('button', { name: 'Try again' }));
     await expect(canvas.queryByRole('alert')).toBeNull();
     await expect(canvas.getByText('My tasks due this week')).toBeVisible();
+  },
+};
+
+const tabletViewport = { viewport: { value: 'tablet', isRotated: false } } as const;
+
+/** The count of the bell, past 9999, is read beside the bell and not drawn over it. */
+export const ExtremeBellCountDoesNotCoverTheBell: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <AppShellScreen state="extreme" />,
+  play: async ({ canvas }) => {
+    const bell = canvas.getByRole('button', { name: /^Notifications/ });
+    const icon = bell.querySelector('svg')!.getBoundingClientRect();
+    const count = within(bell).getByText('9999+').getBoundingClientRect();
+    const overlap =
+      Math.min(icon.right, count.right) > Math.max(icon.left, count.left) &&
+      Math.min(icon.bottom, count.bottom) > Math.max(icon.top, count.top);
+    await expect(overlap).toBe(false);
+  },
+};
+
+/** At 768px, with the long title of the extreme page, the search keeps a field you can type in. */
+export const ExtremeSearchKeepsItsWidthAtTabletWidth: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: tabletViewport,
+  render: () => <AppShellScreen state="extreme" />,
+  play: async ({ canvas }) => {
+    const search = canvas.getByRole('button', { name: /Search projects/ });
+    await expect(search.getBoundingClientRect().width).toBeGreaterThanOrEqual(160);
+    // The field and the bell do not run into each other, on either side of the line.
+    const field = search.getBoundingClientRect();
+    const bell = canvas.getByRole('button', { name: /^Notifications/ }).getBoundingClientRect();
+    await expect(field.right <= bell.left || field.left >= bell.right).toBe(true);
   },
 };
 

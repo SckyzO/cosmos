@@ -1,7 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MoreVertical } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, mocked, userEvent, waitFor, within } from 'storybook/test';
+import {
+  SlowFolds,
+  clipOf,
+  expectFoldClosed,
+  expectFoldOpen,
+  finishAnimations,
+  closedRotation,
+  rotationOf,
+} from '../storybook-folds';
 import {
   directionBox,
   endEdge,
@@ -11,7 +20,14 @@ import {
   startOffset,
 } from '../storybook-helpers';
 import { DataTable } from './DataTable';
-import { HOSTS, hostColumns, type Host } from './storybook-hosts';
+import {
+  HOSTS,
+  hostColumns,
+  patchColumns,
+  pickColumns,
+  withPins,
+  type Host,
+} from './storybook-fixtures';
 import type { ColumnDef } from './types';
 
 // Expandable rows (`renderExpandedRow`) and pinned columns (`pin`), in their own file with the
@@ -27,12 +43,6 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-const Wrap = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">
-    <div className={className}>{children}</div>
-  </div>
-);
 
 const EVENTS = [
   ['06:12', 'CPU above 80% for 10 minutes'],
@@ -69,28 +79,45 @@ const detail = (r: Host) => (
   </div>
 );
 
-const summaryColumns: ColumnDef<Host>[] = [
-  hostColumns[0],
-  hostColumns[1],
-  hostColumns[9],
-  hostColumns[4],
-  hostColumns[7],
-  hostColumns[8],
-].map((c) => ({ ...c, width: undefined }));
+const summaryColumns: ColumnDef<Host>[] = pickColumns(hostColumns, [
+  'host',
+  'rack',
+  'status',
+  'cpu',
+  'owner',
+  'updated',
+]).map((c) => ({ ...c, width: undefined }));
 
 /** `renderExpandedRow` adds a chevron column; the detail opens in a row below, over every column. */
 export const ExpandableRows: Story = {
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Hosts"
-        rows={HOSTS.slice(0, 5)}
-        columns={summaryColumns}
-        rowKey={(r) => r.host}
-        renderExpandedRow={detail}
-        defaultExpandedRows={new Set(['node-a02'])}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Hosts"
+      rows={HOSTS.slice(0, 5)}
+      columns={summaryColumns}
+      rowKey={(r) => r.host}
+      renderExpandedRow={detail}
+      defaultExpandedRows={new Set(['node-a02'])}
+    />
+  ),
+};
+
+/**
+ * The detail unfolds under its row in 200 ms: the height runs from 0 to its size while the content
+ * fades in and slides 4 px, and the chevron turns with it. Folding it back plays the same in
+ * reverse, then the row goes.
+ */
+export const DetailUnfolds: Story = {
+  ...ExpandableRows,
+  parameters: { settleMotion: false },
+  render: () => (
+    <DataTable
+      aria-label="Hosts"
+      rows={HOSTS.slice(0, 5)}
+      columns={summaryColumns}
+      rowKey={(r) => r.host}
+      renderExpandedRow={detail}
+    />
   ),
 };
 
@@ -101,15 +128,13 @@ export const ExpandAndCollapseByKeyboard: Story = {
   ...ExpandableRows,
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Hosts"
-        rows={HOSTS.slice(0, 3)}
-        columns={summaryColumns}
-        rowKey={(r) => r.host}
-        renderExpandedRow={detail}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Hosts"
+      rows={HOSTS.slice(0, 3)}
+      columns={summaryColumns}
+      rowKey={(r) => r.host}
+      renderExpandedRow={detail}
+    />
   ),
   play: async ({ canvas }) => {
     // The sortable Host header is the first Tab stop, the first row's toggle the next.
@@ -144,18 +169,16 @@ export const TogglingNeverSelectsOrClicksTheRow: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onRowClick: fn(), onSelectionChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        aria-label="Hosts"
-        rows={HOSTS.slice(0, 3)}
-        columns={summaryColumns}
-        rowKey={(r) => r.host}
-        renderExpandedRow={detail}
-        selectable
-        onRowClick={args.onRowClick}
-        onSelectionChange={args.onSelectionChange}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Hosts"
+      rows={HOSTS.slice(0, 3)}
+      columns={summaryColumns}
+      rowKey={(r) => r.host}
+      renderExpandedRow={detail}
+      selectable
+      onRowClick={args.onRowClick}
+      onSelectionChange={args.onSelectionChange}
+    />
   ),
   play: async ({ canvas, args }) => {
     await userEvent.click(toggleOf(canvas, 'node-a01'));
@@ -173,20 +196,18 @@ export const ControlledExpandedRows: Story = {
   render: (args) => {
     const [expanded, setExpanded] = useState<Set<string | number>>(new Set(['node-a02']));
     return (
-      <Wrap>
-        <DataTable
-          aria-label="Hosts"
-          rows={HOSTS.slice(0, 3)}
-          columns={summaryColumns}
-          rowKey={(r) => r.host}
-          renderExpandedRow={detail}
-          expandedRows={expanded}
-          onExpandedRowsChange={(next) => {
-            args.onExpandedRowsChange?.(next);
-            setExpanded(next);
-          }}
-        />
-      </Wrap>
+      <DataTable
+        aria-label="Hosts"
+        rows={HOSTS.slice(0, 3)}
+        columns={summaryColumns}
+        rowKey={(r) => r.host}
+        renderExpandedRow={detail}
+        expandedRows={expanded}
+        onExpandedRowsChange={(next) => {
+          args.onExpandedRowsChange?.(next);
+          setExpanded(next);
+        }}
+      />
     );
   },
   play: async ({ canvas, args }) => {
@@ -210,17 +231,15 @@ export const ControlledExpandedRowsFollowTheHost: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onExpandedRowsChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        aria-label="Hosts"
-        rows={HOSTS.slice(0, 3)}
-        columns={summaryColumns}
-        rowKey={(r) => r.host}
-        renderExpandedRow={detail}
-        expandedRows={new Set()}
-        onExpandedRowsChange={args.onExpandedRowsChange}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Hosts"
+      rows={HOSTS.slice(0, 3)}
+      columns={summaryColumns}
+      rowKey={(r) => r.host}
+      renderExpandedRow={detail}
+      expandedRows={new Set()}
+      onExpandedRowsChange={args.onExpandedRowsChange}
+    />
   ),
   play: async ({ canvas, args }) => {
     await userEvent.click(toggleOf(canvas, 'node-a01'));
@@ -233,18 +252,16 @@ export const VirtualizedTablesDoNotExpand: Story = {
   ...ExpandableRows,
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Hosts"
-        rows={HOSTS}
-        columns={summaryColumns}
-        rowKey={(r) => r.host}
-        renderExpandedRow={detail}
-        virtualize
-        pageSize={HOSTS.length}
-        className="max-h-96"
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Hosts"
+      rows={HOSTS}
+      columns={summaryColumns}
+      rowKey={(r) => r.host}
+      renderExpandedRow={detail}
+      virtualize
+      pageSize={HOSTS.length}
+      className="max-h-96"
+    />
   ),
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('table', { name: 'Hosts' })).toBeVisible();
@@ -252,14 +269,145 @@ export const VirtualizedTablesDoNotExpand: Story = {
   },
 };
 
+// The detail row a toggle controls, and the fold in its cell.
+const detailOf = (toggle: HTMLElement) => {
+  const row = document.getElementById(toggle.getAttribute('aria-controls')!)!;
+  return { row, fold: row.querySelector('td')!.firstElementChild as HTMLElement };
+};
+
+/**
+ * The detail row is a fold in its cell: a row cannot animate its height, a block can. It unfolds
+ * when its row opens, is inert and out of the accessibility tree at once when it closes while it
+ * folds back, and goes once it has. Its row keeps its divider off until then, and a detail open
+ * from the first render is simply there. Slowed to 2 s to read the middle.
+ */
+export const DetailRowUnfoldsAndFoldsBack: Story = {
+  ...ExpandableRows,
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => (
+    <SlowFolds>
+      <DataTable
+        aria-label="Hosts"
+        rows={HOSTS.slice(0, 3)}
+        columns={summaryColumns}
+        rowKey={(r) => r.host}
+        renderExpandedRow={detail}
+        defaultExpandedRows={new Set(['node-a02'])}
+      />
+    </SlowFolds>
+  ),
+  play: async ({ canvas }) => {
+    // Open from the first render: there, at rest, nothing played.
+    const started = detailOf(canvas.getByRole('button', { name: 'Hide details for node-a02' }));
+    await expectFoldOpen(started.fold);
+    await expect(started.fold.getAnimations()).toHaveLength(0);
+
+    // Opening: the row is there at once, unclipped only at rest, and grows.
+    const toggle = toggleOf(canvas, 'node-a01');
+    const chevron = toggle.querySelector('svg')!;
+    await expect(rotationOf(chevron)).toBe(closedRotation(chevron));
+    await userEvent.click(toggle);
+    const { row, fold } = detailOf(
+      canvas.getByRole('button', { name: 'Hide details for node-a01' })
+    );
+    await expect(fold.inert).toBe(false);
+    await expect(getComputedStyle(clipOf(fold)).overflow).toBe('hidden');
+    await expect(fold.getAnimations().length).toBeGreaterThan(0);
+    const midway = fold.getBoundingClientRect().height;
+    await finishAnimations(toggle.closest('table')!);
+    await expectFoldOpen(fold);
+    await expect(midway).toBeLessThan(fold.getBoundingClientRect().height);
+    await expect(rotationOf(chevron)).toBe('90deg');
+    // The padding is the fold's: the cell itself has none.
+    await expect(getComputedStyle(row.querySelector('td')!).paddingTop).toBe('0px');
+
+    // Closing: inert and out of the accessibility tree at once, the row still there and joined to
+    // the one above it, which keeps its divider off until the detail has gone.
+    const parent = toggle.closest('tr')!;
+    await userEvent.click(canvas.getByRole('button', { name: 'Hide details for node-a01' }));
+    await expect(row.isConnected).toBe(true);
+    await expect(row).toHaveAttribute('aria-hidden', 'true');
+    expectFoldClosed(fold);
+    await expect(fold.getBoundingClientRect().height).toBeGreaterThan(0);
+    await expect(parent.nextElementSibling).toBe(row);
+    await expect(getComputedStyle(parent).borderBottomWidth).toBe('0px');
+    await expect(toggleOf(canvas, 'node-a01')).not.toHaveAttribute('aria-controls');
+
+    // Opened again while it folds: the same row comes back.
+    await userEvent.click(toggleOf(canvas, 'node-a01'));
+    await expect(row.isConnected).toBe(true);
+    await expect(row).not.toHaveAttribute('aria-hidden');
+    await expect(fold.inert).toBe(false);
+    await finishAnimations(parent.closest('table')!);
+    await expectFoldOpen(fold);
+
+    // Folded back for good: the row goes once the fold has played, and the divider comes back.
+    await userEvent.click(canvas.getByRole('button', { name: 'Hide details for node-a01' }));
+    await finishAnimations(parent.closest('table')!);
+    await waitFor(() => expect(row.isConnected).toBe(false));
+    await expect(getComputedStyle(parent).borderBottomWidth).not.toBe('0px');
+    await expect(canvas.queryByText('Agent restarted', { selector: 'span' })).not.toBeNull();
+  },
+};
+
+/** The host's `renderExpandedRow` is only called for the rows that are open, as it always was. */
+export const DetailIsOnlyRenderedForOpenRows: Story = {
+  ...ExpandableRows,
+  tags: ['!dev', '!autodocs'],
+  args: { renderExpandedRow: fn((row: unknown) => detail(row as Host)) },
+  render: (args) => (
+    <DataTable
+      aria-label="Hosts"
+      rows={HOSTS.slice(0, 4)}
+      columns={summaryColumns}
+      rowKey={(r) => r.host}
+      renderExpandedRow={args.renderExpandedRow}
+      defaultExpandedRows={new Set(['node-a02'])}
+    />
+  ),
+  play: async ({ args }) => {
+    const rendered = mocked(args.renderExpandedRow!).mock.calls.map(([row]) => (row as Host).host);
+    await expect(rendered.length).toBeGreaterThan(0);
+    await expect(new Set(rendered)).toEqual(new Set(['node-a02']));
+  },
+};
+
+/** With the Animations setting on "Reduced", the detail is there at once when its row opens, and gone at once when it closes. */
+export const ReducedMotionDetailAtOnce: Story = {
+  ...ExpandableRows,
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  globals: { motion: 'reduced' },
+  render: () => (
+    <DataTable
+      aria-label="Hosts"
+      rows={HOSTS.slice(0, 3)}
+      columns={summaryColumns}
+      rowKey={(r) => r.host}
+      renderExpandedRow={detail}
+    />
+  ),
+  play: async ({ canvas }) => {
+    const toggle = toggleOf(canvas, 'node-a01');
+    await userEvent.click(toggle);
+    const { row, fold } = detailOf(
+      canvas.getByRole('button', { name: 'Hide details for node-a01' })
+    );
+    await expect(row.getAnimations({ subtree: true })).toHaveLength(0);
+    await expect(getComputedStyle(clipOf(fold)).overflow).toBe('visible');
+    await expect(fold.getBoundingClientRect().height).toBeGreaterThan(0);
+    await userEvent.click(canvas.getByRole('button', { name: 'Hide details for node-a01' }));
+    await expect(row.isConnected).toBe(false);
+  },
+};
+
 // ── Pinned columns ──────────────────────────────────────────────────────────
 
-const pinnedColumns: ColumnDef<Host>[] = hostColumns.map((c) =>
-  c.key === 'host' ? { ...c, pin: 'start' } : c.key === 'status' ? { ...c, pin: 'end' } : c
-);
+const pinnedColumns = withPins(hostColumns, { start: ['host'], end: ['status'] });
 
 const PinnedTable = ({ columns = pinnedColumns }: { columns?: ColumnDef<Host>[] }) => (
-  <Wrap className="max-w-3xl">
+  <div className="max-w-3xl">
     <DataTable
       aria-label="Hosts"
       rows={HOSTS}
@@ -276,7 +424,7 @@ const PinnedTable = ({ columns = pinnedColumns }: { columns?: ColumnDef<Host>[] 
         </button>
       )}
     />
-  </Wrap>
+  </div>
 );
 
 /**
@@ -371,13 +519,7 @@ export const SeveralPinnedColumnsAddUp: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <PinnedTable
-      columns={hostColumns.map((c) =>
-        c.key === 'host' || c.key === 'rack'
-          ? { ...c, pin: 'start' }
-          : c.key === 'status' || c.key === 'updated'
-            ? { ...c, pin: 'end' }
-            : c
-      )}
+      columns={withPins(hostColumns, { start: ['host', 'rack'], end: ['updated', 'status'] })}
     />
   ),
   play: async ({ canvas }) => {
@@ -398,12 +540,9 @@ export const PinnedOffsetsFollowTheTextSizeAndTheWidth: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <PinnedTable
-      columns={hostColumns.map((c) =>
-        c.key === 'host'
-          ? { ...c, width: '20%', pin: 'start' }
-          : c.key === 'rack'
-            ? { ...c, width: '12%', pin: 'start' }
-            : c
+      columns={withPins(
+        patchColumns(hostColumns, { host: { width: '20%' }, rack: { width: '12%' } }),
+        { start: ['host', 'rack'] }
       )}
     />
   ),
@@ -460,10 +599,10 @@ export const ExpandChevronFollowsTheReadingDirection: Story = {
       const box = directionBox(canvasElement, dir);
       const closed = within(box).getByRole('button', { name: /Show details for node-a01/ });
       const open = within(box).getByRole('button', { name: /Hide details for node-a02/ });
-      expect(getComputedStyle(closed.querySelector('svg')!).scale, `${dir}: closed`).toBe(
-        dir === 'rtl' ? '-1 1' : 'none'
+      expect(rotationOf(closed.querySelector('svg')!), `${dir}: closed`).toBe(
+        dir === 'rtl' ? '180deg' : 'none'
       );
-      expect(getComputedStyle(open.querySelector('svg')!).scale, `${dir}: open`).toBe('none');
+      expect(rotationOf(open.querySelector('svg')!), `${dir}: open`).toBe('90deg');
       // The toggle column is the first: nearest the start edge.
       const table = closed.closest('table')!;
       expect(startOffset(closed, table), dir).toBeLessThan(endOffset(closed, table));

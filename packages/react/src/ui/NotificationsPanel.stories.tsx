@@ -12,6 +12,7 @@ import {
   portalDocsParams,
   startOffset,
 } from '../storybook-helpers';
+import { loopStops } from '../storybook-motion';
 import { Button } from './Button';
 import { NotificationsPanel, type NotificationsPanelIntent } from './NotificationsPanel';
 
@@ -700,5 +701,15 @@ export const CloseOnClick: Story = {
     await expect(document.querySelector('[role="dialog"]')).not.toBeNull();
     await userEvent.click(within(dialog).getByRole('button', { name: /closes/ }));
     await waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
+  },
+};
+
+/** The ping around the count is a decorative loop: it runs, and stops under reduced motion. */
+export const PingStopsUnderReducedMotion: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <FullPanel defaultOpen={false} />,
+  play: async ({ canvasElement }) => {
+    const ping = canvasElement.querySelector<HTMLElement>('.animate-ping')!;
+    await expect(loopStops(ping)).toMatchObject({ running: 'ping', reduced: 'none' });
   },
 };

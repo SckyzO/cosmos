@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
+import { expectTextContrastOnTint, inEachTheme } from '../storybook-helpers';
 import { LOG_LEVEL_KEYS } from './types';
 import { LogLevelBadge } from './LogLevelBadge';
 
@@ -46,5 +47,52 @@ export const LevelsAreLabelledByText: Story = {
       expect(canvas.getByText(word)).toBeVisible();
     // `unknown` and the unrecognised `warning` both read UNKNOWN.
     expect(canvas.getAllByText('UNKNOWN')).toHaveLength(2);
+  },
+};
+
+/**
+ * The test of the surface tone, hidden: a `Badge` pill like `StatusBadge`, of one width for every
+ * level but the longest word, with `data-level` and a readable word in every theme.
+ */
+export const SurfaceIsABadgePill: Story = {
+  ...SurfaceLevels,
+  tags: ['!dev', '!autodocs'],
+  play: ({ canvasElement }) => {
+    const wrappers = [...canvasElement.querySelectorAll<HTMLElement>('[data-level]')];
+    expect(wrappers.map((wrapper) => wrapper.dataset.level)).toEqual([
+      ...LOG_LEVEL_KEYS,
+      'unknown',
+    ]);
+    const widths = new Set<number>();
+    for (const wrapper of wrappers) {
+      const badge = wrapper.firstElementChild!;
+      const { height, width } = badge.getBoundingClientRect();
+      // Badge `sm`: a pill, 19px high; `min-w-14` gives the short words one width.
+      expect(parseFloat(getComputedStyle(badge).borderTopLeftRadius)).toBeGreaterThanOrEqual(
+        height
+      );
+      expect(Math.round(height)).toBe(19);
+      expect(width).toBeGreaterThanOrEqual(56);
+      expect(getComputedStyle(badge).fontFamily).not.toMatch(/mono/i);
+      if (wrapper.dataset.level !== 'unknown') widths.add(Math.round(width));
+    }
+    expect(widths.size).toBe(1);
+    inEachTheme(() => {
+      for (const wrapper of wrappers) expectTextContrastOnTint(wrapper.querySelector('bdi')!);
+    });
+  },
+};
+
+/** The test of the terminal tone, hidden: it keeps its monospace face and its small corners. */
+export const TerminalKeepsItsLook: Story = {
+  ...TerminalLevels,
+  tags: ['!dev', '!autodocs'],
+  play: ({ canvasElement }) => {
+    for (const badge of canvasElement.querySelectorAll<HTMLElement>('[data-level]')) {
+      const style = getComputedStyle(badge);
+      expect(style.fontFamily).toMatch(/mono/i);
+      expect(parseFloat(style.borderTopLeftRadius)).toBeLessThan(8);
+      expect(Math.round(badge.getBoundingClientRect().height)).toBe(18);
+    }
   },
 };

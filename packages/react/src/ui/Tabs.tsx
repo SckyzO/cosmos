@@ -12,8 +12,10 @@ import {
 import type { ElementType, KeyboardEvent, ReactNode } from 'react';
 import { directionOf } from '../hooks/direction';
 import { useControllableState } from '../hooks/useControllableState';
+import { useIndicator } from '../hooks/useIndicator';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useScrollFade } from '../hooks/useScrollFade';
+import { SlidingIndicator, type IndicatorAxes } from './SlidingIndicator';
 
 export type TabsOrientation = 'horizontal' | 'vertical';
 
@@ -56,6 +58,10 @@ type TabsContextValue = {
 
 const TabsContext = createContext<TabsContextValue | null>(null);
 
+// Whether the list's marker is in place: the active tab then leaves its own line or fill to it.
+// Until it is (server render, the first frame of a hydration) the tab draws it itself.
+const MarkedContext = createContext(false);
+
 const useTabs = () => {
   const ctx = useContext(TabsContext);
   if (!ctx) throw new Error('Tabs.* must be used inside <Tabs>');
@@ -91,9 +97,33 @@ const LIST_CLASSES: Record<TabsVariant, Record<TabsOrientation, string>> = {
   raised: TRACK_LIST,
 };
 
+// The marker that slides to the active tab, where the variant has one (`folder` joins its tab to
+// the panel: it has none). `axes` is what it follows; `className` is its look, and for an axis it
+// does not follow, its place and size.
+const MARKER: Record<
+  Exclude<TabsVariant, 'folder'>,
+  Record<TabsOrientation, { axes: IndicatorAxes; className: string }>
+> = {
+  // The line of the active tab: on the list's border, as the tab's own border sits.
+  underline: {
+    horizontal: { axes: 'inline', className: '-bottom-px h-0.5 bg-brand-500' },
+    vertical: { axes: 'block', className: '-inset-e-px w-0.5 bg-brand-500' },
+  },
+  pills: {
+    horizontal: { axes: 'both', className: 'rounded-lg bg-brand-500' },
+    vertical: { axes: 'both', className: 'rounded-lg bg-brand-500' },
+  },
+  raised: {
+    horizontal: { axes: 'both', className: 'rounded-lg bg-white shadow-sm dark:bg-gray-700' },
+    vertical: { axes: 'both', className: 'rounded-lg bg-white shadow-sm dark:bg-gray-700' },
+  },
+};
+
 type TriggerClasses = {
   base: string;
   active: string;
+  /** The active tab once the marker draws its line or fill: `active` without them. */
+  marked?: string;
   /** Structure of an inactive tab; its text colors come from `IDLE_TEXT` and `hover`. */
   inactive: string;
   /** Hover feedback of an inactive tab, left out of a disabled one. */
@@ -134,14 +164,17 @@ const BADGE_CLASSES: Record<TabsVariant, BadgeClasses> = {
   },
 };
 
-// The raised tab of `raised`, the same in both orientations.
+// The raised tab of `raised`, the same in both orientations: its text, and the raised fill the
+// marker draws once it is in place.
 const RAISED_ACTIVE = 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white';
+const RAISED_MARKED = 'text-gray-900 dark:text-white';
 
 const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasses>> = {
   underline: {
     horizontal: {
       base: '-mb-px border-b-2 px-3 py-row-8',
       active: 'border-brand-500 text-brand-600 dark:text-brand-400',
+      marked: 'border-transparent text-brand-600 dark:text-brand-400',
       inactive: 'border-transparent',
       hover: IDLE_HOVER,
     },
@@ -149,6 +182,8 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
       base: '-me-px justify-start rounded-s-lg border-e-2 px-3 py-row-8 text-start whitespace-nowrap',
       active:
         'border-brand-500 bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400',
+      marked:
+        'border-transparent bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400',
       inactive: 'border-transparent',
       hover: 'hover:bg-gray-50 dark:hover:bg-white/5 ' + IDLE_HOVER,
     },
@@ -180,6 +215,7 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
     horizontal: {
       base: 'rounded-lg px-3.5 py-row-6',
       active: 'bg-brand-500 text-white',
+      marked: 'text-white',
       inactive: '',
       hover: 'hover:text-gray-900 dark:hover:text-white',
       idle: 'text-gray-600 dark:text-gray-300',
@@ -188,6 +224,7 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
     vertical: {
       base: 'justify-start rounded-lg px-3 py-row-8 text-start whitespace-nowrap',
       active: 'bg-brand-500 text-white',
+      marked: 'text-white',
       inactive: '',
       hover: 'hover:text-gray-900 dark:hover:text-white',
       idle: 'text-gray-600 dark:text-gray-300',
@@ -202,6 +239,7 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
     horizontal: {
       base: 'rounded-lg px-3 py-row-6',
       active: RAISED_ACTIVE,
+      marked: RAISED_MARKED,
       inactive: '',
       hover: 'hover:text-gray-900 dark:hover:text-white',
       idle: 'text-gray-600 dark:text-gray-400',
@@ -209,6 +247,7 @@ const TRIGGER_CLASSES: Record<TabsVariant, Record<TabsOrientation, TriggerClasse
     vertical: {
       base: 'justify-start rounded-lg px-3 py-row-6 text-start whitespace-nowrap',
       active: RAISED_ACTIVE,
+      marked: RAISED_MARKED,
       inactive: '',
       hover: 'hover:text-gray-900 dark:hover:text-white',
       idle: 'text-gray-600 dark:text-gray-400',
@@ -316,6 +355,14 @@ const Root = ({
 const List = ({ children, className }: { children: ReactNode; className?: string }) => {
   const { orientation, variant, setFallbackTabId } = useTabs();
   const listRef = useRef<HTMLDivElement>(null);
+  // The line or fill of the active tab is one element that slides from tab to tab.
+  const hasMarker = variant !== 'folder';
+  const marker = useIndicator(
+    listRef,
+    { active: '[role="tab"][aria-selected="true"]', options: '[role="tab"]' },
+    hasMarker
+  );
+  const look = hasMarker ? MARKER[variant][orientation] : undefined;
   // With no tab selected (a value that matches none), every tab would be out of the tab
   // sequence: the first enabled one takes the tab stop until one is selected.
   useLayoutEffect(() => {
@@ -364,9 +411,15 @@ const List = ({ children, className }: { children: ReactNode; className?: string
       role="tablist"
       aria-orientation={orientation}
       onKeyDown={onKeyDown}
-      className={clsx(LIST_CLASSES[variant][orientation], className)}
+      // `relative isolate`: the marker is placed against the list and sits behind the tabs.
+      className={clsx(
+        hasMarker && 'relative isolate',
+        LIST_CLASSES[variant][orientation],
+        className
+      )}
     >
-      {children}
+      {look && <SlidingIndicator marker={marker} axes={look.axes} className={look.className} />}
+      <MarkedContext value={marker.box !== null}>{children}</MarkedContext>
     </div>
   );
   return orientation === 'vertical' ? list : <ScrollStrip>{list}</ScrollStrip>;
@@ -419,6 +472,7 @@ const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: Ta
   } = useTabs();
   const isActive = value === active;
   const styles = TRIGGER_CLASSES[variant][orientation];
+  const marked = useContext(MarkedContext);
   return (
     <button
       type="button"
@@ -436,7 +490,7 @@ const Trigger = ({ value, children, icon: Icon, badge, disabled, className }: Ta
         isActive && styles.activeFocus ? styles.activeFocus : 'focus-visible:focus-indicator',
         styles.base,
         isActive
-          ? styles.active
+          ? (marked && styles.marked) || styles.active
           : [styles.inactive, disabled ? DISABLED_TEXT : [styles.idle ?? IDLE_TEXT, styles.hover]],
         className
       )}

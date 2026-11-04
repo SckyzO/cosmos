@@ -64,7 +64,7 @@ or Enter to drop it, Escape to put it back; a live region announces each step. E
 an actions menu ("Move to" the other columns, "Move up", "Move down"), so the board works without
 dragging. `onCardOpen` makes the whole card a button, `onAddCard` adds an "Add card" button to each
 column, `renderCard` replaces what is inside a card (the grip and the actions menu stay), and
-`loading` shows skeleton columns. A column takes an `intent` for the dot before its title and an
+`loading` shows skeleton columns, and the board fades in when the cards arrive. A column takes an `intent` for the dot before its title and an
 `empty` node for when it has no cards. Below `sm` the columns scroll sideways, one column wide.
 
 Drag and drop is built on [`@dnd-kit/react`](https://dndkit.com), pinned to an exact version since it
@@ -101,7 +101,10 @@ colours it (`brand` by default, `violet` as a category colour that carries no me
   its time. Leave it unset in an app, where it is now and the line moves every minute; set it to
   freeze the calendar in a story or a test.
 - **Time.** An event with a time writes its start before its title on a month chip ("9:30 AM
-  Release 2.4", in the `locale`). An all-day event writes none.
+  Release 2.4", in the `locale`). An all-day event writes none. In a day cell narrower than 9rem
+  (about a tablet, 640 to 1000px) the title goes under the time, so it still reads. A multi-day
+  event writes its title once, on its first day: each later day has a bare chip, a coloured dot in
+  a pill, whose title is there for screen readers.
 - **All-day.** `allDay` is inferred: an event is all-day when `start` is at 00:00 and `end` is
   missing or at 00:00, so an event made of dates alone (`new Date(2026, 4, 7)`) stays all-day. For
   an all-day event `end` is the last day, included. Set `allDay` to force the answer either way: a
@@ -114,7 +117,10 @@ colours it (`brand` by default, `violet` as a category colour that carries no me
 ### Week and day
 
 The week and the day draw a grid of 24 hours, 48px each, in a scrolling area. It opens at 7 AM, or
-an hour before the first event of the period when that starts earlier. The area is as tall as the
+an hour before the first event of the period when that starts earlier. Events that arrive after the
+grid is drawn (a host that loads them per period, once `onDateChange` has fired) count the same: the
+grid goes to the first of them, unless the person has scrolled it themselves, in which case it
+stays where they left it. Moving on to another period keeps the scroll. The area is as tall as the
 card: give the card a height with `className` (`h-[640px]`) and the grid scrolls inside it, or leave
 it and the grid is 36rem tall. The day names stay in view at the top, with the all-day events
 under them as bars over the days they cover.
@@ -122,6 +128,7 @@ under them as bars over the days they cover.
 - **Overlaps.** Events that overlap sit side by side and share the width, as many columns as fit:
   72px each, and two at least. A group with more has the rest behind a "+N" button at its first
   hidden event, which opens the list of the whole day, the same one the month's "+N more" opens.
+  The button is at least 24px by 24px, and follows the page's density.
 - **Short and long events.** An event shorter than 20px (about 25 minutes) is drawn at 20px, on one
   line with its start time. One that runs past midnight is cut at 24:00, square where it is cut, and
   carries on at 00:00 the next day; a screen reader hears that it continues.
@@ -132,9 +139,13 @@ under them as bars over the days they cover.
   00:00 with `allDay: true`. Setting it also gives the grid one tab stop for a cursor on the slots:
   the arrow keys move it a day or 30 minutes (the arrows toward the start and the end of the line
   swap in right to left), Page Up and Page Down a week (a day, in the day view), Home and End to
-  the first and the last slot of the day, Enter or Space calls `onSlotClick`. A move past the
-  period shown goes to the next or the previous one. A status line under the grid says where the
-  cursor is. A click on a slot does not show the cursor, nor the line (the grid is focused by the
+  the first and the last slot of the day, Enter or Space calls `onSlotClick`. Up from the first
+  slot of a day goes to the all-day row of that day (Enter there calls it with `allDay: true`, the
+  arrows move along the row, Down comes back to the first slot). A move past the period shown goes
+  to the next or the previous one. A status line under the grid says where the cursor is, and it
+  is how a screen reader hears it: the grid is a plain group, not an `application`, so a screen
+  reader keeps its own reading keys over it, and its focus mode is the one that passes the arrows
+  to the grid. A click on a slot does not show the cursor, nor the line (the grid is focused by the
   pointer, not the keyboard): the first key pressed after it does. Without `onSlotClick` the grid is
   an area you can scroll, and nothing more.
 - **Keyboard and screen readers.** The hour grid is not an ARIA `grid`: events that overlap and run
@@ -294,18 +305,28 @@ the locale nor the zone, and keep the room of their text until then.
 <Countdown target="2026-03-01T09:00:00Z" onComplete={() => reload()} />
 ```
 
-- `DateTime` takes a `format` (`date`, `time`, `datetime`, `long`, `full`, or `Intl.DateTimeFormat`
-  options), a `locale` and a `timeZone`, and draws a `<time dateTime>`. `tooltip` adds the full date
-  and zone, and makes the `<time>` a tab stop so a keyboard reaches it.
+- `DateTime` takes a `format` (`date`, `time`, `datetime`, `long`, `full`, `short` for the numeric
+  date, `monthDay`, `weekday`, `iso` for `2026-01-15` in every locale, or `Intl.DateTimeFormat`
+  options), a `locale` and a `timeZone`, and draws a `<time dateTime>`. `hour12` forces the clock and
+  `showZone` adds the zone's short name after a time, as `Clock` does for `hour12`. `variant` is
+  `inline` (plain text), `stacked` (the date, and the time under it in a smaller muted line) or
+  `badge` (a neutral pill, built on `Badge`), and `icon` puts a Lucide icon before any of them.
+  `tooltip` adds the full date and zone, and makes the `<time>` a tab stop so a keyboard reaches
+  it.
 - `RelativeTime` reads "5 minutes ago", "yesterday", "in 2 days". Every instance shares one timer and
   wakes only when its text changes: each second in the first minute, each minute in the first hour,
   and rarely after, so a long list costs nothing.
 - `Clock` has the variants `inline`, `card` and `display`, and takes `hour12`, `showSeconds`,
   `showDate` and a `label` for the zone. It ticks on the second boundary. A world clock is a grid of
   `Clock`s.
-- `Countdown` has the variants `tiles`, `inline` and `compact`. `onComplete` is called once, at zero,
-  and the countdown stops there. `labels`, `shortLabels`, `label` and `completedLabel` translate its
-  text.
+- `Countdown` has the variants `tiles`, `inline`, `compact`, `card` and `display`. `card` is one
+  bordered card with a caption over the clock, like `Clock`'s, and `display` is huge digits for a
+  wall screen or a kiosk. `size` (`sm`, `md`, `lg`) sizes the tiles, and `units` picks which ones
+  `tiles`, `card` and `display` show: a unit left out rolls into the next smaller one, so without
+  days 2 days 4 hours read 52 hours. In `card` and `display` the days leave the clock once there are
+  none. `intent` colors the count, and `urgentBelow` (seconds left) turns it `danger` for the last
+  stretch, whatever the `intent`. `onComplete` is called once, at zero, and the countdown stops
+  there. `labels`, `shortLabels`, `label` and `completedLabel` translate its text.
 
 `Clock` and `Countdown` are `role="timer"`, which a screen reader does not announce as it changes.
 Every one of them takes `now`, which freezes it at that moment and sets no timer: use it for
@@ -325,6 +346,11 @@ the line: a `ProgressRing` next to a percentage. The figure keeps at least 9rem,
 narrow for both the chart drops under it, at the start of the line, and nothing widens the page. The
 default, `chartPosition="bottom"`, is the chart under the delta at the full width of the card, for a
 sparkline.
+
+With `href` or `onClick` the whole card is one link or button: its border turns to the accent and it
+rises 2px with a soft shadow under the pointer, and rises 2px on keyboard focus, over 200ms (on
+focus the ring stands where the shadow would). While `loading`, the figures are skeletons; when they arrive
+they fade in over 200ms, unless the card had them from the first render.
 
 `featured` is for the one figure a dashboard leads with. The card takes the tinted surface of its
 meaning, the accent for a neutral card and the intent's color for `warning` and `danger`, and its

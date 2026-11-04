@@ -52,6 +52,22 @@ const arrowPosition = (side: AnchorSide): string => {
   }
 };
 
+// Where a hidden tooltip waits: 4px toward its trigger, on the side the box opened on (as the
+// screen sees it, after any flip, so it mirrors in right to left on its own). It slides out to
+// its place as it fades in, and back as it fades out.
+const tuckedToward = (side: AnchorSide): string => {
+  switch (side) {
+    case 'top':
+      return 'translate-y-1';
+    case 'bottom':
+      return '-translate-y-1';
+    case 'left':
+      return 'translate-x-1';
+    case 'right':
+      return '-translate-x-1';
+  }
+};
+
 const VARIANT_BOX: Record<TooltipVariant, string> = {
   dark: 'bg-gray-900 text-white shadow-[0_0_20px_rgba(0,0,0,0.35)] dark:bg-gray-700',
   white:
@@ -220,9 +236,16 @@ export const Tooltip = ({
             role="tooltip"
             style={anchored ?? UNPLACED}
             className={clsx(
-              'pointer-events-none fixed block w-max rounded-lg px-3 py-2 text-xs leading-relaxed font-normal whitespace-normal transition-opacity duration-150',
+              'pointer-events-none fixed block w-max rounded-lg px-3 py-2 text-xs leading-relaxed font-normal whitespace-normal transition-[opacity,translate]',
               TOOLTIP_Z,
-              open ? 'opacity-100' : 'opacity-0',
+              // In over the fast duration easing out, out over the shorter exit easing in. It stays
+              // mounted while hidden (`aria-describedby` points at it), so there is nothing to wait for.
+              open
+                ? 'translate-none opacity-100 duration-(--cosmos-motion-fast) ease-(--cosmos-ease-out)'
+                : clsx(
+                    'opacity-0 duration-(--cosmos-motion-exit) ease-(--cosmos-ease-in)',
+                    tuckedToward(side)
+                  ),
               maxWidth,
               intent ? INTENT_BOX[intent] : VARIANT_BOX[variant]
             )}

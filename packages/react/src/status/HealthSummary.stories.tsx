@@ -250,3 +250,44 @@ export const BannerAndCompactFollowTheReadingDirection: Story = {
     );
   },
 };
+
+// A wrapped line may end with the separator, never start with it.
+export const SeparatorNeverStartsALine: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div data-testid="box" style={{ width: 300 }}>
+      <div className="flex flex-col gap-3">
+        <HealthSummary checks={DEGRADED} now={HEALTH_NOW} ariaLabel="Banner" />
+        <HealthSummary checks={DEGRADED} now={HEALTH_NOW} ariaLabel="Compact" variant="compact" />
+      </div>
+    </div>
+  ),
+  play: ({ canvas }) => {
+    const box = canvas.getByTestId('box');
+    const dots: { text: Text; at: number; block: HTMLElement }[] = [];
+    const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const text = node as Text;
+      let block = text.parentElement!;
+      while (/^inline/.test(getComputedStyle(block).display)) block = block.parentElement!;
+      for (let at = text.data.indexOf('·'); at >= 0; at = text.data.indexOf('·', at + 1)) {
+        dots.push({ text, at, block });
+      }
+    }
+    expect(dots.length).toBeGreaterThanOrEqual(2);
+    // Every width where the line can break next to a dot, one pixel at a time.
+    for (let width = 160; width <= 520; width++) {
+      box.style.width = `${width}px`;
+      for (const { text, at, block } of dots) {
+        const range = document.createRange();
+        range.setStart(text, at);
+        range.setEnd(text, at + 1);
+        const lineStart = block.getBoundingClientRect().left;
+        expect(
+          range.getBoundingClientRect().left - lineStart,
+          `${width}px: a line starts with the separator`
+        ).toBeGreaterThan(1);
+      }
+    }
+  },
+};

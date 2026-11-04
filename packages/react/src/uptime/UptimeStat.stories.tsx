@@ -274,3 +274,25 @@ export const FiguresRunFromTheStartOfTheLine: Story = {
     expectMirrored(canvasElement, (box) => within(box).getByText('1 year'));
   },
 };
+
+// The certificate figure is one phrase: a narrow cell moves it as a whole, and never leaves
+// "left" alone on a line under "25 days".
+export const CertificateFigureNeverWraps: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { certificate: { daysLeft: 25, warnBelow: 30 } },
+  render: (args) => (
+    <div data-testid="box" style={{ width: 400 }}>
+      <UptimeStat {...args} />
+    </div>
+  ),
+  play: ({ canvas }) => {
+    const box = canvas.getByTestId('box');
+    const figure = canvas.getByText('25 days left');
+    const range = document.createRange();
+    range.selectNodeContents(figure);
+    for (let width = 160; width <= 420; width += 2) {
+      box.style.width = `${width}px`;
+      expect(range.getClientRects().length, `${width}px: the figure wraps`).toBe(1);
+    }
+  },
+};

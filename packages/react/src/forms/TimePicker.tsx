@@ -10,6 +10,7 @@ import {
   fieldClass,
   type FieldSize,
 } from './fieldRecipe';
+import { FieldMessage } from './FieldMessage';
 import { RequiredMark } from './RequiredMark';
 
 export type TimePickerProps = Omit<
@@ -120,16 +121,16 @@ export function TimePicker({
           {...rest}
         />
       </div>
-      {(error || description) && (
-        <p
-          className={clsx(
-            'mt-1 text-xs',
-            error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
-          )}
-        >
-          {error ?? description}
-        </p>
-      )}
+      <FieldMessage
+        show={!!(error || description)}
+        as="p"
+        className={clsx(
+          'mt-1 text-xs',
+          error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+        )}
+      >
+        {error ?? description}
+      </FieldMessage>
     </div>
   );
 }

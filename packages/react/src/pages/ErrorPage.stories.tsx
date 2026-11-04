@@ -76,3 +76,17 @@ export const BigCodeReachesThreeToOne: Story = {
     inEachTheme(() => expectGraphicContrast(watermark, 'color', 3));
   },
 };
+
+// The numeral fills its line box down to the baseline, so a title that rides up over that box
+// touches the digits.
+export const TitleSitsBelowTheCode: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { code: 404, title: 'Page not found' },
+  play: async ({ canvas, canvasElement }) => {
+    const code = canvasElement.querySelector('p[aria-hidden="true"]')!.getBoundingClientRect();
+    const title = canvas
+      .getByRole('heading', { name: '404: Page not found' })
+      .getBoundingClientRect();
+    await expect(title.top).toBeGreaterThanOrEqual(code.bottom);
+  },
+};

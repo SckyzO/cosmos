@@ -1,5 +1,4 @@
 import { clsx } from 'clsx';
-import { ChevronDown } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Checkbox } from '../forms/Checkbox';
 import { Button } from '../ui/Button';
@@ -8,8 +7,10 @@ import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
 import { Sk } from '../feedback/Skeleton';
 import { AppLink } from '../ui/AppLink';
+import { CardDetail } from './ExpandedDetail';
 import { detailRowId } from './expandedRows';
-import { DIMMED, LoadingVeil } from './LoadingVeil';
+import { DIMMED, LoadingVeil, UNDIMMED } from './LoadingVeil';
+import { useAfterSkeleton } from '../feedback/useAfterSkeleton';
 import { RowChevron } from './RowChevron';
 import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import {
@@ -91,6 +92,7 @@ export const DataTableMobileCards = <T,>({
   'aria-labelledby': ariaLabelledBy,
 }: DataTableMobileCardsProps<T>) => {
   const { title, pairs } = splitMobileColumns(columns);
+  const arrive = useAfterSkeleton(loading);
 
   if (loading) {
     return (
@@ -114,7 +116,10 @@ export const DataTableMobileCards = <T,>({
 
   if ((error && !dimmed) || rows.length === 0) {
     return (
-      <div className="flex justify-center px-4 sm:hidden">
+      <div
+        onAnimationEnd={arrive.onAnimationEnd}
+        className={clsx('flex justify-center px-4 sm:hidden', arrive.className)}
+      >
         {error ? (
           <ErrorState message={error} onRetry={onRetry} />
         ) : (
@@ -130,7 +135,13 @@ export const DataTableMobileCards = <T,>({
       aria-label={ariaLabel}
       aria-labelledby={ariaLabelledBy}
       inert={dimmed || undefined}
-      className={clsx(ROW_DIVIDER, !dimmed && 'sm:hidden', dimmed && DIMMED)}
+      onAnimationEnd={arrive.onAnimationEnd}
+      className={clsx(
+        ROW_DIVIDER,
+        !dimmed && 'sm:hidden',
+        dimmed ? DIMMED : UNDIMMED,
+        arrive.className
+      )}
     >
       {rows.map((row) => {
         const key = rowKey(row);
@@ -179,7 +190,7 @@ export const DataTableMobileCards = <T,>({
                   variant="ghost"
                   size="lg"
                   shape="square"
-                  icon={open ? ChevronDown : RowChevron}
+                  icon={RowChevron}
                   aria-expanded={open}
                   aria-controls={open ? detailId : undefined}
                   aria-label={`${open ? 'Hide' : 'Show'} details for ${key}`}
@@ -231,13 +242,8 @@ export const DataTableMobileCards = <T,>({
                 ))}
               </dl>
             )}
-            {open && renderExpandedRow && (
-              <div
-                id={detailId}
-                className="mt-3 border-t border-dashed border-gray-200 pt-3 text-sm dark:border-gray-700"
-              >
-                {renderExpandedRow(row)}
-              </div>
+            {renderExpandedRow && (
+              <CardDetail id={detailId} open={open} render={() => renderExpandedRow(row)} />
             )}
           </li>
         );
@@ -245,11 +251,12 @@ export const DataTableMobileCards = <T,>({
     </ul>
   );
 
-  if (!dimmed) return list;
+  // One wrapper in both states, so the list stays where it is and its dimming has a before to
+  // come from: it waits and fades like the rows of the table.
   return (
-    <div className="relative sm:hidden">
+    <div className={dimmed ? 'relative sm:hidden' : 'contents'}>
       {list}
-      <LoadingVeil sticky />
+      {dimmed && <LoadingVeil sticky />}
     </div>
   );
 };

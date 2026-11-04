@@ -331,7 +331,7 @@ function SiteFooterBottom({
               'order-last mt-2 basis-full justify-between gap-x-6 gap-y-2 border-t pt-5',
               RULE[theme]
             )
-          : 'basis-full gap-x-4 gap-y-1 lg:basis-auto',
+          : 'basis-full gap-x-4 gap-y-1 lg:basis-auto lg:only:grow lg:only:justify-between',
         className
       )}
       {...rest}

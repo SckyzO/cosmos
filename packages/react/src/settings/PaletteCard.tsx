@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import type { Ref } from 'react';
+import { CARD_LIFT } from '../ui/cardLift';
 import { paletteLabelColor } from './paletteLabelColor';
 import { PICKER_SELECTED_BORDER, SelectedMark } from './SelectedMark';
 
@@ -64,7 +65,10 @@ export const PaletteCard = ({
       tabIndex={tabIndex}
       aria-label={meta.label}
       className={clsx(
-        'group focus-visible:focus-indicator relative flex flex-col overflow-hidden rounded-xl border-2 transition-all',
+        // No `overflow-hidden`: it would cut the strip that keeps the card's place while it is
+        // lifted, so each part clips and rounds its own corners, a border's width inside the card's.
+        'group focus-visible:focus-indicator relative flex flex-col rounded-xl border-2 transition-all',
+        CARD_LIFT,
         active
           ? clsx(PICKER_SELECTED_BORDER, 'shadow-sm')
           : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600',
@@ -73,7 +77,7 @@ export const PaletteCard = ({
     >
       {/* Mini mockup */}
       <div
-        className="flex h-16 w-full flex-col gap-0.5 p-2"
+        className="flex h-16 w-full flex-col gap-0.5 overflow-hidden rounded-t-[calc(var(--radius-xl)-2px)] p-2"
         style={{ backgroundColor: meta.preview.bg }}
       >
         <span className="h-2 w-8 rounded-sm" style={{ backgroundColor: meta.preview.border }} />
@@ -88,7 +92,7 @@ export const PaletteCard = ({
 
       {/* Label row — flex-1 fills the card when a taller neighbor stretches the grid row. */}
       <div
-        className="flex flex-1 items-center justify-between px-2.5 py-1.5"
+        className="flex flex-1 items-center justify-between overflow-hidden rounded-b-[calc(var(--radius-xl)-2px)] px-2.5 py-1.5"
         style={{
           backgroundColor: meta.preview.surface,
           borderTop: `1px solid ${meta.preview.border}`,

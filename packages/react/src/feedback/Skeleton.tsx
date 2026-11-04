@@ -30,7 +30,13 @@ export const Sk = ({
   className,
 }: SkProps) => (
   <Tag
-    className={clsx('block animate-pulse bg-gray-200 dark:bg-gray-700', h, w, round, className)}
+    className={clsx(
+      'block animate-pulse bg-gray-200 motion-reduce:animate-none dark:bg-gray-700',
+      h,
+      w,
+      round,
+      className
+    )}
   />
 );
 
@@ -98,7 +104,7 @@ export type SkeletonListProps = {
 };
 
 export const SkeletonList = ({ rows = 4, showAction = true, className }: SkeletonListProps) => (
-  <div className={clsx('animate-pulse space-y-0', className)}>
+  <div className={clsx('animate-pulse space-y-0 motion-reduce:animate-none', className)}>
     {Array.from({ length: rows }).map((_, i) => (
       <div
         key={i}

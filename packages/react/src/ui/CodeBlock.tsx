@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Clipboard } from './Clipboard';
+import { SectionLabel } from './SectionLabel';
 import { parseCode, parseLineRanges, splitLines, type CodeRow } from './codeLines';
 
 export type CodeBlockProps = {
@@ -185,16 +186,10 @@ export const CodeBlock = ({
               <span className="truncate text-xs font-medium text-gray-700 dark:text-gray-200">
                 <bdi>{filename}</bdi>
               </span>
-              {language && (
-                <span className="text-3xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                  {language}
-                </span>
-              )}
+              {language && <SectionLabel as="span">{language}</SectionLabel>}
             </span>
           ) : (
-            <span className="text-3xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
-              {language}
-            </span>
+            <SectionLabel as="span">{language}</SectionLabel>
           )}
           {/* When a title bar is present, the copy button lives inside it so the
            *  bar doubles as the action surface — matches GitHub / Carbon / TUI. */}

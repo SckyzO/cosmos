@@ -15,6 +15,7 @@ import { Checkbox } from '../forms/Checkbox';
 import { useControllableState } from '../hooks/useControllableState';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { AppLink } from '../ui/AppLink';
+import { IconButton, iconButtonClass } from '../ui/IconButton';
 import { Menu, type MenuItemIntent } from '../ui/Menu';
 
 // The `card` mode of the list reaches its items without a prop on each of them.
@@ -285,13 +286,6 @@ export type StackedListItemProps = Omit<ComponentPropsWithRef<'li'>, 'title' | '
 // Below `sm`, and on a screen with no hover to reveal anything, the actions are one menu.
 const FOLD_ACTIONS = '(width < 40rem), (hover: none)';
 
-const ICON_BUTTON =
-  'focus-visible:focus-indicator flex h-ctrl-28 w-ctrl-28 shrink-0 items-center justify-center rounded-lg transition-colors';
-const ICON_BUTTON_NEUTRAL =
-  'text-[var(--color-text-muted)] hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/10';
-const ICON_BUTTON_DANGER =
-  'text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10';
-
 // A focus ring on the whole row, from the title only: the checkbox, star and actions draw their own.
 const RING_FROM_TITLE =
   'has-[[data-row-main]:focus-visible]:focus-indicator has-[[data-row-main]:focus-visible]:ring-inset';
@@ -420,51 +414,49 @@ function StackedListItem({
   });
 
   const starNode = starrable && (
-    <button
-      type="button"
+    <IconButton
+      size="sm"
       {...labelled('star')}
       aria-pressed={starred}
       onClick={() => setStarred(!starred)}
-      className={clsx(
-        ICON_BUTTON,
-        ICON_BUTTON_NEUTRAL,
-        // A set star always shows; an empty one waits for the row to be hovered or focused, and
-        // is shown where there is no hover to wait for.
-        !starred &&
-          'opacity-0 group-focus-within/row:opacity-100 group-hover/row:opacity-100 max-sm:opacity-100 [@media(hover:none)]:opacity-100'
-      )}
+      // A set star always shows; an empty one waits for the row to be hovered or focused, and
+      // is shown where there is no hover to wait for.
+      className={
+        !starred
+          ? 'opacity-0 group-focus-within/row:opacity-100 group-hover/row:opacity-100 max-sm:opacity-100 [@media(hover:none)]:opacity-100'
+          : undefined
+      }
     >
       <span id={`${id}-star`} className="sr-only">
         Star
       </span>
       {/* warning-600, as on `Rating`: it holds 3:1 on a sand page, where amber-600 does not. */}
       <Star
-        className={clsx('size-4', starred && 'text-warning-600 fill-current dark:text-amber-400')}
+        className={starred ? 'text-warning-600 fill-current dark:text-amber-400' : undefined}
         aria-hidden
       />
-    </button>
+    </IconButton>
   );
 
+  // Transparent, not gone, so a keyboard reaches them; and out of the pointer's way while they are,
+  // or a tap near the time, on a touch screen that reports `(hover: hover)`, would hit one unseen.
   const actionButtons = inlineActions && (
-    <div className="relative col-start-1 row-start-1 -my-0.5 flex items-center gap-x-0.5 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100">
+    <div className="pointer-events-none relative col-start-1 row-start-1 -my-0.5 flex items-center gap-x-0.5 opacity-0 transition-opacity group-focus-within/row:pointer-events-auto group-focus-within/row:opacity-100 group-hover/row:pointer-events-auto group-hover/row:opacity-100">
       {rowActions.map(({ label, icon: Icon, intent, disabled, onSelect }, i) => (
-        <button
+        <IconButton
           key={label}
-          type="button"
+          size="sm"
+          intent={intent === 'danger' ? 'danger' : 'neutral'}
           disabled={disabled}
           aria-labelledby={`${id}-a${i} ${titleId}`}
           onClick={onSelect}
-          className={clsx(
-            ICON_BUTTON,
-            intent === 'danger' ? ICON_BUTTON_DANGER : ICON_BUTTON_NEUTRAL,
-            disabled && 'cursor-not-allowed opacity-50'
-          )}
+          className={disabled ? 'cursor-not-allowed opacity-50' : undefined}
         >
           <span id={`${id}-a${i}`} className="sr-only">
             {label}
           </span>
-          <Icon className="size-4" aria-hidden />
-        </button>
+          <Icon aria-hidden />
+        </IconButton>
       ))}
     </div>
   );
@@ -473,7 +465,7 @@ function StackedListItem({
     <Menu align="end">
       <Menu.Trigger
         aria-labelledby={`${id}-more ${titleId}`}
-        className={clsx(ICON_BUTTON, ICON_BUTTON_NEUTRAL)}
+        className={iconButtonClass({ size: 'sm' })}
       >
         <span id={`${id}-more`} className="sr-only">
           More actions
@@ -556,7 +548,9 @@ function StackedListItem({
           )}
         />
       )}
-      <div className="flex min-w-0 gap-x-4">
+      {/* `flex-auto`: the block fills the row, so a timestamp at its end sits at the row's end
+          whatever the length of the text, with or without content after it. */}
+      <div className="flex min-w-0 flex-auto gap-x-4">
         {checkable && (
           // The first control of the row in tab order, so it is raised above the title's overlay
           // by hand. The label is a 26px target around the 18px box; the negative margins keep

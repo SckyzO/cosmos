@@ -4,15 +4,9 @@ import { expect, fireEvent, fn, userEvent, within } from 'storybook/test';
 import { AvatarUploader } from './AvatarUploader';
 import { expectTextContrast, inEachTheme } from '../storybook-helpers';
 
-const SAMPLE_AVATAR =
-  'data:image/svg+xml;utf8,' +
-  encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">
-       <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs>
-       <rect width="128" height="128" fill="url(#g)"/>
-       <text x="50%" y="58%" font-family="sans-serif" font-size="56" fill="white" text-anchor="middle">JD</text>
-     </svg>`
-  );
+// "Lorelei" by Lisa Wischofsky, CC0 1.0, via DiceBear (https://www.dicebear.com/styles/lorelei/).
+// `new URL(…, import.meta.url)` lets Vite emit it as an asset, base path included.
+const SAMPLE_AVATAR = new URL('../storybook-assets/avatar-woman.svg', import.meta.url).href;
 
 const meta = {
   title: 'Forms/Avatar Uploader',
@@ -20,7 +14,7 @@ const meta = {
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
   args: {
-    name: 'John Doe',
+    name: 'Sophia Laurent',
     onUpload: fn(),
     onRemove: fn(),
   },

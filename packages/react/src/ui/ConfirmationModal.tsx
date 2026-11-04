@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { AlertTriangle, Save, Trash2, X } from 'lucide-react';
 import { type ElementType, useId, useState } from 'react';
 import { Input } from '../forms/Input';
+import type { BackdropVariant } from './Backdrop';
 import { Button } from './Button';
 import { Dialog } from './Dialog';
 import { INTENT_STYLE, type Intent } from './intent';
@@ -36,6 +37,11 @@ export type ConfirmationModalProps = {
   requireText?: string;
   /** Label of the `requireText` field, for translations. Default `Type "<requireText>" to confirm`. */
   requireTextLabel?: string;
+  /**
+   * The scrim behind the dialog: `dim` (default) is the colour alone, `blur` blurs the page by
+   * 8px under a light veil, `blur-dark` under a dark one. See `Backdrop`.
+   */
+  backdrop?: BackdropVariant;
 };
 
 /**
@@ -48,10 +54,21 @@ export type ConfirmationModalProps = {
  * and described by its message. The Stay button, the close icon, the backdrop
  * and `Escape` call `onClose`.
  */
-export const ConfirmationModal = ({ open, onClose, ...content }: ConfirmationModalProps) => {
+export const ConfirmationModal = ({
+  open,
+  onClose,
+  backdrop,
+  ...content
+}: ConfirmationModalProps) => {
   const messageId = useId();
   return (
-    <Dialog open={open} onClose={onClose} role="alertdialog" ariaDescribedBy={messageId}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      backdrop={backdrop}
+      role="alertdialog"
+      ariaDescribedBy={messageId}
+    >
       <ConfirmationContent {...content} onClose={onClose} messageId={messageId} />
     </Dialog>
   );
@@ -76,7 +93,7 @@ const ConfirmationContent = ({
   messageId,
 }: Omit<ConfirmationModalProps, 'open'> & { messageId: string }) => {
   const titleId = useDialogTitleId();
-  // Rendered inside the Dialog, which unmounts its content on close: the field starts empty.
+  // Rendered inside the Dialog, which unmounts its content once it has closed: the field starts empty.
   const [typed, setTyped] = useState('');
   const danger = intent === 'danger';
   const confirmed = requireText === undefined || typed === requireText;

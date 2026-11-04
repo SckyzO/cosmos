@@ -16,6 +16,7 @@ import {
   toggleCell,
   toggleScope,
   triStateOf,
+  type FocusMove,
   type GridCell,
   type PermissionGridColumn,
   type PermissionGridGroup,
@@ -30,13 +31,17 @@ export type { PermissionGridColumn, PermissionGridGroup, PermissionGridLabels };
 export type { PermissionGridRow } from './permissionGridModel';
 
 export type PermissionGridProps = {
-  /** The permissions, grouped by area: a header row per group, then one row per permission. */
+  /**
+   * The permissions, grouped by area: a header row per group, then one row per permission. Row ids
+   * are unique across the whole grid, group ids among the groups.
+   */
   groups: PermissionGridGroup[];
   /** What the permissions are granted for: actions (view, edit, delete) or roles. */
   columns: PermissionGridColumn[];
   /**
-   * The granted cells, as `cellKey(rowId, columnId)` keys: the row id, a colon and the column id.
-   * With `defaultValue` and `onChange(value)`, as for every control. Keys the grid does not own (a
+   * The granted cells, as `cellKey(rowId, columnId)` keys: the row id, a colon and the column id
+   * (a colon or a backslash in a column id is escaped: build the keys with `cellKey`). With
+   * `defaultValue` and `onChange(value)`, as for every control. Keys the grid does not own (a
    * read-only column's grants, a cell that does not apply) are kept as they are.
    */
   value?: string[];
@@ -111,6 +116,11 @@ export const PermissionGrid = ({
   const gridRef = useRef<HTMLTableElement>(null);
   const errorId = useId();
   const [active, setActive] = useState<Position>({ row: 0, col: 0 });
+  // The column Up and Down keep aiming at through a row with one cell (a group's header), where
+  // the focus has to leave it. Unset: the column the focus is on.
+  const wantedColumn = useRef<number | null>(null);
+  // The focus is being moved by a key: the focus event that follows is not a new choice of column.
+  const keyMove = useRef(false);
   const [announcement, setAnnouncement] = useState('');
 
   const cells = useMemo(() => gridCells(groups, columns, readOnly), [groups, columns, readOnly]);
@@ -150,6 +160,14 @@ export const PermissionGrid = ({
     target.closest('td, th')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
 
+  const moveWith = (from: Position, move: FocusMove) => {
+    const column = wantedColumn.current ?? from.col;
+    wantedColumn.current = move === 'up' || move === 'down' ? column : null;
+    keyMove.current = true;
+    focusAt(moveFocus(rowLengths, from, move, column));
+    keyMove.current = false;
+  };
+
   const positionOf = (target: EventTarget): Position | null => {
     const element = (target as HTMLElement).closest<HTMLElement>('[data-grid-row]');
     return element
@@ -162,12 +180,13 @@ export const PermissionGrid = ({
     const move = from && focusMoveOf(event.key, event, directionOf(gridRef.current));
     if (!from || !move) return;
     event.preventDefault();
-    focusAt(moveFocus(rowLengths, from, move));
+    moveWith(from, move);
   };
 
   // Clicking a box focuses it in most browsers; the position follows the focus either way.
   const onFocus = (event: FocusEvent<HTMLTableElement>) => {
     const position = positionOf(event.target);
+    if (!keyMove.current) wantedColumn.current = null;
     if (position) {
       setActive((current) =>
         current.row === position.row && current.col === position.col ? current : position

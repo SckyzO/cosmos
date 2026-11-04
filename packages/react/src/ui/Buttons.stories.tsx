@@ -12,7 +12,8 @@ import {
   mirroredIcon,
   textLines,
 } from '../storybook-helpers';
-import { Button } from './Button';
+import { tokenMs, transitionMs, valueWhile } from '../storybook-motion';
+import { Button, type ButtonSize } from './Button';
 import { SectionCard } from '../templates/SectionCard';
 
 // Icons that point along the line turn around in right to left.
@@ -31,7 +32,6 @@ type Story = StoryObj<typeof meta>;
 
 const EMPHASES = ['primary', 'secondary', 'ghost', 'soft'] as const;
 const INTENTS = ['brand', 'success', 'warning', 'danger'] as const;
-const SIZES = ['xs', 'sm', 'md', 'lg', 'xl'] as const;
 
 const INTENT_LABEL = {
   brand: 'Connect',
@@ -40,8 +40,18 @@ const INTENT_LABEL = {
   danger: 'Disconnect',
 } as const;
 
-// Width and height of an icon-only button, by size: 1.75, 2, 2.25, 2.75 and 3rem.
-const ICON_ONLY_PX = { xs: 28, sm: 32, md: 36, lg: 44, xl: 48 } as const;
+// Width and height of an icon-only button, by size: 1.75, 2, 2.25, 2.75, 3, 3.5 and 4rem. Every
+// size is listed (the compiler checks it), and the stories read their sizes from here.
+const ICON_ONLY_PX = {
+  xs: 28,
+  sm: 32,
+  md: 36,
+  lg: 44,
+  xl: 48,
+  '2xl': 56,
+  '3xl': 64,
+} as const satisfies Record<ButtonSize, number>;
+const SIZES = Object.keys(ICON_ONLY_PX) as ButtonSize[];
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
   <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
@@ -188,44 +198,49 @@ export const LoadingBlocksClick: Story = {
   },
 };
 
-// TUI Plus pattern "Primary buttons" — 5 sizes (xs/sm/md/lg/xl) of primary.
+// TUI Plus pattern "Primary buttons" — the 7 sizes of primary.
 export const PrimarySizes: Story = {
   render: () => (
     <Wrap>
-      <SectionCard title="Primary — 5 sizes">
+      <SectionCard title="Primary — 7 sizes">
         <div className="flex flex-wrap items-center gap-3">
-          <Button size="xs">Button text</Button>
-          <Button size="sm">Button text</Button>
-          <Button size="md">Button text</Button>
-          <Button size="lg">Button text</Button>
-          <Button size="xl">Button text</Button>
+          {SIZES.map((size) => (
+            <Button key={size} size={size}>
+              Button text
+            </Button>
+          ))}
         </div>
       </SectionCard>
     </Wrap>
   ),
 };
 
-// TUI Plus pattern "Secondary buttons" — 5 sizes of secondary.
+/** Each size is its height (28px to 64px), and the text and the icon grow with it. */
+export const PrimarySizesChecks: Story = {
+  ...PrimarySizes,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const buttons = canvas.getAllByRole('button');
+    await expect(buttons.map((button) => button.getBoundingClientRect().height)).toEqual(
+      SIZES.map((size) => ICON_ONLY_PX[size])
+    );
+    await expect(buttons.map((button) => parseFloat(getComputedStyle(button).fontSize))).toEqual([
+      12, 12, 14, 16, 16, 18, 20,
+    ]);
+  },
+};
+
+// TUI Plus pattern "Secondary buttons" — the 7 sizes of secondary.
 export const SecondarySizes: Story = {
   render: () => (
     <Wrap>
-      <SectionCard title="Secondary — 5 sizes">
+      <SectionCard title="Secondary — 7 sizes">
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="secondary" size="xs">
-            Button text
-          </Button>
-          <Button variant="secondary" size="sm">
-            Button text
-          </Button>
-          <Button variant="secondary" size="md">
-            Button text
-          </Button>
-          <Button variant="secondary" size="lg">
-            Button text
-          </Button>
-          <Button variant="secondary" size="xl">
-            Button text
-          </Button>
+          {SIZES.map((size) => (
+            <Button key={size} variant="secondary" size={size}>
+              Button text
+            </Button>
+          ))}
         </div>
       </SectionCard>
     </Wrap>
@@ -236,27 +251,46 @@ export const SecondarySizes: Story = {
 export const SoftSizes: Story = {
   render: () => (
     <Wrap>
-      <SectionCard title="Soft — 5 sizes">
+      <SectionCard title="Soft — 7 sizes">
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="soft" size="xs">
-            Button text
-          </Button>
-          <Button variant="soft" size="sm">
-            Button text
-          </Button>
-          <Button variant="soft" size="md">
-            Button text
-          </Button>
-          <Button variant="soft" size="lg">
-            Button text
-          </Button>
-          <Button variant="soft" size="xl">
-            Button text
-          </Button>
+          {SIZES.map((size) => (
+            <Button key={size} variant="soft" size={size}>
+              Button text
+            </Button>
+          ))}
         </div>
       </SectionCard>
     </Wrap>
   ),
+};
+
+/** The two large sizes take their height from the density tokens, like the other five. */
+export const LargeSizesFollowDensity: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div>
+      {(['compact', 'default', 'comfortable'] as const).map((density) => (
+        <div key={density} data-density={density} className="flex items-center gap-3">
+          <Button size="2xl">{density} 2xl</Button>
+          <Button size="3xl">{density} 3xl</Button>
+          <Button size="3xl" shape="square" icon={Plus} aria-label={`${density} square`} />
+        </div>
+      ))}
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const box = (name: string) => canvas.getByRole('button', { name }).getBoundingClientRect();
+    for (const [density, delta] of [
+      ['compact', -4],
+      ['default', 0],
+      ['comfortable', 4],
+    ] as const) {
+      await expect(box(`${density} 2xl`).height).toBe(56 + delta);
+      await expect(box(`${density} 3xl`).height).toBe(64 + delta);
+      // An icon-only button is as wide as it is tall.
+      await expect(box(`${density} square`).width).toBe(64 + delta);
+    }
+  },
 };
 
 // TUI Plus pattern "Rounded primary/secondary" — pill-shaped.
@@ -478,10 +512,10 @@ export const LinkVariantChecks: Story = {
           await expect(style.getPropertyValue(`padding-${side.toLowerCase()}`)).toBe('0px');
           await expect(style.getPropertyValue(`margin-${side.toLowerCase()}`)).toBe('0px');
         }
-        // No fixed height: the box is its line of text, shorter than the smallest button (28px).
+        // No fixed height: the box is its line of text, shorter than a button of the same size.
         const box = button.getBoundingClientRect();
         await expect(box.height).toBeCloseTo(parseFloat(style.lineHeight), 0);
-        await expect(box.height).toBeLessThan(ICON_ONLY_PX.xs);
+        await expect(box.height).toBeLessThan(ICON_ONLY_PX[size]);
       }
       // `size` sets the text size.
       await expect(fontSize(intent, 'md')).toBeGreaterThan(fontSize(intent, 'xs'));
@@ -731,7 +765,7 @@ export const FocusShowsRingInDark: Story = {
 
 export const FocusShowsRingInLight: Story = {
   ...FocusShowsRingInDark,
-  tags: ['!dev'],
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 
@@ -806,5 +840,141 @@ export const LabelKeepsOneLine: Story = {
       const icon = button.querySelector('svg')!.getBoundingClientRect();
       await expect(Math.round(icon.width)).toBe(Math.round(icon.height));
     }
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+/** A press pushes the button 1px down, and it comes back in 80 ms. Press and hold to see it. */
+export const PressPushesDown: Story = {
+  tags: ['!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => (
+    <Wrap>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button>Primary</Button>
+        <Button variant="secondary">Secondary</Button>
+        <Button variant="ghost">Ghost</Button>
+        <Button variant="soft" icon={Plus}>
+          Soft
+        </Button>
+        <Button shape="circle" icon={Plus} aria-label="Add" />
+        <Button disabled>Disabled</Button>
+        <Button loading>Loading</Button>
+      </div>
+    </Wrap>
+  ),
+};
+
+// What a press does to the button, read from the rule of the page: a real pointer held down cannot
+// be simulated from a play function, so `:active` is read as the rule declares it.
+const pressed = (button: HTMLElement) => valueWhile(button, ':active', 'translate');
+const PUSHED = '0px 1px';
+
+/** Every variant, shape and size but `link` moves 1px down while pressed; the others hold still. */
+export const PressMovesOneStepDown: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="flex flex-wrap items-center gap-3">
+        {EMPHASES.map((variant) => (
+          <Fragment key={variant}>
+            {INTENTS.map((intent) => (
+              <Button key={intent} variant={variant} intent={intent}>
+                {`${variant} ${intent}`}
+              </Button>
+            ))}
+          </Fragment>
+        ))}
+        {SIZES.map((size) => (
+          <Button key={size} size={size}>
+            {`size ${size}`}
+          </Button>
+        ))}
+        <Button shape="pill">pill</Button>
+        <Button shape="circle" icon={Plus} aria-label="circle" />
+        <Button shape="square" icon={Plus} aria-label="square" />
+        <Button variant="link">link</Button>
+        <Button disabled>disabled</Button>
+        <Button loading>loading</Button>
+        <Button variant="link" disabled>
+          link disabled
+        </Button>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const buttons = canvas.getAllByRole('button');
+    await expect(buttons).toHaveLength(30);
+    for (const button of buttons) {
+      const name = button.getAttribute('aria-label') ?? button.textContent ?? '';
+      const stays = name === 'link' || (button as HTMLButtonElement).disabled;
+      await expect(pressed(button), name).toBe(stays ? 'none' : PUSHED);
+    }
+    // At rest nothing is pushed.
+    await expect(
+      getComputedStyle(canvas.getByRole('button', { name: 'primary brand' })).translate
+    ).toBe('none');
+  },
+};
+
+/** The press is a `translate`: the button keeps its place in the layout, to the pixel. */
+export const PressKeepsTheLayout: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <div className="flex items-center gap-3">
+        <Button>Before</Button>
+        <Button>Pressed</Button>
+        <Button>After</Button>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const [before, target, after] = canvas.getAllByRole('button');
+    const rects = () => [before, target, after].map((b) => b.getBoundingClientRect().toJSON());
+    const rest = rects();
+    // The rule sets `translate` and nothing that takes room.
+    await expect(pressed(target)).toBe(PUSHED);
+    await expect(valueWhile(target, ':active', 'margin-top')).toBe('0px');
+    await expect(valueWhile(target, ':active', 'padding-top')).toBe('0px');
+    await expect(rects()).toEqual(rest);
+  },
+};
+
+/** At its real speed the button moves over the exit duration, 80 ms, and the colours with it. */
+export const PressMovesOnTheExitToken: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => (
+    <Wrap>
+      <div className="flex gap-3">
+        <Button>Primary</Button>
+        <Button variant="link">Link</Button>
+      </div>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const primary = canvas.getByRole('button', { name: 'Primary' });
+    await expect(tokenMs('--cosmos-motion-exit')).toBe(80);
+    await expect(transitionMs(primary)).toBe(80);
+    await expect(getComputedStyle(primary).transitionProperty).toContain('translate');
+  },
+};
+
+/** With the reduced setting the press has no length: the button is pushed or back at once. */
+export const PressSkipsMotionWhenReduced: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => (
+    <Wrap>
+      <Button>Primary</Button>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const primary = canvas.getByRole('button', { name: 'Primary' });
+    await expect(transitionMs(primary)).toBe(0);
+    await expect(pressed(primary)).toBe(PUSHED);
   },
 };

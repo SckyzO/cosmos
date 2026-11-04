@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { useId, type ElementType, type ReactNode } from 'react';
 import { Avatar } from '../ui/Avatar';
+import { SectionLabel } from '../ui/SectionLabel';
 import type { Intent } from '../ui/intent';
 import { TIMESTAMP_CLASS } from '../ui/timestamp';
 
@@ -281,7 +282,9 @@ const TimelineList = ({
             >
               <div className="col-start-1 row-start-1 flex flex-col items-center md:col-start-2">
                 <StepperIndicator icon={item.icon} intent={item.intent} />
-                {!isLast && <span className="my-1 w-px flex-1 bg-gray-200 dark:bg-gray-700" />}
+                {!isLast && (
+                  <span className="my-1 min-h-4 w-px flex-1 bg-gray-200 dark:bg-gray-700" />
+                )}
               </div>
               <div
                 className={clsx(
@@ -345,7 +348,9 @@ const TimelineList = ({
               ) : (
                 <DotIndicator icon={item.icon} intent={item.intent} />
               )}
-              {!isLast && <span className="my-1 w-px flex-1 bg-gray-200 dark:bg-gray-700" />}
+              {!isLast && (
+                <span className="my-1 min-h-4 w-px flex-1 bg-gray-200 dark:bg-gray-700" />
+              )}
             </div>
             {/* Content. */}
             <Body item={item} variant={variant} isLast={isLast} />
@@ -380,12 +385,9 @@ const GroupHeader = ({ id, label, centred }: { id: string; label: string; centre
       </span>
     </h3>
   ) : (
-    <h3
-      id={id}
-      className="mb-3 text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
-    >
+    <SectionLabel as="h3" size="lg" id={id} className="mb-3">
       {label}
-    </h3>
+    </SectionLabel>
   );
 
 // ── Main component ──────────────────────────────────────────────────────────

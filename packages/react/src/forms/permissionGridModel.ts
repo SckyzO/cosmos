@@ -6,6 +6,7 @@ import type { Direction } from '../hooks/direction';
 
 /** A column: an action (view, edit…) or a role. */
 export type PermissionGridColumn = {
+  /** Unique among the columns. */
   id: string;
   /** Names the column, and is read as part of the name of each of its cells. */
   label: string;
@@ -18,6 +19,7 @@ export type PermissionGridColumn = {
 
 /** A permission: one row of the grid. */
 export type PermissionGridRow = {
+  /** Unique in the whole grid, across every group: two rows with one id share their cells. */
   id: string;
   /** Names the row, and is read as part of the name of each of its cells. */
   label: string;
@@ -30,16 +32,27 @@ export type PermissionGridRow = {
 
 /** An area of permissions: a header row over its permissions. */
 export type PermissionGridGroup = {
+  /** Unique among the groups: two groups with one id share their box and their count. */
   id: string;
   label: string;
   rows: PermissionGridRow[];
 };
 
+// The column id is read from the end of a key, so a colon or a backslash in it is escaped with a
+// backslash, and so is a backslash in the row id (a trailing one would escape the separator). That
+// keeps `('a:b', 'c')` and `('a', 'b:c')` apart, and leaves the key of every id that has none of
+// them, and every row id with a colon, as `row:column`.
+const escapeColumn = (id: string) => id.replace(/[\\:]/g, '\\$&');
+const escapeRow = (id: string) => id.replace(/\\/g, '\\\\');
+
 /**
  * The key of a cell in the grid's `value`: the id of the row, a colon and the id of the column.
- * To build a `defaultValue`, or to read a granted cell back.
+ * To build a `defaultValue`, or to read a granted cell back. A colon or a backslash in a column
+ * id, and a backslash in a row id, are escaped with a backslash, so two different cells never
+ * share a key; for any other id the key is just `row:column`.
  */
-export const cellKey = (rowId: string, columnId: string) => `${rowId}:${columnId}`;
+export const cellKey = (rowId: string, columnId: string) =>
+  `${escapeRow(rowId)}:${escapeColumn(columnId)}`;
 
 /** One cell of the grid, as far as the logic reads it. */
 export type GridCell = {
@@ -292,19 +305,21 @@ export const clampPosition = (rowLengths: readonly number[], { row, col }: Posit
 /**
  * Where the focus goes. Nothing wraps: at an edge the focus stays. A row with fewer cells (a
  * group's header, which has one) takes the focus at its last cell when it is reached from a
- * further column.
+ * further column. Up and down aim at `column` (default: the column of `from`), so a caller that
+ * remembers the column the person was moving along gets back to it after such a row.
  */
 export const moveFocus = (
   rowLengths: readonly number[],
   from: Position,
-  move: FocusMove
+  move: FocusMove,
+  column?: number
 ): Position => {
   if (rowLengths.length === 0) return from;
   const { row, col } = clampPosition(rowLengths, from);
   const lastRow = rowLengths.length - 1;
   const onRow = (target: number): Position => ({
     row: target,
-    col: Math.min(col, lastCol(rowLengths, target)),
+    col: Math.min(Math.max(column ?? col, 0), lastCol(rowLengths, target)),
   });
   switch (move) {
     case 'up':

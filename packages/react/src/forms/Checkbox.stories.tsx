@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Checkbox, CheckboxGroup } from './Checkbox';
+import { isFading, tokenMs, transitionMs } from '../storybook-motion';
 import {
   bothDirections,
   endOffset,
@@ -252,8 +253,8 @@ export const FocusShowsRingInDark: Story = {
 };
 
 export const FocusShowsRingInLight: Story = {
-  tags: ['!dev'],
   ...FocusShowsRingInDark,
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 
@@ -363,6 +364,54 @@ export const GroupVerticalStacksItems: Story = {
   },
 };
 
+// The vertical middle of an element, for lining the box up with a line of text.
+const middleOf = (element: Element) => {
+  const rect = element.getBoundingClientRect();
+  return rect.top + rect.height / 2;
+};
+
+/**
+ * The box is centred on the first line of the label, within half a pixel, at the default text size
+ * and at the largest: its size is fixed in pixels while the text follows `data-text-size`. A
+ * description under the label does not move it.
+ */
+export const BoxIsCenteredOnTheFirstLine: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-6">
+      {[undefined, 'xl'].map((textSize) => (
+        <div
+          key={textSize ?? 'default'}
+          data-text-size={textSize}
+          data-testid={textSize ?? 'default'}
+          className="space-y-3"
+        >
+          <Checkbox label="Subscribe to newsletter" />
+          <Checkbox
+            label="Marketing emails"
+            description="Get tips, product updates and best practices once a week."
+          />
+          <Checkbox size="sm" label="Compact" />
+        </div>
+      ))}
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const textSize of ['default', 'xl']) {
+      const scope = within(canvas.getByTestId(textSize));
+      for (const label of ['Subscribe to newsletter', 'Marketing emails', 'Compact']) {
+        // The input is visually hidden: the box next to it is what is drawn.
+        const box = scope.getByLabelText(label, { exact: false }).nextElementSibling!;
+        const line = scope.getByText(label);
+        await expect(
+          Math.abs(middleOf(box) - middleOf(line)),
+          `${label} at the ${textSize} text size`
+        ).toBeLessThanOrEqual(0.5);
+      }
+    }
+  },
+};
+
 // ── Right to left ───────────────────────────────────────────────────────────
 
 /** The box is at the start of its label, and a horizontal group starts at the start edge. */
@@ -383,5 +432,94 @@ export const BoxAndGroupMirrorInRightToLeft: Story = {
     expectMirrored(canvasElement, (box) => box.querySelector('label'));
     expectMirrored(canvasElement, (box) => box.querySelector('label span[aria-hidden]'));
     expectMirrored(canvasElement, (box) => box.querySelectorAll('label')[1]);
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+// The two marks inside the box of a checkbox: the check, then the dash of the indeterminate state.
+const marksOf = (checkbox: HTMLElement) => {
+  const [check, dash] = checkbox.nextElementSibling!.querySelectorAll('svg');
+  return { check: check as unknown as SVGElement, dash: dash as unknown as SVGElement };
+};
+const shown = (mark: Element) => {
+  const style = getComputedStyle(mark);
+  return { opacity: style.opacity, scale: style.scale };
+};
+const REST = { opacity: '1', scale: 'none' };
+const HALF = { opacity: '0', scale: '0.5' };
+
+const MotionBoxes = () => {
+  const [on, setOn] = useState(false);
+  return (
+    <div className="flex flex-col gap-3">
+      <Checkbox label="Pick me" checked={on} onChange={setOn} />
+      <Checkbox label="Some of them" indeterminate />
+      <Checkbox label="Small" size="sm" defaultChecked />
+    </div>
+  );
+};
+
+/** The check grows from half its size as it fades in, 120 ms, and shrinks back as it fades out. */
+export const CheckGrowsIn: Story = {
+  tags: ['!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <MotionBoxes />,
+};
+
+/** At rest the mark of a checked box is full size and opaque, the dash of a mixed one too. */
+export const MarksAreAtRest: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <MotionBoxes />,
+  play: async ({ canvas }) => {
+    const pick = canvas.getByRole('checkbox', { name: 'Pick me' });
+    await expect(shown(marksOf(pick).check)).toEqual(HALF);
+    await userEvent.click(pick);
+    await expect(shown(marksOf(pick).check)).toEqual(REST);
+    await userEvent.click(pick);
+    await expect(shown(marksOf(pick).check)).toEqual(HALF);
+
+    const mixed = marksOf(canvas.getByRole('checkbox', { name: 'Some of them' }));
+    await expect(shown(mixed.dash)).toEqual(REST);
+    // The dash replaces the check: a mixed box that is not checked has none.
+    await expect(shown(mixed.check)).toEqual(HALF);
+
+    const small = marksOf(canvas.getByRole('checkbox', { name: 'Small' }));
+    await expect(shown(small.check)).toEqual(REST);
+    await expect(shown(small.dash)).toEqual(HALF);
+  },
+};
+
+/** At its real speed the mark moves over the fast duration, and ends at rest. */
+export const MarkMovesOnTheFastToken: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <MotionBoxes />,
+  play: async ({ canvas }) => {
+    const pick = canvas.getByRole('checkbox', { name: 'Pick me' });
+    const { check } = marksOf(pick);
+    await expect(transitionMs(check)).toBe(tokenMs('--cosmos-motion-fast'));
+    await userEvent.click(pick);
+    await expect(isFading(check as unknown as Element)).toBe(true);
+    await waitFor(() => expect(shown(check)).toEqual(REST));
+    await userEvent.click(pick);
+    await expect(isFading(check as unknown as Element)).toBe(true);
+    await waitFor(() => expect(shown(check)).toEqual(HALF));
+  },
+};
+
+/** With the reduced setting the mark is there as the box is ticked: nothing plays. */
+export const MarkSkipsMotionWhenReduced: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <MotionBoxes />,
+  play: async ({ canvas }) => {
+    const pick = canvas.getByRole('checkbox', { name: 'Pick me' });
+    const { check } = marksOf(pick);
+    await userEvent.click(pick);
+    await expect(transitionMs(check)).toBe(0);
+    await expect(isFading(check as unknown as Element)).toBe(false);
+    await expect(shown(check)).toEqual(REST);
   },
 };

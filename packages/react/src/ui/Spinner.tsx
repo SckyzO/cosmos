@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import type { Intent } from './intent';
 
-export type SpinnerSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type SpinnerSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
 
 /** What the arc means: the accent (`brand`, default), a plain gray, an outcome or a problem. */
 export type SpinnerIntent = Extract<Intent, 'brand' | 'neutral' | 'success' | 'warning' | 'danger'>;
@@ -13,6 +13,8 @@ const SIZE_CLASS: Record<SpinnerSize, string> = {
   md: 'h-6 w-6 border-2',
   lg: 'h-8 w-8 border-[3px]',
   xl: 'h-10 w-10 border-4',
+  '2xl': 'h-12 w-12 border-4',
+  '3xl': 'h-16 w-16 border-[5px]',
 };
 
 // One whole set per intent, track and arc: a default with an override on top is settled by the
@@ -32,6 +34,7 @@ const INTENT_CLASS: Record<SpinnerIntent, string> = {
 const ON_DARK_CLASS = 'border-white/30 border-t-white';
 
 export type SpinnerProps = {
+  /** Seven steps, `xs` (12px) to `3xl` (64px), `md` (24px) by default. */
   size?: SpinnerSize;
   /**
    * What the arc means. `brand` (default) follows the accent, `neutral` is a plain gray. Ignored

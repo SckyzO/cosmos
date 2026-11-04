@@ -116,6 +116,21 @@ export const branches = (
     return value > 0 ? [{ index, name: node.name, value }] : [];
   });
 
+/**
+ * The arcs by the `id` of the node they are children of (none for the first ring), each list in the
+ * order of the circle. One pass over `arcs`: a parent with many children costs no more per child
+ * than one with two.
+ */
+export const groupByParent = (arcs: readonly Arc[]): Map<string | undefined, Arc[]> => {
+  const byParent = new Map<string | undefined, Arc[]>();
+  for (const arc of arcs) {
+    const siblings = byParent.get(arc.parent);
+    if (siblings) siblings.push(arc);
+    else byParent.set(arc.parent, [arc]);
+  }
+  return byParent;
+};
+
 /** The arc of the node at `path`, the names from the first ring. Of two siblings with the same name, the first. */
 export const findArc = (arcs: readonly Arc[], path: readonly string[]): Arc | undefined => {
   let found: Arc | undefined;

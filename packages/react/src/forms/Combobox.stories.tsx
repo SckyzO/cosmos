@@ -525,9 +525,40 @@ export const AllowCustomValueOpensNoEmptyPanel: Story = {
     await userEvent.type(strict, 'zzz');
     await expect(strict).toHaveAttribute('aria-expanded', 'true');
     await expect(await page.findByText('No matches found.')).toBeVisible();
-    // The empty message is a bare `li` in the listbox, which axe flags: close it before it runs.
-    await userEvent.keyboard('{Escape}');
-    await expect(page.queryByRole('listbox')).toBeNull();
+    // It ends with the list open on no match: axe runs on it.
+  },
+};
+
+/**
+ * With no match the list says so in a status line under its (hidden) listbox, not as an option:
+ * nothing in the listbox is a choice, the input points at none, and the message is a polite
+ * status, which a screen reader reads when the list turns empty. The line is one element that
+ * keeps its place while the panel is open, so a change of its text is what is announced.
+ */
+export const EmptyListIsAStatusNotAnOption: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <Combobox label="Assigned to" options={PEOPLE} />,
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('combobox', { name: 'Assigned to' });
+    await userEvent.type(input, 'zzz');
+    await expect(input).toHaveAttribute('aria-expanded', 'true');
+    const status = await page.findByRole('status');
+    await expect(status).toHaveTextContent('No matches found.');
+    await expect(status).toBeVisible();
+    await expect(page.queryAllByRole('option')).toHaveLength(0);
+    await expect(input).not.toHaveAttribute('aria-activedescendant');
+    // The keys have nothing to move to, and Enter picks nothing.
+    await userEvent.keyboard('{ArrowDown}{Enter}');
+    await expect(input).not.toHaveAttribute('aria-activedescendant');
+    await expect(input).toHaveValue('zzz');
+
+    // The text goes and comes back in the same element: that is what a screen reader hears.
+    await userEvent.clear(input);
+    await waitFor(() => expect(page.getAllByRole('option')).toHaveLength(PEOPLE.length));
+    await expect(status).toBeInTheDocument();
+    await expect(status).toBeEmptyDOMElement();
+    await userEvent.type(input, 'zzz');
+    await expect(status).toHaveTextContent('No matches found.');
   },
 };
 

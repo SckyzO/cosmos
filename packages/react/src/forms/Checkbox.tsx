@@ -9,9 +9,16 @@ import {
   type ComponentPropsWithRef,
 } from 'react';
 import { mergeRefs } from '../ui/mergeRefs';
+import { FieldMessage } from './FieldMessage';
 import { useControllableState } from '../hooks/useControllableState';
 
 export type CheckboxSize = 'sm' | 'md';
+
+// The mark grows from half its size as it fades in, over the fast duration easing out, and shrinks
+// back as it fades out. At rest it is full size and opaque.
+const MARK = 'transition-[opacity,scale] duration-(--cosmos-motion-fast) ease-(--cosmos-ease-out)';
+const MARK_SHOWN = 'scale-none opacity-100';
+const MARK_HIDDEN = 'scale-50 opacity-0';
 
 export type CheckboxProps = Omit<
   ComponentPropsWithRef<'input'>,
@@ -73,7 +80,14 @@ export function Checkbox({
         className
       )}
     >
-      <span className="relative inline-flex shrink-0 items-center justify-center">
+      <span
+        className={clsx(
+          'relative inline-flex shrink-0 items-center justify-center',
+          // The box is centred on the first line of the text, whatever the text size: the
+          // wrapper is one line of the label tall, so the fixed-size box sits in its middle.
+          (label || description) && clsx(sizes.label, 'h-lh')
+        )}
+      >
         <input
           ref={mergeRefs(innerRef, ref)}
           id={fieldId}
@@ -88,7 +102,7 @@ export function Checkbox({
         <span
           aria-hidden
           className={clsx(
-            'peer-focus-visible:focus-indicator relative flex items-center justify-center rounded-md border transition-colors',
+            'peer-focus-visible:focus-indicator relative flex items-center justify-center rounded-md border transition-colors duration-(--cosmos-motion-fast)',
             sizes.box,
             showFilled
               ? 'border-brand-500 bg-brand-500'
@@ -97,15 +111,23 @@ export function Checkbox({
         >
           {/* Always render both icons; toggle visibility via opacity to keep
               the box's intrinsic baseline stable (prevents text from
-              shifting when checked/unchecked). */}
+              shifting when checked/unchecked), and to let each one grow in and fade out. */}
           <Check
             className={clsx(
-              'block text-white transition-opacity',
+              'block text-white',
+              MARK,
               sizes.icon,
-              isChecked && !indeterminate ? 'opacity-100' : 'opacity-0'
+              isChecked && !indeterminate ? MARK_SHOWN : MARK_HIDDEN
             )}
           />
-          {indeterminate && <Minus className={clsx('absolute block text-white', sizes.icon)} />}
+          <Minus
+            className={clsx(
+              'absolute block text-white',
+              MARK,
+              sizes.icon,
+              indeterminate ? MARK_SHOWN : MARK_HIDDEN
+            )}
+          />
         </span>
       </span>
       {(label || description) && (
@@ -200,7 +222,9 @@ export const CheckboxGroup = ({
           />
         ))}
       </div>
-      {error && <p className="mt-1.5 text-xs text-red-700 dark:text-red-400">{error}</p>}
+      <FieldMessage show={!!error} as="p" className="mt-1.5 text-xs text-red-700 dark:text-red-400">
+        {error}
+      </FieldMessage>
     </fieldset>
   );
 };

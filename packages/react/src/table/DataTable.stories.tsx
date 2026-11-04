@@ -20,19 +20,25 @@ import { ColumnFilterDropdown } from './ColumnFilterDropdown';
 import { DataTable } from './DataTable';
 import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from './Table';
 import type { ColumnDef, DataTableDensity } from './types';
-import { StatusBadge } from '../status/StatusBadge';
-import { Avatar } from '../ui/Avatar';
-import { Badge } from '../ui/Badge';
-import type { Intent } from '../ui/intent';
 import { Button } from '../ui/Button';
 import { Menu } from '../ui/Menu';
 import { RowActionButton } from '../ui/RowActionButton';
 import { RowActionsMenu } from './RowActionsMenu';
-import { TableAmountCell, TableDescriptionCell, TableIdCell, TableIdentityCell } from './cells';
-import { placeholderAvatar } from '../storybook-avatars';
+import { TableAmountCell, TableDescriptionCell, TableIdCell } from './cells';
+import {
+  alertColumns,
+  makeHosts,
+  PEOPLE,
+  peopleColumns,
+  narrowMins,
+  patchColumns,
+  pickColumns,
+  type Person,
+  withIdentity,
+  withPins,
+} from './storybook-fixtures';
 import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 import { SectionCard } from '../templates/SectionCard';
-import type { HealthStatus } from '../status/types';
 
 // What the row menu's danger item calls.
 const deleted = fn();
@@ -48,115 +54,62 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const Wrap = ({ children }: { children: React.ReactNode }) => (
-  <div className="bg-[var(--color-bg-base)] p-6 text-[var(--color-text-base)]">{children}</div>
-);
-
-type Alert = {
-  id: string;
-  severity: HealthStatus;
-  name: string;
-  type: string;
-  location: string;
-  rack: string;
-  room: string;
-};
-
-const SEVERITIES: HealthStatus[] = ['OK', 'WARN', 'CRIT', 'INFO'];
-const TYPES = ['cpu', 'memory', 'temp', 'power', 'disk', 'network'];
-const ROOMS = ['Room A', 'Room B', 'Room C'];
-
-const rows: Alert[] = Array.from({ length: 60 }, (_, i) => ({
-  id: `alert-${i + 1}`,
-  severity: SEVERITIES[i % SEVERITIES.length],
-  name: `node-${100 + i}`,
-  type: TYPES[i % TYPES.length],
-  location: `DC${(i % 3) + 1}`,
-  rack: `rack-${String((i % 12) + 1).padStart(2, '0')}`,
-  room: ROOMS[i % ROOMS.length],
-}));
-
-const columns: ColumnDef<Alert>[] = [
-  {
-    key: 'severity',
-    label: 'Severity',
-    width: '12%',
-    sortable: true,
-    filterable: true,
-    sortValue: (r) => r.severity,
-    filterValue: (r) => r.severity,
-    render: (r) => <StatusBadge status={r.severity} size="md" />,
-  },
-  {
-    key: 'name',
-    label: 'Name',
-    width: '20%',
-    sortable: true,
-    sortValue: (r) => r.name,
-    searchValue: (r) => r.name,
-    render: (r) => <span className="font-medium text-gray-900 dark:text-white">{r.name}</span>,
-  },
-  {
-    key: 'type',
-    label: 'Type',
-    width: '12%',
-    sortable: true,
-    filterable: true,
-    sortValue: (r) => r.type,
-    filterValue: (r) => r.type,
-    render: (r) => r.type,
-  },
-  {
-    key: 'location',
-    label: 'Location',
-    width: '12%',
-    sortable: true,
-    filterable: true,
-    sortValue: (r) => r.location,
-    filterValue: (r) => r.location,
-    render: (r) => r.location,
-  },
-  {
-    key: 'rack',
-    label: 'Rack',
-    width: '12%',
-    sortable: true,
-    sortValue: (r) => r.rack,
-    render: (r) => r.rack,
-  },
-  {
-    key: 'room',
-    label: 'Room',
-    width: '12%',
-    sortable: true,
-    filterable: true,
-    sortValue: (r) => r.room,
-    filterValue: (r) => r.room,
-    render: (r) => r.room,
-  },
-];
+// The base table of the page: 60 hosts with an alert each, in the columns of an alerts list.
+const rows = makeHosts(60);
+const columns = alertColumns;
 
 export const Alerts: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'When a table is wider than its box it scrolls sideways, and the edge that has more content fades.',
+      },
+    },
+  },
   render: () => (
-    <Wrap>
-      <SectionCard title="DataTable — sortable, filterable, paginated">
-        <DataTable
-          rows={rows}
-          columns={columns}
-          rowKey={(r) => r.id}
-          renderRowAction={() => <RowActionButton>View</RowActionButton>}
-          pageSize={10}
-        />
-      </SectionCard>
-    </Wrap>
+    <SectionCard title="DataTable — sortable, filterable, paginated">
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.host}
+        renderRowAction={() => <RowActionButton>View</RowActionButton>}
+        pageSize={10}
+      />
+    </SectionCard>
   ),
+};
+
+/**
+ * The base table fits the docs page: with its selection and action columns it needs less than the
+ * 790px a card of the docs page leaves it, so it does not scroll sideways and its edge does not
+ * fade. `MobileScrollsWithAnEdgeFade` is the story where the table is wider than its box.
+ */
+export const AlertsFitTheDocsWidth: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div style={{ width: 790 }}>
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.host}
+        selectable
+        renderRowAction={() => <RowActionButton>View</RowActionButton>}
+        pageSize={10}
+      />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const scroller = scrollerOf(canvas.getByRole('table'));
+    await expect(scroller.clientWidth).toBeGreaterThan(780);
+    await expect(scroller.scrollWidth).toBeLessThanOrEqual(scroller.clientWidth);
+    await expect(getComputedStyle(scroller).maskImage).toBe('none');
+  },
 };
 
 export const Loading: Story = {
   render: () => (
-    <Wrap>
-      <DataTable rows={[]} columns={columns} rowKey={(r) => r.id} loading loadingRows={4} />
-    </Wrap>
+    <DataTable rows={[]} columns={columns} rowKey={(r) => r.host} loading loadingRows={4} />
   ),
 };
 
@@ -177,16 +130,14 @@ export const LoadingChecks: Story = {
 export const LoadingKeepsTheSelectionAndActionColumns: Story = {
   tags: ['!dev'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={[]}
-        columns={columns}
-        rowKey={(r) => r.id}
-        loading
-        selectable
-        renderRowAction={() => <RowActionButton>View</RowActionButton>}
-      />
-    </Wrap>
+    <DataTable
+      rows={[]}
+      columns={columns}
+      rowKey={(r) => r.host}
+      loading
+      selectable
+      renderRowAction={() => <RowActionButton>View</RowActionButton>}
+    />
   ),
   play: async ({ canvas }) => {
     // The default is five rows, and every one has a cell per column.
@@ -200,15 +151,13 @@ export const LoadingKeepsTheSelectionAndActionColumns: Story = {
 
 export const ErrorWithRetry: Story = {
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={[]}
-        columns={columns}
-        rowKey={(r) => r.id}
-        error="Failed to fetch alerts."
-        onRetry={() => {}}
-      />
-    </Wrap>
+    <DataTable
+      rows={[]}
+      columns={columns}
+      rowKey={(r) => r.host}
+      error="Failed to fetch alerts."
+      onRetry={() => {}}
+    />
   ),
 };
 
@@ -226,15 +175,13 @@ export const ErrorWithRetryChecks: Story = {
 
 export const Empty: Story = {
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={[]}
-        columns={columns}
-        rowKey={(r) => r.id}
-        emptyTitle="No active alerts"
-        emptyDescription="All nodes are healthy."
-      />
-    </Wrap>
+    <DataTable
+      rows={[]}
+      columns={columns}
+      rowKey={(r) => r.host}
+      emptyTitle="No active alerts"
+      emptyDescription="All nodes are healthy."
+    />
   ),
 };
 
@@ -251,7 +198,7 @@ export const EmptyChecks: Story = {
 // ── Interaction tests ────────────────────────────────────────────────────────
 
 export const NextPageButton: Story = {
-  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.host} pageSize={10} />,
 };
 
 export const NextPageButtonChecks: Story = {
@@ -270,7 +217,7 @@ export const NextPageButtonChecks: Story = {
 
 export const PagerIsANavigation: Story = {
   tags: ['!dev'],
-  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.host} pageSize={10} />,
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Pagination' });
     await expect(within(nav).getByRole('button', { name: 'Page 1' })).toHaveAttribute(
@@ -289,11 +236,7 @@ export const PagerIsANavigation: Story = {
 
 export const Mobile: Story = {
   globals: mobileViewport,
-  render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />
-    </Wrap>
-  ),
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.host} pageSize={10} />,
 };
 
 export const MobileChecks: Story = {
@@ -308,20 +251,20 @@ export const MobileChecks: Story = {
 
 export const SortByName: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.host} pageSize={10} />,
   play: async ({ canvas }) => {
-    // Default order: node-100, node-101, …
+    // Default order: node-00001, node-00002, …
     const nameCol = canvas.getByRole('button', { name: /Name/ });
     await userEvent.click(nameCol); // asc
     await userEvent.click(nameCol); // desc
-    // After desc, the highest node-159 should appear in the first row
-    await expect(canvas.getByText('node-159')).toBeInTheDocument();
+    // After desc, the highest node-00060 should appear in the first row
+    await expect(canvas.getByText('node-00060')).toBeInTheDocument();
   },
 };
 
 export const ColumnFilterOpensBeforeAnyFilter: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.host} pageSize={10} />,
   play: async ({ canvas }) => {
     // No filter is applied yet: the first click on a filter icon must still
     // open the dropdown with its options.
@@ -342,24 +285,22 @@ export const ColumnFilterOpensBeforeAnyFilter: Story = {
 export const ScrollingRowsAreFocusableOnesThatFitAreNot: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <div className="space-y-6">
-        <DataTable
-          aria-label="Scrolling alerts"
-          className="max-h-72"
-          rows={rows.slice(0, 30)}
-          columns={columns}
-          rowKey={(r) => r.id}
-          pageSize={30}
-        />
-        <DataTable
-          aria-label="Short alerts"
-          rows={rows.slice(0, 2)}
-          columns={columns}
-          rowKey={(r) => r.id}
-        />
-      </div>
-    </Wrap>
+    <div className="space-y-6">
+      <DataTable
+        aria-label="Scrolling alerts"
+        className="max-h-72"
+        rows={rows.slice(0, 30)}
+        columns={columns}
+        rowKey={(r) => r.host}
+        pageSize={30}
+      />
+      <DataTable
+        aria-label="Short alerts"
+        rows={rows.slice(0, 2)}
+        columns={columns}
+        rowKey={(r) => r.host}
+      />
+    </div>
   ),
   play: async ({ canvas }) => {
     const region = await canvas.findByRole('region', { name: 'Scrolling alerts' });
@@ -383,15 +324,13 @@ export const ScrollingRowsAreFocusableOnesThatFitAreNot: Story = {
 export const ScrollingRowsWithoutLabelAreFocusableNotARegion: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        className="max-h-72"
-        rows={rows.slice(0, 30)}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={30}
-      />
-    </Wrap>
+    <DataTable
+      className="max-h-72"
+      rows={rows.slice(0, 30)}
+      columns={columns}
+      rowKey={(r) => r.host}
+      pageSize={30}
+    />
   ),
   play: async ({ canvas }) => {
     const scroller = canvas.getByRole('table').parentElement!;
@@ -410,7 +349,7 @@ export const ScrollingRowsWithoutLabelAreFocusableNotARegion: Story = {
 export const ScrollingRowsNamedByAHeading: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
+    <>
       <h2 id="alerts-title" className="mb-3 text-lg font-semibold">
         Open alerts
       </h2>
@@ -419,10 +358,10 @@ export const ScrollingRowsNamedByAHeading: Story = {
         className="max-h-72"
         rows={rows.slice(0, 30)}
         columns={columns}
-        rowKey={(r) => r.id}
+        rowKey={(r) => r.host}
         pageSize={30}
       />
-    </Wrap>
+    </>
   ),
   play: async ({ canvas }) => {
     const region = await canvas.findByRole('region', { name: 'Open alerts' });
@@ -438,17 +377,15 @@ export const ScrollingRowsNamedByAHeading: Story = {
 export const ScrollingAreaFollowsItsContent: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Searchable alerts"
-        className="h-96"
-        defaultSearchValue=""
-        rows={rows.slice(0, 30)}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={30}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Searchable alerts"
+      className="h-96"
+      defaultSearchValue=""
+      rows={rows.slice(0, 30)}
+      columns={columns}
+      rowKey={(r) => r.host}
+      pageSize={30}
+    />
   ),
   play: async ({ canvas }) => {
     const region = await canvas.findByRole('region', { name: 'Searchable alerts' });
@@ -467,7 +404,7 @@ export const ScrollingAreaFollowsItsContent: Story = {
 
 export const SortableHeadersShowTheirAffordance: Story = {
   tags: ['!dev'],
-  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.host} pageSize={10} />,
   play: async ({ canvas }) => {
     // Before any sort every sortable column carries a muted two-way icon, hidden from assistive
     // technology (the button is named by its label).
@@ -492,16 +429,14 @@ export const SortableHeadersShowTheirAffordance: Story = {
 
 export const WithSelection: Story = {
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows.slice(0, 8)}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={10}
-        selectable
-        renderRowAction={() => <RowActionButton>View</RowActionButton>}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows.slice(0, 8)}
+      columns={columns}
+      rowKey={(r) => r.host}
+      pageSize={10}
+      selectable
+      renderRowAction={() => <RowActionButton>View</RowActionButton>}
+    />
   ),
 };
 
@@ -521,43 +456,39 @@ export const WithSelectionChecks: Story = {
 
 export const WithBulkActions: Story = {
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows.slice(0, 8)}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={10}
-        selectable
-        bulkActions={(selected) => (
-          <>
-            <Button variant="ghost" size="sm" icon={Download}>
-              Export ({selected.length})
-            </Button>
-            <Button variant="secondary" size="sm" icon={Archive}>
-              Archive
-            </Button>
-            <Button intent="danger" size="sm" icon={Trash2}>
-              Delete
-            </Button>
-          </>
-        )}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows.slice(0, 8)}
+      columns={columns}
+      rowKey={(r) => r.host}
+      pageSize={10}
+      selectable
+      bulkActions={(selected) => (
+        <>
+          <Button variant="ghost" size="sm" icon={Download}>
+            Export ({selected.length})
+          </Button>
+          <Button variant="secondary" size="sm" icon={Archive}>
+            Archive
+          </Button>
+          <Button intent="danger" size="sm" icon={Trash2}>
+            Delete
+          </Button>
+        </>
+      )}
+    />
   ),
 };
 
 export const WithGlobalSearch: Story = {
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        pageSize={10}
-        defaultSearchValue=""
-        searchPlaceholder="Search by name…"
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.host}
+      pageSize={10}
+      defaultSearchValue=""
+      searchPlaceholder="Search by name…"
+    />
   ),
 };
 
@@ -566,34 +497,32 @@ export const SelectionBulkSearchCombined: Story = {
     const [selection, setSelection] = useState<Set<string | number>>(new Set());
     const [search, setSearch] = useState('');
     return (
-      <Wrap>
-        <SectionCard
-          title={`DataTable — ${selection.size} selected · search: "${search || '(none)'}"`}
-        >
-          <DataTable
-            rows={rows}
-            columns={columns}
-            rowKey={(r) => r.id}
-            pageSize={10}
-            selectable
-            selection={selection}
-            onSelectionChange={setSelection}
-            searchValue={search}
-            onSearchChange={setSearch}
-            searchPlaceholder="Filter by name…"
-            bulkActions={(selected) => (
-              <>
-                <Button variant="ghost" size="sm" icon={Download}>
-                  Export ({selected.length})
-                </Button>
-                <Button intent="danger" size="sm" icon={Trash2}>
-                  Delete
-                </Button>
-              </>
-            )}
-          />
-        </SectionCard>
-      </Wrap>
+      <SectionCard
+        title={`DataTable — ${selection.size} selected · search: "${search || '(none)'}"`}
+      >
+        <DataTable
+          rows={rows}
+          columns={columns}
+          rowKey={(r) => r.host}
+          pageSize={10}
+          selectable
+          selection={selection}
+          onSelectionChange={setSelection}
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Filter by name…"
+          bulkActions={(selected) => (
+            <>
+              <Button variant="ghost" size="sm" icon={Download}>
+                Export ({selected.length})
+              </Button>
+              <Button intent="danger" size="sm" icon={Trash2}>
+                Delete
+              </Button>
+            </>
+          )}
+        />
+      </SectionCard>
     );
   },
 };
@@ -606,7 +535,7 @@ export const SelectAllToggles: Story = {
     <DataTable
       rows={rows.slice(0, 5)}
       columns={columns}
-      rowKey={(r) => r.id}
+      rowKey={(r) => r.host}
       pageSize={10}
       selectable
       onSelectionChange={args.onSelectionChange as (s: Set<string | number>) => void}
@@ -629,19 +558,19 @@ export const SearchFiltersRows: Story = {
     <DataTable
       rows={rows}
       columns={columns}
-      rowKey={(r) => r.id}
+      rowKey={(r) => r.host}
       pageSize={10}
       defaultSearchValue=""
     />
   ),
   play: async ({ canvas }) => {
-    // Initially node-100 should be visible
-    await expect(canvas.getByText('node-100')).toBeInTheDocument();
+    // Initially node-00001 should be visible
+    await expect(canvas.getByText('node-00001')).toBeInTheDocument();
     const search = canvas.getByLabelText(/search rows/i);
-    await userEvent.type(search, 'node-159');
-    // After search, only node-159 should be visible
-    await expect(canvas.getByText('node-159')).toBeInTheDocument();
-    await expect(canvas.queryByText('node-100')).toBeNull();
+    await userEvent.type(search, 'node-00060');
+    // After search, only node-00060 should be visible
+    await expect(canvas.getByText('node-00060')).toBeInTheDocument();
+    await expect(canvas.queryByText('node-00001')).toBeNull();
   },
 };
 
@@ -651,7 +580,7 @@ export const BulkActionsAppearWhenSelected: Story = {
     <DataTable
       rows={rows.slice(0, 3)}
       columns={columns}
-      rowKey={(r) => r.id}
+      rowKey={(r) => r.host}
       pageSize={10}
       selectable
       bulkActions={(s) => <Button size="sm">Delete {s.length}</Button>}
@@ -661,7 +590,7 @@ export const BulkActionsAppearWhenSelected: Story = {
     // No bulk action visible yet
     await expect(canvas.queryByRole('button', { name: /delete/i })).toBeNull();
     // Select first row
-    const firstRowCb = canvas.getByLabelText(/select row alert-1$/i);
+    const firstRowCb = canvas.getByLabelText(/select row node-00001$/i);
     await userEvent.click(firstRowCb);
     // Bulk action toolbar appears
     await expect(canvas.getByText(/1 selected/)).toBeInTheDocument();
@@ -674,122 +603,54 @@ export const BulkActionsAppearWhenSelected: Story = {
 
 // ── Comfortable density ──────────────────────────────────────────────────────
 
-type Member = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  team: string;
-  status: 'Active' | 'Invited' | 'Suspended';
-  lastSeen: string;
-};
+// Eight people for the density stories: the person, the role with its team under it, the status
+// and the last visit, in 76% of the table so the selection and action columns have room.
+const members = PEOPLE.slice(0, 8);
 
-const MEMBER_STATUS_INTENT: Record<Member['status'], Intent> = {
-  Active: 'success',
-  Invited: 'warning',
-  Suspended: 'neutral',
-};
-
-const members: Member[] = (
-  [
-    ['Olivia Martin', 'Admin', 'Platform', 'Active', '2 min ago'],
-    ['Liam Chen', 'Operator', 'Datacenter', 'Active', '18 min ago'],
-    ['Sofia Rossi', 'Operator', 'Network', 'Active', '1 h ago'],
-    ['Noah Dubois', 'Viewer', 'Finance', 'Invited', 'Never'],
-    ['Emma Novak', 'Admin', 'Security', 'Active', 'Yesterday'],
-    ['Lucas Silva', 'Operator', 'Datacenter', 'Suspended', '3 weeks ago'],
-    ['Ava Patel', 'Viewer', 'Support', 'Active', '5 h ago'],
-    ['Ethan Moreau', 'Operator', 'Network', 'Invited', 'Never'],
-  ] as const
-).map(([name, role, team, status, lastSeen], i) => ({
-  id: `m-${i + 1}`,
-  name,
-  email: `${name.toLowerCase().replace(' ', '.')}@example.com`,
-  role,
-  team,
-  status,
-  lastSeen,
-}));
-
-const memberColumns: ColumnDef<Member>[] = [
-  {
-    key: 'member',
-    label: 'Member',
-    width: '34%',
-    sortable: true,
-    sortValue: (m) => m.name,
-    render: (m) => (
-      <div className="flex items-center gap-3">
-        <Avatar name={m.name} size="sm" />
-        <div className="min-w-0">
-          <p className="truncate font-medium text-[var(--color-text-primary)]">{m.name}</p>
-          <p className="truncate text-xs text-[var(--color-text-secondary)]">{m.email}</p>
-        </div>
-      </div>
-    ),
-  },
-  {
-    key: 'role',
-    label: 'Role',
-    width: '20%',
-    sortable: true,
-    filterable: true,
-    sortValue: (m) => m.role,
-    filterValue: (m) => m.role,
-    render: (m) => (
-      <>
-        <p>{m.role}</p>
-        <p className="text-xs text-[var(--color-text-secondary)]">{m.team} team</p>
-      </>
-    ),
-  },
-  {
-    key: 'status',
-    label: 'Status',
-    width: '16%',
-    filterable: true,
-    filterValue: (m) => m.status,
-    render: (m) => <Badge intent={MEMBER_STATUS_INTENT[m.status]}>{m.status}</Badge>,
-  },
-  {
-    key: 'lastSeen',
-    label: 'Last seen',
-    width: '16%',
-    render: (m) => <span className="text-[var(--color-text-secondary)]">{m.lastSeen}</span>,
-  },
-];
+const memberColumns = narrowMins(
+  patchColumns(withIdentity(pickColumns(peopleColumns, ['name', 'role', 'status', 'lastSeen'])), {
+    name: { label: 'Member', width: '30%' },
+    role: {
+      width: '18%',
+      render: (m) => (
+        <>
+          <p>{m.role}</p>
+          <p className="text-xs text-[var(--color-text-secondary)]">{m.team} team</p>
+        </>
+      ),
+    },
+    status: { width: '14%' },
+    lastSeen: { width: '14%' },
+  })
+);
 
 export const CompactDensity: Story = {
   render: () => (
-    <Wrap>
-      <SectionCard title="DataTable — compact density for long lists">
-        <DataTable
-          rows={members}
-          columns={memberColumns}
-          rowKey={(m) => m.id}
-          renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
-          selectable
-          density="compact"
-        />
-      </SectionCard>
-    </Wrap>
+    <SectionCard title="DataTable — compact density for long lists">
+      <DataTable
+        rows={members}
+        columns={memberColumns}
+        rowKey={(m) => m.id}
+        renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
+        selectable
+        density="compact"
+      />
+    </SectionCard>
   ),
 };
 
 export const ComfortableDensity: Story = {
   render: () => (
-    <Wrap>
-      <SectionCard title="DataTable — comfortable density for two-line rows">
-        <DataTable
-          rows={members}
-          columns={memberColumns}
-          rowKey={(m) => m.id}
-          renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
-          selectable
-          density="comfortable"
-        />
-      </SectionCard>
-    </Wrap>
+    <SectionCard title="DataTable — comfortable density for two-line rows">
+      <DataTable
+        rows={members}
+        columns={memberColumns}
+        rowKey={(m) => m.id}
+        renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
+        selectable
+        density="comfortable"
+      />
+    </SectionCard>
   ),
 };
 
@@ -801,23 +662,21 @@ export const ComfortableDensity: Story = {
 export const ComfortableRowsAreTaller: Story = {
   tags: ['!dev'],
   render: () => (
-    <Wrap>
-      <div className="space-y-6">
-        {(['default', 'comfortable'] as const).map((density) => (
-          <section key={density} aria-label={`${density} density`}>
-            <DataTable
-              aria-label={`${density} density members`}
-              rows={members.slice(0, 3)}
-              columns={memberColumns}
-              rowKey={(m) => m.id}
-              renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
-              selectable
-              density={density}
-            />
-          </section>
-        ))}
-      </div>
-    </Wrap>
+    <div className="space-y-6">
+      {(['default', 'comfortable'] as const).map((density) => (
+        <section key={density} aria-label={`${density} density`}>
+          <DataTable
+            aria-label={`${density} density members`}
+            rows={members.slice(0, 3)}
+            columns={memberColumns}
+            rowKey={(m) => m.id}
+            renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
+            selectable
+            density={density}
+          />
+        </section>
+      ))}
+    </div>
   ),
   play: async ({ canvas }) => {
     const rowsOf = (density: DataTableDensity) => {
@@ -849,8 +708,8 @@ export const ComfortableRowsAreTaller: Story = {
     const offsets = (firstRow: HTMLElement) => {
       const row = within(firstRow);
       return [
-        row.getByLabelText('Select row m-1').closest('label')!,
-        row.getByLabelText('Olivia Martin'),
+        row.getByLabelText('Select row user-1').closest('label')!,
+        row.getByLabelText('Ada Lovelace'),
         row.getByRole('button', { name: 'Edit' }),
       ].map((el) => centre(el) - centre(firstRow));
     };
@@ -866,23 +725,21 @@ export const ComfortableRowsAreTaller: Story = {
 export const CompactRowsAreShorter: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <div className="space-y-6">
-        {(['default', 'compact'] as const).map((density) => (
-          <section key={density} aria-label={`${density} density`}>
-            <DataTable
-              aria-label={`${density} density members`}
-              rows={members.slice(0, 3)}
-              columns={memberColumns}
-              rowKey={(m) => m.id}
-              renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
-              selectable
-              density={density}
-            />
-          </section>
-        ))}
-      </div>
-    </Wrap>
+    <div className="space-y-6">
+      {(['default', 'compact'] as const).map((density) => (
+        <section key={density} aria-label={`${density} density`}>
+          <DataTable
+            aria-label={`${density} density members`}
+            rows={members.slice(0, 3)}
+            columns={memberColumns}
+            rowKey={(m) => m.id}
+            renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
+            selectable
+            density={density}
+          />
+        </section>
+      ))}
+    </div>
   ),
   play: async ({ canvas }) => {
     const rowsOf = (density: DataTableDensity) => {
@@ -912,27 +769,25 @@ export const CompactRowsAreShorter: Story = {
 export const FollowsThePageDensity: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <div className="space-y-6">
-        {(['compact', 'default', 'comfortable'] as const).map((page) => (
-          <div key={page} data-density={page} aria-label={`page ${page}`} role="group">
-            <DataTable
-              aria-label={`${page} page, no prop`}
-              rows={members.slice(0, 2)}
-              columns={memberColumns}
-              rowKey={(m) => m.id}
-            />
-            <DataTable
-              aria-label={`${page} page, default prop`}
-              rows={members.slice(0, 2)}
-              columns={memberColumns}
-              rowKey={(m) => m.id}
-              density="default"
-            />
-          </div>
-        ))}
-      </div>
-    </Wrap>
+    <div className="space-y-6">
+      {(['compact', 'default', 'comfortable'] as const).map((page) => (
+        <div key={page} data-density={page} aria-label={`page ${page}`} role="group">
+          <DataTable
+            aria-label={`${page} page, no prop`}
+            rows={members.slice(0, 2)}
+            columns={memberColumns}
+            rowKey={(m) => m.id}
+          />
+          <DataTable
+            aria-label={`${page} page, default prop`}
+            rows={members.slice(0, 2)}
+            columns={memberColumns}
+            rowKey={(m) => m.id}
+            density="default"
+          />
+        </div>
+      ))}
+    </div>
   ),
   play: async ({ canvas }) => {
     const cellPadding = (name: string) => {
@@ -957,18 +812,16 @@ export const FollowsThePageDensity: Story = {
 export const CellsStayCentredWithAnyFont: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <div style={{ fontFamily: 'serif', fontSize: 28 }}>
-        <DataTable
-          rows={members.slice(0, 1)}
-          columns={memberColumns}
-          rowKey={(m) => m.id}
-          renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
-          selectable
-          density="comfortable"
-        />
-      </div>
-    </Wrap>
+    <div style={{ fontFamily: 'serif', fontSize: 28 }}>
+      <DataTable
+        rows={members.slice(0, 1)}
+        columns={memberColumns}
+        rowKey={(m) => m.id}
+        renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
+        selectable
+        density="comfortable"
+      />
+    </div>
   ),
   play: async ({ canvas }) => {
     const [header, firstRow] = within(canvas.getByRole('table')).getAllByRole('row');
@@ -978,7 +831,7 @@ export const CellsStayCentredWithAnyFont: Story = {
     };
     const row = within(firstRow);
     for (const el of [
-      row.getByLabelText('Select row m-1').closest('label')!,
+      row.getByLabelText('Select row user-1').closest('label')!,
       row.getByRole('button', { name: 'Edit' }),
     ]) {
       await expect(Math.abs(centre(el) - centre(firstRow))).toBeLessThanOrEqual(1);
@@ -993,9 +846,7 @@ export const SearchFocusShowsAccentBorderInDark: Story = {
   tags: ['!dev', '!autodocs'],
   globals: { theme: 'dark' },
   render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} defaultSearchValue="" />
-    </Wrap>
+    <DataTable rows={rows} columns={columns} rowKey={(r) => r.host} defaultSearchValue="" />
   ),
   play: async ({ canvas }) => {
     await expectFocusBorder(canvas.getByRole('searchbox', { name: 'Search rows' }));
@@ -1006,16 +857,14 @@ export const ColumnFilterSearchFocusShowsAccentBorderInDark: Story = {
   tags: ['!dev', '!autodocs'],
   globals: { theme: 'dark' },
   render: () => (
-    <Wrap>
-      <div className="relative h-72">
-        <ColumnFilterDropdown
-          values={['critical', 'warning', 'info']}
-          selected={new Set()}
-          onToggle={() => {}}
-          onClear={() => {}}
-        />
-      </div>
-    </Wrap>
+    <div className="relative h-72">
+      <ColumnFilterDropdown
+        values={['critical', 'warning', 'info']}
+        selected={new Set()}
+        onToggle={() => {}}
+        onClear={() => {}}
+      />
+    </div>
   ),
   play: async ({ canvas }) => {
     await expectFocusBorder(canvas.getByPlaceholderText('Search…'));
@@ -1024,7 +873,7 @@ export const ColumnFilterSearchFocusShowsAccentBorderInDark: Story = {
 
 export const SortableHeadersExposeAriaSort: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.host} pageSize={10} />,
   play: async ({ canvas }) => {
     const header = canvas.getByRole('columnheader', { name: /Name/ });
     await expect(header).toHaveAttribute('aria-sort', 'none');
@@ -1037,7 +886,7 @@ export const SortableHeadersExposeAriaSort: Story = {
 
 export const FilterButtonsAreNamedAfterTheirColumn: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.host} pageSize={10} />,
   play: async ({ canvas }) => {
     const filters = canvas.getAllByRole('button', { name: /^Filter / });
     const names = filters.map((b) => b.getAttribute('aria-label'));
@@ -1049,7 +898,7 @@ export const FilterButtonsAreNamedAfterTheirColumn: Story = {
 /** The filter button shows how many values are checked, and its name says it too (WCAG 2.5.3). */
 export const FilterButtonNameHoldsTheCheckedCount: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.host} pageSize={10} />,
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Filter Severity' }));
     // The dropdown is queried from the whole page, wherever it renders.
@@ -1074,7 +923,7 @@ export const ColumnFilterEscapesTheTable: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <div data-testid="clip" className="overflow-hidden">
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />
+      <DataTable rows={rows} columns={columns} rowKey={(r) => r.host} pageSize={10} />
     </div>
   ),
   play: async ({ canvas }) => {
@@ -1097,7 +946,7 @@ export const ColumnFilterFollowsAndCloses: Story = {
   render: () => (
     <div data-testid="scroller" className="h-96 overflow-y-auto">
       <div className="space-y-4 p-6 pb-[600px]">
-        <DataTable rows={rows.slice(0, 5)} columns={columns} rowKey={(r) => r.id} />
+        <DataTable rows={rows.slice(0, 5)} columns={columns} rowKey={(r) => r.host} />
         <button type="button">Outside</button>
       </div>
     </div>
@@ -1132,16 +981,14 @@ export const ColumnFilterFollowsAndCloses: Story = {
 export const ClickableRows: Story = {
   args: { onRowClick: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        rows={rows.slice(0, 6)}
-        columns={columns}
-        rowKey={(r) => r.id}
-        selectable
-        renderRowAction={() => <RowActionButton>View</RowActionButton>}
-        onRowClick={args.onRowClick}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows.slice(0, 6)}
+      columns={columns}
+      rowKey={(r) => r.host}
+      selectable
+      renderRowAction={() => <RowActionButton>View</RowActionButton>}
+      onRowClick={args.onRowClick}
+    />
   ),
 };
 
@@ -1150,14 +997,16 @@ export const ClickableRowsChecks: Story = {
   tags: ['!dev', '!autodocs'],
   play: async ({ args, canvas }) => {
     const onRowClick = args.onRowClick as ReturnType<typeof fn>;
-    const row = canvas.getByRole('row', { name: /node-100/ });
+    const row = canvas.getByRole('row', { name: /node-00001/ });
     await expect(row).toHaveClass('cursor-pointer');
     // A click on a cell is a click on the row.
-    await userEvent.click(within(row).getByText('node-100'));
+    await userEvent.click(within(row).getByText('node-00001'));
     await expect(onRowClick).toHaveBeenCalledTimes(1);
-    await expect(onRowClick).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'alert-1' }));
+    await expect(onRowClick).toHaveBeenLastCalledWith(
+      expect.objectContaining({ host: 'node-00001' })
+    );
     // The checkbox and the action column keep their own meaning.
-    await userEvent.click(within(row).getByRole('checkbox', { name: 'Select row alert-1' }));
+    await userEvent.click(within(row).getByRole('checkbox', { name: 'Select row node-00001' }));
     await userEvent.click(within(row).getByRole('button', { name: 'View' }));
     await expect(onRowClick).toHaveBeenCalledTimes(1);
   },
@@ -1167,22 +1016,20 @@ export const ClickableRowFocusesFromTheKeyboard: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onRowClick: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        rows={rows.slice(0, 3)}
-        columns={columns}
-        rowKey={(r) => r.id}
-        onRowClick={args.onRowClick}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows.slice(0, 3)}
+      columns={columns}
+      rowKey={(r) => r.host}
+      onRowClick={args.onRowClick}
+    />
   ),
   play: async ({ args, canvas }) => {
     const onRowClick = args.onRowClick as ReturnType<typeof fn>;
-    const row = canvas.getByRole('row', { name: /node-101/ });
+    const row = canvas.getByRole('row', { name: /node-00002/ });
     await expect(row).toHaveAttribute('tabindex', '0');
     await expectFocusRing(row, { inset: true });
     await userEvent.keyboard('{Enter}');
-    await expect(onRowClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'alert-2' }));
+    await expect(onRowClick).toHaveBeenCalledWith(expect.objectContaining({ host: 'node-00002' }));
     await userEvent.keyboard(' ');
     await expect(onRowClick).toHaveBeenCalledTimes(2);
   },
@@ -1207,16 +1054,14 @@ const linkColumns = [columns[1], columns[0], ...columns.slice(2)];
 
 export const LinkRows: Story = {
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows.slice(0, 6)}
-        columns={linkColumns}
-        rowKey={(r) => r.id}
-        selectable
-        rowHref={(r) => `#${r.id}`}
-        renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows.slice(0, 6)}
+      columns={linkColumns}
+      rowKey={(r) => r.host}
+      selectable
+      rowHref={(r) => `#${r.host}`}
+      renderRowAction={() => <RowActionButton>Edit</RowActionButton>}
+    />
   ),
 };
 
@@ -1224,9 +1069,9 @@ export const LinkRowsChecks: Story = {
   ...LinkRows,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
-    const row = canvas.getByRole('row', { name: /node-100/ });
-    const link = within(row).getByRole('link', { name: /node-100/ });
-    await expect(link).toHaveAttribute('href', '#alert-1');
+    const row = canvas.getByRole('row', { name: /node-00001/ });
+    const link = within(row).getByRole('link', { name: /node-00001/ });
+    await expect(link).toHaveAttribute('href', '#node-00001');
     // The link is drawn over the whole row: what sits under a point in another cell is the link,
     // and what sits under the checkbox and the action button is that control, not the link.
     const under = (el: Element) => {
@@ -1246,7 +1091,7 @@ export const LinkRowsChecks: Story = {
       await expect(clicks.followed).toEqual([]);
       // userEvent clicks the element it is given, so give it the one under the cell's point.
       await userEvent.click(under(within(row).getByText('cpu'))!);
-      await expect(clicks.followed).toEqual(['#alert-1']);
+      await expect(clicks.followed).toEqual(['#node-00001']);
     } finally {
       clicks.stop();
     }
@@ -1256,24 +1101,22 @@ export const LinkRowsChecks: Story = {
 export const LinkRowFocusesFromTheKeyboard: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows.slice(0, 3)}
-        columns={linkColumns}
-        rowKey={(r) => r.id}
-        rowHref={(r) => `#${r.id}`}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows.slice(0, 3)}
+      columns={linkColumns}
+      rowKey={(r) => r.host}
+      rowHref={(r) => `#${r.host}`}
+    />
   ),
   play: async ({ canvas }) => {
-    const row = canvas.getByRole('row', { name: /node-102/ });
+    const row = canvas.getByRole('row', { name: /node-00003/ });
     const link = within(row).getByRole('link');
     // The row draws the ring: the link itself would only outline its cell.
     await expectFocusRing(link, { ring: row, inset: true });
     const clicks = recordLinkClicks();
     try {
       await userEvent.keyboard('{Enter}');
-      await expect(clicks.followed).toEqual(['#alert-3']);
+      await expect(clicks.followed).toEqual(['#node-00003']);
     } finally {
       clicks.stop();
     }
@@ -1284,26 +1127,24 @@ export const RowMenu: Story = {
   parameters: portalDocsParams.lg(),
   args: { onRowClick: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        rows={rows.slice(0, 6)}
-        columns={columns}
-        rowKey={(r) => r.id}
-        onRowClick={args.onRowClick}
-        renderRowAction={(r) => (
-          <RowActionsMenu aria-label={`Actions for ${r.name}`}>
-            <Menu.Item icon={Pencil} onSelect={fn()}>
-              Edit
-            </Menu.Item>
-            <Menu.Item icon={Copy}>Duplicate</Menu.Item>
-            <Menu.Separator />
-            <Menu.Item icon={Trash2} intent="danger" onSelect={() => deleted(r.id)}>
-              Delete
-            </Menu.Item>
-          </RowActionsMenu>
-        )}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows.slice(0, 6)}
+      columns={columns}
+      rowKey={(r) => r.host}
+      onRowClick={args.onRowClick}
+      renderRowAction={(r) => (
+        <RowActionsMenu aria-label={`Actions for ${r.host}`}>
+          <Menu.Item icon={Pencil} onSelect={fn()}>
+            Edit
+          </Menu.Item>
+          <Menu.Item icon={Copy}>Duplicate</Menu.Item>
+          <Menu.Separator />
+          <Menu.Item icon={Trash2} intent="danger" onSelect={() => deleted(r.host)}>
+            Delete
+          </Menu.Item>
+        </RowActionsMenu>
+      )}
+    />
   ),
 };
 
@@ -1314,15 +1155,15 @@ export const RowMenuChecks: Story = {
     const onRowClick = args.onRowClick as ReturnType<typeof fn>;
     const page = within(document.body);
     deleted.mockClear();
-    const trigger = canvas.getByRole('button', { name: 'Actions for node-101' });
+    const trigger = canvas.getByRole('button', { name: 'Actions for node-00002' });
     // The 32px button fits the action column.
     await expect(trigger.getBoundingClientRect().width).toBe(32);
     await userEvent.click(trigger);
-    const menu = await page.findByRole('menu', { name: 'Actions for node-101' });
+    const menu = await page.findByRole('menu', { name: 'Actions for node-00002' });
     await expect(trigger).toHaveAttribute('aria-expanded', 'true');
     // The danger item is red, and choosing it runs it, closes the menu, and is not a row click.
     await userEvent.click(within(menu).getByRole('menuitem', { name: 'Delete' }));
-    await expect(deleted).toHaveBeenCalledWith('alert-2');
+    await expect(deleted).toHaveBeenCalledWith('node-00002');
     await waitFor(() => expect(page.queryByRole('menu')).toBeNull());
     // Nor is the click on the trigger, or on the menu around its items, one on the row.
     await userEvent.click(trigger);
@@ -1334,31 +1175,29 @@ export const RowMenuChecks: Story = {
 export const HeaderCellsShareOneStyleWithTable: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <div className="space-y-6">
-        <DataTable
-          rows={rows.slice(0, 2)}
-          columns={columns.slice(0, 2)}
-          rowKey={(r) => r.id}
-          selectable
-          renderRowAction={() => <RowActionButton>View</RowActionButton>}
-        />
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableHeaderCell>Severity</TableHeaderCell>
-              <TableHeaderCell>Name</TableHeaderCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            <TableRow>
-              <TableCell>OK</TableCell>
-              <TableCell>node-100</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
-    </Wrap>
+    <div className="space-y-6">
+      <DataTable
+        rows={rows.slice(0, 2)}
+        columns={columns.slice(0, 2)}
+        rowKey={(r) => r.host}
+        selectable
+        renderRowAction={() => <RowActionButton>View</RowActionButton>}
+      />
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>Severity</TableHeaderCell>
+            <TableHeaderCell>Name</TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          <TableRow>
+            <TableCell>OK</TableCell>
+            <TableCell>node-00001</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
   ),
   play: async ({ canvas }) => {
     const look = (el: Element) => {
@@ -1392,11 +1231,7 @@ const scrollerOf = (table: HTMLElement) => table.parentElement as HTMLElement;
 
 export const MobileScrollsWithAnEdgeFade: Story = {
   globals: mobileViewport,
-  render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={wideColumns} rowKey={(r) => r.id} pageSize={5} />
-    </Wrap>
-  ),
+  render: () => <DataTable rows={rows} columns={wideColumns} rowKey={(r) => r.host} pageSize={5} />,
 };
 
 export const MobileScrollsWithAnEdgeFadeChecks: Story = {
@@ -1433,11 +1268,7 @@ export const MobileScrollsWithAnEdgeFadeChecks: Story = {
 
 export const TableThatFitsHasNoFade: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => (
-    <Wrap>
-      <DataTable rows={rows.slice(0, 5)} columns={columns} rowKey={(r) => r.id} />
-    </Wrap>
-  ),
+  render: () => <DataTable rows={rows.slice(0, 5)} columns={columns} rowKey={(r) => r.host} />,
   play: async ({ canvas }) => {
     const scroller = scrollerOf(canvas.getByRole('table'));
     await expect(scroller.scrollWidth).toBeLessThanOrEqual(scroller.clientWidth);
@@ -1457,9 +1288,15 @@ export const PercentColumnsScrollOnAPhone: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={5} />
-    </Wrap>
+    <>
+      {/* The fixture's own 5rem minimums off: this is about the default one. */}
+      <DataTable
+        rows={rows}
+        columns={columns.map(({ minWidth: _minWidth, ...c }) => c)}
+        rowKey={(r) => r.host}
+        pageSize={5}
+      />
+    </>
   ),
   play: async ({ canvas, canvasElement }) => {
     expectNoHorizontalOverflow();
@@ -1478,17 +1315,15 @@ export const ColumnsWithoutWidthScrollOnAPhone: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns.map(({ width: _width, ...c }, i) =>
-          i === 1 ? { ...c, minWidth: '12rem' } : c
-        )}
-        rowKey={(r) => r.id}
-        pageSize={5}
-        selectable
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns.map(({ width: _width, ...c }, i) =>
+        i === 1 ? { ...c, minWidth: '12rem' } : c
+      )}
+      rowKey={(r) => r.host}
+      pageSize={5}
+      selectable
+    />
   ),
   play: async ({ canvas, canvasElement }) => {
     const scroller = scrollerOf(canvas.getByRole('table'));
@@ -1506,15 +1341,13 @@ export const ColumnsWithoutWidthScrollOnAPhone: Story = {
 export const PinnedStartColumn: Story = {
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={[{ ...columns[1], pin: 'start' }, columns[0], ...wideColumns.slice(2)]}
-        rowKey={(r) => r.id}
-        pageSize={5}
-        selectable
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={withPins(wideColumns, { start: ['host'] })}
+      rowKey={(r) => r.host}
+      pageSize={5}
+      selectable
+    />
   ),
 };
 
@@ -1555,72 +1388,55 @@ export const PinnedStartColumnKeepsRowLinks: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows.slice(0, 4)}
-        columns={[{ ...columns[1], pin: 'start' }, ...wideColumns.slice(2)]}
-        rowKey={(r) => r.id}
-        rowHref={(r) => `#${r.id}`}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows.slice(0, 4)}
+      columns={withPins(pickColumns(wideColumns, ['host', 'metric', 'dc', 'rack', 'room']), {
+        start: ['host'],
+      })}
+      rowKey={(r) => r.host}
+      rowHref={(r) => `#${r.host}`}
+    />
   ),
   play: async ({ canvas }) => {
-    const row = canvas.getByRole('row', { name: /node-101/ });
+    const row = canvas.getByRole('row', { name: /node-00002/ });
     const clicks = recordLinkClicks();
     try {
       // A click on a cell that scrolls follows the link of the pinned one, which does not cover it.
       await userEvent.click(within(row).getAllByRole('cell')[2]);
-      await expect(clicks.followed).toEqual(['#alert-2']);
+      await expect(clicks.followed).toEqual(['#node-00002']);
       await userEvent.click(within(row).getByRole('link'));
-      await expect(clicks.followed).toEqual(['#alert-2', '#alert-2']);
+      await expect(clicks.followed).toEqual(['#node-00002', '#node-00002']);
     } finally {
       clicks.stop();
     }
   },
 };
 
-type Customer = { id: string; name: string; email: string; plan: string; balance: number };
+// Three people with a billing record. The cells cut what is too long for their column, and Ada's
+// email and plan are.
+type Customer = Person & { customerId: string; plan: string; balance: number };
 
 const customers: Customer[] = [
   {
-    id: 'cus_9f2a41c07d5e8b3a6c1d',
-    name: 'Ada Lovelace',
+    ...PEOPLE[0]!,
     email: 'ada.lovelace@analytical-engine.example.org',
+    customerId: 'cus_9f2a41c07d5e8b3a6c1d',
     plan: 'Business, billed yearly, with the audit log and single sign-on add-ons',
     balance: 1240.5,
   },
-  {
-    id: 'cus_1b7c88e02f4a9d63e5b0',
-    name: 'Grace Hopper',
-    email: 'grace@cobol.example.org',
-    plan: 'Team',
-    balance: -89,
-  },
-  {
-    id: 'cus_5d0e73a91c2b4f8a6e37',
-    name: 'Alan Turing',
-    email: 'alan@bletchley.example.org',
-    plan: 'Free',
-    balance: 0,
-  },
+  { ...PEOPLE[1]!, customerId: 'cus_1b7c88e02f4a9d63e5b0', plan: 'Team', balance: -89 },
+  { ...PEOPLE[4]!, customerId: 'cus_5d0e73a91c2b4f8a6e37', plan: 'Free', balance: 0 },
 ];
 
 const customerColumns: ColumnDef<Customer>[] = [
+  ...patchColumns(withIdentity(pickColumns(peopleColumns, ['name'])), {
+    name: { label: 'Customer', width: '30%' },
+  }),
   {
-    key: 'name',
-    label: 'Customer',
-    width: '30%',
-    sortable: true,
-    sortValue: (r) => r.name,
-    render: (r) => (
-      <TableIdentityCell title={r.name} subtitle={r.email} src={placeholderAvatar(r.name, 80)} />
-    ),
-  },
-  {
-    key: 'id',
+    key: 'customerId',
     label: 'ID',
     width: '20%',
-    render: (r) => <TableIdCell>{r.id}</TableIdCell>,
+    render: (r) => <TableIdCell>{r.customerId}</TableIdCell>,
   },
   {
     key: 'plan',
@@ -1641,17 +1457,15 @@ const customerColumns: ColumnDef<Customer>[] = [
 
 export const CellHelpers: Story = {
   render: () => (
-    <Wrap>
-      <div className="max-w-3xl">
-        <DataTable
-          rows={customers}
-          columns={customerColumns}
-          rowKey={(r) => r.id}
-          density="comfortable"
-          aria-label="Customers"
-        />
-      </div>
-    </Wrap>
+    <div className="max-w-3xl">
+      <DataTable
+        rows={customers}
+        columns={customerColumns}
+        rowKey={(r) => r.id}
+        density="comfortable"
+        aria-label="Customers"
+      />
+    </div>
   ),
 };
 
@@ -1674,54 +1488,16 @@ export const CellHelpersChecks: Story = {
   },
 };
 
-type Teammate = {
-  id: string;
-  name: string;
-  email: string;
-  status: 'Active' | 'Suspended' | 'Invited';
-};
+// The people of a team, split by status tabs: seven are active, two suspended and three invited.
+const teammates = PEOPLE;
 
-const TEAMMATE_STATUSES: Teammate['status'][] = [
-  'Active',
-  'Active',
-  'Suspended',
-  'Active',
-  'Invited',
-  'Active',
-  'Active',
-  'Invited',
-  'Suspended',
-  'Active',
-  'Invited',
-  'Active',
-];
-
-const teammates: Teammate[] = TEAMMATE_STATUSES.map((status, i) => ({
-  id: `member-${i + 1}`,
-  name: `Member ${i + 1}`,
-  email: `member${i + 1}@example.org`,
-  status,
-}));
-
-const teammateColumns: ColumnDef<Teammate>[] = [
-  {
-    key: 'name',
-    label: 'Name',
-    width: '45%',
-    render: (r) => <TableIdentityCell title={r.name} subtitle={r.email} />,
-  },
-  {
-    key: 'status',
-    label: 'Status',
-    width: '30%',
-    filterable: true,
-    filterValue: (r) => r.status,
-    render: (r) => r.status,
-  },
-];
+const teammateColumns = patchColumns(withIdentity(pickColumns(peopleColumns, ['name', 'status'])), {
+  name: { width: '45%' },
+  status: { width: '30%' },
+});
 
 // The host owns the counts (they may come from a server); here they are read off the sample.
-const countOf = (status: Teammate['status']) => teammates.filter((m) => m.status === status).length;
+const countOf = (status: Person['status']) => teammates.filter((m) => m.status === status).length;
 
 const statusTabs = {
   columnKey: 'status',
@@ -1733,22 +1509,22 @@ const statusTabs = {
   })),
 };
 
-const teammateNames = (canvas: { getAllByText: (re: RegExp) => HTMLElement[] }) =>
-  canvas.getAllByText(/^Member \d+$/).map((el) => el.textContent);
+const TEAMMATE_NAMES = new Set(teammates.map((m) => m.name));
+
+const teammateNames = (canvas: Canvas) =>
+  canvas.getAllByText((text) => TEAMMATE_NAMES.has(text)).map((el) => el.textContent);
 
 export const WithStatusTabs: Story = {
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={teammates}
-        columns={teammateColumns}
-        rowKey={(r) => r.id}
-        filterTabs={statusTabs}
-        searchPlaceholder="Search members…"
-        defaultSearchValue=""
-        aria-label="Members"
-      />
-    </Wrap>
+    <DataTable
+      rows={teammates}
+      columns={teammateColumns}
+      rowKey={(r) => r.id}
+      filterTabs={statusTabs}
+      searchPlaceholder="Search members…"
+      defaultSearchValue=""
+      aria-label="Members"
+    />
   ),
 };
 
@@ -1765,7 +1541,7 @@ export const WithStatusTabsChecks: Story = {
       'true'
     );
     await expect(all).toHaveAttribute('aria-selected', 'false');
-    await expect(teammateNames(canvas)).toEqual(['Member 3', 'Member 9']);
+    await expect(teammateNames(canvas)).toEqual(['Linus Torvalds', 'Ken Thompson']);
     await userEvent.click(all);
     await expect(teammateNames(canvas)).toHaveLength(12);
   },
@@ -1774,16 +1550,14 @@ export const WithStatusTabsChecks: Story = {
 export const TabsAreOnTopOfTheCard: Story = {
   tags: ['!dev'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={teammates}
-        columns={teammateColumns}
-        rowKey={(r) => r.id}
-        filterTabs={statusTabs}
-        defaultSearchValue=""
-        aria-label="Members"
-      />
-    </Wrap>
+    <DataTable
+      rows={teammates}
+      columns={teammateColumns}
+      rowKey={(r) => r.id}
+      filterTabs={statusTabs}
+      defaultSearchValue=""
+      aria-label="Members"
+    />
   ),
   play: async ({ canvas }) => {
     const tablist = canvas.getByRole('tablist');
@@ -1803,15 +1577,13 @@ export const TabsAreOnTopOfTheCard: Story = {
 export const ClearingTheFilterMovesTheTabBackToAll: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={teammates}
-        columns={teammateColumns}
-        rowKey={(r) => r.id}
-        filterTabs={statusTabs}
-        aria-label="Members"
-      />
-    </Wrap>
+    <DataTable
+      rows={teammates}
+      columns={teammateColumns}
+      rowKey={(r) => r.id}
+      filterTabs={statusTabs}
+      aria-label="Members"
+    />
   ),
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('tab', { name: 'Invited 3' }));
@@ -1835,15 +1607,13 @@ export const ClearingTheFilterMovesTheTabBackToAll: Story = {
 export const ColumnHeaderFilterSelectsItsTab: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={teammates}
-        columns={teammateColumns}
-        rowKey={(r) => r.id}
-        filterTabs={statusTabs}
-        aria-label="Members"
-      />
-    </Wrap>
+    <DataTable
+      rows={teammates}
+      columns={teammateColumns}
+      rowKey={(r) => r.id}
+      filterTabs={statusTabs}
+      aria-label="Members"
+    />
   ),
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /Status/ }));
@@ -1860,15 +1630,13 @@ export const ColumnHeaderFilterSelectsItsTab: Story = {
 export const StatusTabsKeyboard: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={teammates}
-        columns={teammateColumns}
-        rowKey={(r) => r.id}
-        filterTabs={statusTabs}
-        aria-label="Members"
-      />
-    </Wrap>
+    <DataTable
+      rows={teammates}
+      columns={teammateColumns}
+      rowKey={(r) => r.id}
+      filterTabs={statusTabs}
+      aria-label="Members"
+    />
   ),
   play: async ({ canvas }) => {
     // Roving tabindex: only the active tab is a tab stop.
@@ -1898,7 +1666,7 @@ export const ControlledFilters: Story = {
       status: new Set(['Suspended']),
     });
     return (
-      <Wrap>
+      <>
         <div className="mb-3 flex items-center gap-3 text-sm">
           <Button variant="secondary" size="sm" onClick={() => setFilters({})}>
             Reset from the host
@@ -1918,7 +1686,7 @@ export const ControlledFilters: Story = {
           onFiltersChange={setFilters}
           aria-label="Members"
         />
-      </Wrap>
+      </>
     );
   },
   play: async ({ canvas }) => {
@@ -1941,17 +1709,15 @@ export const ControlledFiltersWaitForTheHost: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onFiltersChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        rows={teammates}
-        columns={teammateColumns}
-        rowKey={(r) => r.id}
-        filterTabs={statusTabs}
-        filters={{}}
-        onFiltersChange={args.onFiltersChange}
-        aria-label="Members"
-      />
-    </Wrap>
+    <DataTable
+      rows={teammates}
+      columns={teammateColumns}
+      rowKey={(r) => r.id}
+      filterTabs={statusTabs}
+      filters={{}}
+      onFiltersChange={args.onFiltersChange}
+      aria-label="Members"
+    />
   ),
   play: async ({ canvas, args }) => {
     await userEvent.click(canvas.getByRole('tab', { name: 'Active 7' }));
@@ -1974,17 +1740,15 @@ export const DefaultFiltersStartUncontrolled: Story = {
   tags: ['!dev', '!autodocs'],
   args: { onFiltersChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        rows={teammates}
-        columns={teammateColumns}
-        rowKey={(r) => r.id}
-        filterTabs={statusTabs}
-        defaultFilters={{ status: new Set(['Invited']) }}
-        onFiltersChange={args.onFiltersChange}
-        aria-label="Members"
-      />
-    </Wrap>
+    <DataTable
+      rows={teammates}
+      columns={teammateColumns}
+      rowKey={(r) => r.id}
+      filterTabs={statusTabs}
+      defaultFilters={{ status: new Set(['Invited']) }}
+      onFiltersChange={args.onFiltersChange}
+      aria-label="Members"
+    />
   ),
   play: async ({ canvas, args }) => {
     await expect(canvas.getByRole('tab', { name: 'Invited 3' })).toHaveAttribute(
@@ -2002,22 +1766,20 @@ export const DefaultFiltersStartUncontrolled: Story = {
 export const StatusTabsMobile: Story = {
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={teammates}
-        columns={teammateColumns}
-        rowKey={(r) => r.id}
-        filterTabs={{
-          ...statusTabs,
-          options: [
-            ...statusTabs.options,
-            { value: 'Archived', label: 'Archived', count: 0 },
-            { value: 'Pending review', label: 'Pending review', count: 0 },
-          ],
-        }}
-        aria-label="Members"
-      />
-    </Wrap>
+    <DataTable
+      rows={teammates}
+      columns={teammateColumns}
+      rowKey={(r) => r.id}
+      filterTabs={{
+        ...statusTabs,
+        options: [
+          ...statusTabs.options,
+          { value: 'Archived', label: 'Archived', count: 0 },
+          { value: 'Pending review', label: 'Pending review', count: 0 },
+        ],
+      }}
+      aria-label="Members"
+    />
   ),
 };
 
@@ -2035,16 +1797,14 @@ export const StatusTabsMobileChecks: Story = {
 export const MultiValueFilterKeepsTheStripReachable: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={teammates}
-        columns={teammateColumns}
-        rowKey={(r) => r.id}
-        filterTabs={statusTabs}
-        defaultFilters={{ status: new Set(['Active', 'Invited']) }}
-        aria-label="Teammates"
-      />
-    </Wrap>
+    <DataTable
+      rows={teammates}
+      columns={teammateColumns}
+      rowKey={(r) => r.id}
+      filterTabs={statusTabs}
+      defaultFilters={{ status: new Set(['Active', 'Invited']) }}
+      aria-label="Teammates"
+    />
   ),
   play: async ({ canvas }) => {
     // Two values match no single tab: none is selected, and Tab still lands on the strip.
@@ -2065,15 +1825,13 @@ const findRange = (canvas: Canvas, range: string) =>
 
 export const WithPageSizeOptions: Story = {
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        defaultPageSize={10}
-        pageSizeOptions={PAGE_SIZES}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.host}
+      defaultPageSize={10}
+      pageSizeOptions={PAGE_SIZES}
+    />
   ),
 };
 
@@ -2096,7 +1854,7 @@ export const PageSizeChangeGoesBackToPageOne: Story = {
     <DataTable
       rows={rows}
       columns={columns}
-      rowKey={(r) => r.id}
+      rowKey={(r) => r.host}
       defaultPageSize={10}
       pageSizeOptions={PAGE_SIZES}
     />
@@ -2117,11 +1875,11 @@ export const PageSizeControlled: Story = {
   render: () => {
     const [size, setSize] = useState(10);
     return (
-      <Wrap>
+      <>
         <DataTable
           rows={rows}
           columns={columns}
-          rowKey={(r) => r.id}
+          rowKey={(r) => r.host}
           pageSize={size}
           onPageSizeChange={setSize}
           pageSizeOptions={PAGE_SIZES}
@@ -2129,7 +1887,7 @@ export const PageSizeControlled: Story = {
         <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
           Page size held by the host: <span data-testid="host-size">{size}</span>
         </p>
-      </Wrap>
+      </>
     );
   },
 };
@@ -2153,7 +1911,7 @@ export const PageSizeWithoutCallbackStaysFixed: Story = {
     <DataTable
       rows={rows}
       columns={columns}
-      rowKey={(r) => r.id}
+      rowKey={(r) => r.host}
       pageSize={10}
       onPageSizeChange={pickedSizes}
       pageSizeOptions={PAGE_SIZES}
@@ -2174,7 +1932,7 @@ export const PageSizeOutsideTheOptionsIsListed: Story = {
     <DataTable
       rows={rows}
       columns={columns}
-      rowKey={(r) => r.id}
+      rowKey={(r) => r.host}
       pageSize={15}
       pageSizeOptions={PAGE_SIZES}
     />
@@ -2188,7 +1946,7 @@ export const PageSizeOutsideTheOptionsIsListed: Story = {
 
 export const NoPageSizeSelectByDefault: Story = {
   tags: ['!dev'],
-  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={10} />,
+  render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.host} pageSize={10} />,
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('combobox', { name: 'Rows per page' })).not.toBeInTheDocument();
   },
@@ -2197,15 +1955,13 @@ export const NoPageSizeSelectByDefault: Story = {
 export const PageSizeOptionsMobile: Story = {
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        defaultPageSize={10}
-        pageSizeOptions={PAGE_SIZES}
-      />
-    </Wrap>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.host}
+      defaultPageSize={10}
+      pageSizeOptions={PAGE_SIZES}
+    />
   ),
 };
 
@@ -2222,6 +1978,8 @@ export const PageSizeOptionsMobileChecks: Story = {
 
 // ── Right to left ───────────────────────────────────────────────────────────
 
+// The alignment checks need one column of each `align` and a cell that says which: a model of their
+// own, kept local, since no shared column is made for it.
 type AlignRow = { id: string; a: string; b: string; c: string };
 
 const ALIGN_COLUMNS: ColumnDef<AlignRow>[] = [
@@ -2311,16 +2069,14 @@ export const RowActionsMenuAlignFollowsTheReadingDirection: Story = {
 export const LoadingPlaceholderFollowsTheColumnAlign: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <DataTable
-        rows={[]}
-        columns={ALIGN_COLUMNS}
-        rowKey={(r) => r.id}
-        loading
-        loadingRows={2}
-        aria-label="Loading"
-      />
-    </Wrap>
+    <DataTable
+      rows={[]}
+      columns={ALIGN_COLUMNS}
+      rowKey={(r) => r.id}
+      loading
+      loadingRows={2}
+      aria-label="Loading"
+    />
   ),
   play: ({ canvas }) => {
     const row = canvas.getByRole('table', { name: 'Loading' }).querySelector('tbody > tr')!;
@@ -2346,10 +2102,10 @@ export const ToolbarFollowsTheReadingDirection: Story = {
             aria-label={`Alerts ${dir}`}
             rows={rows.slice(0, 5)}
             columns={columns}
-            rowKey={(r) => r.id}
+            rowKey={(r) => r.host}
             defaultSearchValue="مرحبا"
             selectable
-            defaultSelection={new Set([rows[0]!.id])}
+            defaultSelection={new Set([rows[0]!.host])}
             bulkActions={() => <button type="button">Archive</button>}
           />
         </div>

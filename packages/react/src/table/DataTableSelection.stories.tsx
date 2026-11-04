@@ -3,6 +3,7 @@ import { Archive, Printer, Trash2, Truck } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, spyOn, userEvent, waitFor, within } from 'storybook/test';
 import { Button } from '../ui/Button';
+import { SlowFolds, finishAnimations } from '../storybook-folds';
 import {
   expectNoHorizontalOverflow,
   mobileViewport,
@@ -10,7 +11,8 @@ import {
   textLines,
 } from '../storybook-helpers';
 import { DataTable } from './DataTable';
-import type { ColumnDef, DataTableBulkAction } from './types';
+import { makeOrders, orderColumns, type Order } from './storybook-fixtures';
+import type { DataTableBulkAction } from './types';
 
 // What DataTable does around a selection and on a phone: the toolbar that stays while rows are
 // selected, the Export that follows the selection, the filters sheet of the cards and the empty
@@ -26,61 +28,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-type Order = {
-  id: string;
-  customer: string;
-  status: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
-  payment: 'Paid' | 'Pending' | 'Failed';
-  total: string;
-};
-
-const rows: Order[] = [
-  ['Maya Lindqvist', 'Pending', 'Pending', '€64.80'],
-  ['Tomás Herrera', 'Packed', 'Paid', '€18.50'],
-  ['Aiko Tanaka', 'Packed', 'Paid', '€112.30'],
-  ['Oliver Brandt', 'Shipped', 'Paid', '€39.00'],
-  ['Fatima Okonkwo', 'Packed', 'Paid', '€87.40'],
-  ['Lucas Moreau', 'Delivered', 'Paid', '€24.90'],
-  ['Sofia Petrov', 'Cancelled', 'Failed', '€41.60'],
-  ['Daniel Whitfield', 'Delivered', 'Paid', '€143.20'],
-].map(([customer, status, payment, total], i) => ({
-  id: `BK-${20421 - i}`,
-  customer: customer!,
-  status: status as Order['status'],
-  payment: payment as Order['payment'],
-  total: total!,
-}));
-
-const columns: ColumnDef<Order>[] = [
-  { key: 'id', label: 'Order', mobile: 'title', render: (r) => r.id },
-  {
-    key: 'customer',
-    label: 'Customer',
-    sortable: true,
-    sortValue: (r) => r.customer,
-    searchValue: (r) => r.customer,
-    render: (r) => r.customer,
-  },
-  {
-    key: 'status',
-    label: 'Status',
-    filterable: true,
-    filterValue: (r) => r.status,
-    render: (r) => r.status,
-  },
-  {
-    key: 'payment',
-    label: 'Payment',
-    filterable: true,
-    filterValue: (r) => r.payment,
-    render: (r) => r.payment,
-  },
-  { key: 'total', label: 'Total', align: 'end', render: (r) => r.total },
-];
-
-const Wrap = ({ children }: { children: React.ReactNode }) => (
-  <div className="bg-[var(--color-bg-base)] p-4 text-[var(--color-text-base)]">{children}</div>
-);
+// The eight orders of the shared fixtures: `BK-20421` is the newest, and the stories select
+// `BK-20420`, `BK-20419` and `BK-20417`.
+const rows = makeOrders(8);
+const columns = orderColumns;
 
 const laptop = { viewport: { value: 'laptop', isRotated: false } } as const;
 const tablet = { viewport: { value: 'tablet', isRotated: false } } as const;
@@ -120,11 +71,7 @@ const Orders = (props: OrdersProps) => (
 export const SelectionKeepsTheToolbar: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
-  render: () => (
-    <Wrap>
-      <Orders defaultSelection={selected} />
-    </Wrap>
-  ),
+  render: () => <Orders defaultSelection={selected} />,
   play: async ({ canvas }) => {
     await expect(canvas.getByText('3 selected')).toBeVisible();
     await expect(canvas.getByRole('searchbox', { name: 'Search rows' })).toBeVisible();
@@ -149,11 +96,7 @@ export const SelectionKeepsTheToolbar: Story = {
 export const BulkActionsFoldIntoAMenu: Story = {
   tags: ['!dev', '!autodocs'],
   globals: tablet,
-  render: () => (
-    <Wrap>
-      <Orders defaultSelection={selected} />
-    </Wrap>
-  ),
+  render: () => <Orders defaultSelection={selected} />,
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Mark as shipped' })).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Actions' })).toBeVisible();
@@ -172,11 +115,7 @@ export const BulkActionsFoldIntoAMenu: Story = {
  */
 export const BulkActionsOnAPhone: Story = {
   globals: mobileViewport,
-  render: () => (
-    <Wrap>
-      <Orders mobileLayout="cards" defaultSelection={selected} />
-    </Wrap>
-  ),
+  render: () => <Orders mobileLayout="cards" defaultSelection={selected} />,
 };
 
 export const BulkActionsOnAPhoneChecks: Story = {
@@ -207,12 +146,12 @@ export const BulkActionsWrapUnderTheCountOnAPhone: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
+    <>
       {/* The card of a 375px phone, a little narrower than the viewport's own. */}
       <div style={{ maxWidth: 296 }}>
         <Orders defaultSelection={selected} />
       </div>
-    </Wrap>
+    </>
   ),
   play: async ({ canvas }) => {
     const ship = canvas.getByRole('button', { name: 'Mark as shipped' });
@@ -234,17 +173,15 @@ export const BulkActionsAsNodes: Story = {
   globals: laptop,
   tags: ['!autodocs'],
   render: () => (
-    <Wrap>
-      <Orders
-        bulkActionItems={undefined}
-        defaultSelection={selected}
-        bulkActions={(rows) => (
-          <Button variant="secondary" size="md" icon={Archive}>
-            Archive {rows.length}
-          </Button>
-        )}
-      />
-    </Wrap>
+    <Orders
+      bulkActionItems={undefined}
+      defaultSelection={selected}
+      bulkActions={(rows) => (
+        <Button variant="secondary" size="md" icon={Archive}>
+          Archive {rows.length}
+        </Button>
+      )}
+    />
   ),
 };
 
@@ -264,12 +201,10 @@ export const BulkActionsAsNodesChecks: Story = {
 export const FiltersOnAPhone: Story = {
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <Orders
-        mobileLayout="cards"
-        defaultFilters={{ status: new Set(['Packed']), payment: new Set(['Paid']) }}
-      />
-    </Wrap>
+    <Orders
+      mobileLayout="cards"
+      defaultFilters={{ status: new Set(['Packed']), payment: new Set(['Paid']) }}
+    />
   ),
 };
 
@@ -289,13 +224,11 @@ export const FiltersSheetOpen: Story = {
   globals: mobileViewport,
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <Wrap>
-      <Orders
-        mobileLayout="cards"
-        defaultFilters={{ status: new Set(['Packed']) }}
-        selectable={false}
-      />
-    </Wrap>
+    <Orders
+      mobileLayout="cards"
+      defaultFilters={{ status: new Set(['Packed']) }}
+      selectable={false}
+    />
   ),
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /^Filters/ }));
@@ -311,18 +244,16 @@ export const FiltersSheetOpen: Story = {
 export const EmptyWithAnAction: Story = {
   globals: laptop,
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Orders"
-        rows={[]}
-        columns={columns}
-        rowKey={(r) => r.id}
-        defaultSearchValue=""
-        emptyTitle="No orders yet"
-        emptyDescription="Orders appear here as soon as a customer checks out."
-        emptyAction={<Button size="sm">Create the first order</Button>}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Orders"
+      rows={[]}
+      columns={columns}
+      rowKey={(r) => r.id}
+      defaultSearchValue=""
+      emptyTitle="No orders yet"
+      emptyDescription="Orders appear here as soon as a customer checks out."
+      emptyAction={<Button size="sm">Create the first order</Button>}
+    />
   ),
 };
 
@@ -340,19 +271,27 @@ export const FiltersHideEveryRow: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
   render: () => (
-    <Wrap>
-      <Orders
-        selectable={false}
-        defaultSearchValue="zzz"
-        defaultFilters={{ status: new Set(['Packed']) }}
-        emptyAction={<Button size="sm">Create the first order</Button>}
-      />
-    </Wrap>
+    <Orders
+      selectable={false}
+      defaultSearchValue="zzz"
+      defaultFilters={{ status: new Set(['Packed']) }}
+      emptyAction={<Button size="sm">Create the first order</Button>}
+    />
   ),
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Clear filters' })).toBeVisible();
     await expect(canvas.queryByRole('button', { name: 'Create the first order' })).toBeNull();
   },
+};
+
+/**
+ * Tick a row: the "N selected" bar fades in and slides 4 px in 120 ms, in the place of the search
+ * row. Clear the selection: it fades out over the search row in 80 ms.
+ */
+export const SelectionBarFadesInAndOut: Story = {
+  parameters: { settleMotion: false },
+  globals: laptop,
+  render: () => <Orders />,
 };
 
 // ── Tests ────────────────────────────────────────────────────────────────────
@@ -361,11 +300,7 @@ export const FiltersHideEveryRow: Story = {
 export const TypingKeepsTheSelection: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
-  render: () => (
-    <Wrap>
-      <Orders defaultSelection={selected} />
-    </Wrap>
-  ),
+  render: () => <Orders defaultSelection={selected} />,
   play: async ({ canvas }) => {
     const search = canvas.getByRole('searchbox', { name: 'Search rows' });
     await userEvent.type(search, 'aiko');
@@ -385,16 +320,104 @@ export const TypingKeepsTheSelection: Story = {
 export const ClearLeavesTheToolbar: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
-  render: () => (
-    <Wrap>
-      <Orders defaultSelection={selected} />
-    </Wrap>
-  ),
+  render: () => <Orders defaultSelection={selected} />,
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Clear' }));
     await expect(canvas.queryByText(/selected/)).toBeNull();
     await expect(canvas.getByRole('searchbox', { name: 'Search rows' })).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Export' })).toBeVisible();
+  },
+};
+
+const SLOW_BAR = ['--cosmos-motion-fast', '--cosmos-motion-exit'];
+
+// The box that moves the "N selected" bar.
+const barOf = (scope: HTMLElement) => scope.querySelector<HTMLElement>('[data-selection-bar]');
+
+/**
+ * The bar comes with the first row ticked and leaves with the last one cleared. Leaving, it is out
+ * of the layout (the search row is already back in its place), inert and out of the accessibility
+ * tree at once, and it still reads what it read; ticking again brings the same bar back. A
+ * selection restored with the table is simply there. Slowed to 2 s to read the middle.
+ */
+export const SelectionBarComesAndGoes: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  globals: laptop,
+  render: () => (
+    <SlowFolds tokens={SLOW_BAR}>
+      <div data-testid="live">
+        <Orders />
+      </div>
+      <div data-testid="restored">
+        <Orders aria-label="Restored" defaultSelection={selected} />
+      </div>
+    </SlowFolds>
+  ),
+  play: async ({ canvas }) => {
+    const restored = barOf(canvas.getByTestId('restored'))!;
+    const live = within(canvas.getByTestId('live'));
+    const tick = () => userEvent.click(live.getByRole('checkbox', { name: 'Select row BK-20420' }));
+    const searchboxes = () => live.getAllByRole('searchbox', { name: 'Search rows', hidden: true });
+
+    // A selection restored with the table: there, nothing played.
+    await expect(restored).toHaveTextContent('3 selected');
+    await expect(restored.getAnimations()).toHaveLength(0);
+
+    // Arriving: the first row ticked brings the bar, fading in.
+    await expect(barOf(canvas.getByTestId('live'))).toBeNull();
+    await tick();
+    const bar = barOf(canvas.getByTestId('live'))!;
+    await expect(bar).toHaveTextContent('1 selected');
+    await expect(bar.inert).toBe(false);
+    await expect(bar.getAnimations().length).toBeGreaterThan(0);
+    await expect(getComputedStyle(bar).position).not.toBe('absolute');
+    await expect(searchboxes()).toHaveLength(1);
+    await finishAnimations(bar);
+
+    // Leaving: inert and hidden at once, over the search row that is already back, still reading
+    // "1 selected" and not "0 selected".
+    await userEvent.click(within(bar).getByRole('button', { name: 'Clear' }));
+    await expect(bar.isConnected).toBe(true);
+    await expect(bar.inert).toBe(true);
+    await expect(bar).toHaveAttribute('aria-hidden', 'true');
+    await expect(getComputedStyle(bar).position).toBe('absolute');
+    await expect(getComputedStyle(bar).pointerEvents).toBe('none');
+    await expect(bar).toHaveTextContent('1 selected');
+    await expect(bar.getAnimations().length).toBeGreaterThan(0);
+    await expect(searchboxes()).toHaveLength(2);
+    await expect(live.getAllByRole('searchbox', { name: 'Search rows' })).toHaveLength(1);
+
+    // Ticked again while it leaves: the same bar comes back.
+    await tick();
+    await expect(barOf(canvas.getByTestId('live'))).toBe(bar);
+    await expect(bar.inert).toBe(false);
+    await expect(bar).not.toHaveAttribute('aria-hidden');
+    await expect(getComputedStyle(bar).position).not.toBe('absolute');
+    await expect(searchboxes()).toHaveLength(1);
+
+    // Cleared for good: the bar goes once it has faded.
+    await userEvent.click(within(bar).getByRole('button', { name: 'Clear' }));
+    await finishAnimations(bar);
+    await waitFor(() => expect(bar.isConnected).toBe(false));
+    await expect(searchboxes()).toHaveLength(1);
+  },
+};
+
+/** With the Animations setting on "Reduced", the bar is there with the first row and gone with the last. */
+export const ReducedMotionSelectionBarAtOnce: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  globals: { ...laptop, motion: 'reduced' },
+  render: () => <Orders />,
+  play: async ({ canvas, canvasElement }) => {
+    await userEvent.click(canvas.getByRole('checkbox', { name: 'Select row BK-20420' }));
+    const bar = barOf(canvasElement)!;
+    await expect(bar).toHaveTextContent('1 selected');
+    await expect(bar.getAnimations({ subtree: true })).toHaveLength(0);
+    await userEvent.click(canvas.getByRole('button', { name: 'Clear' }));
+    await expect(bar.isConnected).toBe(false);
+    await expect(canvas.queryByText(/selected/)).toBeNull();
   },
 };
 
@@ -405,7 +428,7 @@ export const BulkActionsReceiveTheRows: Story = {
   render: () => {
     const [last, setLast] = useState('none');
     return (
-      <Wrap>
+      <>
         <p data-testid="last">{last}</p>
         <Orders
           defaultSelection={selected}
@@ -418,7 +441,7 @@ export const BulkActionsReceiveTheRows: Story = {
             )
           )}
         />
-      </Wrap>
+      </>
     );
   },
   play: async ({ canvas }) => {
@@ -438,10 +461,10 @@ export const FoldedMenuRunsAnAction: Story = {
       onClick: (selectedRows) => setLast(`${a.label}:${selectedRows.length}`),
     }));
     return (
-      <Wrap>
+      <>
         <p data-testid="last">{last}</p>
         <Orders defaultSelection={selected} bulkActionItems={items} />
-      </Wrap>
+      </>
     );
   },
   play: async ({ canvas }) => {
@@ -476,11 +499,7 @@ const csvOf = async (blob: Blob) =>
 export const ExportFollowsTheSelection: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
-  render: () => (
-    <Wrap>
-      <Orders />
-    </Wrap>
-  ),
+  render: () => <Orders />,
   play: async ({ canvas }) => {
     const download = interceptDownload();
     try {
@@ -514,11 +533,7 @@ export const ExportQueryCarriesTheSelection: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
   args: { onExport: fn() },
-  render: (args) => (
-    <Wrap>
-      <Orders onExport={args.onExport} />
-    </Wrap>
-  ),
+  render: (args) => <Orders onExport={args.onExport} />,
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Export' }));
     await expect(args.onExport).toHaveBeenLastCalledWith(
@@ -540,17 +555,15 @@ export const FiltersSheetDrivesTheFilters: Story = {
   render: (args) => {
     const [filters, setFilters] = useState<Record<string, Set<string>>>({});
     return (
-      <Wrap>
-        <Orders
-          selectable={false}
-          mobileLayout="cards"
-          filters={filters}
-          onFiltersChange={(next) => {
-            args.onFiltersChange?.(next);
-            setFilters(next);
-          }}
-        />
-      </Wrap>
+      <Orders
+        selectable={false}
+        mobileLayout="cards"
+        filters={filters}
+        onFiltersChange={(next) => {
+          args.onFiltersChange?.(next);
+          setFilters(next);
+        }}
+      />
     );
   },
   play: async ({ args, canvas }) => {
@@ -592,13 +605,11 @@ export const FiltersSheetUncontrolled: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <Orders
-        selectable={false}
-        mobileLayout="cards"
-        defaultFilters={{ payment: new Set(['Failed']) }}
-      />
-    </Wrap>
+    <Orders
+      selectable={false}
+      mobileLayout="cards"
+      defaultFilters={{ payment: new Set(['Failed']) }}
+    />
   ),
   play: async ({ canvas }) => {
     const cards = () => canvas.getAllByRole('listitem');
@@ -618,11 +629,7 @@ export const FiltersSheetUncontrolled: Story = {
 export const FiltersSheetClosesOnEscape: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
-  render: () => (
-    <Wrap>
-      <Orders selectable={false} mobileLayout="cards" />
-    </Wrap>
-  ),
+  render: () => <Orders selectable={false} mobileLayout="cards" />,
   play: async ({ canvas }) => {
     const open = canvas.getByRole('button', { name: /^Filters/ });
     await expect(open).toHaveAttribute('aria-expanded', 'false');
@@ -640,11 +647,7 @@ export const FiltersSheetClosesOnEscape: Story = {
 export const NoFiltersButtonOnADesktop: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
-  render: () => (
-    <Wrap>
-      <Orders selectable={false} mobileLayout="cards" />
-    </Wrap>
-  ),
+  render: () => <Orders selectable={false} mobileLayout="cards" />,
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('button', { name: /^Filters/ })).toBeNull();
   },
@@ -655,13 +658,11 @@ export const NoFiltersButtonWithoutFilterableColumns: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <Orders
-        selectable={false}
-        mobileLayout="cards"
-        columns={columns.map((c) => ({ ...c, filterable: false }))}
-      />
-    </Wrap>
+    <Orders
+      selectable={false}
+      mobileLayout="cards"
+      columns={columns.map((c) => ({ ...c, filterable: false }))}
+    />
   ),
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('button', { name: /^Filters/ })).toBeNull();
@@ -674,15 +675,13 @@ export const ClearFiltersGivesTheRowsBack: Story = {
   globals: laptop,
   args: { onSearchChange: fn(), onFiltersChange: fn() },
   render: (args) => (
-    <Wrap>
-      <Orders
-        selectable={false}
-        defaultSearchValue="zzz"
-        defaultFilters={{ status: new Set(['Packed']) }}
-        onSearchChange={args.onSearchChange}
-        onFiltersChange={args.onFiltersChange}
-      />
-    </Wrap>
+    <Orders
+      selectable={false}
+      defaultSearchValue="zzz"
+      defaultFilters={{ status: new Set(['Packed']) }}
+      onSearchChange={args.onSearchChange}
+      onFiltersChange={args.onFiltersChange}
+    />
   ),
   play: async ({ args, canvas }) => {
     await expect(canvas.getByText('No results')).toBeVisible();
@@ -700,26 +699,24 @@ export const ClearFiltersOnlyWhenTheyHideRows: Story = {
   tags: ['!dev', '!autodocs'],
   globals: laptop,
   render: () => (
-    <Wrap>
-      <div className="flex flex-col gap-4">
-        <DataTable
-          aria-label="No data"
-          rows={[]}
-          columns={columns}
-          rowKey={(r) => r.id}
-          defaultSearchValue=""
-          emptyAction={<Button size="sm">Create the first order</Button>}
-        />
-        <DataTable
-          aria-label="Filtered"
-          rows={rows}
-          columns={columns}
-          rowKey={(r) => r.id}
-          defaultSearchValue="zzz"
-          emptyAction={<Button size="sm">Create another order</Button>}
-        />
-      </div>
-    </Wrap>
+    <div className="flex flex-col gap-4">
+      <DataTable
+        aria-label="No data"
+        rows={[]}
+        columns={columns}
+        rowKey={(r) => r.id}
+        defaultSearchValue=""
+        emptyAction={<Button size="sm">Create the first order</Button>}
+      />
+      <DataTable
+        aria-label="Filtered"
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        defaultSearchValue="zzz"
+        emptyAction={<Button size="sm">Create another order</Button>}
+      />
+    </div>
   ),
   play: async ({ canvas }) => {
     const none = within(canvas.getByRole('table', { name: 'No data' }));
@@ -736,27 +733,25 @@ export const CardsEmptyActions: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <div className="flex flex-col gap-4">
-        <DataTable
-          aria-label="No data"
-          rows={[]}
-          columns={columns}
-          rowKey={(r) => r.id}
-          mobileLayout="cards"
-          emptyAction={<Button size="sm">Create the first order</Button>}
-        />
-        <DataTable
-          aria-label="Filtered"
-          rows={rows}
-          columns={columns}
-          rowKey={(r) => r.id}
-          mobileLayout="cards"
-          defaultFilters={{ status: new Set(['Cancelled']), payment: new Set(['Paid']) }}
-          emptyAction={<Button size="sm">Create another order</Button>}
-        />
-      </div>
-    </Wrap>
+    <div className="flex flex-col gap-4">
+      <DataTable
+        aria-label="No data"
+        rows={[]}
+        columns={columns}
+        rowKey={(r) => r.id}
+        mobileLayout="cards"
+        emptyAction={<Button size="sm">Create the first order</Button>}
+      />
+      <DataTable
+        aria-label="Filtered"
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        mobileLayout="cards"
+        defaultFilters={{ status: new Set(['Cancelled']), payment: new Set(['Paid']) }}
+        emptyAction={<Button size="sm">Create another order</Button>}
+      />
+    </div>
   ),
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

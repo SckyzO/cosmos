@@ -30,6 +30,7 @@ import {
   parseLogLevel,
   splitLogMatches,
 } from './log-lines';
+import { GROW_IN } from './growIn';
 import { detailSlots, lineWindow, slotOf, totalSlots, type ExpandedBlock } from './log-window';
 import type { LogColumn, LogLevelKey, LogLine, LogLineId, LogOrder } from './types';
 
@@ -269,7 +270,7 @@ const LogRow = ({
       <ChevronRight
         aria-hidden
         className={clsx(
-          'h-3.5 w-3.5 transition-transform motion-reduce:transition-none',
+          'h-3.5 w-3.5 transition-transform duration-(--cosmos-motion-base) ease-(--cosmos-ease-in-out)',
           expanded && 'rotate-90'
         )}
       />
@@ -377,6 +378,8 @@ const LogDetails = ({
   style,
   fixed,
   number,
+  arrives,
+  onArrived,
   onOpen,
 }: {
   line: LogLine;
@@ -386,6 +389,10 @@ const LogDetails = ({
   /** Fixed height (windowed): it scrolls, so a keyboard has to reach it. */
   fixed: boolean;
   number: number | null;
+  /** The details have just been opened: they fade in and are revealed from the top. */
+  arrives: boolean;
+  /** Called when that has played. */
+  onArrived: () => void;
   onOpen: (() => void) | null;
 }) => {
   const palette = TONE[tone];
@@ -397,10 +404,14 @@ const LogDetails = ({
       aria-label={`Details of line ${number ?? line.id}`}
       tabIndex={fixed ? 0 : undefined}
       style={style}
+      onTransitionEnd={(e) => {
+        if (e.target === e.currentTarget) onArrived();
+      }}
       className={clsx(
         'focus-visible:focus-indicator w-full font-mono text-xs leading-5 focus-visible:ring-inset',
         fixed && 'overflow-auto',
-        palette.expanded
+        palette.expanded,
+        arrives && GROW_IN
       )}
     >
       <div className="py-row-4 ps-9 pe-3">
@@ -681,10 +692,21 @@ export const LogViewer = ({
   }
 
   // ── Rows ──────────────────────────────────────────────────────────────────
-  const toggle = (line: LogLine) =>
+  // The row whose details the reader has just opened: they grow in. Details drawn again because
+  // the window moved, or open from the start, are simply there.
+  const [arriving, setArriving] = useState<LogLine['id'] | null>(null);
+  const arrived = useCallback(() => setArriving(null), []);
+  const toggle = (line: LogLine) => {
+    // Opening a row is leaving the end: the viewer stops following, so the row stays where it is
+    // and its details open under it, not the end pulling the whole list up.
+    if (!expandedSet.has(line.id)) {
+      setFollow(false);
+      setArriving(line.id);
+    }
     setExpandedIds((ids) =>
       ids.includes(line.id) ? ids.filter((id) => id !== line.id) : [...ids, line.id]
     );
+  };
   const rowFor = (d: number, fixed: boolean) => {
     const line = lineAtDrawn(d);
     const i = newest ? d : count - 1 - d;
@@ -722,6 +744,8 @@ export const LogViewer = ({
             fixed={fixed}
             number={number}
             style={extra > 0 ? { height: extra * rowHeight } : undefined}
+            arrives={arriving === line.id}
+            onArrived={arrived}
             onOpen={onOpenLine ? () => onOpenLine(line) : null}
           />
         )}
@@ -732,18 +756,19 @@ export const LogViewer = ({
   const rows: ReactNode[] = [];
   for (let d = shown.first; d <= shown.last; d++) rows.push(rowFor(d, !wrap));
 
+  // The button has a strip of its own at the end the log is read from, so no line runs under it.
   const jump = (
     <div
       className={clsx(
-        'pointer-events-none absolute inset-x-0 flex justify-center',
-        newest ? 'bottom-3' : 'top-3'
+        'absolute inset-x-0 flex h-12 items-center justify-center',
+        newest ? 'bottom-0' : 'top-0'
       )}
     >
       <Button
         size="sm"
         shape="pill"
         icon={newest ? ArrowDown : ArrowUp}
-        className="pointer-events-auto shadow-lg"
+        className="shadow-lg"
         onClick={() => setFollow(true)}
       >
         <bdi>
@@ -772,7 +797,11 @@ export const LogViewer = ({
         // A log is output: its records keep their column order and scroll from the left,
         // whatever the page reads. The toolbar and the jump button around it follow the page.
         dir="ltr"
-        className="focus-visible:focus-indicator relative h-full overflow-auto py-2 [overflow-anchor:none] focus-visible:ring-inset"
+        className={clsx(
+          'focus-visible:focus-indicator relative overflow-auto py-2 [overflow-anchor:none] focus-visible:ring-inset',
+          // Paused: the strip of the "Jump to latest" button is taken off the log's height.
+          follow ? 'h-full' : newest ? 'h-[calc(100%-3rem)]' : 'mt-12 h-[calc(100%-3rem)]'
+        )}
       >
         {/* Measures a row, so the window knows how tall one is at this text size. */}
         <div

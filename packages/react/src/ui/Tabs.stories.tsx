@@ -26,6 +26,7 @@ import {
   mobileViewport,
 } from '../storybook-helpers';
 import { SectionCard } from '../templates/SectionCard';
+import { indicatorGap, indicatorOf, isSliding, tokenMs, transitionMs } from '../storybook-motion';
 
 const meta = {
   title: 'Navigation/Tabs',
@@ -611,7 +612,7 @@ export const FocusShowsRingInDark: Story = {
 
 export const FocusShowsRingInLight: Story = {
   ...FocusShowsRingInDark,
-  tags: ['!dev'],
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 
@@ -664,7 +665,7 @@ export const FolderOutlineIsStrongerInDark: Story = {
 /** In light, the folder keeps the theme's own border. */
 export const FolderOutlineKeepsBorderInLight: Story = {
   ...FolderOutlineIsStrongerInDark,
-  tags: ['!dev'],
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
   play: async ({ canvas }) => {
     const plain = colorOf('var(--color-border)');
@@ -943,7 +944,10 @@ export const PillsActiveIsFilled: Story = {
   ),
   play: async ({ canvas }) => {
     const active = canvas.getByRole('tab', { name: 'Overview' });
-    await expect(getComputedStyle(active).backgroundColor).toBe(colorOf('var(--color-brand-500)'));
+    // The fill is the marker's, behind the active pill.
+    await expect(getComputedStyle(indicatorOf(canvas.getByRole('tablist'))).backgroundColor).toBe(
+      colorOf('var(--color-brand-500)')
+    );
     await expect(getComputedStyle(active).color).toBe(colorOf('var(--color-white)'));
     const idle = canvas.getByRole('tab', { name: 'Billing' });
     await expect(getComputedStyle(idle).backgroundColor).toBe('rgba(0, 0, 0, 0)');
@@ -1135,7 +1139,7 @@ export const RaisedWithBadgeChecks: Story = {
     );
     // Each count stands out from what it sits on: the raised tab, the track.
     await expect(getComputedStyle(activeCount).backgroundColor).not.toBe(
-      getComputedStyle(active).backgroundColor
+      getComputedStyle(indicatorOf(canvas.getByRole('tablist'))).backgroundColor
     );
     await expect(getComputedStyle(idleCount).backgroundColor).not.toBe(
       getComputedStyle(canvas.getByRole('tablist')).backgroundColor
@@ -1252,16 +1256,16 @@ const expectRaisedColors = async (
   await expect(getComputedStyle(canvas.getByRole('tablist')).backgroundColor).toBe(
     colorOf(`var(${tokens.track})`)
   );
-  await expect(getComputedStyle(active).backgroundColor).toBe(colorOf(`var(${tokens.raised})`));
+  // The raised fill and its shadow are the marker's, behind the active tab.
+  const raised = getComputedStyle(indicatorOf(canvas.getByRole('tablist')));
+  await expect(raised.backgroundColor).toBe(colorOf(`var(${tokens.raised})`));
   await expect(getComputedStyle(active).color).toBe(colorOf(`var(${tokens.text})`));
-  await expect(getComputedStyle(active).boxShadow).not.toBe('none');
+  await expect(raised.boxShadow).not.toBe('none');
   await expect(getComputedStyle(idle).backgroundColor).toBe('rgba(0, 0, 0, 0)');
   await expect(getComputedStyle(idle).color).toBe(colorOf(`var(${tokens.idle})`));
   await expect(getComputedStyle(idle).boxShadow).toBe('none');
   // No accent in the bar.
-  await expect(getComputedStyle(active).backgroundColor).not.toBe(
-    colorOf('var(--color-brand-500)')
-  );
+  await expect(raised.backgroundColor).not.toBe(colorOf('var(--color-brand-500)'));
   await expect(getComputedStyle(active).color).not.toBe(colorOf('var(--color-brand-600)'));
 };
 
@@ -1286,7 +1290,7 @@ export const RaisedActiveIsRaisedInDark: Story = {
 /** In light, the active tab is white on the gray-100 track, with gray-900 text. */
 export const RaisedActiveIsRaisedInLight: Story = {
   ...RaisedActiveIsRaisedInDark,
-  tags: ['!dev'],
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
   play: async ({ canvas }) =>
     expectRaisedColors(canvas, {
@@ -1397,7 +1401,7 @@ export const RaisedFocusRingInDark: Story = {
 
 export const RaisedFocusRingInLight: Story = {
   ...RaisedFocusRingInDark,
-  tags: ['!dev'],
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 
@@ -1494,5 +1498,229 @@ export const VerticalListSitsAtTheStart: Story = {
       // Physically: the right edge in left to right, the left one in right to left.
       await expect(dir === 'ltr' ? style.borderRightWidth : style.borderLeftWidth).toBe('1px');
     }
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+// The line or the fill of the active tab is one marker that slides from tab to tab.
+const MARKED_VARIANTS = [
+  ['underline', 'horizontal'],
+  ['underline', 'vertical'],
+  ['pills', 'horizontal'],
+  ['pills', 'vertical'],
+  ['raised', 'horizontal'],
+  ['raised', 'vertical'],
+] as const;
+
+const MarkedTabs = () => (
+  <Wrap>
+    <div className="space-y-8">
+      {MARKED_VARIANTS.map(([variant, orientation]) => (
+        <div key={`${variant}-${orientation}`} data-testid={`${variant}-${orientation}`}>
+          <Trio variant={variant} orientation={orientation} />
+        </div>
+      ))}
+    </div>
+  </Wrap>
+);
+
+/**
+ * The underline, and the fill of a pill, slide from one tab to the other in 200 ms, easing in and
+ * out; with the reduced setting they move at once. Click a tab, or use the arrow keys.
+ */
+export const MarkerSlidesFromTabToTab: Story = {
+  parameters: { settleMotion: false },
+  render: () => <MarkedTabs />,
+};
+
+// Whether the marker sits where the tab is, along the axes it follows.
+const sitsOn = (marker: HTMLElement, tab: HTMLElement, axes: 'inline' | 'block' | 'both') => {
+  const gap = indicatorGap(marker, tab);
+  if (axes !== 'block') {
+    expect(gap.start, 'start along the line').toBeLessThan(0.6);
+    expect(gap.inline, 'size along the line').toBeLessThan(0.6);
+  }
+  if (axes !== 'inline') {
+    expect(gap.blockStart, 'start across the line').toBeLessThan(0.6);
+    expect(gap.block, 'size across the line').toBeLessThan(0.6);
+  }
+};
+
+// The line of the `underline` variant is 2px on the edge of its tab that faces the panel: under it
+// in a row, at the end of it in a column, flush with the tab's own border, as the border sat.
+const underlinesTheEdge = (
+  marker: HTMLElement,
+  tab: HTMLElement,
+  orientation: 'horizontal' | 'vertical'
+) => {
+  const line = marker.getBoundingClientRect();
+  const box = tab.getBoundingClientRect();
+  if (orientation === 'horizontal') {
+    expect(line.height, 'thickness').toBe(2);
+    expect(line.bottom, 'on the bottom edge').toBeCloseTo(box.bottom, 0);
+  } else {
+    expect(line.width, 'thickness').toBe(2);
+    // The end edge of the tab: the right one in left to right, the left one in right to left.
+    const rtl = getComputedStyle(marker).direction === 'rtl';
+    expect(rtl ? line.left : line.right, 'on the end edge').toBeCloseTo(
+      rtl ? box.left : box.right,
+      0
+    );
+  }
+};
+
+/**
+ * After a change, whichever way it goes, the marker has the offset and the size of the active tab
+ * along the line (and across it for a fill); at rest it is the tab's own box.
+ */
+export const MarkerSitsOnTheActiveTab: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <MarkedTabs />,
+  play: async ({ canvas }) => {
+    for (const [variant, orientation] of MARKED_VARIANTS) {
+      const list = within(canvas.getByTestId(`${variant}-${orientation}`)).getByRole('tablist');
+      const axes =
+        variant !== 'underline' ? 'both' : orientation === 'vertical' ? 'block' : 'inline';
+      const tab = (name: string) => within(list).getByRole('tab', { name });
+      const marker = indicatorOf(list);
+      await waitFor(() => sitsOn(marker, tab('One'), axes));
+      if (variant === 'underline') underlinesTheEdge(marker, tab('One'), orientation);
+      // Forward, to the last, then back: both ways.
+      for (const name of ['Two', 'Three', 'One', 'Three', 'Two']) {
+        await userEvent.click(tab(name));
+        await waitFor(() => sitsOn(marker, tab(name), axes));
+      }
+    }
+  },
+};
+
+/** The marker is placed from the start of the line: in right to left it measures from the right. */
+export const MarkerFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () =>
+    bothDirections(() => (
+      <div className="w-72">
+        <div data-axes="both">
+          <Trio variant="pills" />
+        </div>
+        <div data-axes="inline" className="mt-6">
+          <Trio variant="underline" />
+        </div>
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      for (const holder of directionBox(canvasElement, dir).querySelectorAll<HTMLElement>(
+        '[data-axes]'
+      )) {
+        const axes = holder.dataset.axes as 'inline' | 'both';
+        const list = within(holder).getByRole('tablist');
+        const marker = indicatorOf(list);
+        for (const name of ['One', 'Three', 'Two']) {
+          await userEvent.click(within(list).getByRole('tab', { name }));
+          await waitFor(() => sitsOn(marker, within(list).getByRole('tab', { name }), axes));
+        }
+      }
+    }
+  },
+};
+
+/**
+ * A resize of the tabs moves the marker with them: a larger text size makes every tab wider, and
+ * the marker keeps the active one, with no slide to catch up.
+ */
+export const MarkerFollowsAResize: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <MarkedTabs />,
+  play: async ({ canvas }) => {
+    const root = document.documentElement;
+    const was = root.getAttribute('data-text-size');
+    try {
+      const list = within(canvas.getByTestId('pills-horizontal')).getByRole('tablist');
+      await userEvent.click(within(list).getByRole('tab', { name: 'Two' }));
+      await waitFor(() => expect(isSliding(list)).toBe(false));
+      const marker = indicatorOf(list);
+      const before = marker.getBoundingClientRect().width;
+      root.setAttribute('data-text-size', 'xl');
+      await waitFor(() => expect(marker.getBoundingClientRect().width).toBeGreaterThan(before));
+      await waitFor(() => sitsOn(marker, within(list).getByRole('tab', { name: 'Two' }), 'both'));
+      // A re-measure is not a slide: nothing moves over 200 ms.
+      await expect(isSliding(list)).toBe(false);
+    } finally {
+      if (was === null) root.removeAttribute('data-text-size');
+      else root.setAttribute('data-text-size', was);
+    }
+  },
+};
+
+/**
+ * No transition on the first paint: the marker is where the active tab is when the tabs appear. A
+ * click then starts the slide, over the base duration of the theme.
+ */
+export const MarkerDoesNotSlideInOnFirstPaint: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <MarkedTabs />,
+  play: async ({ canvas }) => {
+    const list = within(canvas.getByTestId('pills-horizontal')).getByRole('tablist');
+    const marker = indicatorOf(list);
+    await expect(isSliding(list)).toBe(false);
+    sitsOn(marker, within(list).getByRole('tab', { name: 'One' }), 'both');
+    // Nothing to slide with until the active tab changes.
+    await expect(transitionMs(marker)).toBe(0);
+
+    await userEvent.click(within(list).getByRole('tab', { name: 'Three' }));
+    await expect(isSliding(list)).toBe(true);
+    await expect(transitionMs(marker)).toBe(tokenMs('--cosmos-motion-base'));
+    await waitFor(() => expect(isSliding(list)).toBe(false), { timeout: 2000 });
+    sitsOn(marker, within(list).getByRole('tab', { name: 'Three' }), 'both');
+  },
+};
+
+/** With the reduced setting the marker jumps: no transition runs, and it is already there. */
+export const MarkerJumpsUnderReducedMotion: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => <MarkedTabs />,
+  play: async ({ canvas }) => {
+    const list = within(canvas.getByTestId('pills-horizontal')).getByRole('tablist');
+    const marker = indicatorOf(list);
+    await userEvent.click(within(list).getByRole('tab', { name: 'Three' }));
+    await expect(isSliding(list)).toBe(false);
+    await expect(transitionMs(marker)).toBe(0);
+    sitsOn(marker, within(list).getByRole('tab', { name: 'Three' }), 'both');
+  },
+};
+
+/** `folder` joins its active tab to the panel: no marker, the tab keeps its own look. */
+export const FolderHasNoMarker: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Trio variant="folder" />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('tablist').querySelector('[data-slot="indicator"]')).toBeNull();
+  },
+};
+
+/** The marker is decoration: assistive technology reads the tabs as before, and it takes no clicks. */
+export const MarkerIsDecoration: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Wrap>
+      <Trio variant="pills" />
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const list = canvas.getByRole('tablist');
+    const marker = indicatorOf(list);
+    await expect(marker).toHaveAttribute('aria-hidden', 'true');
+    await expect(getComputedStyle(marker).pointerEvents).toBe('none');
+    await expect(within(list).getAllByRole('tab')).toHaveLength(3);
   },
 };

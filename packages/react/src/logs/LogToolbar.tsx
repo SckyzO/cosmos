@@ -18,6 +18,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { HealthDot } from '../status/HealthDot';
 import { Button } from '../ui/Button';
 import { Popover } from '../ui/Popover';
+import { SectionLabel } from '../ui/SectionLabel';
 import { LOG_LEVEL_LABEL } from './LogLevelBadge';
 import { compileLogSearch, stepLogMatch } from './log-lines';
 import type { LogLevelKey, LogOrder } from './types';
@@ -515,9 +516,9 @@ export const LogToolbar = ({
               <div className="flex flex-col gap-4">
                 {levels && (
                   <fieldset className="m-0 min-w-0 border-0 p-0">
-                    <legend className="mb-1 text-xs font-semibold tracking-wide text-gray-600 uppercase dark:text-gray-400">
+                    <SectionLabel as="legend" size="lg" className="mb-1">
                       Levels
-                    </legend>
+                    </SectionLabel>
                     <div className="flex flex-col gap-2.5">
                       {levels.map((level) => {
                         const count = levelCount(level);
@@ -545,9 +546,9 @@ export const LogToolbar = ({
                 {sources && sourceField(true)}
                 {(wrapToggle || orderToggle || regexToggle) && (
                   <div>
-                    <p className="m-0 mb-1 text-xs font-semibold tracking-wide text-gray-600 uppercase dark:text-gray-400">
+                    <SectionLabel size="lg" className="mb-1">
                       View
-                    </p>
+                    </SectionLabel>
                     <div className="flex flex-wrap gap-2">
                       {wrapToggle}
                       {onSearchRegexChange !== undefined && (

@@ -5,6 +5,7 @@ import { useControllableState } from '../hooks/useControllableState';
 import { markInk, normalizeHex } from './colorHex';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { FIELD_PAD_X, FIELD_PLACEHOLDER, fieldClass, type FieldSize } from './fieldRecipe';
+import { FieldMessage } from './FieldMessage';
 import { onRadioGroupKeyDown, radioTabIndex } from './radioGroupA11y';
 import { RequiredMark } from './RequiredMark';
 
@@ -29,6 +30,14 @@ const DEFAULT_PRESETS: ColorPreset[] = [
 ];
 
 const INVALID_MESSAGE = 'Enter a hex colour, such as #14b8a6.';
+
+// The space between the swatch and the code follows the field's own padding, so the swatch has as
+// much air on its end as on its start.
+const SWATCH_GAP: Record<FieldSize, string> = {
+  sm: 'gap-2.5',
+  md: 'gap-3',
+  lg: 'gap-4',
+};
 
 export type ColorInputProps = FieldA11yProps & {
   label?: string;
@@ -180,7 +189,8 @@ export const ColorInput = ({
         // the digits, the caret and the swatch beside them keep their order.
         dir="ltr"
         className={clsx(
-          'flex w-50 max-w-full items-center gap-2.5',
+          'flex w-50 max-w-full items-center',
+          SWATCH_GAP[size],
           fieldClass({ size, invalid: !!message, within: true }),
           FIELD_PAD_X[size],
           disabled && 'cursor-not-allowed opacity-50'
@@ -231,17 +241,16 @@ export const ColorInput = ({
           )}
         />
       </div>
-      {helper && (
-        <span
-          id={descId}
-          className={clsx(
-            'mt-1 block text-xs',
-            message ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
-          )}
-        >
-          {helper}
-        </span>
-      )}
+      <FieldMessage
+        show={!!helper}
+        id={descId}
+        className={clsx(
+          'mt-1 block text-xs',
+          message ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+        )}
+      >
+        {helper}
+      </FieldMessage>
     </div>
   );
 };

@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { AlertCircle, Check, RotateCw, X } from 'lucide-react';
 import { useId, useState, type Ref } from 'react';
 import { FILE_KIND_VISUAL, kindFromName, type FileKind } from '../lists/fileKind';
+import { IconButton } from '../ui/IconButton';
 import { INTENT_STYLE } from '../ui/intent';
 import { Button } from '../ui/Button';
 import { ProgressBar } from '../ui/ProgressBar';
@@ -214,14 +215,9 @@ const UploadRow = ({
         </Button>
       )}
       {onRemove && (
-        <button
-          type="button"
-          aria-label={`${REMOVE_VERB[status]} ${name}`}
-          onClick={() => onRemove(id)}
-          className="focus-visible:focus-indicator flex size-8 shrink-0 items-center justify-center rounded-lg text-[var(--color-text-muted)] transition-colors hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/10"
-        >
-          <X className="size-4" aria-hidden />
-        </button>
+        <IconButton aria-label={`${REMOVE_VERB[status]} ${name}`} onClick={() => onRemove(id)}>
+          <X aria-hidden />
+        </IconButton>
       )}
     </li>
   );

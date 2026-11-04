@@ -11,6 +11,7 @@ import {
   scrollAnchor,
   startOffset,
 } from '../storybook-helpers';
+import { isFading, tokenMs, transitionMs } from '../storybook-motion';
 import { Tooltip, TooltipHelp, type TooltipProps } from './Tooltip';
 import { SectionCard } from '../templates/SectionCard';
 import { Button } from './Button';
@@ -734,5 +735,168 @@ export const ShortcutKeysKeepTheirOrder: Story = {
       const last = keys.lastElementChild!.getBoundingClientRect();
       expect(first.left).toBeLessThan(last.left);
     }
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+// The slide of a tooltip, [x, y] in px: `translate` computed, `none` being no slide.
+const slideOf = (tip: HTMLElement): [number, number] => {
+  const value = getComputedStyle(tip).translate;
+  if (value === 'none') return [0, 0];
+  const [x = '0px', y = '0px'] = value.split(' ');
+  return [parseFloat(x), parseFloat(y)];
+};
+
+const SIDES = [
+  // position, then the slide of the hidden tooltip in left to right and in right to left: 4px
+  // toward the trigger, on the side the box opened on as the screen sees it.
+  ['top', [0, 4], [0, 4]],
+  ['bottom', [0, -4], [0, -4]],
+  ['start', [4, 0], [-4, 0]],
+  ['end', [-4, 0], [4, 0]],
+] as const;
+
+/**
+ * Shown, a tooltip fades in and slides 4px out from its trigger; hidden, it fades out and slides
+ * back, in 120 ms and 80 ms. Hover the buttons, or tab to them.
+ */
+export const FadesAndSlidesFromItsTrigger: Story = {
+  parameters: { settleMotion: false },
+  render: () => (
+    <Wrap>
+      <div className="flex flex-wrap items-center gap-24">
+        {(['top', 'bottom', 'start', 'end'] as const).map((position) => (
+          <Tooltip key={position} content={`Position: ${position}`} position={position}>
+            <Button variant="secondary" size="sm">
+              {position}
+            </Button>
+          </Tooltip>
+        ))}
+      </div>
+    </Wrap>
+  ),
+};
+
+/**
+ * Shown, a tooltip is at rest: opaque and in its place. Hidden, it waits 4px toward its trigger,
+ * on the side it opened on, which mirrors in right to left.
+ */
+export const HiddenTooltipWaitsTowardItsTrigger: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { layout: 'fullscreen' },
+  render: () =>
+    bothDirections(() => (
+      <div className="flex gap-40 px-48 py-16">
+        {SIDES.map(([position]) => (
+          <Tooltip key={position} content={`Position: ${position}`} position={position}>
+            <Button variant="secondary" size="sm">
+              {position}
+            </Button>
+          </Tooltip>
+        ))}
+      </div>
+    )),
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      for (const [position, ltr, rtl] of SIDES) {
+        const trigger = within(box).getByRole('button', { name: position });
+        const tip = document.getElementById(trigger.getAttribute('aria-describedby')!)!;
+        await userEvent.hover(trigger);
+        await waitFor(() => expect(tip).toBeVisible());
+        await expect(slideOf(tip), `${dir} ${position}: shown`).toEqual([0, 0]);
+        await expect(getComputedStyle(tip).opacity).toBe('1');
+        await userEvent.unhover(trigger);
+        await waitFor(() => expect(tip).not.toBeVisible());
+        await expect(slideOf(tip), `${dir} ${position}: hidden`).toEqual(dir === 'ltr' ? ltr : rtl);
+      }
+    }
+  },
+};
+
+/**
+ * A tooltip never shown yet already waits where it will open from: 4px toward its trigger, on the
+ * side the box opens on. Under `dir="rtl"` that is the mirror image from the first show on, with
+ * no hover before it to settle it (`start` is the trigger's right, `end` its left).
+ */
+export const FirstShowInRtlStartsFromTheRightSide: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { direction: 'rtl' },
+  parameters: { layout: 'fullscreen' },
+  render: () => (
+    <div className="flex gap-40 px-48 py-16">
+      {SIDES.map(([position]) => (
+        <Tooltip key={position} content={`Position: ${position}`} position={position}>
+          <Button variant="secondary" size="sm">
+            {position}
+          </Button>
+        </Tooltip>
+      ))}
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const [position, , rtl] of SIDES) {
+      const trigger = canvas.getByRole('button', { name: position });
+      const tip = document.getElementById(trigger.getAttribute('aria-describedby')!)!;
+      await expect(tip, `${position}: reads in the direction of its trigger`).toHaveAttribute(
+        'dir',
+        'rtl'
+      );
+      await expect(slideOf(tip), `${position}: waits before its first show`).toEqual(rtl);
+    }
+  },
+};
+
+/** In 120 ms easing out, then out in 80 ms easing in: the theme's fast and exit durations. */
+export const TooltipMovesOnTheTokens: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => (
+    <Wrap>
+      <Tooltip content="Deletes the selected rows">
+        <Button variant="secondary" size="sm">
+          Delete
+        </Button>
+      </Tooltip>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Delete' });
+    const tip = page.getByRole('tooltip', { hidden: true });
+    await userEvent.hover(trigger);
+    await expect(transitionMs(tip)).toBe(tokenMs('--cosmos-motion-fast'));
+    await expect(isFading(tip)).toBe(true);
+    await waitFor(() => expect(getComputedStyle(tip).opacity).toBe('1'));
+    await userEvent.unhover(trigger);
+    await expect(transitionMs(tip)).toBe(tokenMs('--cosmos-motion-exit'));
+    await expect(isFading(tip)).toBe(true);
+    await waitFor(() => expect(getComputedStyle(tip).opacity).toBe('0'));
+  },
+};
+
+/** With the reduced setting a tooltip appears and goes at once, with no slide to play. */
+export const TooltipSkipsMotionWhenReduced: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  render: () => (
+    <Wrap>
+      <Tooltip content="Deletes the selected rows">
+        <Button variant="secondary" size="sm">
+          Delete
+        </Button>
+      </Tooltip>
+    </Wrap>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Delete' });
+    const tip = page.getByRole('tooltip', { hidden: true });
+    await userEvent.hover(trigger);
+    await expect(transitionMs(tip)).toBe(0);
+    await expect(isFading(tip)).toBe(false);
+    await expect(getComputedStyle(tip).opacity).toBe('1');
+    await userEvent.unhover(trigger);
+    await expect(getComputedStyle(tip).opacity).toBe('0');
   },
 };

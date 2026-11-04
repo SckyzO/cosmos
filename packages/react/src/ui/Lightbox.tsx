@@ -2,18 +2,24 @@ import { clsx } from 'clsx';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ChevronLeft, ChevronRight, ImageOff, X } from 'lucide-react';
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
+  type RefObject,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useDocumentDirection } from '../hooks/direction';
+import { exitAnimations } from '../hooks/exitAnimations';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { useControllableState } from '../hooks/useControllableState';
+import { useExitTransition } from '../hooks/useExitTransition';
+import { mergeRefs } from './mergeRefs';
 import { clampIndex, indexForKey, isNearby } from './lightboxNav';
 import { OverlayLayerProvider, useFocusTrap, useOverlayLayer } from './overlayA11y';
 import { Spinner } from './Spinner';
@@ -114,7 +120,7 @@ function Picture({ item, current, errorLabel, retryLabel }: PictureProps) {
     <>
       {status === 'loading' && (
         <div className="absolute inset-x-0 inset-y-0 grid place-items-center sm:px-18">
-          <div className="grid aspect-[3/2] max-h-full w-[min(100%,48rem)] animate-pulse place-items-center rounded-lg bg-white/10">
+          <div className="grid aspect-[3/2] max-h-full w-[min(100%,48rem)] animate-pulse place-items-center rounded-lg bg-white/10 motion-reduce:animate-none">
             {current && <Spinner size="lg" onDark />}
           </div>
         </div>
@@ -128,11 +134,63 @@ function Picture({ item, current, errorLabel, retryLabel }: PictureProps) {
         onLoad={() => setStatus('loaded')}
         onError={() => setStatus('error')}
         className={clsx(
-          'max-h-full max-w-full rounded-lg object-contain transition-opacity select-none',
+          'max-h-full max-w-full rounded-lg object-contain transition-opacity duration-(--cosmos-motion-base) ease-(--cosmos-ease-in-out) select-none',
           status === 'loaded' ? 'opacity-100' : 'opacity-0'
         )}
       />
     </>
+  );
+}
+
+type LeavingPictureProps = {
+  /** The picture the viewer has just left. */
+  item: LightboxItem;
+  /** Tells the viewer this copy has faded out and can go. */
+  onGone: () => void;
+};
+
+// The copy of a picture the viewer has just moved off, laid out as its slide was and drawn over the
+// one that took its place. It starts opaque (`starting:`) and fades out over the base duration, so
+// the two cross-fade; it is decoration, out of reach of the pointer and of assistive technology, and
+// goes once the fade has played, at once when nothing animates (durations at 0).
+function LeavingPicture({ item, onGone }: LeavingPictureProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    const running =
+      element && typeof element.getAnimations === 'function'
+        ? exitAnimations(element.getAnimations({ subtree: true }))
+        : [];
+    if (running.length === 0) {
+      // Reading the browser's animations is the whole point of the effect: the copy stays while
+      // its fade runs, once the transition has started.
+      onGone();
+      return;
+    }
+    // `finished` rejects when the fade is cancelled (the copy was replaced): that ends the wait too.
+    let cancelled = false;
+    void Promise.allSettled(running.map((animation) => animation.finished)).then(() => {
+      if (!cancelled) onGone();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [onGone]);
+  return (
+    <div
+      ref={ref}
+      aria-hidden
+      inert
+      data-slot="leaving-picture"
+      className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-(--cosmos-motion-base) ease-(--cosmos-ease-in-out) sm:px-18 starting:opacity-100"
+    >
+      <img
+        src={item.src}
+        alt=""
+        draggable={false}
+        className="max-h-full max-w-full rounded-lg object-contain select-none"
+      />
+    </div>
   );
 }
 
@@ -210,11 +268,19 @@ type ViewerProps = Required<
   index: number;
   onIndexChange: (index: number) => void;
   onClose: () => void;
+  /** False while the viewer fades out: it is already closed for focus, Escape and scrolling. */
+  open: boolean;
+  /** The viewer's root, which the exit waits on. */
+  exitRef: RefObject<HTMLDivElement | null>;
 };
 
-// The open viewer: mounted when `open` turns true and gone when it turns false, so the focus trap,
-// the overlay layer, the scroll lock and Embla all follow the viewer's own lifetime.
+// The viewer: mounted when `open` turns true and gone once it has faded out, so the focus trap,
+// the overlay layer, the scroll lock and Embla all follow the viewer's own lifetime. While it
+// fades out `open` is false: focus is back on the tile that opened it, Escape goes to the overlay
+// under it and the page scrolls, and the viewer is `inert`.
 function Viewer({
+  open,
+  exitRef,
   items,
   index,
   onIndexChange,
@@ -235,9 +301,11 @@ function Viewer({
   const direction = useDocumentDirection();
   // Moves focus in on open, keeps Tab inside, and puts focus back on the tile that opened the
   // viewer on close. Escape closes the top overlay only, so a viewer opened from a modal leaves it.
-  const rootRef = useFocusTrap<HTMLDivElement>(true);
-  const layer = useOverlayLayer(true, onClose);
-  useBodyScrollLock(true);
+  const rootRef = useFocusTrap<HTMLDivElement>(open);
+  const layer = useOverlayLayer(open, onClose);
+  useBodyScrollLock(open);
+  // Both refs hold the root: the trap's, and the one the exit hook waits on.
+  const mergedRootRef = useMemo(() => mergeRefs(rootRef, exitRef), [rootRef, exitRef]);
 
   // Embla lays the slides out and drags them the way the page reads, but only when told. The
   // viewer opens on the picture the page asked for; after that the index moves Embla, not its options.
@@ -245,14 +313,19 @@ function Viewer({
   const [emblaRef, api] = useEmblaCarousel({ direction, startIndex, watchDrag: several });
 
   const latest = useRef({ index, onIndexChange });
-  useEffect(() => {
+  // In a layout effect, ahead of the jump below: that jump fires Embla's `select` inside the same
+  // commit, and must find the new index already here, or it would report it back to the page.
+  useLayoutEffect(() => {
     latest.current = { index, onIndexChange };
   });
+  // Where Embla is. A swipe moves it before the page hears of it.
+  const [snap, setSnap] = useState(startIndex);
   useEffect(() => {
     if (!api) return;
     // A swipe moved Embla: tell the page.
     const onSelect = () => {
       const selected = api.selectedScrollSnap();
+      setSnap(selected);
       if (selected !== latest.current.index) latest.current.onIndexChange(selected);
     };
     // Embla starts over on `startIndex` when its options change (the page's direction flipped):
@@ -266,14 +339,24 @@ function Viewer({
       api.off('select', onSelect).off('reInit', onReInit);
     };
   }, [api]);
-  // The index moved (arrows, keys, thumbnails, the page): Embla follows.
-  // A jump of more than one picture (the end key, a thumbnail far along the strip) goes
-  // there at once: sliding over the pictures in between would only show blank slides.
-  useEffect(() => {
+  // The index moved (arrows, keys, thumbnails, the page): Embla follows, at once. The pictures do not
+  // slide past each other (a jump of several would only show blank slides in between): the one left
+  // is drawn over the new one and fades out, a cross-fade. Before the paint, so the new picture is
+  // never seen without it.
+  useLayoutEffect(() => {
     if (!api) return;
-    const selected = api.selectedScrollSnap();
-    if (selected !== index) api.scrollTo(index, Math.abs(selected - index) > 1);
+    if (api.selectedScrollSnap() !== index) api.scrollTo(index, true);
   }, [api, index]);
+  // A move the page asked for leaves a copy of the picture it left. A swipe has already brought the
+  // new one in with Embla's own drag, and has nothing to cross over.
+  const [previous, setPrevious] = useState(index);
+  const [leaving, setLeaving] = useState<{ item: LightboxItem; id: number } | null>(null);
+  if (index !== previous) {
+    setPrevious(index);
+    const left = items[previous];
+    if (snap !== index && left) setLeaving({ item: left, id: (leaving?.id ?? 0) + 1 });
+  }
+  const forgetLeaving = useCallback(() => setLeaving(null), []);
 
   const go = (to: number) => {
     const next = clampIndex(to, count);
@@ -320,114 +403,151 @@ function Viewer({
   return createPortal(
     <OverlayLayerProvider value={layer}>
       <div
-        ref={rootRef}
+        ref={mergedRootRef}
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
         tabIndex={-1}
+        inert={!open}
         onKeyDown={onKeyDown}
         onClick={closeOnBackdrop}
-        className="fixed inset-0 z-50 flex flex-col bg-black/95 text-white outline-hidden"
-      >
-        <div
-          onClick={closeOnBackdrop}
-          className="flex shrink-0 items-center justify-between gap-3 px-4 py-3"
-        >
-          {several && (
-            // The text read out, then the figures shown: `dir="ltr"` keeps "3 / 12" in that order
-            // in a right to left page.
-            <div aria-live="polite" aria-atomic="true" className="text-sm font-medium tabular-nums">
-              <span className="sr-only">
-                {announcement}. {item.alt}
-              </span>
-              <span aria-hidden dir="ltr" className="text-white/90">
-                {position} / {count}
-              </span>
-            </div>
-          )}
-          <button
-            type="button"
-            aria-label={closeLabel}
-            onClick={onClose}
-            className={clsx(CONTROL, 'ms-auto')}
-          >
-            <X className="size-4" aria-hidden />
-          </button>
-        </div>
-
-        <div className="relative min-h-0 flex-1">
-          <div
-            ref={emblaRef}
-            className="absolute inset-0 overflow-hidden"
-            onClick={closeOnBackdrop}
-          >
-            <div className="flex h-full touch-pan-y" onClick={closeOnBackdrop}>
-              {items.map((slide, i) => (
-                <div
-                  key={i}
-                  inert={i !== index}
-                  aria-hidden={i !== index}
-                  onClick={closeOnBackdrop}
-                  className="relative flex h-full min-w-0 shrink-0 grow-0 basis-full items-center justify-center sm:px-18"
-                >
-                  {isNearby(i, index) && (
-                    <Picture
-                      key={slide.src}
-                      item={slide}
-                      current={i === index}
-                      errorLabel={errorLabel}
-                      retryLabel={retryLabel}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-          {several && (
-            <>
-              <button
-                ref={prev}
-                type="button"
-                aria-label={prevLabel}
-                disabled={index === 0}
-                onClick={() => go(index - 1)}
-                className={clsx(CONTROL, ARROW, ARROW_PLACE.prev)}
-              >
-                <ChevronLeft className="size-4 rtl:-scale-x-100" aria-hidden />
-              </button>
-              <button
-                ref={next}
-                type="button"
-                aria-label={nextLabel}
-                disabled={index === count - 1}
-                onClick={() => go(index + 1)}
-                className={clsx(CONTROL, ARROW, ARROW_PLACE.next)}
-              >
-                <ChevronRight className="size-4 rtl:-scale-x-100" aria-hidden />
-              </button>
-            </>
-          )}
-        </div>
-
-        {thumbnails && several && (
-          <Thumbnails
-            items={items}
-            index={index}
-            onSelect={go}
-            label={thumbnailsLabel}
-            thumbnailLabel={thumbnailLabel}
-          />
+        className={clsx(
+          'fixed inset-0 z-50 flex flex-col text-white outline-hidden',
+          !open && 'pointer-events-none'
         )}
-
+      >
+        {/* The photo surface: near-black in every theme, a viewer and not a themed panel. It fades in
+            over the base duration easing out (from the first frame, `starting:`), and out over the
+            shorter exit easing in. */}
         <div
-          onClick={closeOnBackdrop}
-          className="flex h-22 shrink-0 items-center justify-center bg-gradient-to-t from-black/70 to-transparent px-16 text-center"
-        >
-          {item.caption && (
-            <p className="line-clamp-2 max-w-2xl text-sm leading-snug font-medium text-white/90">
-              <bdi>{item.caption}</bdi>
-            </p>
+          aria-hidden
+          data-slot="surface"
+          className={clsx(
+            'pointer-events-none absolute inset-0 bg-black/95 transition-opacity',
+            open
+              ? 'opacity-100 duration-(--cosmos-motion-base) ease-(--cosmos-ease-out) starting:opacity-0'
+              : 'opacity-0 duration-(--cosmos-motion-exit-lg) ease-(--cosmos-ease-in)'
           )}
+        />
+        {/* What stands on it opens like a dialog: it fades in and grows from 95%, then leaves the same
+            way, faster. */}
+        <div
+          data-slot="stage"
+          onClick={closeOnBackdrop}
+          className={clsx(
+            'relative flex min-h-0 flex-1 flex-col transition-[opacity,scale]',
+            open
+              ? 'scale-none opacity-100 duration-(--cosmos-motion-base) ease-(--cosmos-ease-out) starting:scale-95 starting:opacity-0'
+              : 'scale-95 opacity-0 duration-(--cosmos-motion-exit-lg) ease-(--cosmos-ease-in)'
+          )}
+        >
+          <div
+            onClick={closeOnBackdrop}
+            className="flex shrink-0 items-center justify-between gap-3 px-4 py-3"
+          >
+            {several && (
+              // The text read out, then the figures shown: `dir="ltr"` keeps "3 / 12" in that order
+              // in a right to left page.
+              <div
+                aria-live="polite"
+                aria-atomic="true"
+                className="text-sm font-medium tabular-nums"
+              >
+                <span className="sr-only">
+                  {announcement}. {item.alt}
+                </span>
+                <span aria-hidden dir="ltr" className="text-white/90">
+                  {position} / {count}
+                </span>
+              </div>
+            )}
+            <button
+              type="button"
+              aria-label={closeLabel}
+              onClick={onClose}
+              className={clsx(CONTROL, 'ms-auto')}
+            >
+              <X className="size-4" aria-hidden />
+            </button>
+          </div>
+
+          <div className="relative min-h-0 flex-1">
+            <div
+              ref={emblaRef}
+              className="absolute inset-0 overflow-hidden"
+              onClick={closeOnBackdrop}
+            >
+              <div className="flex h-full touch-pan-y" onClick={closeOnBackdrop}>
+                {items.map((slide, i) => (
+                  <div
+                    key={i}
+                    inert={i !== index}
+                    aria-hidden={i !== index}
+                    onClick={closeOnBackdrop}
+                    className="relative flex h-full min-w-0 shrink-0 grow-0 basis-full items-center justify-center sm:px-18"
+                  >
+                    {isNearby(i, index) && (
+                      <Picture
+                        key={slide.src}
+                        item={slide}
+                        current={i === index}
+                        errorLabel={errorLabel}
+                        retryLabel={retryLabel}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+            {leaving && (
+              <LeavingPicture key={leaving.id} item={leaving.item} onGone={forgetLeaving} />
+            )}
+            {several && (
+              <>
+                <button
+                  ref={prev}
+                  type="button"
+                  aria-label={prevLabel}
+                  disabled={index === 0}
+                  onClick={() => go(index - 1)}
+                  className={clsx(CONTROL, ARROW, ARROW_PLACE.prev)}
+                >
+                  <ChevronLeft className="size-4 rtl:-scale-x-100" aria-hidden />
+                </button>
+                <button
+                  ref={next}
+                  type="button"
+                  aria-label={nextLabel}
+                  disabled={index === count - 1}
+                  onClick={() => go(index + 1)}
+                  className={clsx(CONTROL, ARROW, ARROW_PLACE.next)}
+                >
+                  <ChevronRight className="size-4 rtl:-scale-x-100" aria-hidden />
+                </button>
+              </>
+            )}
+          </div>
+
+          {thumbnails && several && (
+            <Thumbnails
+              items={items}
+              index={index}
+              onSelect={go}
+              label={thumbnailsLabel}
+              thumbnailLabel={thumbnailLabel}
+            />
+          )}
+
+          <div
+            onClick={closeOnBackdrop}
+            className="flex h-22 shrink-0 items-center justify-center bg-gradient-to-t from-black/70 to-transparent px-16 text-center"
+          >
+            {item.caption && (
+              <p className="line-clamp-2 max-w-2xl text-sm leading-snug font-medium text-white/90">
+                <bdi>{item.caption}</bdi>
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </OverlayLayerProvider>,
@@ -472,9 +592,16 @@ export const Lightbox = ({
     onChange: onIndexChange,
     name: 'Lightbox.index',
   });
-  if (!open || items.length === 0) return null;
+  // The viewer stays on screen while it fades out, and renders nothing without a picture: a host
+  // that empties `items` as it closes has nothing left to show.
+  const active = open && items.length > 0;
+  const exitRef = useRef<HTMLDivElement | null>(null);
+  const present = useExitTransition(active, exitRef);
+  if (!present || items.length === 0) return null;
   return (
     <Viewer
+      open={active}
+      exitRef={exitRef}
       items={items}
       index={clampIndex(current, items.length)}
       onIndexChange={setIndex}

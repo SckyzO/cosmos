@@ -16,6 +16,11 @@ import {
   portalDocsParams,
   startOffset,
 } from '../storybook-helpers';
+import {
+  expectFadesInAfterSkeleton,
+  expectNoFadeFromFirstRender,
+  LoadToggle,
+} from '../storybook-arrival';
 import { AvatarGroup } from '../ui/AvatarGroup';
 import { Drawer } from '../ui/Drawer';
 import { Tag } from '../ui/Tag';
@@ -213,11 +218,25 @@ export const Default: Story = {
   args: { defaultValue: sprint() },
 };
 
+// Written by hand: Storybook's own snippet prints the `value` prop, and this board is made during
+// the render (`useState(sprint)`), so its cards carry React's owner fibers; the printer follows
+// them through the whole component tree until the string overflows, and the docs page hangs.
+const CONTROLLED_SOURCE = `const [board, setBoard] = useState<KanbanColumn[]>(initialBoard);
+const [last, setLast] = useState<KanbanMove>();
+
+<KanbanBoard
+  ariaLabel="Sprint board"
+  value={board}
+  onChange={setBoard}
+  onCardMove={setLast}
+/>`;
+
 /**
  * With `value` and `onChange` the host owns the board: a card moves once the host passes the new
  * board back. `onCardMove` carries the move on its own, which is what a server needs.
  */
 export const Controlled: Story = {
+  parameters: { docs: { source: { code: CONTROLLED_SOURCE } } },
   render: (args) => {
     const [value, setValue] = useState(sprint);
     const [last, setLast] = useState<KanbanMove>();
@@ -970,7 +989,10 @@ export const ControlledBoardWaitsForTheHost: Story = {
 /** Controlled by a host that does keep the board, the move shows, and `onCardMove` names it. */
 export const ControlledBoardFollowsTheHost: Story = {
   tags: ['!dev', '!autodocs'],
-  parameters: portalDocsParams.md(),
+  parameters: {
+    ...portalDocsParams.md(),
+    docs: { ...portalDocsParams.md().docs, source: { code: CONTROLLED_SOURCE } },
+  },
   render: Controlled.render,
   args: {},
   play: async ({ canvas }) => {
@@ -1223,5 +1245,39 @@ export const CardGripAndActionsMirrorInRightToLeft: Story = {
     const lane = (box: HTMLElement) => within(box).getByRole('region', { name: /^To do/ });
     const gap = (box: HTMLElement) => endOffset(actions(box), lane(box));
     expect(gap(rtl)).toBeCloseTo(gap(ltr), 0);
+  },
+};
+
+// ── Skeleton to content ──────────────────────────────────────────────────────
+
+const ArrivingBoard = ({ startLoading }: { startLoading: boolean }) => (
+  <LoadToggle startLoading={startLoading}>
+    {(loading) => (
+      <KanbanBoard defaultValue={sprint()} loading={loading} ariaLabel="Sprint board" />
+    )}
+  </LoadToggle>
+);
+
+/** The board fades in when the data arrives, then stands as it is; a reload plays it again. */
+export const BoardFadesInAfterLoading: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <ArrivingBoard startLoading />,
+  play: async ({ canvas }) => {
+    await expectFadesInAfterSkeleton(canvas, () =>
+      canvas.getByRole('group', { name: 'Sprint board' })
+    );
+  },
+};
+
+/** A board that has its cards from the first render does not fade in. */
+export const BoardFromTheFirstRenderDoesNotFade: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => <ArrivingBoard startLoading={false} />,
+  play: async ({ canvas }) => {
+    await expectNoFadeFromFirstRender(canvas, () =>
+      canvas.getByRole('group', { name: 'Sprint board' })
+    );
   },
 };

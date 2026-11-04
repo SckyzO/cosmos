@@ -11,6 +11,7 @@ import {
   fieldClass,
   type FieldSize,
 } from './fieldRecipe';
+import { FieldMessage } from './FieldMessage';
 import { useFilteredOptions, useListboxNavigation } from './listboxNavigation';
 import { RequiredMark } from './RequiredMark';
 
@@ -166,6 +167,7 @@ export const Combobox = ({
   // message the host asked for.
   const emptyText = emptyMessage ?? (allowCustomValue ? undefined : 'No matches found.');
   const listOpen = open && (filtered.length > 0 || emptyText !== undefined);
+  const noMatch = filtered.length === 0;
 
   const pick = (opt: ComboboxOption) => {
     if (opt.disabled) return;
@@ -269,64 +271,75 @@ export const Combobox = ({
         <ul
           id={listboxId}
           role="listbox"
+          // Nothing to list: the message below says so, and an empty listbox is no listbox.
+          hidden={noMatch}
           className={clsx('max-h-60 w-full text-sm', FIELD_LISTBOX_PANEL)}
         >
-          {filtered.length === 0 ? (
-            <li className="py-row-8 px-3 text-sm text-gray-500 dark:text-gray-400">{emptyText}</li>
-          ) : (
-            filtered.map((opt, i) => {
-              const isActive = i === activeIndex;
-              const isSelected = opt.value === value;
-              return (
-                <li
-                  id={`${id}-opt-${i}`}
-                  key={opt.value}
-                  role="option"
-                  aria-selected={isSelected}
-                  aria-disabled={opt.disabled || undefined}
-                  onMouseEnter={() => setActiveIndex(i)}
-                  onMouseDown={(e) => {
-                    // mousedown fires before input blur — prevents losing focus
-                    // race with the listbox unmount.
-                    e.preventDefault();
-                    pick(opt);
-                  }}
-                  className={clsx(
-                    'py-row-8 flex items-center gap-2 px-3 select-none',
-                    isActive ? 'bg-brand-500 text-white' : 'text-gray-900 dark:text-gray-100',
-                    opt.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-                  )}
-                >
-                  {opt.leading && <span className="shrink-0">{opt.leading}</span>}
-                  <span className="flex-1 truncate">{opt.label}</span>
-                  {opt.secondary && (
-                    <span
-                      className={clsx(
-                        'shrink-0 text-xs',
-                        isActive ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'
-                      )}
-                    >
-                      {opt.secondary}
-                    </span>
-                  )}
-                  {isSelected && <Check className="size-4 shrink-0" aria-hidden />}
-                </li>
-              );
-            })
-          )}
+          {filtered.map((opt, i) => {
+            const isActive = i === activeIndex;
+            const isSelected = opt.value === value;
+            return (
+              <li
+                id={`${id}-opt-${i}`}
+                key={opt.value}
+                role="option"
+                aria-selected={isSelected}
+                aria-disabled={opt.disabled || undefined}
+                onMouseEnter={() => setActiveIndex(i)}
+                onMouseDown={(e) => {
+                  // mousedown fires before input blur — prevents losing focus
+                  // race with the listbox unmount.
+                  e.preventDefault();
+                  pick(opt);
+                }}
+                className={clsx(
+                  'py-row-8 flex items-center gap-2 px-3 select-none',
+                  isActive ? 'bg-brand-500 text-white' : 'text-gray-900 dark:text-gray-100',
+                  opt.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                )}
+              >
+                {opt.leading && <span className="shrink-0">{opt.leading}</span>}
+                <span className="flex-1 truncate">{opt.label}</span>
+                {opt.secondary && (
+                  <span
+                    className={clsx(
+                      'shrink-0 text-xs',
+                      isActive ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'
+                    )}
+                  >
+                    {opt.secondary}
+                  </span>
+                )}
+                {isSelected && <Check className="size-4 shrink-0" aria-hidden />}
+              </li>
+            );
+          })}
         </ul>
+        {/* The message for an empty list is a status line, not an option: a disabled option is
+            never the active descendant, so nothing would read it, and it would count as a choice.
+            One element for as long as the panel is open, so the change of its text is what a
+            screen reader announces; it takes the panel's surface only while it has something to
+            say. */}
+        <div className={clsx('w-full text-sm', noMatch && FIELD_LISTBOX_PANEL)}>
+          <p
+            role="status"
+            className={noMatch ? 'py-row-8 px-3 text-gray-500 dark:text-gray-400' : 'sr-only'}
+          >
+            {noMatch ? emptyText : ''}
+          </p>
+        </div>
       </FloatingPanel>
-      {hasDesc && (
-        <p
-          id={descId}
-          className={clsx(
-            'mt-1.5 text-xs',
-            error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
-          )}
-        >
-          {error ?? helperText}
-        </p>
-      )}
+      <FieldMessage
+        show={hasDesc}
+        as="p"
+        id={descId}
+        className={clsx(
+          'mt-1.5 text-xs',
+          error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+        )}
+      >
+        {error ?? helperText}
+      </FieldMessage>
     </div>
   );
 };

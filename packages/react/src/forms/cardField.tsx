@@ -16,6 +16,7 @@ import {
   fieldClass,
   type FieldSize,
 } from './fieldRecipe';
+import { FieldMessage } from './FieldMessage';
 import { RequiredMark } from './RequiredMark';
 
 // What every card field takes besides its own value: the attributes of the `<input>` it draws,
@@ -195,17 +196,16 @@ export const CardField = ({
           </span>
         )}
       </div>
-      {helper && (
-        <span
-          id={descId}
-          className={clsx(
-            'mt-1 block text-xs',
-            error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
-          )}
-        >
-          {helper}
-        </span>
-      )}
+      <FieldMessage
+        show={!!helper}
+        id={descId}
+        className={clsx(
+          'mt-1 block text-xs',
+          error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+        )}
+      >
+        {helper}
+      </FieldMessage>
     </div>
   );
 };

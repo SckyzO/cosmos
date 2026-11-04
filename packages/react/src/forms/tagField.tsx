@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { useCallback, useState, type ReactNode } from 'react';
 import type { TagSize } from '../ui/Tag';
+import { FieldMessage } from './FieldMessage';
 import { FIELD_PLACEHOLDER, FIELD_PLAINTEXT, fieldClass, type FieldSize } from './fieldRecipe';
 
 // Shared by MultiSelect and TagInput: a field whose values are Tags that wrap onto more lines,
@@ -60,26 +61,52 @@ export const focusInputOnBoxPress = (
   input?.focus();
 };
 
-/** Helper or error text under a field; the error replaces the helper. */
+/**
+ * Helper or error text under a field; the error replaces the helper. `end` is a short text at the
+ * end of the line (a count): it is for sight only, the field says it to assistive technology
+ * itself. Without `end` the text is the field's message line (`FieldMessage`): `show` false folds
+ * it away, where a field that has its text from the start leaves it out.
+ */
 export const TagFieldDescription = ({
   id,
   error,
+  end,
+  show = true,
   children,
 }: {
   id: string;
   error?: boolean;
-  children: ReactNode;
-}) => (
-  <p
-    id={id}
-    className={clsx(
-      'mt-1.5 text-xs',
-      error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
-    )}
-  >
-    {children}
-  </p>
-);
+  end?: ReactNode;
+  show?: boolean;
+  children?: ReactNode;
+}) => {
+  const text = clsx(
+    'text-xs',
+    error ? 'text-red-700 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+  );
+  if (end === undefined) {
+    return (
+      <FieldMessage show={show} as="p" id={id} className={clsx('mt-1', text)}>
+        {children}
+      </FieldMessage>
+    );
+  }
+  return (
+    <div className="mt-1 flex items-start justify-between gap-3">
+      {children ? (
+        <p id={id} className={clsx('min-w-0', text)}>
+          {children}
+        </p>
+      ) : null}
+      <span
+        aria-hidden
+        className="ms-auto shrink-0 text-xs text-gray-500 tabular-nums dark:text-gray-400"
+      >
+        {end}
+      </span>
+    </div>
+  );
+};
 
 /**
  * Messages for screen readers: a tag added or removed changes nothing the focused input

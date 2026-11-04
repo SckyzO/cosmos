@@ -2,8 +2,10 @@ import { clsx } from 'clsx';
 import { X } from 'lucide-react';
 import { Fragment, useEffect, type ReactNode } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import type { BackdropVariant } from './Backdrop';
 import { isTypingTarget, matchesHotkey } from './hotkey';
 import { Modal } from './Modal';
+import { SectionLabel } from './SectionLabel';
 
 // ── Key rendering ────────────────────────────────────────────────────────────
 
@@ -66,6 +68,8 @@ export type HelpOverlayProps = {
   description?: ReactNode;
   /** Footer hint text. Defaults to `Press Esc to close`. */
   footer?: ReactNode;
+  /** The scrim behind the overlay, as `Modal`'s `backdrop`. Default `dim`. */
+  backdrop?: BackdropVariant;
   className?: string;
   children: ReactNode;
 };
@@ -78,6 +82,7 @@ const HelpOverlayRoot = ({
   title = 'Keyboard shortcuts',
   description,
   footer,
+  backdrop,
   className,
   children,
 }: HelpOverlayProps) => {
@@ -110,6 +115,7 @@ const HelpOverlayRoot = ({
       open={open}
       onClose={() => setOpen(false)}
       size="xl"
+      backdrop={backdrop}
       ariaLabel={typeof title === 'string' ? title : 'Keyboard shortcuts'}
       className={clsx('flex max-h-[80vh] flex-col', className)}
     >
@@ -159,9 +165,9 @@ export type HelpOverlaySectionProps = {
 
 const HelpOverlaySection = ({ title, className, children }: HelpOverlaySectionProps) => (
   <section className={clsx('space-y-2', className)}>
-    <h3 className="text-2xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
+    <SectionLabel as="h3" size="md">
       <bdi>{title}</bdi>
-    </h3>
+    </SectionLabel>
     <ul className="divide-y divide-gray-100 dark:divide-gray-800">{children}</ul>
   </section>
 );

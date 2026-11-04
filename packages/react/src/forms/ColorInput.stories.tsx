@@ -71,6 +71,24 @@ export const Sizes: Story = {
   ),
 };
 
+/** The preview square is as far from the code as the field's padding keeps it from the border. */
+export const SwatchGapFollowsTheFieldPadding: Story = {
+  ...Sizes,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    for (const name of ['Small', 'Medium', 'Large']) {
+      const input = canvas.getByRole('textbox', { name });
+      const field = input.parentElement!;
+      const preview = input.previousElementSibling!;
+      const gap = input.getBoundingClientRect().left - preview.getBoundingClientRect().right;
+      await expect(gap, `${name}: preview to code`).toBeCloseTo(
+        parseFloat(getComputedStyle(field).paddingLeft),
+        1
+      );
+    }
+  },
+};
+
 /** A bare field is named by its row, as the other controls are. */
 export const InAFormRow: Story = {
   render: () => (

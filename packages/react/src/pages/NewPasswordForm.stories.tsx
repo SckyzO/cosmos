@@ -5,7 +5,7 @@ import { expect, fn, userEvent } from 'storybook/test';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 import { estimateStrength } from '../storybook-strength';
 import { AuthLayout } from './AuthLayout';
-import { NewPasswordForm } from './NewPasswordForm';
+import { NewPasswordForm, type NewPasswordFormView } from './NewPasswordForm';
 
 const meta = {
   title: 'Examples/Auth/New Password Form',
@@ -328,6 +328,48 @@ export const EveryViewHasOneHeading: Story = {
       const box = canvas.getByTestId(view);
       await expect(box.querySelectorAll('h1')).toHaveLength(1);
     }
+  },
+};
+
+// The host that switches the screen: the form's own submit goes to `done`, a button outside it to
+// `expired`.
+const SwitchingHost = () => {
+  const [view, setView] = useState<NewPasswordFormView>('form');
+  return (
+    <>
+      <NewPasswordForm view={view} onSubmit={() => setView('done')} />
+      <button type="button" onClick={() => setView('expired')}>
+        Expire the link
+      </button>
+    </>
+  );
+};
+
+/** The button that was pressed is gone with its screen: the focus goes to the new heading. */
+export const FocusMovesToTheNewHeadingWhenTheViewSwitches: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  render: () => <SwitchingHost />,
+  play: async ({ canvas }) => {
+    // The first screen takes no focus when it mounts.
+    await expect(canvas.getByRole('heading', { level: 1 })).not.toHaveFocus();
+    await userEvent.type(canvas.getByLabelText(/^New password/), 'SuperSecret_123!');
+    await userEvent.type(canvas.getByLabelText(/^Confirm password/), 'SuperSecret_123!');
+    await userEvent.click(canvas.getByRole('button', { name: 'Update password' }));
+    await expect(canvas.getByRole('heading', { level: 1, name: 'Password updated' })).toHaveFocus();
+  },
+};
+
+/** Focus the person had moved elsewhere on the page stays where it is. */
+export const FocusElsewhereIsLeftWhenTheViewSwitches: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: standaloneDecorator,
+  render: () => <SwitchingHost />,
+  play: async ({ canvas }) => {
+    const outside = canvas.getByRole('button', { name: 'Expire the link' });
+    await userEvent.click(outside);
+    await expect(canvas.getByRole('heading', { level: 1, name: /no longer valid/ })).toBeVisible();
+    await expect(outside).toHaveFocus();
   },
 };
 

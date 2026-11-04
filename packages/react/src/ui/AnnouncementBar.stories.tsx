@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Sparkles } from 'lucide-react';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
   bothDirections,
   directionBox,
@@ -9,6 +9,7 @@ import {
   expectMirrored,
   startOffset,
 } from '../storybook-helpers';
+import { SlowFolds, clipOf, finishAnimations } from '../storybook-folds';
 import { AnnouncementBar, type AnnouncementBarIntent } from './AnnouncementBar';
 import { Link } from './Link';
 
@@ -57,6 +58,23 @@ export const Dismissible: Story = {
     dismissible: true,
     onDismiss: fn(),
   },
+};
+
+/**
+ * Dismiss it: the bar fades and folds away in 200 ms, and the content under it comes up with it
+ * instead of jumping.
+ */
+export const FoldsAway: Story = {
+  parameters: { settleMotion: false },
+  args: { dismissible: true, intent: 'brand' },
+  render: (args) => (
+    <div>
+      <AnnouncementBar {...args} />
+      <p className="m-0 p-4 text-sm text-[var(--color-text-secondary)]">
+        The page under the bar. It comes up as the bar folds away.
+      </p>
+    </div>
+  ),
 };
 
 export const Brand: Story = {
@@ -126,6 +144,76 @@ export const ClickDismissFiresHandlerAndHides: Story = {
   },
 };
 
+// The folding box around the bar: the bar, the box that holds it, the box that clips it, the fold.
+const foldOfBar = (bar: HTMLElement) => bar.parentElement!.parentElement!.parentElement!;
+
+/**
+ * Dismissed, the bar is inert and out of the accessibility tree at once and folds away, fading with
+ * no slide, while the content under it comes up; it unmounts once it has. Slowed to 2 s to read
+ * the middle.
+ */
+export const FoldsAwayThenUnmounts: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  args: { dismissible: true, onDismiss: fn() },
+  render: (args) => (
+    <SlowFolds>
+      <AnnouncementBar {...args} />
+      <p data-testid="page">The page under the bar.</p>
+    </SlowFolds>
+  ),
+  play: async ({ args, canvas }) => {
+    const bar = canvas.getByRole('status');
+    const fold = foldOfBar(bar);
+    const page = canvas.getByTestId('page');
+    await expect(fold.inert).toBe(false);
+    const top = page.getBoundingClientRect().top;
+    await expect(top).toBeGreaterThan(bar.getBoundingClientRect().height - 1);
+
+    await userEvent.click(canvas.getByRole('button', { name: /dismiss/i }));
+    await expect(args.onDismiss).toHaveBeenCalledTimes(1);
+    // Inert and hidden at once, still on screen, fading with no slide.
+    await expect(bar.isConnected).toBe(true);
+    await expect(fold.inert).toBe(true);
+    await expect(fold).toHaveAttribute('aria-hidden', 'true');
+    await expect(canvas.queryByRole('status')).toBeNull();
+    await expect(fold.getAnimations().length).toBeGreaterThan(0);
+    await expect(getComputedStyle(bar.parentElement!).translate).toBe('none');
+    await expect(getComputedStyle(clipOf(fold)).overflow).toBe('hidden');
+
+    // Folded, the bar goes and the page is at the top.
+    await finishAnimations(fold);
+    await waitFor(() => expect(bar.isConnected).toBe(false));
+    await expect(page.getBoundingClientRect().top).toBeLessThan(top);
+  },
+};
+
+/** A sticky bar keeps its place at the top: the box that sticks is the outer one, around the fold. */
+export const StickyBarFoldsInsideTheStickyBox: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { sticky: true, dismissible: true },
+  play: async ({ canvas }) => {
+    const bar = canvas.getByRole('status');
+    const outer = foldOfBar(bar).parentElement!;
+    await expect(getComputedStyle(outer).position).toBe('sticky');
+    await expect(getComputedStyle(foldOfBar(bar)).position).not.toBe('sticky');
+    await expect(getComputedStyle(outer).zIndex).toBe('40');
+  },
+};
+
+/** With the Animations setting on "Reduced", the bar is gone as soon as it is dismissed. */
+export const ReducedMotionGoneAtOnce: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  globals: { motion: 'reduced' },
+  args: { dismissible: true },
+  play: async ({ canvas }) => {
+    const bar = canvas.getByRole('status');
+    await userEvent.click(canvas.getByRole('button', { name: /dismiss/i }));
+    await expect(bar.isConnected).toBe(false);
+  },
+};
+
 export const NotDismissibleHasNoCloseBtn: Story = {
   tags: ['!dev'],
   args: { intent: 'info', message: 'Plain banner.' },
@@ -149,8 +237,8 @@ export const BrandDismissFocusShowsWhiteRingInDark: Story = {
 };
 
 export const BrandDismissFocusShowsWhiteRingInLight: Story = {
-  tags: ['!dev'],
   ...BrandDismissFocusShowsWhiteRingInDark,
+  tags: ['!dev', '!autodocs'],
   globals: { theme: 'light' },
 };
 

@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
+import { loopStops } from '../storybook-motion';
 import { HealthDot } from './HealthDot';
 import type { HealthStatus } from './types';
 
@@ -18,6 +19,21 @@ export const Ok: Story = { args: { status: 'OK' } };
 export const Warn: Story = { args: { status: 'WARN' } };
 export const Crit: Story = { args: { status: 'CRIT' } };
 export const Pulsing: Story = { args: { status: 'CRIT', pulse: true } };
+
+/** `xs` 6px, `sm` 8px, `md` 10px (the default) and `lg` 12px, the pulse ring included. */
+export const Sizes: Story = {
+  render: (args) => (
+    <div className="flex flex-wrap items-center gap-6">
+      {(['xs', 'sm', 'md', 'lg'] as const).map((size) => (
+        <div key={size} className="flex items-center gap-2">
+          <HealthDot {...args} size={size} />
+          <HealthDot {...args} size={size} pulse />
+          <span className="text-xs">{size}</span>
+        </div>
+      ))}
+    </div>
+  ),
+};
 
 const STATUSES: HealthStatus[] = ['OK', 'WARN', 'CRIT', 'INFO', 'UNKNOWN'];
 
@@ -105,5 +121,51 @@ export const LabelNamesTheDot: Story = {
     await expect(dot.querySelector('.sr-only')).toBeNull();
     await expect(canvas.getAllByRole('img')).toHaveLength(1);
     await expect(canvas.getByText('OK')).toHaveClass('sr-only');
+  },
+};
+
+/** The wrapper and the dot are 6, 8, 10 and 12px; with no `size` the dot is still 10px. */
+export const SizesAreMeasured: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="flex items-center gap-4">
+      <div data-size="xs">
+        <HealthDot status="OK" size="xs" pulse />
+      </div>
+      <div data-size="sm">
+        <HealthDot status="OK" size="sm" pulse />
+      </div>
+      <div data-size="md">
+        <HealthDot status="OK" size="md" pulse />
+      </div>
+      <div data-size="lg">
+        <HealthDot status="OK" size="lg" pulse />
+      </div>
+      <div data-size="default">
+        <HealthDot status="OK" />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const expected = { xs: 6, sm: 8, md: 10, lg: 12, default: 10 };
+    for (const [size, px] of Object.entries(expected)) {
+      const box = canvasElement.querySelector(`[data-size="${size}"]`)!;
+      const wrapper = box.firstElementChild!.getBoundingClientRect();
+      const dot = [...box.querySelectorAll('.rounded-full')].at(-1)!.getBoundingClientRect();
+      await expect(`${size} wrapper ${wrapper.width}x${wrapper.height}`).toBe(
+        `${size} wrapper ${px}x${px}`
+      );
+      await expect(`${size} dot ${dot.width}x${dot.height}`).toBe(`${size} dot ${px}x${px}`);
+    }
+  },
+};
+
+/** The ping is a decorative loop: it runs, and stops under reduced motion. */
+export const PingStopsUnderReducedMotion: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { status: 'CRIT', pulse: true, label: 'Database: critical' },
+  play: async ({ canvas }) => {
+    const ping = canvas.getByRole('img').firstElementChild!;
+    await expect(loopStops(ping)).toMatchObject({ running: 'ping', reduced: 'none' });
   },
 };

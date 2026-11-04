@@ -1,6 +1,6 @@
 # Monitoring
 
-Storybook group: Monitoring. Health checks, uptime and logs. The host brings the data: these components draw what they are given.
+Storybook group: Monitoring. Health checks, the node grid, uptime and logs. The host brings the data: these components draw what they are given.
 
 ## Health checks
 
@@ -51,7 +51,11 @@ nothing in it is `UNKNOWN`.
   (`collapsedGroups` / `defaultCollapsedGroups` / `onCollapsedGroupsChange`, by group id).
   `sort="severity"` puts the failing checks, and the groups holding them, first. `variant="list"` is
   rows, `variant="grid"` one small card per check, for a wall screen. A list narrower than 48rem, on
-  a phone or in a card, stacks each check's fields instead of laying them out in columns.
+  a phone or in a card, stacks each check's fields instead of laying them out in columns. A check's
+  output and a group's checks unfold and fold back in 200 ms: the height runs from 0 to its size
+  while the content fades in and slides 4px, and the chevron turns with it. A closed one is out of
+  the tab order and of the accessibility tree from the moment it starts to close. A group keeps its
+  checks mounted; an output is mounted the first time it opens, and stays.
 - `HealthMatrix` is one cell per service (`rows`) and per environment, node or region (`columns`),
   with sticky headers, in a `role="grid"` that takes one tab stop: arrow keys move between cells,
   Home and End go to the ends of the row. A cell opens its detail in a popover (`message`, `latency`,
@@ -74,6 +78,64 @@ cell, the monitor's state chip). The statuses shown stay those of the last data.
 
 Every one takes `now`, which freezes the relative times, for stories and tests. One check shown as a
 card, and a dependency tree, need no component of their own: see the stories of the Monitoring group.
+
+## Node grid
+
+Storybook: [Node Grid](https://sckyzo.github.io/cosmos/?path=/docs/monitoring-node-grid--docs).
+
+`NodeGrid` is the "Node health" card of a fleet: one small mark per node, a grid for each group (a
+room, a rack, a cluster), and the counts above ("40 CRIT 19 WARN 77 OK"). Where `HealthMatrix` crosses
+services with nodes, this one answers "how many of my machines are in trouble, and which" at a
+glance, for a few hundred nodes. The host brings the data, in the order it wants the marks drawn: the
+grid does not sort, since the position can mean a place in a room.
+
+```tsx
+const groups: NodeGridGroup[] = [
+  {
+    id: 'a',
+    label: 'Room A',
+    nodes: [
+      { id: 'a-01', status: 'CRIT', label: 'node-a-01', detail: 'Disk 98% full' },
+      { id: 'a-02', status: 'OK', label: 'node-a-02' },
+    ],
+  },
+];
+
+<NodeGrid
+  title="Node health"
+  groups={groups}
+  marks={{ CRIT: 'square', WARN: 'diamond', OK: 'circle' }}
+  legend
+/>;
+```
+
+- `show` is `all` (default) or `alerting`. `alerting` draws the nodes that are not OK (warning,
+  critical, unknown and info) and leaves out a group with none; the header still counts every node,
+  the OK ones included. When nothing is drawn the card says "All nodes healthy" (`emptyMessage`
+  changes it; a grid with no node at all says "No nodes").
+- `marks` is the shape of each status: `square`, `diamond` or `circle`. Every status is a **square**
+  until you list it, so a grid is read by colors and names alone unless you pick shapes that tell
+  the statuses apart. Each node sits in a 16px box with 4px between two; the marks take the colors of
+  the status palette, which the themes and accents repaint.
+- The header holds `title` and, at the end edge, the counts (`showCounts`, on by default). Critical,
+  warning, unknown and info appear only above 0, OK always, worst first. `labels` rewrites the words
+  for another language: `labels.counts` is what follows each count (`CRIT`, `WARN`, `OK`, `UNKNOWN`,
+  `INFO`), `labels.statuses` the status in full (`Critical`, `Warning`, `OK`, `Unknown`, `Info`),
+  used in a node's name, its tooltip and the legend.
+- `legend` adds one entry per status that is drawn, each with its mark, under the groups.
+- Hovering or focusing a node shows a tooltip with its label (its `id` when it has none), its
+  status and its `detail`, which is plain text since the tooltip is not interactive. Escape hides it.
+- `onNodeSelect(node, group)` makes every node a button, reached with Enter, Space or a click.
+  Without it a node is not interactive besides the tooltip.
+- `maxHeight` scrolls the groups in the card, the header and the legend staying in view.
+
+**Keyboard and screen readers.** The grid is one tab stop. The arrow keys move across it: left and
+right in reading order (the other way round in right to left, and on to the next group at the end
+of one), up and down by the visual column, which is read from where the marks are drawn since the
+wrapping depends on the width; Home and End go to the first and the last node. Each group is a list
+named by its label, and each node is named like "node-a-01, Critical", so no status rests on its
+color: with the default squares, the name and the tooltip still say it. It is a list and not a
+`role="grid"` because the marks wrap with the width: there are no stable rows or columns to announce.
 
 ## Uptime monitoring
 
@@ -205,8 +267,10 @@ and to count the lines that arrived while it was paused.
   `comfortable` puts the message under its time, level and source. `columns` hides parts of the
   row (`['time']`), `lineNumbers` numbers the lines in the order of `lines`.
 - `follow` / `defaultFollow` / `onFollowChange`: it stays at the newest line while lines arrive.
-  Scrolling away from the end pauses it and shows "Jump to latest (12 new)"; the button, or
-  scrolling back to the end, resumes it; a filter that shortens the list does not. `order` puts
+  Scrolling away from the end pauses it and shows "Jump to latest (12 new)" in a strip of its
+  own under the lines (above them with `newest-first`), so it covers none; the button, or
+  scrolling back to the end, resumes it; a filter that shortens the list does not. Opening a row's
+  details pauses it too, so the row stays where it is and its details open under it. `order` puts
   the newest line last (`newest-last`, the default, a tail) or first.
 - The row follows the width of the viewer, not the screen's: the viewer is a container. Under
   28rem the source column is hidden; without `wrap` the row stays on one line and the viewer
@@ -222,7 +286,10 @@ and to count the lines that arrived while it was paused.
   (and Enter / Shift+Enter), wrapping around the ends.
 - A row with `fields` or a `stack` has a button that expands it in place
   (`expandedIds` / `defaultExpandedIds` / `onExpandedIdsChange`). `onOpenLine` adds an "Open
-  details" button to the expanded row, to open a `LogEntryDetail` in a drawer.
+  details" button to the expanded row, to open a `LogEntryDetail` in a drawer. The details a reader
+  opens fade in and are revealed from the top in 200 ms, under their row; they go at once when
+  closed. The room they take is set from the first frame, so the list does not move while they
+  play, and details open from the start, or drawn again as the list scrolls, are simply there.
 - Messages, sources, fields and stacks are text, never HTML. A bidirectional control character
   stays inside its own message.
 
@@ -237,7 +304,10 @@ filters are active (levels narrowed, sources chosen). The state pairs (`live`, `
 fields. It holds none of the log: pass the same filters to the viewer.
 
 **`LogLevelBadge`** is the level as a word in its color (`ERROR`, `WARN`), on the `surface` tone
-by default or the `terminal` one. Use it in a table cell, a card or a detail.
+by default or the `terminal` one. Use it in a table cell, a card or a detail. On the `surface` tone
+it is a `Badge` pill like `StatusBadge` (`trace`, `debug` and `unknown` neutral, `info`, `warn` and
+`error` in their intents, `fatal` solid red), all of one width; the `terminal` tone keeps its
+monospace face and small corners for the dark panel.
 
 **`LogEntryDetail`** shows one record in full for a drawer or a side panel: level, time, source
 and message, the fields as key / value pairs with a copy button each, the stack trace, the raw
@@ -304,7 +374,9 @@ const steps: JobLogStep[] = [
   starts running later opens. `expandedSteps` / `defaultExpandedSteps` / `onExpandedStepsChange`
   work as on other controls. The header of an open step sticks to the top of the log while its
   lines scroll, and each step is windowed on its own, so a step of tens of thousands of lines
-  stays smooth.
+  stays smooth. A step the reader opens by hand fades in and is revealed from the top in 200 ms
+  under its header, without moving the lines; it goes at once when closed. A step open from the
+  start, or opened by a search, a current line or "expand all", is simply there.
 - **Line numbers.** They restart at 1 in each step and are links: `href="#<idPrefix><step id>-L<n>"`.
   A click calls `onCurrentLineChange({ step, line })` and does not touch `location`; a click with a
   modifier key is the browser's own, so "open in a new tab" works. `currentLine` /
@@ -324,7 +396,8 @@ const steps: JobLogStep[] = [
   `+0:04.2`.
 - **Following.** While a step runs the log stays at the end, pauses when the reader scrolls up,
   and has a footer button: Pause, then "Jump to latest (12 new)". `follow` / `defaultFollow` /
-  `onFollowChange`. Moving to a line (a `currentLine`, a search match) leaves the end too.
+  `onFollowChange`. Moving to a line (a `currentLine`, a search match) leaves the end too, and so
+  does opening a step by hand: its header stays where it is and the step opens under it.
 - **Tone.** `terminal` (default) is a dark panel in every theme, `surface` follows the theme.
 
 **ANSI.** Color codes are read into styled spans, never HTML. Kept: the 16 colors and their

@@ -2,14 +2,29 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Menu } from '../ui/Menu';
-import { Badge } from '../ui/Badge';
-import { placeholderAvatar } from '../storybook-avatars';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
+import { tokenMs, transitionDelayMs, transitionMs } from '../storybook-motion';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
+import {
+  SlowFolds,
+  clipOf,
+  expectFoldClosed,
+  expectFoldOpen,
+  finishAnimations,
+  foldOf,
+  closedRotation,
+  rotationOf,
+} from '../storybook-folds';
 import { DataTable } from './DataTable';
-import { TableIdentityCell } from './cells';
 import { RowActionsMenu } from './RowActionsMenu';
-import type { ColumnDef } from './types';
+import {
+  PEOPLE,
+  patchColumns,
+  peopleColumns,
+  pickColumns,
+  withIdentity,
+  type Person,
+} from './storybook-fixtures';
 
 // DataTable's `mobileLayout="cards"`, in its own file with the other DataTable additions:
 // DataTable.stories.tsx is already one of the largest stories files of the package.
@@ -24,61 +39,20 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: 'Active' | 'Invited' | 'Suspended';
-  team: string;
-  lastSeen: string;
-};
+// Six of the shared people. The person is the title of the card, Last seen stays out of it and Team
+// is called Squad there.
+const rows = PEOPLE.slice(0, 6);
 
-const rows: User[] = [
-  ['Ada Lovelace', 'Engineer', 'Active', 'Core', '2 min ago'],
-  ['Grace Hopper', 'Admiral', 'Active', 'Navy', '1 h ago'],
-  ['Linus Torvalds', 'Maintainer', 'Invited', 'Kernel', 'never'],
-  ['Margaret Hamilton', 'Director', 'Active', 'Core', 'yesterday'],
-  ['Alan Turing', 'Researcher', 'Suspended', 'Crypto', '3 days ago'],
-  ['Barbara Liskov', 'Professor', 'Active', 'Types', '5 min ago'],
-].map(([name, role, status, team, lastSeen], i) => ({
-  id: `user-${i + 1}`,
-  name: name!,
-  email: `${name!.toLowerCase().replace(' ', '.')}@example.com`,
-  role: role!,
-  status: status as User['status'],
-  team: team!,
-  lastSeen: lastSeen!,
-}));
-
-const STATUS_INTENT = { Active: 'success', Invited: 'info', Suspended: 'danger' } as const;
-
-const columns: ColumnDef<User>[] = [
+const columns = patchColumns(
+  withIdentity(pickColumns(peopleColumns, ['name', 'role', 'status', 'team', 'lastSeen'])),
   {
-    key: 'name',
-    label: 'User',
-    mobile: 'title',
-    sortable: true,
-    sortValue: (r) => r.name,
-    render: (r) => (
-      <TableIdentityCell title={r.name} subtitle={r.email} src={placeholderAvatar(r.name, 80)} />
-    ),
-  },
-  { key: 'role', label: 'Role', sortable: true, sortValue: (r) => r.role, render: (r) => r.role },
-  {
-    key: 'status',
-    label: 'Status',
-    render: (r) => <Badge intent={STATUS_INTENT[r.status]}>{r.status}</Badge>,
-  },
-  { key: 'team', label: 'Team', mobileLabel: 'Squad', render: (r) => r.team },
-  { key: 'lastSeen', label: 'Last seen', mobile: 'hidden', render: (r) => r.lastSeen },
-];
-
-const Wrap = ({ children }: { children: React.ReactNode }) => (
-  <div className="bg-[var(--color-bg-base)] p-4 text-[var(--color-text-base)]">{children}</div>
+    name: { label: 'User', mobile: 'title' },
+    team: { mobileLabel: 'Squad' },
+    lastSeen: { mobile: 'hidden' },
+  }
 );
 
-const rowAction = (onAction?: (user: User) => void) => (r: User) => (
+const rowAction = (onAction?: (user: Person) => void) => (r: Person) => (
   <RowActionsMenu aria-label={`Actions for ${r.name}`}>
     <Menu.Item onClick={() => onAction?.(r)}>Edit</Menu.Item>
     <Menu.Item intent="danger">Remove</Menu.Item>
@@ -87,31 +61,29 @@ const rowAction = (onAction?: (user: User) => void) => (r: User) => (
 
 const cards = (canvas: ReturnType<typeof within>) => canvas.getAllByRole('listitem');
 const titleOf = (card: HTMLElement) =>
-  within(card).getByText(/^[A-Z][a-z]+ [A-Z][a-z]+$/).textContent;
+  within(card).getByText(/^\p{Lu}\p{L}+ \p{Lu}\p{L}+$/u).textContent;
 
 /**
  * `mobileLayout="cards"`: below `sm` each row is a block of the table card. The first line holds
  * the checkbox, the `mobile: 'title'` column and the row action; under it, one label/value pair
  * per column. `Last seen` is `mobile: 'hidden'`, `Team` is relabelled `Squad`. The second line of
- * the toolbar has the "Sort by" select and the columns button.
+ * the toolbar has the "Filters" button, the "Sort by" select and the columns button.
  */
 export const Cards: Story = {
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Users"
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        mobileLayout="cards"
-        selectable
-        columnsMenu
-        defaultSearchValue=""
-        searchPlaceholder="Search users…"
-        renderRowAction={rowAction()}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Users"
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      mobileLayout="cards"
+      selectable
+      columnsMenu
+      defaultSearchValue=""
+      searchPlaceholder="Search users…"
+      renderRowAction={rowAction()}
+    />
   ),
 };
 
@@ -137,16 +109,14 @@ export const CardsWithoutPairs: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Users"
-        rows={rows}
-        columns={[{ ...columns[0]!, sortable: false }]}
-        rowKey={(r) => r.id}
-        mobileLayout="cards"
-        renderRowAction={rowAction()}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Users"
+      rows={rows}
+      columns={[{ ...columns[0]!, sortable: false }]}
+      rowKey={(r) => r.id}
+      mobileLayout="cards"
+      renderRowAction={rowAction()}
+    />
   ),
 };
 
@@ -166,15 +136,13 @@ export const CardsShowTheTableData: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Users"
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        mobileLayout="cards"
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Users"
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      mobileLayout="cards"
+    />
   ),
   play: async ({ canvas, canvasElement }) => {
     const items = cards(canvas);
@@ -207,15 +175,13 @@ export const CardsAreAListForScreenReaders: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Users"
-        rows={rows.slice(0, 2)}
-        columns={columns}
-        rowKey={(r) => r.id}
-        mobileLayout="cards"
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Users"
+      rows={rows.slice(0, 2)}
+      columns={columns}
+      rowKey={(r) => r.id}
+      mobileLayout="cards"
+    />
   ),
   play: async ({ canvas, canvasElement }) => {
     // Hidden by `display: none`, so neither a role nor a name of it is reachable.
@@ -247,17 +213,15 @@ export const CardsSelection: Story = {
   globals: mobileViewport,
   args: { onSelectionChange: fn() },
   render: (args) => (
-    <Wrap>
-      <DataTable
-        aria-label="Users"
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        mobileLayout="cards"
-        selectable
-        onSelectionChange={args.onSelectionChange}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Users"
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      mobileLayout="cards"
+      selectable
+      onSelectionChange={args.onSelectionChange}
+    />
   ),
 };
 
@@ -286,7 +250,7 @@ export const CardsRowAction: Story = {
   render: function Render(args) {
     const [acted, setActed] = useState('');
     return (
-      <Wrap>
+      <>
         <DataTable
           aria-label="Users"
           rows={rows}
@@ -297,7 +261,7 @@ export const CardsRowAction: Story = {
           renderRowAction={rowAction((u) => setActed(u.name))}
         />
         <p role="status">{acted && `Edit ${acted}`}</p>
-      </Wrap>
+      </>
     );
   },
 };
@@ -312,7 +276,7 @@ export const CardsRowActionChecks: Story = {
     // The action is not a click on the card.
     await expect(args.onRowClick).not.toHaveBeenCalled();
     // A click on the card itself is.
-    await userEvent.click(within(cards(canvas)[2]!).getByText('Maintainer'));
+    await userEvent.click(within(cards(canvas)[2]!).getByText('Engineer'));
     await expect(args.onRowClick).toHaveBeenCalledWith(rows[2]);
   },
 };
@@ -322,15 +286,13 @@ export const CardsSort: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Users"
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        mobileLayout="cards"
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Users"
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      mobileLayout="cards"
+    />
   ),
 };
 
@@ -367,35 +329,33 @@ export const CardsLoadingAndEmpty: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <div className="flex flex-col gap-4">
-        <DataTable
-          aria-label="Loading"
-          rows={[]}
-          columns={columns}
-          rowKey={(r) => r.id}
-          mobileLayout="cards"
-          loading
-          loadingRows={2}
-        />
-        <DataTable
-          aria-label="Empty"
-          rows={[]}
-          columns={columns}
-          rowKey={(r) => r.id}
-          mobileLayout="cards"
-          emptyTitle="No users"
-        />
-        <DataTable
-          aria-label="Failed"
-          rows={[]}
-          columns={columns}
-          rowKey={(r) => r.id}
-          mobileLayout="cards"
-          error="Could not load the users"
-        />
-      </div>
-    </Wrap>
+    <div className="flex flex-col gap-4">
+      <DataTable
+        aria-label="Loading"
+        rows={[]}
+        columns={columns}
+        rowKey={(r) => r.id}
+        mobileLayout="cards"
+        loading
+        loadingRows={2}
+      />
+      <DataTable
+        aria-label="Empty"
+        rows={[]}
+        columns={columns}
+        rowKey={(r) => r.id}
+        mobileLayout="cards"
+        emptyTitle="No users"
+      />
+      <DataTable
+        aria-label="Failed"
+        rows={[]}
+        columns={columns}
+        rowKey={(r) => r.id}
+        mobileLayout="cards"
+        error="Could not load the users"
+      />
+    </div>
   ),
 };
 
@@ -420,17 +380,15 @@ export const CardsOnADesktopIsTheTable: Story = {
   tags: ['!dev', '!autodocs'],
   globals: { viewport: { value: 'laptop', isRotated: false } },
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Users"
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        mobileLayout="cards"
-        selectable
-        columnsMenu
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Users"
+      rows={rows}
+      columns={columns}
+      rowKey={(r) => r.id}
+      mobileLayout="cards"
+      selectable
+      columnsMenu
+    />
   ),
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('table', { name: 'Users' })).toBeVisible();
@@ -445,11 +403,7 @@ export const CardsOnADesktopIsTheTable: Story = {
 export const ScrollIsTheDefault: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
-  render: () => (
-    <Wrap>
-      <DataTable aria-label="Users" rows={rows} columns={columns} rowKey={(r) => r.id} />
-    </Wrap>
-  ),
+  render: () => <DataTable aria-label="Users" rows={rows} columns={columns} rowKey={(r) => r.id} />,
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('table', { name: 'Users' })).toBeVisible();
     await expect(canvas.queryByRole('list')).toBeNull();
@@ -457,7 +411,7 @@ export const ScrollIsTheDefault: Story = {
   },
 };
 
-const userDetail = (r: User) => (
+const userDetail = (r: Person) => (
   <div className="flex flex-col gap-3">
     <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
       <div>
@@ -482,19 +436,17 @@ const userDetail = (r: User) => (
 export const ExpandableCards: Story = {
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <DataTable
-        aria-label="Users"
-        rows={rows.slice(0, 4)}
-        columns={columns}
-        rowKey={(r) => r.id}
-        mobileLayout="cards"
-        selectable
-        renderRowAction={rowAction()}
-        renderExpandedRow={userDetail}
-        defaultExpandedRows={new Set(['user-2'])}
-      />
-    </Wrap>
+    <DataTable
+      aria-label="Users"
+      rows={rows.slice(0, 4)}
+      columns={columns}
+      rowKey={(r) => r.id}
+      mobileLayout="cards"
+      selectable
+      renderRowAction={rowAction()}
+      renderExpandedRow={userDetail}
+      defaultExpandedRows={new Set(['user-2'])}
+    />
   ),
 };
 
@@ -526,9 +478,11 @@ export const CardChevronExpandsAndCollapses: Story = {
     const detailBox = document.getElementById(open.getAttribute('aria-controls')!)!;
     await expect(card('1').contains(detailBox)).toBe(true);
     await expect(within(detailBox).getByText(/joined the Core team/)).toBeVisible();
-    await expect(detailBox.getBoundingClientRect().top).toBeGreaterThan(
-      within(card('1')).getByText('Squad').getBoundingClientRect().bottom
-    );
+    await expect(
+      within(detailBox)
+        .getByText(/joined the Core team/)
+        .getBoundingClientRect().top
+    ).toBeGreaterThan(within(card('1')).getByText('Squad').getBoundingClientRect().bottom);
     expectNoHorizontalOverflow();
     // The keyboard does the same, and the toggle does not select the card.
     chevron('1', true).focus();
@@ -541,24 +495,94 @@ export const CardChevronExpandsAndCollapses: Story = {
   },
 };
 
+/**
+ * A card's detail unfolds under its fields in 200 ms and folds back, the chevron turning with it,
+ * as the detail row of the table does.
+ */
+export const CardDetailUnfolds: Story = {
+  ...ExpandableCards,
+  parameters: { settleMotion: false },
+  render: () => (
+    <DataTable
+      aria-label="Users"
+      rows={rows.slice(0, 4)}
+      columns={columns}
+      rowKey={(r) => r.id}
+      mobileLayout="cards"
+      renderExpandedRow={userDetail}
+    />
+  ),
+};
+
+export const CardDetailUnfoldsAndFoldsBack: Story = {
+  ...ExpandableCards,
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  render: () => (
+    <SlowFolds>
+      <DataTable
+        aria-label="Users"
+        rows={rows.slice(0, 4)}
+        columns={columns}
+        rowKey={(r) => r.id}
+        mobileLayout="cards"
+        renderExpandedRow={userDetail}
+        defaultExpandedRows={new Set(['user-2'])}
+      />
+    </SlowFolds>
+  ),
+  play: async ({ canvas }) => {
+    const toggle = (id: string, open: boolean) =>
+      canvas.getByRole('button', { name: `${open ? 'Hide' : 'Show'} details for user-${id}` });
+
+    // Open from the first render: there, at rest, nothing played.
+    const started = foldOf(toggle('2', true));
+    await expectFoldOpen(started);
+    await expect(started.getAnimations()).toHaveLength(0);
+
+    // Opening: reachable at once, clipping and growing, then at rest.
+    const first = toggle('1', false);
+    const chevron = first.querySelector('svg')!;
+    await expect(rotationOf(chevron)).toBe(closedRotation(chevron));
+    await userEvent.click(first);
+    const fold = foldOf(toggle('1', true));
+    await expect(fold.inert).toBe(false);
+    await expect(getComputedStyle(clipOf(fold)).overflow).toBe('hidden');
+    await expect(fold.getAnimations().length).toBeGreaterThan(0);
+    const midway = fold.getBoundingClientRect().height;
+    await finishAnimations(fold.closest('li')!);
+    await expectFoldOpen(fold);
+    await expect(midway).toBeLessThan(fold.getBoundingClientRect().height);
+    await expect(rotationOf(chevron)).toBe('90deg');
+
+    // Closing: inert and hidden at once, still there while it folds, gone once it has.
+    await userEvent.click(toggle('1', true));
+    await expect(fold.isConnected).toBe(true);
+    expectFoldClosed(fold);
+    await expect(fold.getBoundingClientRect().height).toBeGreaterThan(0);
+    await finishAnimations(fold.closest('li')!);
+    await waitFor(() => expect(fold.isConnected).toBe(false));
+    await expect(toggle('1', false)).not.toHaveAttribute('aria-controls');
+    expectNoHorizontalOverflow();
+  },
+};
+
 /** A card and a label/value pair of the cards layout follow the page's `data-density`. */
 export const CardsFollowPageDensity: Story = {
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => (
-    <Wrap>
-      <InEachDensity>
-        {(density) => (
-          <DataTable
-            aria-label={`Users, ${density}`}
-            rows={rows.slice(0, 3)}
-            columns={columns}
-            rowKey={(r) => r.id}
-            mobileLayout="cards"
-          />
-        )}
-      </InEachDensity>
-    </Wrap>
+    <InEachDensity>
+      {(density) => (
+        <DataTable
+          aria-label={`Users, ${density}`}
+          rows={rows.slice(0, 3)}
+          columns={columns}
+          rowKey={(r) => r.id}
+          mobileLayout="cards"
+        />
+      )}
+    </InEachDensity>
   ),
   play: async ({ canvas }) => {
     await expectDensitySteps(canvas, (scope) => scope.getAllByRole('listitem')[0]!);
@@ -566,5 +590,64 @@ export const CardsFollowPageDensity: Story = {
       canvas,
       (_scope, region) => region.querySelectorAll<HTMLElement>('dl > div')[1]!
     );
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+const ReloadingCards = () => {
+  const [loading, setLoading] = useState(false);
+  return (
+    <div className="space-y-3">
+      <button
+        type="button"
+        className="rounded-md border border-gray-300 px-3 py-1 text-sm"
+        onClick={() => setLoading((on) => !on)}
+      >
+        Reload
+      </button>
+      <DataTable
+        aria-label="Users"
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        mobileLayout="cards"
+        loading={loading}
+      />
+    </div>
+  );
+};
+
+/** A reload with rows on screen: the cards dim and the spinner shows after the wait, as the table does. */
+export const CardsWaitBeforeTheVeil: Story = {
+  globals: mobileViewport,
+  parameters: { settleMotion: false },
+  render: () => <ReloadingCards />,
+};
+
+export const CardsWaitBeforeTheVeilChecks: Story = {
+  ...CardsWaitBeforeTheVeil,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const list = canvas.getAllByRole('list').find((el) => el.tagName === 'UL')!;
+    await expect(getComputedStyle(list).opacity).toBe('1');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Reload' }));
+    // The same list element, kept: its dimming has a before to come from.
+    await expect(canvas.getAllByRole('list', { hidden: true }).includes(list)).toBe(true);
+    await expect(list.inert).toBe(true);
+    await expect(getComputedStyle(list).opacity).toBe('1');
+    await expect(transitionDelayMs(list)).toBe(150);
+    await expect(transitionMs(list)).toBe(tokenMs('--cosmos-motion-fast'));
+    // The spinner of the cards: the wrapper of the list holds it (the table's own is hidden).
+    const veil = list.parentElement!.querySelector<HTMLElement>(':scope > [aria-hidden="true"]')!;
+    await expect(getComputedStyle(veil).opacity).toBe('0');
+    await expect(transitionDelayMs(veil)).toBe(150);
+    await waitFor(() => expect(getComputedStyle(list).opacity).toBe('0.5'), { timeout: 3000 });
+    await waitFor(() => expect(getComputedStyle(veil).opacity).toBe('1'), { timeout: 3000 });
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Reload' }));
+    await expect(list.inert).toBe(false);
+    await waitFor(() => expect(getComputedStyle(list).opacity).toBe('1'), { timeout: 3000 });
   },
 };

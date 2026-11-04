@@ -10,12 +10,20 @@ import {
   expectTextContrast,
   inDirection,
   mobileViewport,
+  portalDocsParams,
   startOffset,
 } from '../storybook-helpers';
 import { MapMarkerList } from './MapMarkerList';
 import { MapView, type MapViewProps, type MapViewState } from './MapView';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
-import { CITY_DARK, CITY_LIGHT, CITY_STORES } from './storybook-map';
+import {
+  CITY_DARK,
+  CITY_LIGHT,
+  CITY_STORES,
+  WORLD_DARK,
+  WORLD_LIGHT,
+  WORLD_SITES,
+} from './storybook-map';
 import type { MapMarker } from './types';
 
 const meta = {
@@ -43,6 +51,24 @@ export const Clusters: Story = {
 /** `cluster={false}` draws every marker, however close. */
 export const NoClusters: Story = {
   args: { fit: false, initialCenter: [4.86, 45.735], initialZoom: 10.8, cluster: false },
+};
+
+/**
+ * A world view: the outlines are the countries of Natural Earth, read from the `world-atlas`
+ * package, so nothing is fetched. Sites close together (Paris, London, Frankfurt) group into a
+ * counted circle; zoom in to split them.
+ */
+export const WorldView: Story = {
+  args: {
+    markers: WORLD_SITES,
+    style: WORLD_LIGHT,
+    darkStyle: WORLD_DARK,
+    ariaLabel: 'Sites',
+    fit: false,
+    initialCenter: [10, 25],
+    initialZoom: 1.2,
+    height: 420,
+  },
 };
 
 /** A fixed view for a card: no gesture, no zoom buttons, no focus stop, and the pins are pictures. */
@@ -88,6 +114,8 @@ const Locator = (args: MapViewProps) => {
 export const DarkStyle: Story = {
   args: { defaultSelectedId: 'station' },
   globals: { theme: 'dark' },
+  // A frame of its own: pinning the theme there leaves the docs page on the toolbar's.
+  parameters: { ...portalDocsParams(440), layout: 'padded' },
 };
 
 /** At 375 px the list stacks under the map and the page does not scroll sideways. */
@@ -304,6 +332,31 @@ export const ClusterZoomsIn: Story = {
     const before = readView(canvasElement).zoom || 10.8;
     await userEvent.click(group[0]!);
     await waitFor(() => expect(readView(canvasElement).zoom).toBeGreaterThan(before));
+  },
+};
+
+/**
+ * The test of `WorldView`, hidden: the map draws, the close sites form a group, the attribution
+ * names Natural Earth, and nothing was asked of another origin.
+ */
+export const WorldViewDrawsOffline: Story = {
+  ...WorldView,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement, canvas }) => {
+    await mapCanvas(canvasElement);
+    await waitFor(() =>
+      expect(canvasElement.querySelector('.maplibregl-ctrl-attrib')?.textContent).toContain(
+        'Natural Earth'
+      )
+    );
+    // At this zoom Paris, London and Frankfurt are one circle.
+    const groups = await canvas.findAllByRole('button', { name: /places, zoom in$/ });
+    expect(groups.length).toBeGreaterThan(0);
+    const foreign = performance
+      .getEntriesByType('resource')
+      .map((entry) => entry.name)
+      .filter((name) => /^https?:/.test(name) && new URL(name).origin !== location.origin);
+    expect(foreign).toEqual([]);
   },
 };
 

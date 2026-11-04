@@ -10,11 +10,17 @@ import { Select } from './Select';
 import { Textarea } from './Textarea';
 import { TimePicker } from './TimePicker';
 
-// Every field of the library, one row per size: they share one recipe, so a row
-// reads as one family and the heights step 32 / 36 / 44px like Button's.
 const meta = {
   title: 'Forms/Field sizes',
-  parameters: { layout: 'padded' },
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          "Every text-entry field of the library, one row per size. They share one recipe (`fieldRecipe.ts`), so a row reads as one family and the heights step 32 / 36 / 44px like `Button`'s (`sm` / `md` / `lg`). The heights and the vertical padding follow the page density.",
+      },
+    },
+  },
   tags: ['autodocs'],
 } satisfies Meta;
 
@@ -55,6 +61,7 @@ const FieldsRow = ({ size, required }: { size: FieldSize; required?: boolean }) 
   </div>
 );
 
+/** The same fields at `sm`, `md` (the default) and `lg`, one row each. */
 export const AllFieldsAllSizes: Story = {
   render: () => (
     <div className="flex flex-col gap-8">
@@ -91,6 +98,7 @@ export const SizesStepThroughTheScale: Story = {
   },
 };
 
+/** `required` on every field: an asterisk after the label, and `aria-required` on the control. */
 export const Required: Story = {
   render: () => <FieldsRow size="md" required />,
 };

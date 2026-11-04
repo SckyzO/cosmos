@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, spyOn, userEvent, waitFor, within } from 'storybook/test';
 import { StickyScrollNav, type StickyScrollNavProps } from './StickyScrollNav';
-import { SectionCard } from '../templates/SectionCard';
 import {
   endOffset,
   expectNoHorizontalOverflow,
   mobileViewport,
   startOffset,
 } from '../storybook-helpers';
+import { indicatorGap, indicatorOf, isSliding, tokenMs, transitionMs } from '../storybook-motion';
 
 const meta = {
   title: 'Navigation/Sticky Scroll Nav',
@@ -20,28 +20,54 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// A settings page: each section heading matches the button that goes to it.
+const SETTINGS = [
+  {
+    id: 'profile',
+    label: 'Profile',
+    text: 'Your name, your photo and the address people see on your public page.',
+  },
+  {
+    id: 'notifications',
+    label: 'Notifications',
+    text: 'Choose what reaches you by email and what stays in the app.',
+  },
+  {
+    id: 'security',
+    label: 'Security',
+    text: 'Your password, two-step verification and the devices signed in to your account.',
+  },
+  { id: 'billing', label: 'Billing', text: 'Your plan, the card on file and your past invoices.' },
+];
+
+/**
+ * A settings page in a scroll box. The row of buttons stays pinned at the top while the page
+ * scrolls: each button goes to its section, and the one of the section being read is marked.
+ */
 export const Default: Story = {
   render: () => (
-    <div className="min-h-screen bg-[var(--color-bg-base)] p-6">
-      <StickyScrollNav
-        sections={[
-          { id: 's1', label: 'Realtime' },
-          { id: 's2', label: 'Line / Area' },
-          { id: 's3', label: 'Donut' },
-          { id: 's4', label: 'Treemap' },
-        ]}
-      />
-      <div className="space-y-6 pt-6">
-        {['s1', 's2', 's3', 's4'].map((id) => (
-          <div key={id} id={id}>
-            <SectionCard title={id.toUpperCase()}>
-              <div className="h-48 rounded-xl bg-gray-100 dark:bg-gray-800/50" />
-            </SectionCard>
-          </div>
+    <div className="bg-[var(--color-bg-base)] p-6">
+      <div className="h-[360px] overflow-y-auto rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+        <StickyScrollNav sections={SETTINGS} topOffset={8} />
+        {SETTINGS.map(({ id, label, text }) => (
+          <section key={id} id={id} aria-label={label} className="min-h-[240px] pt-6">
+            <h2 className="text-lg font-semibold">{label}</h2>
+            <p className="mt-2 text-sm text-[var(--color-text-muted)]">{text}</p>
+          </section>
         ))}
       </div>
     </div>
   ),
+};
+
+/**
+ * The fill behind the button of the section being read is one marker that slides to the next
+ * button as the page scrolls, in 200 ms easing in and out; with the reduced setting it moves at
+ * once. Scroll the box, or click a button.
+ */
+export const MarkerSlidesWhileReading: Story = {
+  ...Default,
+  parameters: { settleMotion: false },
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
@@ -130,6 +156,44 @@ export const ButtonScrollsInsideAScrollContainer: Story = {
     await expect(nav.parentElement?.scrollTop).toBeGreaterThan(0);
     await expect(window.scrollY).toBe(0);
     await expect(topOf(nav)).toBeCloseTo(stuckTop, 0);
+  },
+};
+
+/** The button of the section being read is marked, whether it got there by a click or by scrolling. */
+export const ButtonMarksTheSectionBeingRead: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    const box = nav.parentElement!;
+    const reading = () =>
+      canvas
+        .getAllByRole('button')
+        .filter((button) => button.getAttribute('aria-current') === 'location')
+        .map((button) => button.textContent);
+    // At the top, the first section is the one being read.
+    await expect(reading()).toEqual(['Profile']);
+
+    // Scrolled by hand until a section's top reaches the nav: its button takes the mark.
+    const scrollTo = (id: string) =>
+      box.scrollBy({
+        top: topOf(canvas.getByRole('region', { name: id })) - nav.getBoundingClientRect().bottom,
+        behavior: 'instant',
+      });
+    scrollTo('Security');
+    await waitFor(() => expect(reading()).toEqual(['Security']), { timeout: 3000 });
+    scrollTo('Notifications');
+    await waitFor(() => expect(reading()).toEqual(['Notifications']), { timeout: 3000 });
+    // The last section may never reach the nav: the end of the scroll counts as reading it.
+    box.scrollBy({ top: box.scrollHeight, behavior: 'instant' });
+    await waitFor(() => expect(reading()).toEqual(['Billing']), { timeout: 3000 });
+
+    // A click scrolls there, and the mark follows.
+    await userEvent.click(canvas.getByRole('button', { name: 'Profile' }));
+    await waitFor(() => expect(reading()).toEqual(['Profile']), { timeout: 3000 });
+    await expect(canvas.getByRole('button', { name: 'Billing' })).not.toHaveAttribute(
+      'aria-current'
+    );
   },
 };
 
@@ -250,5 +314,155 @@ export const SectionsRunFromTheStartEdge: Story = {
     expect(startOffset(first, row)).toBeLessThan(endOffset(first, row));
     expect(startOffset(first, row)).toBeLessThan(startOffset(last, row));
     expect(first.getBoundingClientRect().left).toBeGreaterThan(last.getBoundingClientRect().left);
+  },
+};
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+
+// Whether the marker sits on the button, along the line and across it.
+const sitsOn = (marker: HTMLElement, button: HTMLElement) => {
+  const gap = indicatorGap(marker, button);
+  expect(gap.start, 'start along the line').toBeLessThan(0.6);
+  expect(gap.inline, 'size along the line').toBeLessThan(0.6);
+  expect(gap.blockStart, 'start across the line').toBeLessThan(0.6);
+  expect(gap.block, 'size across the line').toBeLessThan(0.6);
+};
+
+// Scrolls the box by hand until the top of a section meets the bottom of the nav.
+const scrollToSection = (nav: HTMLElement, section: HTMLElement) =>
+  nav.parentElement!.scrollBy({
+    top: section.getBoundingClientRect().top - nav.getBoundingClientRect().bottom,
+    behavior: 'instant',
+  });
+
+/**
+ * The marker has the box of the button of the section being read: at the top, after a scroll to a
+ * section further down, back up, to the end, and after a click. The button leaves its fill to it.
+ */
+export const MarkerSitsOnTheButtonBeingRead: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    const marker = indicatorOf(nav);
+    const button = (name: string) => canvas.getByRole('button', { name });
+    await waitFor(() => sitsOn(marker, button('Profile')));
+    // The fill is the marker's: the button has none of its own, and the marker has one.
+    await expect(getComputedStyle(button('Profile')).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+    await expect(getComputedStyle(marker).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+
+    // Down, then up, then to the end of the scroll: both ways.
+    for (const name of ['Security', 'Notifications']) {
+      scrollToSection(nav, canvas.getByRole('region', { name }));
+      await waitFor(() => expect(button(name)).toHaveAttribute('aria-current', 'location'), {
+        timeout: 3000,
+      });
+      await waitFor(() => sitsOn(marker, button(name)));
+    }
+    nav.parentElement!.scrollBy({ top: nav.parentElement!.scrollHeight, behavior: 'instant' });
+    await waitFor(() => sitsOn(marker, button('Billing')), { timeout: 3000 });
+    await expect(nav.querySelectorAll('[aria-current="location"]')).toHaveLength(1);
+
+    // A click scrolls there, and the marker ends on the button.
+    await userEvent.click(button('Profile'));
+    await waitFor(() => expect(button('Profile')).toHaveAttribute('aria-current', 'location'), {
+      timeout: 3000,
+    });
+    await waitFor(() => sitsOn(marker, button('Profile')));
+  },
+};
+
+/**
+ * No transition on the first paint: the marker is where the button of the first section is when
+ * the nav appears. Reading on then starts the slide, over the base duration of the theme.
+ */
+export const MarkerDoesNotSlideInOnFirstPaint: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
+  parameters: { settleMotion: false },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    const marker = indicatorOf(nav);
+    await expect(isSliding(nav)).toBe(false);
+    sitsOn(marker, canvas.getByRole('button', { name: 'Profile' }));
+    await expect(transitionMs(marker)).toBe(0);
+
+    scrollToSection(nav, canvas.getByRole('region', { name: 'Security' }));
+    await waitFor(() => expect(isSliding(nav)).toBe(true), { timeout: 3000 });
+    await expect(transitionMs(marker)).toBe(tokenMs('--cosmos-motion-base'));
+    await waitFor(() => expect(isSliding(nav)).toBe(false), { timeout: 3000 });
+    sitsOn(marker, canvas.getByRole('button', { name: 'Security' }));
+  },
+};
+
+/** With the reduced setting the marker jumps: no transition runs, and it is already there. */
+export const MarkerJumpsUnderReducedMotion: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
+  globals: { motion: 'reduced' },
+  parameters: { settleMotion: false },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    const marker = indicatorOf(nav);
+    scrollToSection(nav, canvas.getByRole('region', { name: 'Security' }));
+    await waitFor(
+      () =>
+        expect(canvas.getByRole('button', { name: 'Security' })).toHaveAttribute('aria-current'),
+      { timeout: 3000 }
+    );
+    await expect(isSliding(nav)).toBe(false);
+    await expect(transitionMs(marker)).toBe(0);
+    sitsOn(marker, canvas.getByRole('button', { name: 'Security' }));
+  },
+};
+
+/** Below `sm` the row of buttons is a menu: there is no marker to place. */
+export const NoMarkerOnThePhone: Story = {
+  ...MobileJumpMenu,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    await expect(nav.querySelector('[data-slot="indicator"]')).toBeNull();
+    await expect(canvas.getByRole('combobox', { name: 'Jump to section' })).toBeVisible();
+  },
+};
+
+/** The marker is decoration: assistive technology reads the buttons as before, and it takes no clicks. */
+export const MarkerIsDecoration: Story = {
+  ...Default,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    const marker = indicatorOf(nav);
+    await expect(marker).toHaveAttribute('aria-hidden', 'true');
+    await expect(getComputedStyle(marker).pointerEvents).toBe('none');
+    await expect(canvas.getAllByRole('button')).toHaveLength(SETTINGS.length);
+  },
+};
+
+/** In right to left the first button is on the right, and the marker starts from the right too. */
+export const MarkerFollowsTheReadingDirection: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div dir="rtl" data-direction="rtl" className="bg-[var(--color-bg-base)] p-6">
+      <div className="h-[360px] overflow-y-auto rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+        <StickyScrollNav sections={SETTINGS} topOffset={8} />
+        {SETTINGS.map(({ id, label, text }) => (
+          <section key={id} id={id} aria-label={label} className="min-h-[240px] pt-6">
+            <h2 className="text-lg font-semibold">{label}</h2>
+            <p className="mt-2 text-sm text-[var(--color-text-muted)]">{text}</p>
+          </section>
+        ))}
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation');
+    const marker = indicatorOf(nav);
+    await waitFor(() => sitsOn(marker, canvas.getByRole('button', { name: 'Profile' })));
+    for (const name of ['Security', 'Notifications']) {
+      scrollToSection(nav, canvas.getByRole('region', { name }));
+      await waitFor(() => sitsOn(marker, canvas.getByRole('button', { name })), { timeout: 3000 });
+    }
   },
 };

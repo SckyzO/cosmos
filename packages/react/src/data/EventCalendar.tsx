@@ -7,6 +7,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useTicker } from '../hooks/useTicker';
 import { Button } from '../ui/Button';
 import type { Intent } from '../ui/intent';
+import { SectionLabel } from '../ui/SectionLabel';
 import { Tooltip } from '../ui/Tooltip';
 import {
   addDays,
@@ -99,7 +100,8 @@ export type EventCalendarProps = {
    * for a click on the all-day row, whose start is 00:00. With it set, the hour grid is a single
    * tab stop for a cursor on the slots: the arrow keys move it a day or 30 minutes, Page Up and
    * Page Down a week (a day, in the day view), Home and End to the first and the last slot of
-   * the day.
+   * the day. Up from the first slot goes to the all-day row of that day, where Enter calls it with
+   * `allDay: true` and Down comes back.
    */
   onSlotClick?: (start: Date, info: { allDay: boolean }) => void;
   /**
@@ -190,7 +192,8 @@ const NAV_BUTTON = clsx(
  * dots, and picking a day lists its events under the grid.
  *
  * The week and day views draw a scrolling grid of 24 hours, 48px each, opened at 7 AM (or an hour
- * before the first event). All-day events sit in a row above it; timed ones are placed at their
+ * before the first event, also when the events arrive after the grid is drawn, unless the person
+ * has scrolled it). All-day events sit in a row above it; timed ones are placed at their
  * time, side by side when they overlap, as many as the width allows (72px each, two at least),
  * the rest behind a "+N" button. A line marks the current time. Below `sm` a week is a strip of
  * its seven days and the grid of the picked day.
@@ -367,13 +370,10 @@ export const EventCalendar = ({
             aria-hidden
           >
             {fmt.weekdays.map((d, i) => (
-              <span
-                key={i}
-                className="text-2xs py-2 text-center font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
-              >
+              <SectionLabel key={i} as="span" size="md" className="py-2 text-center">
                 <bdi className="max-sm:hidden">{d}</bdi>
                 <span className="sm:hidden">{fmt.weekdaysNarrow[i]}</span>
-              </span>
+              </SectionLabel>
             ))}
           </div>
 
@@ -400,7 +400,8 @@ export const EventCalendar = ({
                   role="group"
                   aria-label={label}
                   className={clsx(
-                    'min-h-20 min-w-0 border-b border-gray-200 p-1.5 sm:min-h-28 dark:border-gray-800',
+                    // A container: its chips stack the time over the title when the cell is narrow.
+                    '@container min-h-20 min-w-0 border-b border-gray-200 p-1.5 sm:min-h-28 dark:border-gray-800',
                     i % 7 !== 6 && 'border-e',
                     outside && 'bg-gray-50 dark:bg-white/[0.02]'
                   )}

@@ -5,6 +5,7 @@ import {
   COSMOS_ACCENTS,
   COSMOS_DENSITIES,
   COSMOS_FONTS,
+  COSMOS_MOTIONS,
   COSMOS_RADII,
   COSMOS_TEXT_SIZES,
   COSMOS_THEMES,
@@ -196,6 +197,33 @@ describe('applyAppearance', () => {
     it('keeps it as it is when left out', () => {
       const { data } = apply({ theme: 'light', accent: 'blue' }, { dataset: { radius: 'sm' } });
       expect(data).toEqual({ radius: 'sm' });
+    });
+  });
+
+  describe('motion', () => {
+    it('sets data-motion for reduced motion', () => {
+      const { data } = apply({ theme: 'light', accent: 'blue', motion: 'reduced' });
+      expect(data).toEqual({ motion: 'reduced' });
+    });
+
+    it('removes it for full motion, the default', () => {
+      const { data } = apply(
+        { theme: 'light', accent: 'blue', motion: 'full' },
+        { dataset: { motion: 'reduced' } }
+      );
+      expect(data).not.toHaveProperty('motion');
+    });
+
+    it('keeps it as it is when left out', () => {
+      const { data } = apply(
+        { theme: 'light', accent: 'blue' },
+        { dataset: { motion: 'reduced' } }
+      );
+      expect(data).toEqual({ motion: 'reduced' });
+    });
+
+    it('offers full first, as the default, then reduced', () => {
+      expect(COSMOS_MOTIONS.map((m) => m.id)).toEqual(['full', 'reduced']);
     });
   });
 
@@ -405,6 +433,12 @@ describe('contract with @sckyzo/cosmos-theme', () => {
   it('has a data-radius block for every radius', () => {
     for (const { id } of COSMOS_RADII) {
       expect(attributeValues('radius'), id).toContain(id);
+    }
+  });
+
+  it('has a data-motion block for every motion but full', () => {
+    for (const { id } of COSMOS_MOTIONS) {
+      if (id !== 'full') expect(attributeValues('motion'), id).toContain(id);
     }
   });
 

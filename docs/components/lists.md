@@ -57,8 +57,11 @@ holds no selection, no read flags and no open row of its own.
 - `actions` is data: `label`, `icon`, `onSelect`, and `intent="danger"` or `disabled` when needed.
   On a wide screen they are icon buttons in place of the `timestamp`, transparent until the row is
   hovered or has focus. They stay in the tab order and the accessibility tree the whole time, so a
-  keyboard reaches them. Below `sm`, and on a screen with no hover, they fold into one "More
-  actions" menu next to the star. `trailing` stays for anything else.
+  keyboard reaches them, but they take no pointer until they are shown: a tap near the time, on a
+  touch screen that still reports hover, lands on the row and not on an action nobody can see.
+  Below `sm`, and on a screen with no hover, they fold into one "More actions" menu next to the
+  star. `trailing` stays for anything else. A `timestamp` ends at the end of the row, in a row with
+  or without content after it.
 - `StackedList.Header` becomes a selection bar when it gets `checked` or `onCheckedChange`: a
   select-all checkbox (mixed with `indeterminate`), the count as its children, and `actions` at the
   end for the bulk buttons. It does not wrap, so make those icon-only on a phone.
@@ -154,7 +157,9 @@ only http(s) URLs become links.
   Cancel and Escape return the focus to the button that opened it. Delete calls back at once:
   confirm in the host if needed.
 - Replies are one level, `Comment`s passed as `replies`, folded beyond `maxReplies` (default
-  `2`) behind a "Show 3 more replies" button. A reply has no Reply of its own. For a ticket, where
+  `2`) behind a "Show 3 more replies" button. A thread line runs from just under the parent's
+  avatar, at its centre, to the end of the last reply (or of the open composer, or of the fold
+  button), and the replies start where the parent's text does. A reply has no Reply of its own. For a ticket, where
   the latest exchanges matter, `keepReplies="last"` keeps the last `maxReplies` visible and folds
   the older ones behind a button above them ("Show 3 earlier replies", `labels.showEarlierReplies`).
 - `variant="internal"` tints a note and labels it "Internal note" with a lock, so it reads as one
@@ -209,7 +214,13 @@ go with it.
   its own for the keyboard, and a click on one is not a click on the row. With `actions` the row
   is a `<div>` around the button and them, so `className` styles the `<div>` while `ref` and the
   other props stay on the button; without them the row is the button, as before. Give every row of
-  a list the same actions, so the badges line up. In a panel an action does not close it.
+  a list the same actions, so the badges line up. In a panel an action does not close it. The
+  actions are centred on the badge's line, at the top of the row, not on the middle of it, and the
+  last one ends where the badge of a row without actions does. The stories draw them with the
+  package's internal icon button: a 32px box around a 16px icon, muted at rest, tinted on hover,
+  and for a delete the red only on hover and focus, so six rows do not show six red icons. It is
+  not exported; an `<button>` with those classes, or your own `Button` with `variant="ghost"`,
+  does the same.
 - `closeOnClick` belongs to `NotificationsPanel.Item`: outside a panel there is nothing to close.
 
 ### A notifications page

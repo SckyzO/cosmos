@@ -10,9 +10,66 @@ import {
   fieldClass,
   type FieldSize,
 } from './fieldRecipe';
+import { FieldMessage } from './FieldMessage';
 import { RequiredMark } from './RequiredMark';
 
 export type SelectOption = { value: string; label: string; disabled?: boolean };
+
+// The open list. A browser that can draw it itself (`appearance: base-select`, Chromium) gives it
+// the look of the field listboxes (Combobox): the same panel, rows of `py-row-8 px-3`, a check
+// mark on the picked one, the accent on the row under the pointer or the keyboard. The closed
+// control keeps the one every browser shows, so its chevron stays ours and the text stays on the
+// middle of the field. Any other browser keeps its native list, and none of these classes apply.
+// Tailwind reads whole class names, so each one is written out.
+const BASE_SELECT = [
+  'not-supports-[appearance:base-select]:appearance-none',
+  // The closed control: a flex row like the others, the text centred, the browser's own arrow off.
+  'supports-[appearance:base-select]:[appearance:base-select]',
+  'supports-[appearance:base-select]:inline-flex',
+  'supports-[appearance:base-select]:items-center',
+  'supports-[appearance:base-select]:[&::picker-icon]:hidden',
+  // The panel, as FIELD_LISTBOX_PANEL draws it, 6px under the field. `dark:` comes before the
+  // pseudo-element: the selector reads `.x:where(.dark *)::picker(select)`.
+  'supports-[appearance:base-select]:[&::picker(select)]:[appearance:base-select]',
+  'supports-[appearance:base-select]:[&::picker(select)]:my-1.5',
+  'supports-[appearance:base-select]:[&::picker(select)]:max-h-60',
+  'supports-[appearance:base-select]:[&::picker(select)]:overflow-auto',
+  'supports-[appearance:base-select]:[&::picker(select)]:rounded-lg',
+  'supports-[appearance:base-select]:[&::picker(select)]:border',
+  'supports-[appearance:base-select]:[&::picker(select)]:border-gray-200',
+  'supports-[appearance:base-select]:[&::picker(select)]:bg-white',
+  'supports-[appearance:base-select]:[&::picker(select)]:py-1',
+  'supports-[appearance:base-select]:[&::picker(select)]:shadow-lg',
+  'supports-[appearance:base-select]:dark:[&::picker(select)]:border-gray-700',
+  'supports-[appearance:base-select]:dark:[&::picker(select)]:bg-gray-800',
+].join(' ');
+
+// One row of that list. The check mark is Lucide's, as a mask so it takes the row's colour, and
+// only the picked row has one.
+const BASE_SELECT_OPTION = [
+  'supports-[appearance:base-select]:flex',
+  'supports-[appearance:base-select]:items-center',
+  'supports-[appearance:base-select]:gap-2',
+  'supports-[appearance:base-select]:px-3',
+  'supports-[appearance:base-select]:py-row-8',
+  'supports-[appearance:base-select]:text-gray-900',
+  'supports-[appearance:base-select]:dark:text-gray-100',
+  'supports-[appearance:base-select]:cursor-pointer',
+  'supports-[appearance:base-select]:enabled:hover:bg-brand-500',
+  'supports-[appearance:base-select]:enabled:hover:text-white',
+  'supports-[appearance:base-select]:focus-visible:bg-brand-500',
+  'supports-[appearance:base-select]:focus-visible:text-white',
+  'supports-[appearance:base-select]:focus-visible:outline-hidden',
+  'supports-[appearance:base-select]:disabled:cursor-not-allowed',
+  'supports-[appearance:base-select]:disabled:opacity-50',
+  'supports-[appearance:base-select]:[&::checkmark]:order-1',
+  'supports-[appearance:base-select]:[&::checkmark]:ms-auto',
+  'supports-[appearance:base-select]:[&::checkmark]:size-4',
+  "supports-[appearance:base-select]:[&::checkmark]:content-['']",
+  'supports-[appearance:base-select]:[&::checkmark]:bg-current',
+  'supports-[appearance:base-select]:[&::checkmark]:[mask:url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27black%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27M20%206%209%2017l-5-5%27/%3E%3C/svg%3E)_center/contain_no-repeat]',
+  'supports-[appearance:base-select]:[&:not(:checked)::checkmark]:hidden',
+].join(' ');
 
 // With the check icon beside the chevron: the icon sits one icon width plus a
 // 6px gap before the chevron, and the text clears both with the chevron's 8px.
@@ -64,6 +121,12 @@ export type SelectProps = Omit<ComponentPropsWithRef<'select'>, 'children' | 'si
  * Select — styled native `<select>`. `onChange` receives the native change
  * event and `ref` the `<select>`, like any native field. `className` goes to
  * the `<select>` itself.
+ *
+ * The open list belongs to the browser. Where the browser can draw it from CSS
+ * (`appearance: base-select`, Chromium for now) it takes the look of the
+ * Combobox list, with rows as tall as its own and a check mark on the picked
+ * one; everywhere else it stays the native list, and on a phone the native
+ * picker. For a list that looks the same in every browser, use `Combobox`.
  *
  * `label`, `description` and `error` are rendered around it and wired through
  * `htmlFor` and `aria-describedby`. Without a `label`, it takes its name and
@@ -128,7 +191,7 @@ export function Select({
           aria-required={required || undefined}
           required={required}
           className={clsx(
-            'appearance-none',
+            BASE_SELECT,
             fieldClass({ size, invalid: !!error, success: !!successText }),
             successText ? FIELD_PAD_END_CHECK[size] : FIELD_PAD_END_ICON[size],
             FIELD_PAD_START[size],
@@ -139,12 +202,17 @@ export function Select({
           defaultValue={defaultValue}
         >
           {placeholder && (
-            <option value="" disabled>
+            <option value="" disabled className={BASE_SELECT_OPTION}>
               {placeholder}
             </option>
           )}
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value} disabled={opt.disabled}>
+            <option
+              key={opt.value}
+              value={opt.value}
+              disabled={opt.disabled}
+              className={BASE_SELECT_OPTION}
+            >
               {opt.label}
             </option>
           ))}
@@ -167,22 +235,21 @@ export function Select({
           )}
         />
       </div>
-      {hasDesc && (
-        <span
-          id={descId}
-          aria-live={successText ? 'polite' : undefined}
-          className={clsx(
-            'mt-1 block text-xs',
-            error
-              ? 'text-red-700 dark:text-red-400'
-              : successText
-                ? 'text-green-700 dark:text-green-400'
-                : 'text-gray-500 dark:text-gray-400'
-          )}
-        >
-          {successText ?? error ?? description}
-        </span>
-      )}
+      <FieldMessage
+        show={hasDesc}
+        id={descId}
+        aria-live={successText ? 'polite' : undefined}
+        className={clsx(
+          'mt-1 block text-xs',
+          error
+            ? 'text-red-700 dark:text-red-400'
+            : successText
+              ? 'text-green-700 dark:text-green-400'
+              : 'text-gray-500 dark:text-gray-400'
+        )}
+      >
+        {successText ?? error ?? description}
+      </FieldMessage>
     </div>
   );
 }

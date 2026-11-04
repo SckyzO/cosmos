@@ -109,13 +109,19 @@ export const Topbar = ({
 
       {pageTitle && (
         // Below `sm` the page shows its own title: the Topbar keeps the width for actions.
-        <TitleTag className="hidden truncate text-lg font-semibold text-[var(--color-text-primary)] sm:block">
+        // A long title is cut before the search is: it gives way 8 times faster.
+        <TitleTag className="hidden truncate text-lg font-semibold text-[var(--color-text-primary)] sm:block sm:shrink-[8]">
           <bdi>{pageTitle}</bdi>
         </TitleTag>
       )}
 
       {/* Center: stretches */}
-      {center ? <div className="min-w-0 flex-1">{center}</div> : <div className="flex-1" />}
+      {/* From `sm` up it asks for 12rem, so a long title or brand can't squeeze it to nothing. */}
+      {center ? (
+        <div className="min-w-0 shrink grow max-sm:basis-0 sm:basis-48">{center}</div>
+      ) : (
+        <div className="flex-1" />
+      )}
 
       {/* End: actions */}
       {(endActions || moreActions) && (
