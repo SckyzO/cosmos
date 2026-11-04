@@ -16,11 +16,13 @@ import {
 } from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
+  Amount,
   Avatar,
   Badge,
   Breadcrumb,
   Button,
   DataTable,
+  DateTime,
   Menu,
   PageContainer,
   PageHeader,
@@ -78,8 +80,6 @@ const FULFILMENT_INTENT: Record<Fulfilment, Intent> = {
   Returned: 'neutral',
 };
 
-const euro = new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' });
-const day = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 const count = new Intl.NumberFormat('en-US');
 
 // A business status is a `Badge`; `StatusBadge` is for the health of a system.
@@ -124,7 +124,7 @@ const baseColumns: ColumnDef<Order>[] = [
     align: 'end',
     sortable: true,
     sortValue: (o) => o.total,
-    render: (o) => <span className="tabular-nums">{euro.format(o.total)}</span>,
+    render: (o) => <Amount value={o.total} currency="EUR" locale="en-IE" />,
   },
   {
     key: 'payment',
@@ -186,7 +186,15 @@ const baseColumns: ColumnDef<Order>[] = [
     width: '120px',
     sortable: true,
     sortValue: (o) => o.date,
-    render: (o) => <span className="whitespace-nowrap">{day.format(new Date(o.date))}</span>,
+    render: (o) => (
+      <DateTime
+        value={o.date}
+        format="date"
+        locale="en-US"
+        timeZone="UTC"
+        className="whitespace-nowrap"
+      />
+    ),
   },
 ];
 
