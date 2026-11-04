@@ -346,7 +346,8 @@ const homeCrumbs = (workspace: Workspace) => (
 
 const TaskRow = ({ task }: { task: Task }) => (
   <StackedList.Item
-    // The row's own checkbox (named after the task) ticks the task off; the host keeps the state.
+    // The row's own checkbox ticks the task off: it is named "Mark done: <task>", not "Select".
+    selectLabel="Mark done:"
     defaultChecked={false}
     title={task.title}
     subtitle={
@@ -875,6 +876,19 @@ export const EmptyOffersAProject: Story = {
     // The nav says the same, in its own words.
     await expect(canvas.getByText('No projects yet')).toBeVisible();
     await expect(canvas.getByRole('link', { name: 'Create project' })).toBeVisible();
+  },
+};
+
+/** Each task's checkbox says what it does: "Mark done: <task>", not "Select". */
+export const TaskCheckboxesAreNamedAfterTheTask: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <AppShellScreen state="content" />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('checkbox')).toHaveLength(6);
+    await expect(
+      canvas.getByRole('checkbox', { name: 'Mark done: Review pricing page copy' })
+    ).toBeVisible();
+    await expect(canvas.queryByRole('checkbox', { name: /^Select / })).toBeNull();
   },
 };
 
