@@ -50,7 +50,7 @@ export const ErrorState = ({
       (onRetry || action) && (
         <div className="flex flex-wrap items-center justify-center gap-2">
           {onRetry && (
-            <Button variant="secondary" size="sm" icon={RotateCw} onClick={onRetry}>
+            <Button variant="secondary" size="sm" icon={RotateCw} onClick={() => onRetry()}>
               {retryLabel}
             </Button>
           )}
