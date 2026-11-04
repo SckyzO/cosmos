@@ -12,8 +12,10 @@ import {
 import { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
+  Avatar,
   EmptyState,
   KpiCard,
+  Link,
   PageActionButton,
   PageContainer,
   PageHeader,
@@ -22,6 +24,7 @@ import {
   Shell,
   Sidebar,
   SkeletonTable,
+  StackedList,
   Table,
   TableBody,
   TableCell,
@@ -253,12 +256,9 @@ const DashboardTopbar = () => (
 // widgets as regions and a test finds one by name. Its `action` sits at the end of the header.
 
 const ViewAll = ({ label }: { label: string }) => (
-  <a
-    href="#all"
-    className="text-brand-600 dark:text-brand-400 focus-visible:focus-indicator shrink-0 rounded-sm text-sm font-medium"
-  >
+  <Link href="#all" className="shrink-0">
     {label}
-  </a>
+  </Link>
 );
 
 // ── KPIs ─────────────────────────────────────────────────────────────────────
@@ -474,22 +474,22 @@ const CancellationsTable = ({ rows }: { rows: Cancellation[] }) => (
 );
 
 const CancellationsList = ({ rows }: { rows: Cancellation[] }) => (
-  <ul aria-label="Recent cancellations" className="divide-y divide-[var(--color-border)] sm:hidden">
+  <StackedList aria-label="Recent cancellations" className="sm:hidden">
     {rows.map((row) => (
-      <li key={row.id} className="py-row-12 first:pt-0 last:pb-0">
-        <div className="flex items-start justify-between gap-3">
-          <TableIdentityCell title={row.customer} subtitle={row.email} className="max-w-full" />
-          <span className="shrink-0 text-sm font-semibold text-[var(--color-text-primary)] tabular-nums">{`-${euroShort(row.mrrLost)}`}</span>
-        </div>
-        <p className="mt-1.5 text-xs text-[var(--color-text-secondary)]">
-          <bdi>{row.plan}</bdi> · <bdi>{row.date}</bdi>
-        </p>
-        <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-          <bdi>{row.reason}</bdi>
-        </p>
-      </li>
+      <StackedList.Item
+        key={row.id}
+        avatar={<Avatar name={row.customer} size="md" />}
+        title={row.customer}
+        // The reason is the line to read, so it takes the description's two lines; the e-mail,
+        // the least needed on a phone, ends the details line and is the one that truncates.
+        description={row.reason}
+        details={[row.plan, row.date, row.email]}
+        trailing={
+          <span className="text-sm font-semibold text-[var(--color-text-primary)] tabular-nums">{`-${euroShort(row.mrrLost)}`}</span>
+        }
+      />
     ))}
-  </ul>
+  </StackedList>
 );
 
 const CancellationsCard = ({ view, state }: { view: View; state: ScreenState }) => (
