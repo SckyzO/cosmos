@@ -43,7 +43,8 @@ export const ZoomInFiresHandler: Story = {
   args: { zoom: 1, onZoomIn: fn(), onZoomOut: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByTitle('Zoom in'));
-    await expect(args.onZoomIn).toHaveBeenCalled();
+    // The props are `() => void`: the click event stays with the button.
+    await expect(args.onZoomIn).toHaveBeenCalledWith();
   },
 };
 
@@ -52,7 +53,7 @@ export const ZoomOutFiresHandler: Story = {
   args: { zoom: 1, onZoomIn: fn(), onZoomOut: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByTitle('Zoom out'));
-    await expect(args.onZoomOut).toHaveBeenCalled();
+    await expect(args.onZoomOut).toHaveBeenCalledWith();
   },
 };
 
