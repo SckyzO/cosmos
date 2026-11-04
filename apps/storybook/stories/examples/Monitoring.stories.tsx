@@ -523,7 +523,7 @@ const NodeStates = ({ cluster, stale }: { cluster: Cluster; stale?: boolean }) =
   const series = nodeStates(cluster);
   const [ok = 0, warn = 0, crit = 0, unknown = 0] = series;
   return (
-    <Panel title="Node states" aside={stale ? STALE_TEXT : undefined} className="flex-[1_1_18rem]">
+    <Panel title="Node states" aside={stale ? STALE_TEXT : undefined} className="flex-[1_1_15rem]">
       <DonutChart
         series={series}
         labels={['OK', 'Warning', 'Critical', 'Unknown']}
@@ -531,15 +531,15 @@ const NodeStates = ({ cluster, stale }: { cluster: Cluster; stale?: boolean }) =
         centerLabel="nodes"
         formatValue={grouped}
         legendValues
-        legendPosition="right"
-        height={220}
+        height={280}
         ariaLabel={`${grouped(ok + warn + crit + unknown)} nodes: ${grouped(ok)} OK, ${grouped(warn)} warning, ${grouped(crit)} critical, ${grouped(unknown)} unknown`}
       />
     </Panel>
   );
 };
 
-// The matrix takes two thirds of a wide row and the states the rest; a narrow page stacks them.
+// The matrix is 52.5rem wide, what its 12 columns need: the states go beside it when the page has
+// that and 15rem more (from a 1440px window with the sidebar open), and under it otherwise.
 const NodesRow = ({
   cluster,
   extreme,
@@ -550,7 +550,7 @@ const NodesRow = ({
   stale?: boolean;
 }) => (
   <div className="flex flex-wrap items-stretch gap-6">
-    <div className="min-w-0 flex-[2_1_35rem]">
+    <div className="min-w-0 flex-[3_1_52.5rem]">
       <Nodes cluster={cluster} extreme={extreme} stale={stale} />
     </div>
     <NodeStates cluster={cluster} stale={stale} />
@@ -567,12 +567,13 @@ const SEVERITY_INTENT = {
 } as const;
 
 // The columns of the table. The severity is what the tabs filter on, and the name carries the
-// summary under it: the one cell that wraps.
+// summary under it: the one cell that wraps, and the one column with no width, so it takes what the
+// others leave. Together they fit the page from a 1280px window with the sidebar open.
 const ALERT_COLUMNS: ColumnDef<Alert>[] = [
   {
     key: 'severity',
     label: 'Severity',
-    width: '7rem',
+    width: '6.75rem',
     filterValue: (alert) => alert.severity,
     render: (alert) => (
       <Badge size="sm" intent={SEVERITY_INTENT[alert.severity]}>
@@ -583,7 +584,7 @@ const ALERT_COLUMNS: ColumnDef<Alert>[] = [
   {
     key: 'name',
     label: 'Alert',
-    minWidth: '14rem',
+    minWidth: '12rem',
     mobile: 'title',
     searchValue: (alert) => `${alert.name} ${alert.summary}`,
     render: (alert) => (
@@ -598,7 +599,8 @@ const ALERT_COLUMNS: ColumnDef<Alert>[] = [
   {
     key: 'target',
     label: 'Target',
-    minWidth: '11rem',
+    width: '20%',
+    minWidth: '9rem',
     render: (alert) => (
       <span title={alert.target} className="block max-w-[18rem] truncate font-mono text-xs">
         {alert.target}
@@ -608,7 +610,9 @@ const ALERT_COLUMNS: ColumnDef<Alert>[] = [
   {
     key: 'started',
     label: 'Started',
-    width: '5.5rem',
+    width: '5rem',
+    // The card of a phone keeps "For": how long says as much, in a line less.
+    mobile: 'hidden',
     render: (alert) => (
       <span className="tabular-nums">
         <DateTime value={alert.startedAt} format="time" locale="en-GB" timeZone="UTC" />
@@ -618,7 +622,7 @@ const ALERT_COLUMNS: ColumnDef<Alert>[] = [
   {
     key: 'for',
     label: 'For',
-    width: '7rem',
+    width: '6.5rem',
     render: (alert) => (
       <span className="whitespace-nowrap tabular-nums">{since(alert.startedAt)}</span>
     ),
@@ -626,7 +630,7 @@ const ALERT_COLUMNS: ColumnDef<Alert>[] = [
   {
     key: 'state',
     label: 'State',
-    width: '8.5rem',
+    width: '8rem',
     render: (alert) => (
       <span className={alert.acknowledged ? 'text-[var(--color-text-secondary)]' : undefined}>
         {alert.acknowledged ? 'Acknowledged' : 'Firing'}
@@ -681,15 +685,19 @@ const AlertsTable = ({
       }}
       filters={filters}
       onFiltersChange={onFiltersChange}
-      renderRowAction={(alert) => (
-        <RowActionButton
-          hideChevron
-          aria-label={`${alert.acknowledged ? 'Unacknowledge' : 'Acknowledge'} ${alert.name} on ${alert.target}`}
-          onClick={() => onToggleAcknowledged(alert.id)}
-        >
-          {alert.acknowledged ? 'Unack' : 'Ack'}
-        </RowActionButton>
-      )}
+      renderRowAction={(alert) => {
+        const action = alert.acknowledged ? 'Unack' : 'Ack';
+        return (
+          <RowActionButton
+            hideChevron
+            // The name starts with the word on the button, and says which alert it is for.
+            aria-label={`${action} ${alert.name} on ${alert.target}`}
+            onClick={() => onToggleAcknowledged(alert.id)}
+          >
+            {action}
+          </RowActionButton>
+        );
+      }}
       mobileLayout="cards"
     />
   </div>
@@ -760,9 +768,8 @@ const Jobs = ({
           centerLabel="jobs"
           formatValue={grouped}
           legendValues
-          legendPosition="right"
           loading={loading}
-          height={220}
+          height={280}
           ariaLabel={`${grouped(total)} jobs: ${grouped(jobs.Running)} running, ${grouped(jobs.Pending)} pending, ${grouped(jobs.Stalled)} stalled`}
         />
         {!loading && (
@@ -1069,22 +1076,29 @@ const EmptyPage = () => (
 );
 
 // The first load: the page header and the frame are there, skeletons stand where the panels, the
-// gauges, the matrix, the table, the charts and the events go. One busy region and one status
-// message say it to a screen reader.
+// gauges, the matrix, the table, the charts and the events go. One busy group and one status
+// message say it to a screen reader. The page is taller than a window and holds nothing to focus
+// yet, so the group takes the focus itself: it is what the arrow keys scroll the page by.
 const LoadingPage = () => (
   <>
     <PageHeader as="h1" title="Cluster overview" description="Loading…" />
-    <div aria-busy="true" className="flex flex-col gap-6">
+    <div
+      role="group"
+      aria-label="Cluster overview, loading"
+      aria-busy="true"
+      tabIndex={0}
+      className="focus-visible:focus-indicator flex flex-col gap-6 rounded-sm"
+    >
       <p role="status" className="sr-only">
         Loading cluster status…
       </p>
       <SeverityPanels alerts={[]} loading />
       <Gauges gauges={GAUGES} loading />
       <div className="flex flex-wrap items-stretch gap-6">
-        <Panel title="Nodes by rack" className="flex-[2_1_35rem]">
+        <Panel title="Nodes by rack" className="flex-[3_1_52.5rem]">
           <SkeletonTable rows={8} cols={12} />
         </Panel>
-        <Panel title="Node states" className="flex-[1_1_18rem]">
+        <Panel title="Node states" className="flex-[1_1_15rem]">
           <DonutChart series={[]} labels={[]} loading height={220} ariaLabel="Node states" />
         </Panel>
       </div>
