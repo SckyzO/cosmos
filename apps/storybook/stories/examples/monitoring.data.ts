@@ -538,8 +538,9 @@ const NODE_RULE = {
   UNKNOWN: ['Unknown', 'ExporterDown', 'node_exporter does not answer'],
 } as const;
 
-// One alert per node that is not fine, started somewhere in the last 20 hours: 616 nodes, so 616
-// alerts, 300 of them critical, plus the three above and the four informational ones.
+// One alert per node that is not fine: 616 nodes, 616 alerts, 300 of them critical, plus the three
+// above and the four informational ones. They started in the last 8 hours, after the three above,
+// which are the oldest and so lead the table.
 const extremeAlerts = (): Alert[] => {
   const random = seeded(2043);
   const nodes = EXTREME_CLUSTER.checks.filter(
@@ -548,7 +549,7 @@ const extremeAlerts = (): Alert[] => {
   );
   const perNode = nodes.map((check): Alert => {
     const [severity, name, summary] = NODE_RULE[check.status];
-    const minutes = 5 + Math.floor(random() * 20 * 60);
+    const minutes = 5 + Math.floor(random() * 8 * 60);
     return {
       id: `${name}:${check.id}`,
       severity,
@@ -726,21 +727,6 @@ export const EXTREME_INLET_TEMPS: { rack: string; celsius: number }[] = (() => {
       index >= 40 && index <= 49 ? 36 + Math.floor(random() * 7) : 20 + Math.floor(random() * 9),
   }));
 })();
-
-// ── The incident ─────────────────────────────────────────────────────────────
-
-export const INCIDENT = {
-  id: 'INC-2041',
-  title: 'Lustre OST0012 is offline on oss-c01-03',
-  detail: '14 jobs are stalled. Started 09:41.',
-};
-
-export const EXTREME_INCIDENT = {
-  id: 'INC-2041',
-  title:
-    'parallel filesystem metadata servers lost quorum after the 03:12 power-feed failover on halls B and C, 300 nodes are unreachable and the scheduler is draining every partition except debug-short',
-  detail: 'Started 03:12.',
-};
 
 // ── One node, for the phone ──────────────────────────────────────────────────
 
