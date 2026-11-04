@@ -54,7 +54,11 @@ export const WithHamburger: Story = {
           }
         />
         <p className="px-4 py-3 text-xs text-[var(--color-text-muted)]">
-          Click the hamburger to toggle: collapsed = {String(collapsed)}
+          The sidebar is{' '}
+          <strong className="font-semibold text-[var(--color-text-secondary)]">
+            {collapsed ? 'collapsed' : 'expanded'}
+          </strong>
+          . Click the hamburger to {collapsed ? 'expand' : 'collapse'} it.
         </p>
       </Wrap>
     );

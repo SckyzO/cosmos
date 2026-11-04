@@ -407,8 +407,12 @@ export const Controlled: Story = {
     const [active, setActive] = useState('list');
     return (
       <div className="flex flex-col gap-3">
-        <p className="text-sm">
-          activePane = <code data-testid="active">{active}</code>
+        <p className="text-sm text-[var(--color-text-secondary)]">
+          The host shows the{' '}
+          <strong className="font-semibold text-[var(--color-text-primary)]" data-testid="active">
+            {active}
+          </strong>{' '}
+          pane.
         </p>
         <Frame height={320}>
           <SplitView
