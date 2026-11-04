@@ -6,8 +6,8 @@ import { test, expect } from '@playwright/test';
 // story's `globals.viewport` picks. Storybook 10 reads them from
 // `parameters.viewport.options`: under any other key the manager does not know
 // them and shows a pinned story in its 320x568 fallback.
-const frameWidth = async (page: import('@playwright/test').Page, id: string) => {
-  await page.goto(`/?path=/story/${id}`);
+const frameWidth = async (page: import('@playwright/test').Page, id: string, globals?: string) => {
+  await page.goto(`/?path=/story/${id}${globals ? `&globals=${globals}` : ''}`);
   const frame = page.frameLocator('iframe#storybook-preview-iframe');
   await expect(frame.locator('#storybook-root')).not.toBeEmpty({ timeout: 20_000 });
   return page.locator('iframe#storybook-preview-iframe').evaluate((f) => f.clientWidth);
@@ -15,8 +15,13 @@ const frameWidth = async (page: import('@playwright/test').Page, id: string) => 
 
 test.use({ viewport: { width: 1800, height: 1000 } });
 
-test('a story pinned to Tailwind xl is shown 1280px wide', async ({ page }) => {
-  expect(await frameWidth(page, 'examples-list--content')).toBe(1280);
+test('a Tailwind preset picked in the toolbar shows the story 1280px wide', async ({ page }) => {
+  expect(await frameWidth(page, 'examples-list--content', 'viewport.value:tw-xl')).toBe(1280);
+});
+
+// No meta pins a viewport (repo-policy.spec.ts): a full screen with none of its own fills the frame.
+test('a full screen with no viewport of its own fills the frame', async ({ page }) => {
+  expect(await frameWidth(page, 'examples-list--content')).toBeGreaterThan(1280);
 });
 
 test('a story pinned to the phone preset is shown 393px wide', async ({ page }) => {
