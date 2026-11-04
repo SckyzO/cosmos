@@ -54,6 +54,9 @@ export type SectionCardIconPosition = 'start' | 'end' | 'top';
 /** The shape of the icon tile: a rounded square (default) or a circle. */
 export type SectionCardIconShape = 'square' | 'round';
 
+/** The card's padding: `sm` (16px), `md` (20px) or `lg` (24px, default). */
+export type SectionCardSize = 'sm' | 'md' | 'lg';
+
 /** The side of the card the `accent` band sits on. `start` and `end` follow the reading direction. */
 export type SectionCardAccentSide = 'top' | 'end' | 'bottom' | 'start';
 
@@ -65,6 +68,13 @@ const INTENT_TONE: Partial<Record<Intent, SectionCardIconTone>> = {
   success: 'green',
   warning: 'amber',
   danger: 'red',
+};
+
+// The padding of the card, and the gap between the header and the body, which follows it.
+const SIZE: Record<SectionCardSize, { pad: string; gap: string }> = {
+  sm: { pad: 'p-4', gap: 'mb-3' },
+  md: { pad: 'p-5', gap: 'mb-3' },
+  lg: { pad: 'p-6', gap: 'mb-4' },
 };
 
 // ── Surface ───────────────────────────────────────────────────────────────────
@@ -258,6 +268,11 @@ export type SectionCardProps = {
    * reading direction, so they swap in right to left.
    */
   accentSide?: SectionCardAccentSide;
+  /**
+   * The padding of the card: `sm` (16px), `md` (20px) or `lg` (24px, default). The gap between
+   * the header and the body shrinks with it, from 16px to 12px.
+   */
+  size?: SectionCardSize;
   /** Card content */
   children?: ReactNode;
   /** On the root `<section>`: the place for a grid span (`lg:col-span-2`) or a margin. */
@@ -302,6 +317,7 @@ export const SectionCard = ({
   haloSize = 'md',
   accent,
   accentSide = 'top',
+  size = 'lg',
   children,
   className,
 }: SectionCardProps) => {
@@ -333,7 +349,8 @@ export const SectionCard = ({
   const inState = loading || error || empty;
   const arrival = useAfterSkeleton(loading);
   const surface = clsx(
-    'flex flex-1 flex-col overflow-hidden rounded-2xl border p-6',
+    'flex flex-1 flex-col overflow-hidden rounded-2xl border',
+    SIZE[size].pad,
     accent && 'relative',
     solid ? SOLID[intent].fill : variant === 'tinted' ? TINT[intent] : 'bg-[var(--color-bg-panel)]',
     // With a halo the card's own border is clear and its background stops at the padding box, so
@@ -376,7 +393,12 @@ export const SectionCard = ({
           />
         )}
         {/* Below `sm` the action goes under the title; from `sm` it ends the row. */}
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div
+          className={clsx(
+            'flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between',
+            SIZE[size].gap
+          )}
+        >
           <div
             className={clsx(
               'flex min-w-0 gap-3',
