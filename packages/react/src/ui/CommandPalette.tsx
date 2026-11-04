@@ -116,7 +116,7 @@ function CommandPaletteInput({ className, onClose, ref, ...rest }: CommandPalett
       {onClose && (
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => onClose()}
           aria-label="Close"
           className="focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 flex shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >
