@@ -586,6 +586,27 @@ export const CloseButtonClosesThePalette: Story = {
   },
 };
 
+const onInputClose = fn();
+
+/** The input's `onClose` is `() => void`: the click event stays with the button. */
+export const InputCloseGetsNoEvent: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <CommandPalette open hotkey={null} onOpenChange={fn()}>
+      <CommandPalette.Input placeholder="Search…" onClose={onInputClose} />
+      <CommandPalette.List>
+        <CommandPalette.Item>Item</CommandPalette.Item>
+      </CommandPalette.List>
+    </CommandPalette>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+    await expect(onInputClose).toHaveBeenCalledTimes(1);
+    await expect(onInputClose).toHaveBeenCalledWith();
+  },
+};
+
 export const NoCloseButtonByDefault: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (

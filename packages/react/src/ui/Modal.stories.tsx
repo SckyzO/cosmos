@@ -465,6 +465,25 @@ export const HorizontalLayoutHasGrayFooter: Story = {
   },
 };
 
+const onHeaderClose = fn();
+
+/** The header's `onClose` is `() => void`: the click event stays with the button. */
+export const HeaderCloseGetsNoEvent: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <Modal open onClose={() => {}}>
+      <Modal.Header title="Notes" onClose={onHeaderClose} />
+    </Modal>
+  ),
+  play: async () => {
+    await userEvent.click(
+      await within(document.body).findByRole('button', { name: 'Close modal' })
+    );
+    await expect(onHeaderClose).toHaveBeenCalledTimes(1);
+    await expect(onHeaderClose).toHaveBeenCalledWith();
+  },
+};
+
 export const FullWidthActionMakesButtonFull: Story = {
   tags: ['!dev'],
   render: () => (
