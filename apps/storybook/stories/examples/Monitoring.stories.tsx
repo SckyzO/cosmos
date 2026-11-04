@@ -1257,6 +1257,25 @@ export const ExtremeContent: Story = {
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
+const body = () => within(document.body);
+
+// A color the theme defines, as the browser computes it: what a gauge's arc is painted with.
+const themeColor = (name: string) => {
+  const probe = document.createElement('span');
+  probe.style.color = `var(${name})`;
+  document.body.append(probe);
+  const color = getComputedStyle(probe).color;
+  probe.remove();
+  return color;
+};
+
+// The severity of each row of a table, in the order it shows them.
+const severitiesOf = (table: HTMLElement) =>
+  within(table)
+    .getAllByRole('row')
+    .slice(1)
+    .map((row) => row.querySelector('td')?.textContent);
+
 /** The content state: one h1, the severity panels, the gauges, the matrix and node states, the alerts, the charts, the services and the events. */
 export const ContentShowsTheScreen: Story = {
   tags: ['!dev', '!autodocs'],
@@ -1404,6 +1423,146 @@ export const ErrorKeepsTheLastDataStale: Story = {
     await userEvent.click(within(banner!).getByRole('button', { name: 'Retry' }));
     await expect(args.onRetry).toHaveBeenCalledTimes(1);
     await expect(args.onRetry).toHaveBeenCalledWith();
+  },
+};
+
+/** The Topbar: the title, the search with its shortcut in the middle, the bell with its count and the profile; no health badge. */
+export const TopbarHasSearchBellAndProfile: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {},
+  play: async ({ canvas }) => {
+    const bar = within(canvas.getByRole('banner'));
+    await expect(bar.getByText('Cluster overview')).toBeVisible();
+    const search = bar.getByRole('button', { name: /^Search nodes, alerts, jobs/ });
+    await expect(search).toHaveTextContent(/Ctrl K|⌘K/);
+    await expect(bar.getByRole('button', { name: 'Notifications, 3' })).toBeVisible();
+    await expect(bar.getByRole('button', { name: /Maya Kowalski/ })).toBeVisible();
+    // The roll-up badge is gone from the bar.
+    await expect(bar.queryByText(/Degraded|Major outage/)).toBeNull();
+
+    // The search opens the palette, which goes to the pages and the critical alerts.
+    await userEvent.click(search);
+    const palette = await body().findByRole('dialog', { name: 'Command palette' });
+    await waitFor(() =>
+      expect(within(palette).getByRole('option', { name: 'Overview' })).toBeVisible()
+    );
+    await waitFor(() =>
+      expect(within(palette).getByRole('option', { name: /LustreOSTOffline/ })).toBeVisible()
+    );
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body().queryByRole('dialog')).toBeNull());
+
+    // The bell lists the three unread alerts.
+    await userEvent.click(bar.getByRole('button', { name: 'Notifications, 3' }));
+    await expect(await body().findByText('GPUXidError on gpu-b01-04')).toBeVisible();
+    await expect(body().getByText('MemoryECCErrors on cn-a03-05')).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+  },
+};
+
+/** Each gauge draws its zones on the track, and paints its arc in the color of the zone its value is in. */
+export const GaugesDrawZonesAndStatusArcs: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {},
+  play: async ({ canvas, canvasElement }) => {
+    const gauges = ['CPU load', 'Memory', 'Power', 'Lustre /scratch'].map((title) =>
+      canvas.getByRole('region', { name: title })
+    );
+    for (const gauge of gauges) {
+      await waitFor(() => expect(gauge.querySelectorAll('[data-chart-zones]')).toHaveLength(1));
+      await expect(
+        [...gauge.querySelectorAll('[data-zone]')].map((zone) => zone.getAttribute('data-zone'))
+      ).toEqual(['ok', 'warn', 'crit']);
+    }
+    // OK, warning, OK, critical: the arc takes the color of its status.
+    const ok = themeColor('--color-success-500');
+    const warn = themeColor('--color-status-warn');
+    const crit = themeColor('--color-status-crit');
+    await waitFor(() =>
+      expect(
+        [...canvasElement.querySelectorAll('.recharts-radial-bar-sector')].map(
+          (arc) => getComputedStyle(arc).fill
+        )
+      ).toEqual([ok, warn, ok, crit])
+    );
+  },
+};
+
+/** The tabs of the table filter by severity, one at a time, and "All" brings the first eleven back. */
+export const AlertTabsShowOneSeverity: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {},
+  play: async ({ canvas }) => {
+    const table = canvas.getByRole('table', { name: 'Alerts' });
+    await expect(severitiesOf(table)).toHaveLength(11);
+    await expect(severitiesOf(table)).not.toContain('Info');
+
+    await userEvent.click(canvas.getByRole('tab', { name: 'Critical 4' }));
+    await expect(canvas.getByRole('tab', { name: 'Critical 4' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await expect(severitiesOf(table)).toEqual(['Critical', 'Critical', 'Critical', 'Critical']);
+
+    // The informational alerts are behind the others under "All": their tab shows all four.
+    await userEvent.click(canvas.getByRole('tab', { name: 'Info 4' }));
+    await expect(severitiesOf(table)).toEqual(['Info', 'Info', 'Info', 'Info']);
+
+    await userEvent.click(canvas.getByRole('tab', { name: 'All 15' }));
+    await expect(severitiesOf(table)).toHaveLength(11);
+  },
+};
+
+/** A panel leads to the table filtered on its severity, with no navigation, and puts the focus on the table's heading. */
+export const PanelFiltersTheAlerts: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {},
+  play: async ({ canvas }) => {
+    const hash = window.location.hash;
+    const panels = canvas.getByRole('region', { name: 'Alerts by severity' });
+    await userEvent.click(within(panels).getByRole('link', { name: /^Warning\s*6/ }));
+
+    await expect(canvas.getByRole('tab', { name: 'Warning 6' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    const table = canvas.getByRole('table', { name: 'Alerts' });
+    await expect(severitiesOf(table)).toEqual(Array(6).fill('Warning'));
+    await expect(window.location.hash).toBe(hash);
+    await expect(document.activeElement).toBe(
+      canvas.getByRole('heading', { level: 2, name: 'Alerts' })
+    );
+
+    // Another panel replaces the filter.
+    await userEvent.click(within(panels).getByRole('link', { name: /^Unknown\s*1/ }));
+    await expect(severitiesOf(table)).toEqual(['Unknown']);
+  },
+};
+
+/** Ack and Unack toggle one alert: its button, its state, and the acknowledged count of the Warning panel. */
+export const AcknowledgeTogglesAnAlert: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {},
+  play: async ({ canvas }) => {
+    const warning = () =>
+      within(canvas.getByRole('region', { name: 'Alerts by severity' })).getByRole('link', {
+        name: /^Warning/,
+      });
+    const row = (name: string) => canvas.getByRole('button', { name }).closest('tr')!;
+    const ack = 'Ack NTPClockSkew on mds-c02-09';
+    const unack = 'Unack NTPClockSkew on mds-c02-09';
+
+    await expect(warning()).toHaveTextContent('2 acknowledged');
+    await expect(row(ack)).toHaveTextContent('Firing');
+
+    await userEvent.click(canvas.getByRole('button', { name: ack }));
+    await expect(canvas.getByRole('button', { name: unack })).toHaveTextContent('Unack');
+    await expect(row(unack)).toHaveTextContent('Acknowledged');
+    await expect(warning()).toHaveTextContent('3 acknowledged');
+
+    await userEvent.click(canvas.getByRole('button', { name: unack }));
+    await expect(row(ack)).toHaveTextContent('Firing');
+    await expect(warning()).toHaveTextContent('2 acknowledged');
   },
 };
 
