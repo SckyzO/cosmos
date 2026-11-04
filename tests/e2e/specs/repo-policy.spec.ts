@@ -1066,3 +1066,40 @@ test('no story pins the theme on a docs page, and every hidden story says so whe
     ).toBe(true);
   }
 });
+
+// A viewport in a file's `meta` applies to every story of the file, in the canvas and on the docs
+// page: the reader can no longer widen the frame from the toolbar, and a screen built to fill a
+// wide window stays at the preset's width (Examples/Monitoring and Examples/List were held at
+// 1280px). A story that needs a size sets it itself (`globals: mobileViewport`).
+const metaBlock = (source: string) => {
+  const start = source.search(/\bconst meta\b[^=]*=\s*\{/);
+  if (start === -1) return '';
+  const end = source.indexOf('\nexport default', start);
+  return source.slice(start, end === -1 ? undefined : end);
+};
+const pinsViewport = (block: string) =>
+  /globals\s*:\s*\{[^}]*\bviewport\b/.test(block) || /globals\s*:\s*\w+Viewport\b/.test(block);
+
+test('the viewport check sees a pin in the meta and lets a story pin its own', () => {
+  for (const meta of [
+    "const meta = {\n  title: 'A/B',\n  globals: { viewport: { value: 'tw-xl', isRotated: false } },\n} satisfies Meta;\nexport default meta;",
+    "const meta: Meta<typeof X> = { title: 'A/B', globals: mobileViewport };\nexport default meta;",
+  ]) {
+    expect(pinsViewport(metaBlock(meta)), meta).toBe(true);
+  }
+  for (const source of [
+    "const meta = { title: 'A/B', globals: { theme: 'light' } } satisfies Meta;\nexport default meta;\nexport const Phone = { globals: mobileViewport };",
+    "const meta = { title: 'A/B' } satisfies Meta;\nexport default meta;\nexport const Wide = { globals: { viewport: { value: 'tw-2xl' } } };",
+  ]) {
+    expect(pinsViewport(metaBlock(source)), source).toBe(false);
+  }
+});
+
+test('no stories file pins a viewport for every story it holds', () => {
+  const files = storySources();
+  expect(files.length, 'stories files').toBeGreaterThan(200);
+  expect(
+    files.filter((file) => pinsViewport(metaBlock(read(file)))),
+    'a viewport in the meta holds every story of the file at that size, in the canvas and the docs: set it on the stories that need it'
+  ).toEqual([]);
+});

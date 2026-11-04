@@ -420,8 +420,6 @@ const meta = {
   title: 'Examples/List',
   component: OrdersScreen,
   parameters: { ...portalDocsParams.full(), layout: 'fullscreen' },
-  // The shell shows its sidebar from 1024px; the table's toolbar adapts to the width it gets.
-  globals: { viewport: { value: 'tw-xl', isRotated: false } },
   tags: ['autodocs'],
 } satisfies Meta<typeof OrdersScreen>;
 

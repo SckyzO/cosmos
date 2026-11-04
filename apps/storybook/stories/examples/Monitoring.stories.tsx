@@ -604,8 +604,6 @@ const meta = {
   title: 'Examples/Monitoring',
   component: MonitoringScreen,
   parameters: { ...portalDocsParams.full(), layout: 'fullscreen' },
-  // The shell shows its sidebar from 1024px.
-  globals: { viewport: { value: 'tw-xl', isRotated: false } },
   tags: ['autodocs'],
 } satisfies Meta<typeof MonitoringScreen>;
 
