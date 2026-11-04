@@ -1,9 +1,13 @@
 import { type ComponentType, type ReactNode, useId } from 'react';
 import { clsx } from 'clsx';
+import { ChevronDown } from 'lucide-react';
+import { useControllableState } from '../hooks/useControllableState';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
 import { Sk } from '../feedback/Skeleton';
 import { useAfterSkeleton } from '../feedback/useAfterSkeleton';
+import { Fold } from '../ui/Fold';
+import { iconButtonClass } from '../ui/IconButton';
 import { INTENT_STYLE, type Intent } from '../ui/intent';
 
 export type SectionCardIconTone = 'brand' | 'blue' | 'violet' | 'green' | 'amber' | 'red' | 'gray';
@@ -181,6 +185,19 @@ const SOLID_RULE: Record<Intent, string> = {
   danger: 'border-white/30',
 };
 
+// The fold toggle on a `solid` card: it keeps the card's ink, with a veil on hover and a focus ring
+// that shows on the fill (white on a colored one; on a neutral one the brand ring, which is the
+// one that shows once the fill turns light in a dark theme).
+const SOLID_TOGGLE: Record<Intent, string> = {
+  neutral:
+    'hover:bg-white/10 focus-visible:focus-indicator-on-accent dark:hover:bg-gray-900/10 dark:focus-visible:focus-indicator',
+  brand: 'hover:bg-black/15 focus-visible:focus-indicator-on-accent',
+  info: 'hover:bg-black/15 focus-visible:focus-indicator-on-accent',
+  success: 'hover:bg-black/15 focus-visible:focus-indicator-on-accent',
+  warning: 'hover:bg-black/15 focus-visible:focus-indicator-on-accent',
+  danger: 'hover:bg-black/15 focus-visible:focus-indicator-on-accent',
+};
+
 // ── Halo ──────────────────────────────────────────────────────────────────────
 // Two layers behind the card, in the `section` that does not clip: the card's edge in a gradient,
 // and a blurred copy of that gradient around it. Both read the two hues the intent sets on the
@@ -337,6 +354,22 @@ export type SectionCardProps = {
    */
   flush?: boolean;
   /**
+   * A toggle at the end of the header folds the body away, and the footer with it: the header,
+   * with its `badge` and `action`, stays. The toggle is a button named "Toggle" and the title,
+   * with `aria-expanded` and `aria-controls`; the folded body is out of the tab order and of the
+   * reader's.
+   */
+  collapsible?: boolean;
+  /**
+   * Whether the body is unfolded, for a host that owns it. With `defaultOpen` and `onOpenChange`
+   * it is the usual controlled and uncontrolled pair. Only read with `collapsible`.
+   */
+  open?: boolean;
+  /** Whether the body starts unfolded, while uncontrolled. Default `true`. */
+  defaultOpen?: boolean;
+  /** Called when the toggle is used, with the state to move to. */
+  onOpenChange?: (open: boolean) => void;
+  /**
    * The padding of the card: `sm` (16px), `md` (20px) or `lg` (24px, default). The gap between
    * the header and the body shrinks with it, from 16px to 12px.
    */
@@ -388,6 +421,10 @@ export const SectionCard = ({
   accentSide = 'top',
   footer,
   flush = false,
+  collapsible = false,
+  open: openProp,
+  defaultOpen = true,
+  onOpenChange,
   size = 'lg',
   children,
   className,
@@ -419,14 +456,93 @@ export const SectionCard = ({
   );
   const inState = loading || error || empty;
   const arrival = useAfterSkeleton(loading);
+  const [open, setOpen] = useControllableState<boolean>({
+    value: openProp,
+    defaultValue: defaultOpen,
+    onChange: onOpenChange,
+    name: 'SectionCard.open',
+  });
+  const bodyId = useId();
   // A state is padded like any body: `flush` is for the content it replaces.
   const flushBody = flush && !inState;
   const hasFooter = footer != null && footer !== false;
+  const bleeds = flushBody || hasFooter;
+  // Unfolded, a card that bleeds ends its last part on its edge; folded, it is a header with the
+  // card's padding under it, which the padding takes over while the body folds.
+  const bleedsDown = bleeds && (!collapsible || open);
+  // In a fold the box takes the bleed, the parts inside are plain.
+  const partBleed = collapsible ? undefined : SIZE[size].bleed;
   const rule = solid ? SOLID_RULE[intent] : 'border-[var(--color-border)]';
+  // The body and the footer: what a collapsible card folds away.
+  const content = (
+    <>
+      {/* The body takes what the row gives the card; a state fills it and centres itself. */}
+      <div
+        className={clsx(
+          'flex-1',
+          inState && 'flex flex-col',
+          // The table inside sits on the card's edges: the card draws the border and the corners,
+          // and its first and last cells line up with the card's padding.
+          flushBody && [
+            partBleed,
+            'border-t [&>div]:rounded-none [&>div]:border-0 [&>div]:bg-transparent',
+            SIZE[size].tableInset,
+            rule,
+          ],
+          // The gap above the body is inside the fold, so a folded card does not keep it.
+          collapsible && SIZE[size].gapTop,
+          // A fold that bleeds for a footer or a table leaves a plain body to pad itself.
+          collapsible && bleeds && !flushBody && SIZE[size].inset,
+          minBodyHeight,
+          arrival.className
+        )}
+        onAnimationEnd={arrival.onAnimationEnd}
+      >
+        {loading ? (
+          <>
+            <p role="status" className="sr-only">
+              {title ? `Loading ${title}…` : 'Loading…'}
+            </p>
+            <Sk h="h-auto" round="rounded-lg" className="min-h-40 flex-1" />
+          </>
+        ) : error ? (
+          <ErrorState
+            compact
+            title={errorMessage}
+            description={errorDescription}
+            onRetry={onRetry}
+            className="flex-1"
+          />
+        ) : empty ? (
+          <EmptyState compact title={emptyMessage} action={emptyAction} className="flex-1" />
+        ) : (
+          children
+        )}
+      </div>
+      {hasFooter && (
+        <div
+          className={clsx(
+            'py-row-12 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t text-sm',
+            partBleed,
+            SIZE[size].inset,
+            !flushBody && SIZE[size].gapTop,
+            rule,
+            !solid && 'text-[var(--color-text-secondary)]'
+          )}
+        >
+          {footer}
+        </div>
+      )}
+    </>
+  );
   const surface = clsx(
     'flex flex-1 flex-col overflow-hidden rounded-2xl border',
-    // The last part of a card that bleeds ends on its edge: no padding under it.
-    flushBody || hasFooter ? SIZE[size].padBleed : SIZE[size].pad,
+    bleedsDown ? SIZE[size].padBleed : SIZE[size].pad,
+    collapsible &&
+      bleeds && [
+        'transition-[padding-bottom] duration-(--cosmos-motion-base)',
+        open ? 'ease-(--cosmos-ease-out)' : 'ease-(--cosmos-ease-in)',
+      ],
     accent && 'relative',
     solid ? SOLID[intent].fill : variant === 'tinted' ? TINT[intent] : 'bg-[var(--color-bg-panel)]',
     // With a halo the card's own border is clear and its background stops at the padding box, so
@@ -468,18 +584,23 @@ export const SectionCard = ({
             className={clsx('absolute', ACCENT_COLOR[accent], ACCENT_SIDE[accentSide])}
           />
         )}
-        {/* Below `sm` the action goes under the title; from `sm` it ends the row. */}
+        {/* Below `sm` the action goes under the title; from `sm` it ends the row. A collapsible
+            card keeps its toggle on the title's row: the action wraps under it instead. */}
         <div
           className={clsx(
-            'flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between',
-            SIZE[size].gap
+            collapsible
+              ? 'flex flex-wrap items-start gap-3 sm:flex-nowrap'
+              : [
+                  'flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between',
+                  SIZE[size].gap,
+                ]
           )}
         >
           <div
             className={clsx(
               'flex min-w-0 gap-3',
               iconPosition === 'top' ? 'flex-col items-start' : 'items-center',
-              iconPosition === 'end' && 'sm:flex-1'
+              collapsible ? 'flex-1' : iconPosition === 'end' && 'sm:flex-1'
             )}
           >
             {iconPosition !== 'end' && iconTile}
@@ -506,60 +627,48 @@ export const SectionCard = ({
             </div>
             {iconPosition === 'end' && iconTile}
           </div>
-          {action && <div className="shrink-0 max-sm:max-w-full max-sm:self-start">{action}</div>}
-        </div>
-        {/* The body takes what the row gives the card; a state fills it and centres itself. */}
-        <div
-          className={clsx(
-            'flex-1',
-            inState && 'flex flex-col',
-            // The table inside sits on the card's edges: the card draws the border and the corners,
-            // and its first and last cells line up with the card's padding.
-            flushBody && [
-              SIZE[size].bleed,
-              'border-t [&>div]:rounded-none [&>div]:border-0 [&>div]:bg-transparent',
-              SIZE[size].tableInset,
-              rule,
-            ],
-            minBodyHeight,
-            arrival.className
+          {action && (
+            <div
+              className={clsx(
+                'shrink-0 max-sm:max-w-full max-sm:self-start',
+                collapsible && 'max-sm:order-last max-sm:basis-full'
+              )}
+            >
+              {action}
+            </div>
           )}
-          onAnimationEnd={arrival.onAnimationEnd}
-        >
-          {loading ? (
-            <>
-              <p role="status" className="sr-only">
-                {title ? `Loading ${title}…` : 'Loading…'}
-              </p>
-              <Sk h="h-auto" round="rounded-lg" className="min-h-40 flex-1" />
-            </>
-          ) : error ? (
-            <ErrorState
-              compact
-              title={errorMessage}
-              description={errorDescription}
-              onRetry={onRetry}
-              className="flex-1"
-            />
-          ) : empty ? (
-            <EmptyState compact title={emptyMessage} action={emptyAction} className="flex-1" />
-          ) : (
-            children
+          {collapsible && (
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-controls={bodyId}
+              aria-label={`Toggle ${title}`}
+              onClick={() => setOpen(!open)}
+              className={
+                solid
+                  ? clsx(
+                      'flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors [&>svg]:size-4',
+                      SOLID_TOGGLE[intent]
+                    )
+                  : iconButtonClass()
+              }
+            >
+              <ChevronDown
+                aria-hidden
+                className={clsx(
+                  'transition-transform duration-(--cosmos-motion-base) ease-(--cosmos-ease-in-out)',
+                  open && 'rotate-180'
+                )}
+              />
+            </button>
           )}
         </div>
-        {hasFooter && (
-          <div
-            className={clsx(
-              'py-row-12 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t text-sm',
-              SIZE[size].bleed,
-              SIZE[size].inset,
-              !flushBody && SIZE[size].gapTop,
-              rule,
-              !solid && 'text-[var(--color-text-secondary)]'
-            )}
-          >
-            {footer}
-          </div>
+        {collapsible ? (
+          <Fold id={bodyId} open={open} className={clsx(bleeds && SIZE[size].bleed)}>
+            {content}
+          </Fold>
+        ) : (
+          content
         )}
       </div>
     </section>
