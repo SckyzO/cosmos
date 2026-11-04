@@ -191,7 +191,6 @@ const standaloneDecorator = [
 // functions take focus, which scrolls the docs page down to their iframe.
 export const AutoSubmitOnComplete: Story = {
   tags: ['!autodocs'],
-  decorators: standaloneDecorator,
   args: { onSubmit: fn(), sentTo: 'john@example.com', length: 4 },
 };
 
