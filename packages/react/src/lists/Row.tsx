@@ -84,7 +84,7 @@ export const Row = ({
     <button
       ref={ref as Ref<HTMLButtonElement>}
       type="button"
-      onClick={onClick}
+      onClick={onClick && (() => onClick())}
       className={baseClass}
     >
       {inner}
