@@ -61,7 +61,8 @@ export const ClickFiresOnClick: Story = {
   args: { icon: Server, title: 'Click me', onClick: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /Click me/ }));
-    await expect(args.onClick).toHaveBeenCalled();
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onClick).toHaveBeenCalledWith();
   },
 };
 

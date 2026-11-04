@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState, type ComponentProps } from 'react';
+import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { PageHeader } from '../templates/PageHeader';
 import { Button } from '../ui/Button';
@@ -34,18 +34,6 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-// The buttons, and a shortcut that clicks one, hand the click event to `onPrevious` and `onNext`. A
-// mock Storybook has named logs its arguments in the Actions panel by walking the event through
-// `window`, which warns that the Story Store is deprecated: the stories give the pager callbacks
-// that drop the event.
-const DropsTheEvent = ({ onPrevious, onNext, ...props }: ComponentProps<typeof RecordPager>) => (
-  <RecordPager
-    {...props}
-    onPrevious={onPrevious && (() => onPrevious())}
-    onNext={onNext && (() => onNext())}
-  />
-);
 
 /** Links: the app's router handles them (`LinkProvider`), and "open in a new tab" works. */
 export const Links: Story = {};
@@ -234,10 +222,10 @@ export const DisabledAtEndsInCallbackMode: Story = {
   render: (args) => (
     <div className="flex flex-col gap-4">
       <div data-testid="first">
-        <DropsTheEvent {...args} position={1} aria-label="First" />
+        <RecordPager {...args} position={1} aria-label="First" />
       </div>
       <div data-testid="last">
-        <DropsTheEvent {...args} position={340} aria-label="Last" />
+        <RecordPager {...args} position={340} aria-label="Last" />
       </div>
     </div>
   ),
@@ -256,6 +244,9 @@ export const DisabledAtEndsInCallbackMode: Story = {
     await expect(args.onNext).toHaveBeenCalledTimes(1);
     await userEvent.click(last.getByRole('button', { name: 'Previous order' }));
     await expect(args.onPrevious).toHaveBeenCalledTimes(1);
+    // The props are `() => void`: the click event stays with the button.
+    await expect(args.onNext).toHaveBeenCalledWith();
+    await expect(args.onPrevious).toHaveBeenCalledWith();
   },
 };
 
@@ -281,7 +272,6 @@ export const ShortcutsCallBack: Story = {
     onNext: fn(),
     hotkeys: { previous: '[', next: ']' },
   },
-  render: (args) => <DropsTheEvent {...args} />,
   play: async ({ args }) => {
     await userEvent.keyboard('[[');
     await expect(args.onPrevious).toHaveBeenCalledTimes(1);
@@ -298,7 +288,6 @@ export const NoShortcutsByDefault: Story = {
   ...Hidden,
   tags: ['!dev', '!autodocs'],
   args: { previousHref: undefined, nextHref: undefined, onPrevious: fn(), onNext: fn() },
-  render: (args) => <DropsTheEvent {...args} />,
   play: async ({ args }) => {
     await userEvent.keyboard('[[]');
     await expect(args.onPrevious).not.toHaveBeenCalled();
@@ -319,7 +308,7 @@ export const ShortcutsIgnoredInField: Story = {
   },
   render: (args) => (
     <div className="flex flex-col gap-4">
-      <DropsTheEvent {...args} />
+      <RecordPager {...args} />
       <input aria-label="Note" className="rounded border border-gray-300 px-3 py-2 text-sm" />
       <textarea aria-label="Comment" className="rounded border border-gray-300 px-3 py-2 text-sm" />
     </div>
@@ -349,7 +338,6 @@ export const ShortcutsStopAtTheEnds: Story = {
     onNext: fn(),
     hotkeys: { previous: '[', next: ']' },
   },
-  render: (args) => <DropsTheEvent {...args} />,
   play: async ({ args }) => {
     const event = new KeyboardEvent('keydown', { key: '[', bubbles: true, cancelable: true });
     document.body.dispatchEvent(event);
@@ -373,7 +361,7 @@ export const ShortcutsAreRemovedOnUnmount: Story = {
     const [shown, setShown] = useState(true);
     return (
       <div>
-        {shown && <DropsTheEvent {...args} />}
+        {shown && <RecordPager {...args} />}
         <Button onClick={() => setShown(false)}>Remove</Button>
       </div>
     );
