@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 import { estimateStrength } from '../storybook-strength';
+import { Button } from '../ui/Button';
 import { AuthLayout } from './AuthLayout';
 import { NewPasswordForm, type NewPasswordFormView } from './NewPasswordForm';
 
@@ -338,9 +339,9 @@ const SwitchingHost = () => {
   return (
     <>
       <NewPasswordForm view={view} onSubmit={() => setView('done')} />
-      <button type="button" onClick={() => setView('expired')}>
+      <Button variant="secondary" size="sm" onClick={() => setView('expired')}>
         Expire the link
-      </button>
+      </Button>
     </>
   );
 };
