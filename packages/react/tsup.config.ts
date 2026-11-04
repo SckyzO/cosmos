@@ -1,22 +1,29 @@
 import { defineConfig } from 'tsup';
-import { externalizeOutside } from '../../config/tsup/self-reference';
+import { preserveModules, reachableModules } from '../../config/tsup/preserve-modules';
 import { prependUseClient } from '../../config/tsup/use-client';
 
+// Each sub-path entry of the package is a folder of src/ built next to the root one:
+// `@sckyzo/cosmos-react/code` is dist/code/index.*. Its optional peers stay external: shiki for
+// `code`, Tiptap for `editor`, maplibre-gl for `map`, qr for `qr`.
+const SUBPATHS = ['code', 'editor', 'map', 'qr'];
+const subpathEntries = Object.fromEntries(
+  SUBPATHS.map((dir) => [`${dir}/index`, `src/${dir}/index.ts`])
+);
+
+// Every module the entries reach is a file of dist (`dist/ui/Button.js`), so an app ships the
+// components it imports and what they import, not the whole library: see the plugin.
+const modules = await reachableModules(['src/index.ts', ...Object.values(subpathEntries)], {
+  bundled: SUBPATHS,
+});
+
 export default defineConfig({
-  // Each sub-path entry of the package is a folder of src/ built next to the root one:
-  // `@sckyzo/cosmos-react/code` is dist/code/index.*. Its optional peers stay external: shiki for
-  // `code`, Tiptap for `editor`, maplibre-gl for `map`, qr for `qr`.
-  entry: {
-    index: 'src/index.ts',
-    'code/index': 'src/code/index.ts',
-    'editor/index': 'src/editor/index.ts',
-    'map/index': 'src/map/index.ts',
-    'qr/index': 'src/qr/index.ts',
-  },
+  entry: { ...modules, ...subpathEntries },
   format: ['esm', 'cjs'],
-  dts: true,
+  // The published types stay one declaration file per entry of package.json.
+  dts: { entry: { index: 'src/index.ts', ...subpathEntries } },
   sourcemap: true,
   clean: true,
+  // Each file imports the other files it needs, so there is nothing for chunks to share.
   splitting: false,
   treeshake: true,
   external: [
@@ -32,27 +39,8 @@ export default defineConfig({
     // versions `qr` itself asks for.
     'qr',
   ],
-  // A sub-path entry imports the root entry of the package, never a copy of it: see the plugin.
-  // The editor and the map take by value the few internal helpers the root entry does not export;
-  // the QR code needs none.
-  esbuildPlugins: [
-    externalizeOutside('src/code', '@sckyzo/cosmos-react'),
-    externalizeOutside('src/editor', '@sckyzo/cosmos-react', {
-      bundle: [
-        'hooks/useControllableState',
-        'hooks/direction',
-        'ui/mergeRefs',
-        'forms/fieldRecipe',
-        'forms/RequiredMark',
-        'chat/httpUrl',
-      ],
-    }),
-    externalizeOutside('src/map', '@sckyzo/cosmos-react', {
-      bundle: ['hooks/useControllableState', 'settings/useCosmosTheme'],
-    }),
-    externalizeOutside('src/qr', '@sckyzo/cosmos-react'),
-  ],
-  // Mark the bundle as a client module for React Server Components bundlers.
+  esbuildPlugins: [preserveModules({ bundled: SUBPATHS })],
+  // Mark the files as client modules for React Server Components bundlers.
   // After the build: Rollup, which `treeshake` runs, drops an esbuild banner.
   async onSuccess() {
     prependUseClient();

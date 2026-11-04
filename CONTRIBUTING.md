@@ -73,7 +73,7 @@ belongs to a story, unless it can take the element as a parameter (as `applyAppe
 stand-in object with the few members it touches is enough in Node. Logic buried in a component moves
 to a module of its own first, in a separate `refactor` commit that changes nothing else.
 
-`*.test.ts` files stay out of the published packages (tsup bundles from `src/index.ts` only) and
+`*.test.ts` files stay out of the published packages (tsup builds what `src/index.ts` reaches) and
 are type-checked by `apps/storybook`, which compiles the packages from source: `vitest` is mapped in
 its `tsconfig.json` because the packages do not depend on it.
 
