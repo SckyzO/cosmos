@@ -1,11 +1,16 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { Activity } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { Input } from '../forms/Input';
 import { portalDocsParams } from '../storybook-helpers';
 import { AuthLayout } from './AuthLayout';
 import { SignInForm } from './SignInForm';
-import { SocialAuthButtons, type SocialProvider } from './SocialAuthButtons';
+import {
+  SocialAuthButtons,
+  type SocialAuthButtonsProps,
+  type SocialProvider,
+} from './SocialAuthButtons';
 
 const meta = {
   title: 'Examples/Auth/Social Auth Buttons',
@@ -18,21 +23,39 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// The width of a sign-in column, with the field the divider stands between the buttons and: it says
+// "or" to what is on the other side of it.
+const inSignInColumn: Decorator = (Story, { args }) => {
+  const { position, divider } = args as Partial<SocialAuthButtonsProps>;
+  const email = <Input label="Email" type="email" placeholder="you@example.com" />;
+  return (
+    <div className="max-w-sm">
+      {position === 'below' && email}
+      <Story />
+      {position !== 'below' && divider !== false && email}
+    </div>
+  );
+};
+
 // ── Stories ──────────────────────────────────────────────────────────────────
 
 export const TwoProviders: Story = {
+  decorators: [inSignInColumn],
   args: { providers: ['google', 'github'] },
 };
 
 export const FourProviders: Story = {
+  decorators: [inSignInColumn],
   args: { providers: ['google', 'github', 'x', 'apple'] },
 };
 
 export const AllProviders: Story = {
+  decorators: [inSignInColumn],
   args: { providers: ['google', 'github', 'x', 'facebook', 'apple', 'microsoft'] },
 };
 
 export const Grid: Story = {
+  decorators: [inSignInColumn],
   args: {
     providers: ['google', 'github', 'apple', 'microsoft'],
     layout: 'grid',
@@ -40,6 +63,7 @@ export const Grid: Story = {
 };
 
 export const NoDivider: Story = {
+  decorators: [inSignInColumn],
   args: {
     providers: ['google', 'github'],
     divider: false,
@@ -47,6 +71,7 @@ export const NoDivider: Story = {
 };
 
 export const DividerBelow: Story = {
+  decorators: [inSignInColumn],
   args: {
     providers: ['google', 'github'],
     position: 'below',
@@ -54,6 +79,7 @@ export const DividerBelow: Story = {
 };
 
 export const LoadingProvider: Story = {
+  decorators: [inSignInColumn],
   args: {
     providers: ['google', 'github', 'apple'],
     loading: 'github',
@@ -61,6 +87,7 @@ export const LoadingProvider: Story = {
 };
 
 export const CustomLabel: Story = {
+  decorators: [inSignInColumn],
   args: {
     providers: ['google', 'github'],
     labelFor: (p) => `Sign in with ${p[0].toUpperCase() + p.slice(1)}`,
