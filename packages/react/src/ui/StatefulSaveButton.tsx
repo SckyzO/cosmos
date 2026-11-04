@@ -60,7 +60,7 @@ export const StatefulSaveButton = ({
       loading={cfg.loading}
       // `saved` ignores clicks without the native `disabled`, which would dim it.
       aria-disabled={state === 'saved' || undefined}
-      onClick={inactive ? undefined : onClick}
+      onClick={inactive ? undefined : () => onClick()}
       className={clsx(cfg.cls, className)}
     >
       {cfg.label}

@@ -30,7 +30,7 @@ const ZoomBtn = ({
 }) => (
   <button
     type="button"
-    onClick={onClick}
+    onClick={() => onClick()}
     title={title}
     className={clsx(
       'focus-visible:focus-indicator py-row-8 flex items-center px-2.5 text-gray-500 transition-colors hover:bg-gray-50 focus-visible:ring-inset dark:text-gray-400 dark:hover:bg-white/5',

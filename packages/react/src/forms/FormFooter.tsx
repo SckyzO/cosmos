@@ -49,7 +49,7 @@ export const FormFooter = ({
   const buttons = children ?? (
     <>
       {onCancel && (
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>
+        <Button type="button" variant="secondary" onClick={() => onCancel()} disabled={submitting}>
           {cancelLabel}
         </Button>
       )}
