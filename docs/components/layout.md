@@ -313,7 +313,7 @@ instead of sitting inside it, built from parts:
   newsletter. It goes first and the bottom row goes last, wherever they come among the parts.
 - `SiteFooter.Bottom`: the copyright as children and the legal links as `links`
   (`{ label, href }`, plus any anchor prop such as `aria-current`) in a `nav` named `Legal`
-  (`linksLabel` renames it).
+  (`labels.legalLinks` renames it).
 
 ```tsx
 <SiteFooter>
