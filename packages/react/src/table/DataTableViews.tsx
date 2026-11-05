@@ -131,8 +131,7 @@ export const DataTableViews = <T,>({
         intent="danger"
         title={labels.deleteViewTitle(active?.name ?? '')}
         message={labels.deleteViewMessage}
-        stayLabel={labels.cancel}
-        discardLabel={labels.deleteView}
+        labels={{ stay: labels.cancel, discard: labels.deleteView }}
         hideSave
         onDiscard={() => {
           onDelete();

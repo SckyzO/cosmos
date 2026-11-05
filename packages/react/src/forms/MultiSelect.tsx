@@ -47,8 +47,6 @@ export type MultiSelectProps = {
   onChange?: (values: string[]) => void;
   options: MultiSelectOption[];
   placeholder?: string;
-  /** Show this when no option matches the typed query. Default `labels.empty`. */
-  emptyMessage?: string;
   /** The texts it writes, over `LabelsProvider`'s `multiSelect` and the English defaults. */
   labels?: Partial<MultiSelectLabels>;
   /** The most values that can be chosen: the other options are then unavailable. No limit when omitted. */
@@ -90,7 +88,6 @@ export const MultiSelect = ({
   onChange,
   options,
   placeholder,
-  emptyMessage,
   labels: ownLabels,
   maxItems,
   disabled = false,
@@ -361,7 +358,7 @@ export const MultiSelect = ({
             role="status"
             className={noMatch ? 'py-row-8 px-3 text-gray-500 dark:text-gray-400' : 'sr-only'}
           >
-            {noMatch ? (emptyMessage ?? labels.empty) : ''}
+            {noMatch ? labels.empty : ''}
           </p>
         </div>
       </FloatingPanel>

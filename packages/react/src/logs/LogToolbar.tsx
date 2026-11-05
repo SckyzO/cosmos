@@ -397,7 +397,7 @@ export const LogToolbar = ({
         label={labels.sources}
         labelHidden={!visibleLabel}
         placeholder={labels.allSources}
-        emptyMessage={labels.noSource}
+        labels={{ empty: labels.noSource }}
         options={sources.map((source) => ({ value: source, label: source }))}
         value={[...activeSources]}
         onChange={setActiveSources}

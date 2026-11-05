@@ -13,10 +13,6 @@ export type ClipboardProps = Omit<ComponentPropsWithRef<'button'>, 'onCopy'> & {
   /** `icon` (default) → square icon-only button. `button` → icon + label. */
   variant?: ClipboardVariant;
   size?: ClipboardSize;
-  /** Name of the button, and its text with `variant="button"`. Default `labels.copy`. */
-  copyLabel?: string;
-  /** The same once the value is copied. Default `labels.copied`. */
-  copiedLabel?: string;
   /** The texts it writes, over `LabelsProvider`'s `clipboard` and the English defaults. */
   labels?: Partial<ClipboardLabels>;
   /** Milliseconds the "copied" state stays visible. Default 1500. */
@@ -70,8 +66,6 @@ export function Clipboard({
   value,
   variant = 'icon',
   size = 'sm',
-  copyLabel,
-  copiedLabel,
   labels: ownLabels,
   duration = 1500,
   onCopy,
@@ -110,7 +104,7 @@ export function Clipboard({
     []
   );
 
-  const label = copied ? (copiedLabel ?? labels.copied) : (copyLabel ?? labels.copy);
+  const label = copied ? labels.copied : labels.copy;
   const flatStyle = plain && !floating;
   const icons = (
     <CopyIcons

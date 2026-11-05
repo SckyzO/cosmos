@@ -46,7 +46,7 @@ export const ActiveFiltersBar = ({
           intent="brand"
           size="md"
           onRemove={() => onClearOne(f.key)}
-          removeLabel={labels.clearOne(f.label)}
+          labels={{ remove: () => labels.clearOne(f.label) }}
         >
           <span className="font-semibold capitalize">
             <bdi>{f.label}</bdi>
