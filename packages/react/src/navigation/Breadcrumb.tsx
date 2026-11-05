@@ -113,7 +113,7 @@ export const Breadcrumb = ({
               <>
                 <Menu>
                   <Menu.Trigger
-                    aria-label={`Show ${hidden.length} more pages`}
+                    aria-label={`Show ${hidden.length} more ${hidden.length === 1 ? 'page' : 'pages'}`}
                     className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 flex shrink-0 items-center rounded-sm px-2 py-1 transition-colors"
                   >
                     <Ellipsis className="h-4 w-4" aria-hidden />
