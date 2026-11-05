@@ -24,6 +24,7 @@ import { TimeLabel, TimePlaceholder } from '../data/TimeLabel';
 import { formatDateTime, toTimestamp } from '../data/time';
 import { useControllableState } from '../hooks/useControllableState';
 import { useIsClient } from '../hooks/useIsClient';
+import { useScrollFade } from '../hooks/useScrollFade';
 import { windowSlice } from '../hooks/useVirtualWindow';
 import { downloadFile } from '../table/download';
 import { mergeRefs } from '../ui/mergeRefs';
@@ -329,6 +330,38 @@ const JobLogRow = ({
           </span>
         ))}
       </span>
+    </div>
+  );
+};
+
+/**
+ * The lines of an open step. They are output: they keep their order, and scroll from the left,
+ * whatever the page reads. Unwrapped, a long line scrolls the step sideways on its own, and the
+ * edges fade where there is more.
+ */
+const StepLines = ({
+  id,
+  count,
+  wrap,
+  children,
+}: {
+  id: string;
+  count: number;
+  wrap: boolean;
+  children: ReactNode;
+}) => {
+  const linesRef = useRef<HTMLDivElement>(null);
+  const fade = useScrollFade(linesRef);
+  return (
+    <div
+      ref={linesRef}
+      data-lines={id}
+      data-count={count}
+      dir="ltr"
+      style={fade}
+      className={wrap ? undefined : 'overflow-x-auto'}
+    >
+      {children}
     </div>
   );
 };
@@ -776,18 +809,11 @@ export const JobLog = ({
                 {EMPTY_STEP[job.status]}
               </p>
             ) : (
-              <div
-                data-lines={job.id}
-                data-count={count}
-                // The lines are output: they keep their order, and scroll from the left, whatever
-                // the page reads.
-                dir="ltr"
-                className={wrap ? undefined : 'overflow-x-auto'}
-              >
+              <StepLines id={job.id} count={count} wrap={wrap}>
                 {start > 0 && <div aria-hidden style={{ height: start * rowHeight }} />}
                 {rows}
                 {end < count && <div aria-hidden style={{ height: (count - end) * rowHeight }} />}
-              </div>
+              </StepLines>
             )}
           </div>
         )}

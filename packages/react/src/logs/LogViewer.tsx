@@ -16,6 +16,7 @@ import { TimeLabel, TimePlaceholder } from '../data/TimeLabel';
 import { formatDateTime, toTimestamp } from '../data/time';
 import { useControllableState } from '../hooks/useControllableState';
 import { useIsClient } from '../hooks/useIsClient';
+import { useScrollFade } from '../hooks/useScrollFade';
 import { useVirtualWindow } from '../hooks/useVirtualWindow';
 import { Button } from '../ui/Button';
 import { mergeRefs } from '../ui/mergeRefs';
@@ -505,6 +506,7 @@ export const LogViewer = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const probeRef = useRef<HTMLDivElement>(null);
   const mergedRef = useMemo(() => mergeRefs(scrollerRef, ref), [ref]);
+  const fade = useScrollFade(scrollerRef);
 
   const [follow, setFollow] = useControllableState({
     value: followProp,
@@ -797,6 +799,7 @@ export const LogViewer = ({
         // A log is output: its records keep their column order and scroll from the left,
         // whatever the page reads. The toolbar and the jump button around it follow the page.
         dir="ltr"
+        style={fade}
         className={clsx(
           'focus-visible:focus-indicator relative overflow-auto py-2 [overflow-anchor:none] focus-visible:ring-inset',
           // Paused: the strip of the "Jump to latest" button is taken off the log's height.
