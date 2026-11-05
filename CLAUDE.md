@@ -51,9 +51,11 @@ them:
   (`*.ts`, `*.tsx`): Prettier and ESLint on those files, the typecheck, the unit tests, and the
   story files that use what changed in the default pass, the three contrast passes and the
   direction pass. `select-stories.mjs` picks them: the names the changed files export, followed
-  through every source file that names one, barrels skipped; a change to a widely used helper
-  selects most of the suite. A changed package source also selects the stories of the Storybook
-  app that use it; a changed file of the app is followed inside the app only.
+  through every source file that names one (not after a dot: `Intl.DateTimeFormat` is no use of
+  `DateTimeFormat`), barrels and the labels registry (`labels/cosmosLabels.ts`,
+  `englishLabels.ts`) skipped; a change to a widely used helper selects most of the suite. A
+  changed package source also selects the stories of the Storybook app that use it; the names of an
+  app file, changed or reached that way, are followed inside the app only.
 - **Anything else** (theme CSS, `.storybook/`, the Vitest config, dependencies, workflows, e2e
   specs, Docker, MDX): what reaches a story through CSS, config or a dependency isn't followed, so
   every step runs. Lint, format, typecheck, the builds and `CI=true pnpm test` run one after the
