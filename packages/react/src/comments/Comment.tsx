@@ -237,8 +237,7 @@ export function Comment({
               autoFocus
               defaultValue={editText ?? text ?? ''}
               label={labels.editField}
-              submitLabel={labels.editSubmit}
-              cancelLabel={labels.cancel}
+              labels={{ submit: labels.editSubmit, cancel: labels.cancel }}
               onCancel={closeEdit}
               onSubmit={(value) => {
                 onEdit?.(value);
@@ -311,9 +310,11 @@ export function Comment({
                 className={replyList.length > 0 ? 'mt-3' : undefined}
                 autoFocus
                 label={labels.replyField(author)}
-                placeholder={labels.replyPlaceholder}
-                submitLabel={labels.replySubmit}
-                cancelLabel={labels.cancel}
+                labels={{
+                  placeholder: labels.replyPlaceholder,
+                  submit: labels.replySubmit,
+                  cancel: labels.cancel,
+                }}
                 onCancel={closeReply}
                 onSubmit={(value) => {
                   onReply?.(value);

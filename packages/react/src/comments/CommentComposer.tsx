@@ -21,9 +21,9 @@ export type CommentComposerMode = {
    * by mistake. Default `false`.
    */
   internal?: boolean;
-  /** Placeholder while this mode is selected. Default: the composer's `placeholder`. */
+  /** Placeholder while this mode is selected. Default: `labels.placeholder`. */
   placeholder?: string;
-  /** Submit button text while this mode is selected. Default: the composer's `submitLabel`. */
+  /** Submit button text while this mode is selected. Default: `labels.submit`. */
   submitLabel?: string;
 };
 
@@ -44,13 +44,6 @@ export type CommentComposerProps = {
   defaultMode?: string;
   /** Called with the new mode's `value`, in both modes. */
   onModeChange?: (mode: string) => void;
-  /** Accessible name of the modes' control. Default `labels.modeLabel`, `Type of message`. */
-  modeLabel?: string;
-  /**
-   * Said, and announced when the mode changes, while an `internal` mode is selected. Default
-   * `labels.internalNotice`, `Internal note: only your team sees this.`
-   */
-  internalNotice?: string;
   /**
    * Shows a Cancel button and lets Escape cancel. Without it neither exists, which is right for
    * the composer at the bottom of a thread.
@@ -69,12 +62,6 @@ export type CommentComposerProps = {
   submitting?: boolean;
   /** Accessible name of the field. Default `labels.field`, `Comment`. */
   label?: string;
-  /** Default `labels.placeholder`, `Write a comment…`. */
-  placeholder?: string;
-  /** Default `labels.submit`, `Comment`. */
-  submitLabel?: string;
-  /** Default `labels.cancel`, `Cancel`. */
-  cancelLabel?: string;
   /** The texts it writes, over `LabelsProvider`'s `commentComposer` and the English defaults. */
   labels?: Partial<CommentComposerLabels>;
   /** Rows the field starts with before it grows. Default `2`. */
@@ -100,17 +87,12 @@ export function CommentComposer({
   mode: modeProp,
   defaultMode,
   onModeChange,
-  modeLabel,
-  internalNotice,
   onCancel,
   value,
   defaultValue = '',
   onChange,
   submitting = false,
   label,
-  placeholder,
-  submitLabel,
-  cancelLabel,
   labels: ownLabels,
   rows = 2,
   maxRows = 10,
@@ -158,7 +140,7 @@ export function CommentComposer({
       {modes && (
         <SegmentedControl
           size="sm"
-          aria-label={modeLabel ?? labels.modeLabel}
+          aria-label={labels.modeLabel}
           className="mb-2 max-w-full self-start"
           options={modes.map((m) => ({
             value: m.value,
@@ -184,7 +166,7 @@ export function CommentComposer({
           aria-label={label ?? labels.field}
           aria-keyshortcuts="Control+Enter Meta+Enter"
           aria-busy={submitting || undefined}
-          placeholder={activeMode?.placeholder ?? placeholder ?? labels.placeholder}
+          placeholder={activeMode?.placeholder ?? labels.placeholder}
           rows={rows}
           maxRows={maxRows}
           autoResize
@@ -213,14 +195,14 @@ export function CommentComposer({
             {internal && (
               <>
                 <Lock aria-hidden className="h-3 w-3 shrink-0" />
-                {internalNotice ?? labels.internalNotice}
+                {labels.internalNotice}
               </>
             )}
           </p>
         )}
         {onCancel && (
           <Button variant="ghost" size="sm" onClick={() => onCancel()}>
-            {cancelLabel ?? labels.cancel}
+            {labels.cancel}
           </Button>
         )}
         <Button
@@ -230,7 +212,7 @@ export function CommentComposer({
           disabled={!canSubmit}
           onClick={submit}
         >
-          {activeMode?.submitLabel ?? submitLabel ?? labels.submit}
+          {activeMode?.submitLabel ?? labels.submit}
         </Button>
       </div>
     </div>
