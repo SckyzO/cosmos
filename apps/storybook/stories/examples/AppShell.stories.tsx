@@ -975,7 +975,7 @@ export const ExtremeContentFits: Story = {
     );
     await expect(scroller).toBeDefined();
     // The trail folds into a menu and the title takes two lines or more.
-    await expect(canvas.getByRole('button', { name: /more pages/ })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: /more page/ })).toBeVisible();
     const h1 = canvas.getByRole('heading', { level: 1 });
     await expect(h1.getBoundingClientRect().height).toBeGreaterThan(
       1.5 * parseFloat(getComputedStyle(h1).lineHeight)
