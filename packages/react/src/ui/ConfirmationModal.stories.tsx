@@ -414,6 +414,26 @@ export const WarningIsTheDefault: Story = {
   },
 };
 
+/** The confirm button keeps the Save icon by default. */
+export const ConfirmIconDefaultsToSave: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn(), onSave: fn() },
+  play: async () => {
+    const save = await within(document.body).findByRole('button', { name: 'Save & go' });
+    await expect(save.querySelector('svg.lucide-save')).not.toBeNull();
+  },
+};
+
+/** `icon={null}` renders the confirm button without an icon. */
+export const NullIconRemovesTheConfirmIcon: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { open: true, onClose: fn(), onSave: fn(), icon: null },
+  play: async () => {
+    const save = await within(document.body).findByRole('button', { name: 'Save & go' });
+    await expect(save.querySelector('svg')).toBeNull();
+  },
+};
+
 /** The icon and text start the dialog, the close button ends it, the choices end the footer. */
 export const LayoutFollowsTheDirection: Story = {
   tags: ['!dev', '!autodocs'],

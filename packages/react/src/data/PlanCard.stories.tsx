@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { ArrowRightLeft } from 'lucide-react';
 import { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { SegmentedControl } from '../forms/SegmentedControl';
@@ -727,6 +728,7 @@ const BillingPageDemo = ({ pendingId }: { pendingId?: string }) => {
           )} a year.`}
           stayLabel={`Keep ${current.name}`}
           saveLabel={`Switch to ${target.name}`}
+          icon={ArrowRightLeft}
           onClose={() => setOpen(false)}
           onSave={() => {
             setCurrentId(target.id);

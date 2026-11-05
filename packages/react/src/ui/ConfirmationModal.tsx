@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { AlertTriangle, Save, Trash2, X } from 'lucide-react';
-import { useId, useState } from 'react';
+import { type ElementType, useId, useState } from 'react';
 import { Input } from '../forms/Input';
 import type { BackdropVariant } from './Backdrop';
 import { Button } from './Button';
@@ -20,6 +20,8 @@ export type ConfirmationModalProps = {
   stayLabel?: string;
   discardLabel?: string;
   saveLabel?: string;
+  /** Icon of the confirm button: a lucide-react component, or `null` for none. Default `Save`. */
+  icon?: ElementType | null;
   /** Hide the Save button — for simple confirm/cancel flows. */
   hideSave?: boolean;
   /**
@@ -83,6 +85,7 @@ const ConfirmationContent = ({
   stayLabel = 'Stay',
   discardLabel = 'Discard',
   saveLabel = 'Save & go',
+  icon = Save,
   hideSave = false,
   intent = 'warning',
   requireText,
@@ -164,7 +167,12 @@ const ConfirmationContent = ({
           </Button>
         )}
         {!hideSave && onSave && (
-          <Button icon={Save} loading={saving} onClick={() => onSave()} className="shrink-0">
+          <Button
+            icon={icon ?? undefined}
+            loading={saving}
+            onClick={() => onSave()}
+            className="shrink-0"
+          >
             {saveLabel}
           </Button>
         )}
