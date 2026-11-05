@@ -16,8 +16,10 @@ import {
   type ReactNode,
   type ComponentPropsWithRef,
 } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { AppLink } from '../ui/AppLink';
 import { Menu } from '../ui/Menu';
+import { NAVBAR_LABELS, type NavbarLabels } from './labels';
 
 // TUI Plus reference (Pattern 1 — "Simple dark with menu button on left"):
 //   <nav class="bg-gray-800">
@@ -71,6 +73,9 @@ const ITEM_ACTIVE: Record<NavbarTheme, string> = {
 // when rendered outside one).
 const NavbarThemeContext = createContext<NavbarTheme>('light');
 
+// What the root's `labels` prop gave, for `Navbar.Items` and `Navbar.MobileMenuButton`.
+const NavbarLabelsContext = createContext<Partial<NavbarLabels> | undefined>(undefined);
+
 // ── Root ─────────────────────────────────────────────────────────────────────
 
 export type NavbarProps = ComponentPropsWithRef<'nav'> & {
@@ -84,6 +89,8 @@ export type NavbarProps = ComponentPropsWithRef<'nav'> & {
   maxWidth?: 'none' | '7xl';
   /** Override the inner row height. Default `h-16` (64px). */
   heightClassName?: string;
+  /** The texts its parts write ("More", the mobile button's name), over `LabelsProvider`'s `navbar` and the English defaults. */
+  labels?: Partial<NavbarLabels>;
   children: ReactNode;
 };
 
@@ -91,6 +98,7 @@ function NavbarRoot({
   theme = 'light',
   maxWidth = '7xl',
   heightClassName = 'h-16',
+  labels,
   className,
   children,
   ref,
@@ -100,7 +108,9 @@ function NavbarRoot({
     <nav ref={ref} className={clsx(ROOT_BG[theme], className)} data-theme={theme} {...rest}>
       <div className={clsx('px-4 sm:px-6 lg:px-8', maxWidth === '7xl' && 'mx-auto max-w-7xl')}>
         <div className={clsx('flex items-center justify-between', heightClassName)}>
-          <NavbarThemeContext.Provider value={theme}>{children}</NavbarThemeContext.Provider>
+          <NavbarThemeContext.Provider value={theme}>
+            <NavbarLabelsContext value={labels}>{children}</NavbarLabelsContext>
+          </NavbarThemeContext.Provider>
         </div>
       </div>
     </nav>
@@ -217,7 +227,7 @@ const NavbarMenu = ({
 // ── Items (the horizontal main nav, hidden on mobile by default) ────────────
 
 export type NavbarItemsProps = HTMLAttributes<HTMLDivElement> & {
-  /** Label of the menu that takes the items that do not fit. Default `More`. */
+  /** Label of the menu that takes the items that do not fit. Default `labels.more`, `More`. */
   moreLabel?: string;
 };
 
@@ -257,7 +267,8 @@ function countHidden(
   return hidden;
 }
 
-const Items = ({ className, children, moreLabel = 'More', ...rest }: NavbarItemsProps) => {
+const Items = ({ className, children, moreLabel, ...rest }: NavbarItemsProps) => {
+  const labels = useLabels('navbar', NAVBAR_LABELS, useContext(NavbarLabelsContext));
   const theme = useContext(NavbarThemeContext);
   const setHasItems = useContext(BrandContext);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -341,7 +352,7 @@ const Items = ({ className, children, moreLabel = 'More', ...rest }: NavbarItems
             )}
           >
             <Menu>
-              <NavbarTrigger label={moreLabel} active={moreActive} theme={theme} />
+              <NavbarTrigger label={moreLabel ?? labels.more} active={moreActive} theme={theme} />
               <Menu.Content>
                 {overflow.map((entry) => (
                   <OverflowEntry key={entry.key} entry={entry} />
@@ -416,12 +427,13 @@ export type NavbarMobileMenuButtonProps = ButtonHTMLAttributes<HTMLButtonElement
 };
 
 const MobileMenuButton = ({ theme, className, children, ...rest }: NavbarMobileMenuButtonProps) => {
+  const labels = useLabels('navbar', NAVBAR_LABELS, useContext(NavbarLabelsContext));
   const inherited = useContext(NavbarThemeContext);
   const resolved = theme ?? inherited;
   return (
     <button
       type="button"
-      aria-label="Toggle menu"
+      aria-label={labels.toggleMenu}
       className={clsx(
         'focus-visible:focus-indicator relative inline-flex size-10 items-center justify-center rounded-md md:hidden',
         resolved === 'dark'

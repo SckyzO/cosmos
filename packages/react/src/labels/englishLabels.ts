@@ -59,7 +59,15 @@ import {
   TOPBAR_LABELS,
 } from '../layout/labels';
 import { FILE_TILE_LABELS, STACKED_LIST_LABELS } from '../lists/labels';
-import { BREADCRUMB_LABELS } from '../navigation/labels';
+import {
+  BREADCRUMB_LABELS,
+  NAVBAR_LABELS,
+  PAGINATION_LABELS,
+  RECORD_PAGER_LABELS,
+  STEPPER_LABELS,
+  STICKY_SCROLL_NAV_LABELS,
+  VERTICAL_NAVIGATION_LABELS,
+} from '../navigation/labels';
 import {
   NEW_PASSWORD_FORM_LABELS,
   RESET_PASSWORD_FORM_LABELS,
@@ -177,12 +185,14 @@ export const englishLabels: CosmosLabels = {
   miniCalendar: MINI_CALENDAR_LABELS,
   modal: MODAL_LABELS,
   multiSelect: MULTI_SELECT_LABELS,
+  navbar: NAVBAR_LABELS,
   newPasswordForm: NEW_PASSWORD_FORM_LABELS,
   notificationCard: NOTIFICATION_CARD_LABELS,
   notificationRow: NOTIFICATION_ROW_LABELS,
   notificationsPanel: NOTIFICATIONS_PANEL_LABELS,
   numberInput: NUMBER_INPUT_LABELS,
   otpInput: OTP_INPUT_LABELS,
+  pagination: PAGINATION_LABELS,
   passwordInput: PASSWORD_INPUT_LABELS,
   passwordPolicyChecker: PASSWORD_POLICY_LABELS,
   passwordStrengthMeter: PASSWORD_STRENGTH_LABELS,
@@ -191,6 +201,7 @@ export const englishLabels: CosmosLabels = {
   planCard: PLAN_CARD_LABELS,
   progressBar: PROGRESS_BAR_LABELS,
   rating: RATING_LABELS,
+  recordPager: RECORD_PAGER_LABELS,
   refreshButton: REFRESH_BUTTON_LABELS,
   resetPasswordForm: RESET_PASSWORD_FORM_LABELS,
   rowActionButton: ROW_ACTION_BUTTON_LABELS,
@@ -208,6 +219,8 @@ export const englishLabels: CosmosLabels = {
   spinner: SPINNER_LABELS,
   stackedList: STACKED_LIST_LABELS,
   statefulSaveButton: STATEFUL_SAVE_BUTTON_LABELS,
+  stepper: STEPPER_LABELS,
+  stickyScrollNav: STICKY_SCROLL_NAV_LABELS,
   tag: TAG_LABELS,
   tagInput: TAG_INPUT_LABELS,
   themeToggle: THEME_TOGGLE_LABELS,
@@ -219,6 +232,7 @@ export const englishLabels: CosmosLabels = {
   unsavedIndicator: UNSAVED_INDICATOR_LABELS,
   uploadQueue: UPLOAD_QUEUE_LABELS,
   userMenu: USER_MENU_LABELS,
+  verticalNavigation: VERTICAL_NAVIGATION_LABELS,
   videoEmbed: VIDEO_EMBED_LABELS,
   zoomBar: ZOOM_BAR_LABELS,
 };

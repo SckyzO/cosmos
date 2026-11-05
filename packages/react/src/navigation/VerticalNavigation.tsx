@@ -10,9 +10,11 @@ import {
   type ComponentPropsWithRef,
 } from 'react';
 import { useIndicator } from '../hooks/useIndicator';
+import { useLabels } from '../labels/labelsContext';
 import { AppLink } from '../ui/AppLink';
 import { mergeRefs } from '../ui/mergeRefs';
 import { SlidingIndicator } from '../ui/SlidingIndicator';
+import { VERTICAL_NAVIGATION_LABELS, type VerticalNavigationLabels } from './labels';
 
 // TUI Plus reference (Pattern 1 — "Simple"):
 //   <nav class="flex flex-1 flex-col">
@@ -122,16 +124,20 @@ const Section = ({ label, children, className, ...rest }: VerticalNavigationSect
 export type VerticalNavigationProps = ComponentPropsWithRef<'nav'> & {
   /** Tighter padding (TUI "On gray" pattern), useful inside a gray-bg surface. */
   variant?: 'default' | 'on-gray';
+  /** The texts it writes (the landmark's name), over `LabelsProvider`'s `verticalNavigation` and the English defaults. */
+  labels?: Partial<VerticalNavigationLabels>;
   children: ReactNode;
 };
 
 function VerticalNavigationRoot({
   variant = 'default',
+  labels: ownLabels,
   className,
   children,
   ref,
   ...rest
 }: VerticalNavigationProps) {
+  const labels = useLabels('verticalNavigation', VERTICAL_NAVIGATION_LABELS, ownLabels);
   // The background of the active item is one element that slides from item to item.
   const navRef = useRef<HTMLElement>(null);
   const marker = useIndicator(navRef, { active: 'a[aria-current="page"]', options: 'a' });
@@ -139,7 +145,7 @@ function VerticalNavigationRoot({
   return (
     <nav
       ref={mergedRef}
-      aria-label="Sidebar"
+      aria-label={labels.landmark}
       className={clsx(
         // `relative isolate`: the marker is placed against the nav and sits behind the items.
         'relative isolate flex flex-1 flex-col',

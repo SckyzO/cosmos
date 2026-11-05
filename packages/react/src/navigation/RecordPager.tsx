@@ -1,26 +1,12 @@
 import { clsx } from 'clsx';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useLabels } from '../labels/labelsContext';
 import { AppLink } from '../ui/AppLink';
 import { isTypingTarget, matchesHotkey } from '../ui/hotkey';
+import { RECORD_PAGER_LABELS, type RecordPagerLabels } from './labels';
 
 export type RecordPagerVariant = 'default' | 'compact';
-
-export type RecordPagerLabels = {
-  /** Previous button. Default `Previous {noun}`. */
-  previous?: string;
-  /** Next button. Default `Next {noun}`. */
-  next?: string;
-  /** The "Back to list" link. Default `Back to list`. */
-  back?: string;
-  /**
-   * The position, "12 of 340" by default. Receives the 1-indexed position and the total as nodes,
-   * already set apart (medium weight, primary color) as in the English default: put them in your
-   * own words, `(position, total) => <>{position} sur {total}</>`, and they keep that emphasis in
-   * any language.
-   */
-  count?: (position: ReactNode, total: ReactNode) => ReactNode;
-};
 
 export type RecordPagerHotkeys = {
   /** A hotkey in the syntax of `HelpOverlay`'s: `'['`, `'k'`, `'mod+arrowleft'`. */
@@ -53,11 +39,14 @@ export type RecordPagerProps = {
   variant?: RecordPagerVariant;
   /**
    * What the list holds, in the singular and lower case: "order" gives "Previous order" and
-   * "Next order". Default `record`.
+   * "Next order". Default `labels.noun`, `record`.
    */
   noun?: string;
-  /** Replaces a text outright, for another language or a wording `noun` can't build. */
-  labels?: RecordPagerLabels;
+  /**
+   * The texts it writes, over `LabelsProvider`'s `recordPager` and the English defaults: another
+   * language, or a wording `noun` can't build.
+   */
+  labels?: Partial<RecordPagerLabels>;
   /**
    * Keyboard shortcuts, off unless given: a default key would be taken from apps that never asked
    * for one. They listen on the document and do nothing while a field is being typed in. List
@@ -66,7 +55,7 @@ export type RecordPagerProps = {
    * Previous the arrow that points to the right if you want one.
    */
   hotkeys?: RecordPagerHotkeys;
-  /** Names the landmark. Default `{Noun} navigation`; two pagers on one page need distinct names. */
+  /** Names the landmark. Default `labels.landmark`, `{Noun} navigation`; two pagers on one page need distinct names. */
   'aria-label'?: string;
   className?: string;
 };
@@ -81,12 +70,6 @@ const STEP_SIZE: Record<RecordPagerVariant, string> = {
   compact: 'size-ctrl-32',
 };
 
-const defaultCount = (position: ReactNode, total: ReactNode) => (
-  <>
-    {position} of {total}
-  </>
-);
-
 export const RecordPager = ({
   position,
   total,
@@ -96,17 +79,17 @@ export const RecordPager = ({
   onNext,
   backHref,
   variant = 'default',
-  noun = 'record',
-  labels,
+  noun: nounProp,
+  labels: ownLabels,
   hotkeys,
   'aria-label': ariaLabel,
   className,
 }: RecordPagerProps) => {
-  const previousLabel = labels?.previous ?? `Previous ${noun}`;
-  const nextLabel = labels?.next ?? `Next ${noun}`;
-  const backLabel = labels?.back ?? 'Back to list';
-  const count = labels?.count ?? defaultCount;
-  const name = ariaLabel ?? `${noun.charAt(0).toUpperCase()}${noun.slice(1)} navigation`;
+  const labels = useLabels('recordPager', RECORD_PAGER_LABELS, ownLabels);
+  const noun = nounProp ?? labels.noun;
+  const previousLabel = labels.previous(noun);
+  const nextLabel = labels.next(noun);
+  const name = ariaLabel ?? labels.landmark(noun);
 
   // A side with nowhere to go is a disabled button even in link mode: a disabled `<a>` would still
   // be a link to reach and follow.
@@ -202,7 +185,7 @@ export const RecordPager = ({
           className="focus-visible:focus-indicator text-brand-600 dark:text-brand-400 inline-flex items-center gap-1.5 rounded-sm text-sm font-medium hover:underline"
         >
           <ArrowLeft aria-hidden className="size-4 rtl:-scale-x-100" />
-          {backLabel}
+          {labels.back}
         </AppLink>
       )}
       <div className="flex items-center gap-2">
@@ -214,7 +197,7 @@ export const RecordPager = ({
           )}
         >
           <bdi>
-            {count(
+            {labels.count(
               <span className={strong}>{position}</span>,
               <span className={strong}>{total}</span>
             )}

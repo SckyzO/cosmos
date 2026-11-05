@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
+import { STEPPER_LABELS, type StepperLabels } from './labels';
 
 export type StepperOrientation = 'horizontal' | 'vertical';
 export type StepperSize = 'sm' | 'md';
@@ -54,6 +56,8 @@ export type StepperStepProps = {
   __onClick?: (index: number) => void;
   /** @internal */
   __isLast?: boolean;
+  /** @internal */
+  __labels?: StepperLabels;
 };
 
 const INDICATOR_SIZE: Record<StepperSize, string> = {
@@ -93,6 +97,7 @@ const StepperStep = ({
   __clickable = false,
   __onClick,
   __isLast = false,
+  __labels = STEPPER_LABELS,
 }: StepperStepProps) => {
   const interactive = __clickable && !disabled;
   const renderAsButton = __clickable;
@@ -129,7 +134,7 @@ const StepperStep = ({
           )}
         >
           <span className={clsx('text-sm font-medium', stepLabel)}>
-            <bdi>Step {__index + 1}</bdi>
+            <bdi>{__labels.step(__index + 1)}</bdi>
           </span>
           <span className="text-sm font-medium text-gray-900 dark:text-white">{children}</span>
           {description && (
@@ -356,6 +361,8 @@ export type StepperProps = {
   clickable?: boolean;
   /** Called with the index of the step clicked, the step to move to. */
   onStepClick?: (index: number) => void;
+  /** The texts it writes, over `LabelsProvider`'s `stepper` and the English defaults. */
+  labels?: Partial<StepperLabels>;
   className?: string;
   children: ReactNode;
 };
@@ -368,9 +375,11 @@ export const StepperRoot = ({
   variant = 'indicators',
   clickable = false,
   onStepClick,
+  labels: ownLabels,
   className,
   children,
 }: StepperProps) => {
+  const labels = useLabels('stepper', STEPPER_LABELS, ownLabels);
   const [current, setCurrent] = useControllableState({
     value: currentProp,
     defaultValue: defaultCurrent,
@@ -397,7 +406,7 @@ export const StepperRoot = ({
           : 'flex flex-col';
 
   return (
-    <ol className={clsx(rootClass, className)} aria-label="Progress">
+    <ol className={clsx(rootClass, className)} aria-label={labels.progress}>
       {steps.map((step, i) => {
         const status: StepStatus = i < current ? 'done' : i === current ? 'active' : 'pending';
         return cloneElement(step, {
@@ -410,6 +419,7 @@ export const StepperRoot = ({
           __clickable: clickable,
           __onClick: setCurrent,
           __isLast: i === steps.length - 1,
+          __labels: labels,
         });
       })}
     </ol>

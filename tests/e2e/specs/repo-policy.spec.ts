@@ -476,12 +476,6 @@ const TEXT_DEFERRED: string[] = [
   'packages/react/src/map/MapMarkerList.tsx',
   'packages/react/src/map/MapPin.tsx',
   'packages/react/src/map/MapView.tsx',
-  'packages/react/src/navigation/Navbar.tsx',
-  'packages/react/src/navigation/Pagination.tsx',
-  'packages/react/src/navigation/RecordPager.tsx',
-  'packages/react/src/navigation/Stepper.tsx',
-  'packages/react/src/navigation/StickyScrollNav.tsx',
-  'packages/react/src/navigation/VerticalNavigation.tsx',
   'packages/react/src/settings/AppearanceMenu.tsx',
   'packages/react/src/settings/AppearanceSettings.tsx',
   'packages/react/src/settings/Customizer.tsx',
@@ -530,6 +524,11 @@ const TEXT_ALLOWED: { file: string; text: string; reason: string }[] = [
     file: 'packages/react/src/layout/MediaObject.tsx',
     text: 'gap-x-4',
     reason: 'the default of `gapClassName`, a Tailwind class and not text',
+  },
+  {
+    file: 'packages/react/src/navigation/Pagination.tsx',
+    text: 'icon',
+    reason: "`prevNextLabel` says how Previous and Next read ('icon' or 'text'), it is not text",
   },
 ];
 

@@ -59,7 +59,15 @@ import type {
   TopbarLabels,
 } from '../layout/labels';
 import type { FileTileLabels, StackedListLabels } from '../lists/labels';
-import type { BreadcrumbLabels } from '../navigation/labels';
+import type {
+  BreadcrumbLabels,
+  NavbarLabels,
+  PaginationLabels,
+  RecordPagerLabels,
+  StepperLabels,
+  StickyScrollNavLabels,
+  VerticalNavigationLabels,
+} from '../navigation/labels';
 import type {
   NewPasswordFormLabels,
   ResetPasswordFormLabels,
@@ -178,12 +186,14 @@ export type CosmosLabels = {
   miniCalendar: MiniCalendarLabels;
   modal: ModalLabels;
   multiSelect: MultiSelectLabels;
+  navbar: NavbarLabels;
   newPasswordForm: NewPasswordFormLabels;
   notificationCard: NotificationCardLabels;
   notificationRow: NotificationRowLabels;
   notificationsPanel: NotificationsPanelLabels;
   numberInput: NumberInputLabels;
   otpInput: OtpInputLabels;
+  pagination: PaginationLabels;
   passwordInput: PasswordInputLabels;
   passwordPolicyChecker: PasswordPolicyLabels;
   passwordStrengthMeter: PasswordStrengthLabels;
@@ -192,6 +202,7 @@ export type CosmosLabels = {
   planCard: PlanCardLabels;
   progressBar: ProgressBarLabels;
   rating: RatingLabels;
+  recordPager: RecordPagerLabels;
   refreshButton: RefreshButtonLabels;
   resetPasswordForm: ResetPasswordFormLabels;
   rowActionButton: RowActionButtonLabels;
@@ -209,6 +220,8 @@ export type CosmosLabels = {
   spinner: SpinnerLabels;
   stackedList: StackedListLabels;
   statefulSaveButton: StatefulSaveButtonLabels;
+  stepper: StepperLabels;
+  stickyScrollNav: StickyScrollNavLabels;
   tag: TagLabels;
   tagInput: TagInputLabels;
   themeToggle: ThemeToggleLabels;
@@ -220,6 +233,7 @@ export type CosmosLabels = {
   unsavedIndicator: UnsavedIndicatorLabels;
   uploadQueue: UploadQueueLabels;
   userMenu: UserMenuLabels;
+  verticalNavigation: VerticalNavigationLabels;
   videoEmbed: VideoEmbedLabels;
   zoomBar: ZoomBarLabels;
 };
