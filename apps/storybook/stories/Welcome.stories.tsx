@@ -370,13 +370,13 @@ const MANY_GROUPS: IndexEntry[] = [
 );
 
 /** The page on a phone: the sections stack, nothing scrolls sideways. */
-export const Phone: Story = {
+const phone: Story = {
   globals: mobileViewport,
   render: (_args, { globals }) => <WelcomePage appearance={appearanceOf(globals)} />,
 };
 
 export const PhoneChecks: Story = {
-  ...Phone,
+  ...phone,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
@@ -385,7 +385,7 @@ export const PhoneChecks: Story = {
 
 /** The picker starts from the toolbar's theme, here Sand, not from the default. Test only. */
 export const PhonePickerFollowsTheToolbar: Story = {
-  ...Phone,
+  ...phone,
   globals: { ...mobileViewport, theme: 'sand' },
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {

@@ -167,35 +167,35 @@ export const SingleCheckCard: Story = {
 };
 
 /** At 375px the rows stack, a long message wraps and nothing widens the page. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: { groups: HEALTH_GROUPS.slice(0, 2), sort: 'severity' },
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };
 
-export const MobileGrid: Story = {
+const mobileGrid: Story = {
   globals: mobileViewport,
   args: { variant: 'grid', groups: HEALTH_GROUPS.slice(0, 2), sort: 'severity' },
 };
 
 export const MobileGridChecks: Story = {
-  ...MobileGrid,
+  ...mobileGrid,
   tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };
 
-export const MobileLongMessage: Story = {
+const mobileLongMessage: Story = {
   ...LongMessage,
   globals: mobileViewport,
 };
 
 export const MobileLongMessageChecks: Story = {
-  ...MobileLongMessage,
+  ...mobileLongMessage,
   tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };

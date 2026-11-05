@@ -238,7 +238,7 @@ export const Live: Story = {
 };
 
 /** The four tiles share the width and shrink their digits and captions at 375px. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: {
     target: NOW + 123 * DAY + 4 * HOUR,
@@ -247,7 +247,7 @@ export const Mobile: Story = {
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();

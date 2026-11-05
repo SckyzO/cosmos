@@ -1290,7 +1290,7 @@ export const Inbox: Story = {
 };
 
 /** At phone width the row actions fold into one "More actions" menu and the star stays shown. */
-export const InboxNarrow: Story = {
+const inboxNarrow: Story = {
   ...Inbox,
   globals: mobileViewport,
 };
@@ -1728,7 +1728,7 @@ export const InboxFocusRingIsOnTheTitle: Story = {
 
 /** At phone width the actions are one menu, the star stays shown and every target is 24px. */
 export const InboxNarrowFoldsTheActions: Story = {
-  ...InboxNarrow,
+  ...inboxNarrow,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -1766,7 +1766,7 @@ export const InboxNarrowFoldsTheActions: Story = {
 
 /** The menu opens from the keyboard and Escape returns the focus to its button. */
 export const InboxNarrowMenuIsKeyboardReachable: Story = {
-  ...InboxNarrow,
+  ...inboxNarrow,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const row = within(mailRows(canvas)[1]!);

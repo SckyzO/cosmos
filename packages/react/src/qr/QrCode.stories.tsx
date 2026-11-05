@@ -75,7 +75,7 @@ export const Sizes: Story = {
 };
 
 /** A code wider than its parent shrinks with it, square, instead of widening the page. */
-export const ShrinksOnAPhone: Story = {
+const shrinksOnAPhone: Story = {
   globals: mobileViewport,
   args: { size: 480 },
 };
@@ -140,7 +140,7 @@ export const ErrorCorrectionGrowsTheCodeChecks: Story = {
 };
 
 export const ShrinksOnAPhoneChecks: Story = {
-  ...ShrinksOnAPhone,
+  ...shrinksOnAPhone,
   tags: ['!dev', '!autodocs'],
   play: async ({ args, canvasElement }) => {
     const code = codeOf(canvasElement, args.label);

@@ -121,7 +121,7 @@ export const InKpiCardChecks: Story = {
   },
 };
 
-export const OnNarrowScreen: Story = {
+const onNarrowScreen: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   render: () => (
@@ -136,7 +136,7 @@ export const OnNarrowScreen: Story = {
 };
 
 export const OnNarrowScreenChecks: Story = {
-  ...OnNarrowScreen,
+  ...onNarrowScreen,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();

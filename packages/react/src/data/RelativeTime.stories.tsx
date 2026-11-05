@@ -132,13 +132,13 @@ export const Live: Story = {
   },
 };
 
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: { tooltip: true, locale: 'fr-FR', value: NOW - 400 * DAY },
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();

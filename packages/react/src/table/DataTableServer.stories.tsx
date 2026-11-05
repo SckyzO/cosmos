@@ -136,14 +136,14 @@ export const FakeServerWithoutLatency: Story = {
 };
 
 /** At 375px the table scrolls in its own area, the pager and the page size select wrap. */
-export const OnAPhone: Story = {
+const onAPhone: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   render: () => <ServerTable latency={0} />,
 };
 
 export const OnAPhoneChecks: Story = {
-  ...OnAPhone,
+  ...onAPhone,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('table', { name: 'Orders' })).toBeInTheDocument();

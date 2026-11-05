@@ -119,14 +119,14 @@ export const DarkStyle: Story = {
 };
 
 /** At 375 px the list stacks under the map and the page does not scroll sideways. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   parameters: { layout: 'fullscreen' },
   render: (args) => <Locator {...args} />,
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);

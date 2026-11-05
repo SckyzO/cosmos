@@ -889,7 +889,7 @@ export const CodeHostileSnippet: Story = {
 };
 
 /** At 375px a long line scrolls inside its block. */
-export const CodeMobile: Story = {
+const codeMobile: Story = {
   globals: mobileViewport,
   render: () => (
     <Wrap>
@@ -908,7 +908,7 @@ export const CodeMobile: Story = {
 };
 
 export const CodeMobileChecks: Story = {
-  ...CodeMobile,
+  ...codeMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await waitFor(() =>

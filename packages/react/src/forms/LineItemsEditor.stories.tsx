@@ -110,7 +110,7 @@ export const NewInvoice: Story = {
 };
 
 /** The same page on a phone: each line is a card, with the titles of its fields in view. */
-export const NewInvoiceMobile: Story = {
+const newInvoiceMobile: Story = {
   globals: mobileViewport,
   render: () => NEW_INVOICE,
 };
@@ -247,6 +247,7 @@ export const SideSummary: Story = {
 };
 
 export const SideSummaryMobile: Story = {
+  tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
   render: () => <SideSummaryEditor />,
 };
@@ -874,7 +875,7 @@ export const SideSummaryFollowsTheLines: Story = {
 
 /** At 393px a line is a card of its own: titles in view, the fields stacked, no sideways scroll. */
 export const NewInvoiceMobileChecks: Story = {
-  ...NewInvoiceMobile,
+  ...newInvoiceMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

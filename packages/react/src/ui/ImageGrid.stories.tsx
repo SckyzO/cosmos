@@ -401,13 +401,13 @@ export const MasonryItemsAreButtonsAndLinks: Story = {
   },
 };
 
-export const MasonryOnAPhone: Story = {
+const masonryOnAPhone: Story = {
   globals: mobileViewport,
   render: () => <MasonryDemo columns={{ sm: 2, lg: 3 }} />,
 };
 
 export const MasonryOnAPhoneChecks: Story = {
-  ...MasonryOnAPhone,
+  ...masonryOnAPhone,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement, canvas }) => {
     expectNoHorizontalOverflow();

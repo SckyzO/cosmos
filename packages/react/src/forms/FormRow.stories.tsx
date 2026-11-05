@@ -190,13 +190,13 @@ const SettingsRows = () => (
 );
 
 /** Below `sm` the label and its description stack above the field, which takes the row's width. */
-export const MobileStacksLabelAboveField: Story = {
+const mobileStacksLabelAboveField: Story = {
   globals: mobileViewport,
   render: () => <SettingsRows />,
 };
 
 export const MobileStacksLabelAboveFieldChecks: Story = {
-  ...MobileStacksLabelAboveField,
+  ...mobileStacksLabelAboveField,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     expectNoHorizontalOverflow();

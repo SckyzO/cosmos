@@ -2813,13 +2813,13 @@ export const CompactInShell: Story = {
 };
 
 /** Below `lg` the sidebar is the Shell's drawer, expanded: the compact variant gives way to it. */
-export const CompactMobile: Story = {
+const compactMobile: Story = {
   ...CompactInShell,
   globals: mobileViewport,
 };
 
 export const CompactMobileChecks: Story = {
-  ...CompactMobile,
+  ...compactMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

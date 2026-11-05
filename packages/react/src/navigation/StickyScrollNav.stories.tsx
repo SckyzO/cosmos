@@ -258,7 +258,7 @@ export const OnNavigateReplacesTheScroll: Story = {
 // ── Phones: the jump menu ───────────────────────────────────────────────────
 
 /** Below `sm` the row of buttons folds into a menu that names the current section. */
-export const MobileJumpMenu: Story = {
+const mobileJumpMenu: Story = {
   globals: mobileViewport,
   render: () => (
     <div className="bg-[var(--color-bg-base)] p-6">
@@ -271,7 +271,7 @@ export const MobileJumpMenu: Story = {
 };
 
 export const MobileJumpMenuChecks: Story = {
-  ...MobileJumpMenu,
+  ...mobileJumpMenu,
   tags: ['!dev', '!autodocs'],
   // Sections taller than the screen, so each one has room to reach the top.
   render: () => <LongPage topOffset={0} />,
@@ -467,7 +467,7 @@ export const MarkerJumpsUnderReducedMotion: Story = {
 
 /** Below `sm` the row of buttons is a menu: there is no marker to place. */
 export const NoMarkerOnThePhone: Story = {
-  ...MobileJumpMenu,
+  ...mobileJumpMenu,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation');

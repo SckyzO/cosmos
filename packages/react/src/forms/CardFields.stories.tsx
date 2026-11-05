@@ -243,13 +243,13 @@ export const Checkout: Story = {
 };
 
 /** At 375px the summary goes under the form and the code and the expiry stay side by side. */
-export const CheckoutMobile: Story = {
+const checkoutMobile: Story = {
   globals: mobileViewport,
   render: () => <CheckoutPayment initial={VISA} />,
 };
 
 export const CheckoutMobileChecks: Story = {
-  ...CheckoutMobile,
+  ...checkoutMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);

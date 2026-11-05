@@ -127,7 +127,7 @@ export const Live: Story = {
 };
 
 /** At 375px the display clock shrinks to fit and the cards stack. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: {
     variant: 'display',
@@ -139,7 +139,7 @@ export const Mobile: Story = {
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();

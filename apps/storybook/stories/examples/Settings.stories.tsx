@@ -706,13 +706,13 @@ export const ExtremeContent: Story = {
   render: () => <SettingsScreen state="extreme" />,
 };
 
-export const Phone: Story = {
+const phone: Story = {
   ...Content,
   globals: mobileViewport,
 };
 
 export const PhoneChecks: Story = {
-  ...Phone,
+  ...phone,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement, canvas }) => {
     // The sections fold into a jump menu, and nothing makes the page scroll sideways.
@@ -722,13 +722,13 @@ export const PhoneChecks: Story = {
 };
 
 /** The delete confirmation, open on a phone. */
-export const PhoneDeleteConfirm: Story = {
+const phoneDeleteConfirm: Story = {
   render: () => <SettingsScreen state="content" defaultDeleteOpen />,
   globals: mobileViewport,
 };
 
 export const PhoneDeleteConfirmChecks: Story = {
-  ...PhoneDeleteConfirm,
+  ...phoneDeleteConfirm,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     const dialog = await within(document.body).findByRole('alertdialog');

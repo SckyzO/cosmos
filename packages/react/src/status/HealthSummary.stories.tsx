@@ -104,7 +104,7 @@ export const Stale: Story = { args: { stale: STALE_SINCE } };
 export const StaleCompact: Story = { args: { stale: STALE_SINCE, variant: 'compact' } };
 
 /** The banner and the compact line at 375px: the badges and the button wrap, nothing widens the page. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: { refresh: { autoRefreshMs: 0, onRefresh: fn(), onIntervalChange: fn() } },
   render: (args) => (
@@ -116,7 +116,7 @@ export const Mobile: Story = {
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };

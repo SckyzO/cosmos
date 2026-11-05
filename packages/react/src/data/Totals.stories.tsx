@@ -275,7 +275,7 @@ export const SignDisplayChecks: Story = {
 };
 
 /** At 375px a long label wraps, a coupon code with no break point breaks, and the amounts stay on one line. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: { 'aria-label': 'Order summary', currency: 'USD', locale: 'en-US' },
   render: (args) => (
@@ -295,7 +295,7 @@ export const Mobile: Story = {
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

@@ -651,12 +651,12 @@ export const HistoryChecks: Story = {
  * The same page at phone width: the aside under the thread, Assign and Close ticket in the More
  * menu.
  */
-export const Phone: Story = {
+const phone: Story = {
   globals: mobileViewport,
 };
 
 export const PhoneChecks: Story = {
-  ...Phone,
+  ...phone,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -666,13 +666,13 @@ export const PhoneChecks: Story = {
 };
 
 /** The History tab at phone width. */
-export const PhoneHistory: Story = {
+const phoneHistory: Story = {
   globals: mobileViewport,
   args: { tab: 'history' },
 };
 
 export const PhoneHistoryChecks: Story = {
-  ...PhoneHistory,
+  ...phoneHistory,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
@@ -799,7 +799,7 @@ export const ComposerModesReachOnSubmit: Story = {
 };
 
 export const PhoneActionsLiveInTheMoreMenu: Story = {
-  ...Phone,
+  ...phone,
   tags: hidden,
   play: async ({ canvas, args }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'More' }));

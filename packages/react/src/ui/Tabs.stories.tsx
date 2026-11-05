@@ -715,29 +715,29 @@ const expectStripScrollsToActiveTab = async (
   expectNoHorizontalOverflow();
 };
 
-export const MobileScrollingTabs: Story = {
+const mobileScrollingTabs: Story = {
   globals: mobileViewport,
   render: () => <ManyTabs variant="underline" />,
 };
 
 export const MobileScrollingTabsChecks: Story = {
-  ...MobileScrollingTabs,
+  ...mobileScrollingTabs,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => expectStripScrollsToActiveTab(canvas),
 };
 
-export const MobileFolder: Story = {
+const mobileFolder: Story = {
   globals: mobileViewport,
   render: () => <ManyTabs variant="folder" />,
 };
 
 export const MobileFolderChecks: Story = {
-  ...MobileFolder,
+  ...mobileFolder,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => expectStripScrollsToActiveTab(canvas),
 };
 
-export const MobileVertical: Story = {
+const mobileVertical: Story = {
   globals: mobileViewport,
   render: () => {
     const [tab, setTab] = useState('account');
@@ -770,7 +770,7 @@ export const MobileVertical: Story = {
 };
 
 export const MobileVerticalChecks: Story = {
-  ...MobileVertical,
+  ...mobileVertical,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -1032,13 +1032,13 @@ export const PillsFocusRing: Story = {
   },
 };
 
-export const MobilePills: Story = {
+const mobilePills: Story = {
   globals: mobileViewport,
   render: () => <ManyTabs variant="pills" />,
 };
 
 export const MobilePillsChecks: Story = {
-  ...MobilePills,
+  ...mobilePills,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => expectStripScrollsToActiveTab(canvas),
 };
@@ -1405,13 +1405,13 @@ export const RaisedFocusRingInLight: Story = {
   globals: { theme: 'light' },
 };
 
-export const MobileRaised: Story = {
+const mobileRaised: Story = {
   globals: mobileViewport,
   render: () => <ManyTabs variant="raised" />,
 };
 
 export const MobileRaisedChecks: Story = {
-  ...MobileRaised,
+  ...mobileRaised,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => expectStripScrollsToActiveTab(canvas),
 };

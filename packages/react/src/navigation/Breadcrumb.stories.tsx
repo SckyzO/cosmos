@@ -238,13 +238,13 @@ export const ShortTrailIsNotCollapsed: Story = {
 };
 
 /** Below `sm` the labels truncate and the current crumb stays in view. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: { items: DEEP_PATH, maxItems: 3 },
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Breadcrumb' });
@@ -259,7 +259,7 @@ export const MobileChecks: Story = {
   },
 };
 
-export const MobileWithIcons: Story = {
+const mobileWithIcons: Story = {
   globals: mobileViewport,
   args: {
     items: [
@@ -272,7 +272,7 @@ export const MobileWithIcons: Story = {
 };
 
 export const MobileWithIconsChecks: Story = {
-  ...MobileWithIcons,
+  ...mobileWithIcons,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByRole('navigation', { name: 'Breadcrumb' }));

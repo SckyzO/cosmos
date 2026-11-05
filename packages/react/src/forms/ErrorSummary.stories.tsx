@@ -221,13 +221,13 @@ const LONG_ERRORS: ErrorSummaryItem[] = [
 ];
 
 /** On a 375px screen the sentence wraps in the banner, and the page does not scroll sideways. */
-export const OnMobile: Story = {
+const onMobile: Story = {
   render: () => <Form errors={LONG_ERRORS} />,
   globals: mobileViewport,
 };
 
 export const OnMobileChecks: Story = {
-  ...OnMobile,
+  ...onMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);

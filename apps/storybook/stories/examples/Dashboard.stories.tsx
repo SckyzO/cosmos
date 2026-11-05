@@ -633,13 +633,13 @@ export const ExtremeContent: Story = {
 };
 
 /** At 375px the KPIs sit two by two with abbreviated values and the table becomes a list. */
-export const Phone: Story = {
+const phone: Story = {
   globals: mobileViewport,
   render: () => <DashboardScreen state="content" />,
 };
 
 export const PhoneChecks: Story = {
-  ...Phone,
+  ...phone,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();

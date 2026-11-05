@@ -201,13 +201,13 @@ export const SettingsDoesNotAutoClose: Story = {
 };
 
 /** At the `mobile` viewport the actions wrap under the message and nothing runs past the edge. */
-export const FullChoicesOnMobile: Story = {
+const fullChoicesOnMobile: Story = {
   ...FullChoices,
   globals: { viewport: { value: 'mobile', isRotated: false } },
 };
 
 export const FullChoicesOnMobileChecks: Story = {
-  ...FullChoicesOnMobile,
+  ...fullChoicesOnMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(window.innerWidth).toBeLessThan(768);

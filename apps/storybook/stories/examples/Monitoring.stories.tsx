@@ -1266,13 +1266,13 @@ export const LoadError: Story = {
 };
 
 /** On a phone: the severity panels and the gauges come first, the matrix scrolls in a box of its own and the alerts are cards. */
-export const Phone: Story = {
+const phone: Story = {
   globals: mobileViewport,
   args: {},
 };
 
 export const PhoneChecks: Story = {
-  ...Phone,
+  ...phone,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
@@ -1280,13 +1280,13 @@ export const PhoneChecks: Story = {
 };
 
 /** A node opened from the matrix, on a phone: its health checks, the failing ones first. */
-export const PhoneNode: Story = {
+const phoneNode: Story = {
   globals: mobileViewport,
   args: { state: 'node' },
 };
 
 export const PhoneNodeChecks: Story = {
-  ...PhoneNode,
+  ...phoneNode,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();

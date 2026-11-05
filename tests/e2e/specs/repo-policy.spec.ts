@@ -792,6 +792,10 @@ const keyOf = (property: ts.ObjectLiteralElementLike) =>
  * runs hidden. `known` holds the properties a spread, a name or a helper call in the file gives;
  * `opaque` is set when something the file does not declare could add more.
  */
+// `mobileViewport` and `tabletViewport` of storybook-helpers, or a `viewport` global set to either.
+const SMALL_VIEWPORT =
+  /^(?:mobileViewport|tabletViewport)$|\bviewport\s*:\s*\{[^}]*\bvalue\s*:\s*['"](?:mobile|tablet)['"]/;
+
 const readStories = (file: string, source: string) => {
   const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   const values = new Map<string, ts.Expression>();
@@ -919,6 +923,10 @@ const readStories = (file: string, source: string) => {
       pinsTheme: settings('globals').some(
         (node) => ts.isExpression(node) && propsOf(node).known.has('theme')
       ),
+      /** A phone or tablet width in its `globals`, its own or the meta's. */
+      pinsSmallViewport: settings('globals').some((node) => SMALL_VIEWPORT.test(node.getText())),
+      /** Out of the sidebar: `!dev` in its tags or in the meta's. */
+      offTheSidebar: [...(metaTags ?? []), ...(tags ?? [])].includes('!dev'),
       ownIframe: /\bportalDocsParams\b|\binline:\s*false\b/.test(
         settings('parameters')
           .map((node) => node.getText())
@@ -1093,6 +1101,52 @@ test('the viewport check sees a pin in the meta and lets a story pin its own', (
   ]) {
     expect(pinsViewport(metaBlock(source)), source).toBe(false);
   }
+});
+
+// The toolbar's Viewport menu shows any story at a phone or a tablet width, and a story that pins
+// one cannot be widened from it; the docs page draws the story at its own width anyway. A pinned
+// width belongs to a hidden story, for the checks the test runner makes at that width.
+const smallViewportInTheSidebar = (file: string, source: string) =>
+  readStories(file, source)
+    .filter((story) => story.pinsSmallViewport && !story.offTheSidebar)
+    .map((story) => story.name);
+
+test('the sidebar check sees a pinned phone or tablet width and lets a hidden one through', () => {
+  const found = (body: string, meta = "{ title: 'A/B' }") =>
+    smallViewportInTheSidebar(
+      'A.stories.tsx',
+      `const meta = ${meta}; export default meta;\n${body}`
+    );
+  for (const body of [
+    'export const Phone = { globals: mobileViewport };',
+    'export const Tablet = { globals: tabletViewport };',
+    "export const Phone = { globals: { viewport: { value: 'mobile', isRotated: false } } };",
+    'const Base = { globals: mobileViewport };\nexport const Phone = { ...Base, args: {} };',
+  ]) {
+    expect(found(body), body).toHaveLength(1);
+  }
+  for (const body of [
+    "export const Phone = { tags: ['!dev', '!autodocs'], globals: mobileViewport };",
+    "const HIDDEN = ['!dev', '!autodocs'];\nexport const Phone = { tags: HIDDEN, globals: mobileViewport };",
+    "export const Wide = { globals: { viewport: { value: 'desktop', isRotated: false } } };",
+    'export const Plain = { args: {} };',
+  ]) {
+    expect(found(body), body).toEqual([]);
+  }
+  expect(
+    found('export const Phone = { globals: mobileViewport };', "{ title: 'A/B', tags: ['!dev'] }")
+  ).toEqual([]);
+});
+
+test('no story in the sidebar pins a phone or tablet width', () => {
+  const files = storySources();
+  expect(files.length, 'stories files').toBeGreaterThan(200);
+  expect(
+    files.flatMap((file) =>
+      smallViewportInTheSidebar(file, read(file)).map((story) => `${file}: ${story}`)
+    ),
+    "the Viewport menu shows any story at that width: pin it on a hidden story, `tags: ['!dev', '!autodocs']`, for the checks made at that width"
+  ).toEqual([]);
 });
 
 test('no stories file pins a viewport for every story it holds', () => {

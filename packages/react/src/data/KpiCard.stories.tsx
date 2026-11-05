@@ -309,7 +309,7 @@ export const Grid: Story = {
 };
 
 /** One card per row at 375px; the delta wraps under the value, nothing widens the page. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   render: () => (
     <div className="grid gap-4">
@@ -333,7 +333,7 @@ export const Mobile: Story = {
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: ({ canvasElement }) => {
     expectNoHorizontalOverflow();
@@ -676,7 +676,7 @@ export const ChartBesideTheValue: Story = {
 };
 
 /** On a phone the card takes the width of the screen: the ring stays beside the figure. */
-export const ChartBesideTheValueOnMobile: Story = {
+const chartBesideTheValueOnMobile: Story = {
   globals: mobileViewport,
   render: () => (
     <div className="grid gap-4">
@@ -687,7 +687,7 @@ export const ChartBesideTheValueOnMobile: Story = {
 };
 
 export const ChartBesideTheValueOnMobileChecks: Story = {
-  ...ChartBesideTheValueOnMobile,
+  ...chartBesideTheValueOnMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow();
@@ -851,13 +851,13 @@ export const TintedIntents: Story = {
   ),
 };
 
-export const TintedOnMobile: Story = {
+const tintedOnMobile: Story = {
   ...TintedIntents,
   globals: mobileViewport,
 };
 
 export const TintedOnMobileChecks: Story = {
-  ...TintedOnMobile,
+  ...tintedOnMobile,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();

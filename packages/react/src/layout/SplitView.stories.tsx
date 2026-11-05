@@ -339,7 +339,7 @@ export const InAShellNarrow: Story = {
  * Below the breakpoint only the active pane shows. The list item opens the message and the Back
  * button returns, both through `useSplitView`; the pane that appears takes focus.
  */
-export const Narrow: Story = {
+const narrow: Story = {
   globals: mobileViewport,
   render: () => {
     const Row = ({ mail }: { mail: Mail }) => {
@@ -378,7 +378,7 @@ export const Narrow: Story = {
 
 /** The test of `Narrow`, hidden: the visible story keeps its resting state. */
 export const NarrowSwitchesPanes: Story = {
-  ...Narrow,
+  ...narrow,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -400,7 +400,7 @@ export const NarrowSwitchesPanes: Story = {
 };
 
 /** The host owns the active pane: `activePane` and `onActivePaneChange`. */
-export const Controlled: Story = {
+const controlled: Story = {
   globals: mobileViewport,
   args: { onActivePaneChange: fn() },
   render: function Render({ onActivePaneChange }) {
@@ -440,7 +440,7 @@ export const Controlled: Story = {
 
 /** The test of `Controlled`, hidden: the visible story keeps its resting state. */
 export const ControlledSwitchesPanes: Story = {
-  ...Controlled,
+  ...controlled,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(canvas.getByTestId('active')).toHaveTextContent('list');
@@ -556,7 +556,7 @@ const PhoneMail = () => (
  * back out the same way when Back is pressed (from the left in right to left). Side by side
  * nothing moves. With the reduced setting the panes change at once.
  */
-export const DetailSlidesOverTheList: Story = {
+const detailSlidesOverTheList: Story = {
   globals: mobileViewport,
   parameters: { settleMotion: false },
   render: () => <PhoneMail />,
@@ -574,7 +574,7 @@ const fromStart = (el: HTMLElement) => startOffset(el, el.parentElement!);
  * list is out of the layout and the message is in the flow, at rest.
  */
 export const DetailComesInFromTheEnd: Story = {
-  ...DetailSlidesOverTheList,
+  ...detailSlidesOverTheList,
   tags: ['!dev', '!autodocs'],
   render: () => (
     <SlowFolds tokens={['--cosmos-motion-slow']}>
@@ -620,7 +620,7 @@ export const DetailComesInFromTheEnd: Story = {
  * toward the end of the line, out of reach, and is out of the layout when it has gone.
  */
 export const DetailLeavesToTheEnd: Story = {
-  ...DetailSlidesOverTheList,
+  ...detailSlidesOverTheList,
   tags: ['!dev', '!autodocs'],
   render: () => (
     <SlowFolds tokens={['--cosmos-motion-slow']}>
@@ -655,7 +655,7 @@ export const DetailLeavesToTheEnd: Story = {
 
 /** The slide runs on the slow token of the theme, 300 ms, and the old pane goes when it has played. */
 export const DetailSlidesOnTheSlowToken: Story = {
-  ...DetailSlidesOverTheList,
+  ...detailSlidesOverTheList,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const list = pane(canvas, 'Messages');
@@ -670,7 +670,7 @@ export const DetailSlidesOnTheSlowToken: Story = {
 
 /** In right to left the message comes from the left and leaves by it: the end of that line. */
 export const DetailComesFromTheLeftInRightToLeft: Story = {
-  ...DetailSlidesOverTheList,
+  ...detailSlidesOverTheList,
   tags: ['!dev', '!autodocs'],
   globals: { ...mobileViewport, direction: 'rtl' },
   render: () => (
@@ -699,7 +699,7 @@ export const DetailComesFromTheLeftInRightToLeft: Story = {
 
 /** With the reduced setting the panes change at once: nothing slides, and the old pane is gone. */
 export const PanesChangeAtOnceUnderReducedMotion: Story = {
-  ...DetailSlidesOverTheList,
+  ...detailSlidesOverTheList,
   tags: ['!dev', '!autodocs'],
   globals: { ...mobileViewport, motion: 'reduced' },
   play: async ({ canvas }) => {

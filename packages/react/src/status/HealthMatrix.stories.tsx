@@ -183,13 +183,13 @@ export const AttentionStrip: Story = {
 export const AttentionStripPills: Story = { args: { ...AttentionStrip.args, variant: 'pills' } };
 
 /** At 375px the strip scrolls sideways on its own, and the page does not. */
-export const AttentionStripMobile: Story = {
+const attentionStripMobile: Story = {
   ...AttentionStrip,
   globals: mobileViewport,
 };
 
 export const AttentionStripMobileChecks: Story = {
-  ...AttentionStripMobile,
+  ...attentionStripMobile,
   tags: ['!dev', '!autodocs'],
   play: ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -202,12 +202,12 @@ export const AttentionStripMobileChecks: Story = {
 export const AttentionStripFewRows: Story = { args: { attentionStrip: true } };
 
 /** At 375px the grid scrolls in its own box: the page does not. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: ({ canvasElement }) => {
     expectNoHorizontalOverflow();
@@ -224,18 +224,18 @@ export const Stale: Story = { args: { stale: HEALTH_NOW - 4 * 60_000 } };
 
 export const StalePills: Story = { args: { stale: HEALTH_NOW - 4 * 60_000, variant: 'pills' } };
 
-export const StaleMobile: Story = { ...Mobile, args: { stale: HEALTH_NOW - 4 * 60_000 } };
+const staleMobile: Story = { ...mobile, args: { stale: HEALTH_NOW - 4 * 60_000 } };
 
 export const StaleMobileChecks: Story = {
-  ...StaleMobile,
+  ...staleMobile,
   tags: ['!dev', '!autodocs'],
   play: MobileChecks.play,
 };
 
-export const MobilePills: Story = { ...Mobile, args: { variant: 'pills' } };
+const mobilePills: Story = { ...mobile, args: { variant: 'pills' } };
 
 export const MobilePillsChecks: Story = {
-  ...MobilePills,
+  ...mobilePills,
   tags: ['!dev', '!autodocs'],
   play: MobileChecks.play,
 };

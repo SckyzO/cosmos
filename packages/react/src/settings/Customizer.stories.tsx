@@ -76,13 +76,13 @@ export const WithSectionsHidden: Story = {
 };
 
 /** On a phone the panel takes the whole width. */
-export const Mobile: Story = {
+const mobile: Story = {
   args: { presets: PRESETS },
   globals: mobileViewport,
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();

@@ -86,7 +86,7 @@ export const ReadOnly: Story = { args: { items: ITEMS, onRetry: undefined, onRem
 export const CustomLabel: Story = { args: { items: ITEMS.slice(0, 2), label: 'Attachments' } };
 
 /** At 375px a long name truncates, the failed row keeps its Retry button, nothing widens the page. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: {
     items: [
@@ -109,7 +109,7 @@ export const Mobile: Story = {
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByRole('region', { name: 'Uploads' }));

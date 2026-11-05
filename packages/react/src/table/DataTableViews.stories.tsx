@@ -491,7 +491,7 @@ export const ControlledViewsFollowTheHost: Story = {
 };
 
 /** Below `sm` the Views, Export and Columns buttons keep their icons and names and drop their labels. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   render: () => (
     <DataTable
@@ -508,7 +508,7 @@ export const Mobile: Story = {
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

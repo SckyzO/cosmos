@@ -124,13 +124,13 @@ export const NarrowContainer: Story = {
 };
 
 /** At 375px the bar keeps the latest history and the page does not scroll sideways. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: { legend: true },
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: ({ canvasElement }) => {
     expectNoHorizontalOverflow();
@@ -141,14 +141,14 @@ export const MobileChecks: Story = {
   },
 };
 
-export const MobileDots: Story = {
-  ...Mobile,
+const mobileDots: Story = {
+  ...mobile,
   args: { variant: 'dots', legend: true },
   play: undefined,
 };
 
 export const MobileDotsChecks: Story = {
-  ...MobileDots,
+  ...mobileDots,
   tags: ['!dev', '!autodocs'],
   play: ({ canvasElement }) => {
     expectNoHorizontalOverflow();

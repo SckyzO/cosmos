@@ -537,17 +537,17 @@ const fitsThePhone =
     expectNoHorizontalOverflow(context.canvasElement);
   };
 
-export const ThreadWithRepliesOnMobile: Story = atMobile(ThreadWithReplies);
-export const InternalNotesOnMobile: Story = atMobile(InternalNotes);
-export const EditingOnMobile: Story = atMobile(Editing);
-export const EmptyThreadOnMobile: Story = atMobile(EmptyThread);
-export const LongTextOnMobile: Story = atMobile(LongText);
-export const HostileTextOnMobile: Story = atMobile(HostileText);
-export const FoldedRepliesOnMobile: Story = atMobile(FoldedReplies);
-export const LatestRepliesKeptOnMobile: Story = atMobile(LatestRepliesKept);
-export const ComposerWithModesOnMobile: Story = atMobile(ComposerWithModes);
-export const ComposerInternalNoteOnMobile: Story = atMobile(ComposerInternalNote);
-export const TicketDetailPageOnMobile: Story = atMobile(TicketDetailPage);
+const ThreadWithRepliesOnMobile: Story = atMobile(ThreadWithReplies);
+const InternalNotesOnMobile: Story = atMobile(InternalNotes);
+const EditingOnMobile: Story = atMobile(Editing);
+const EmptyThreadOnMobile: Story = atMobile(EmptyThread);
+const LongTextOnMobile: Story = atMobile(LongText);
+const HostileTextOnMobile: Story = atMobile(HostileText);
+const FoldedRepliesOnMobile: Story = atMobile(FoldedReplies);
+const LatestRepliesKeptOnMobile: Story = atMobile(LatestRepliesKept);
+const ComposerWithModesOnMobile: Story = atMobile(ComposerWithModes);
+const ComposerInternalNoteOnMobile: Story = atMobile(ComposerInternalNote);
+const TicketDetailPageOnMobile: Story = atMobile(TicketDetailPage);
 
 export const ThreadWithRepliesOnMobileChecks: Story = {
   ...ThreadWithRepliesOnMobile,

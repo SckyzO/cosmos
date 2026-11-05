@@ -61,20 +61,20 @@ export const InvalidPattern: Story = {
 };
 
 /** Below `sm`, Live and the search stay in the bar; levels, sources and the view options go into Filters. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   render: () => <LogConsole count={200} height={380} search="timeout" />,
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };
 
 /** The test of `Mobile`, hidden: the popover opens, and its button counts the active filters. */
 export const NarrowFiltersCountActiveFilters: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expect(canvas.queryByRole('group', { name: 'Levels' })).toBeNull();

@@ -172,13 +172,13 @@ export const WithTooltip: Story = {
 export const InvalidValue: Story = { args: { value: 'soon' } };
 
 /** At 375px a long format wraps instead of widening the page. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: { format: 'full', locale: 'fr-FR', timeZone: 'Asia/Tokyo' },
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();

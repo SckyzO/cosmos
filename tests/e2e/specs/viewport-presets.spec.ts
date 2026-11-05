@@ -24,8 +24,10 @@ test('a full screen with no viewport of its own fills the frame', async ({ page 
   expect(await frameWidth(page, 'examples-list--content')).toBeGreaterThan(1280);
 });
 
+// A hidden story: none in the sidebar pins a phone width (repo-policy.spec.ts), and the manager
+// opens one by its URL all the same.
 test('a story pinned to the phone preset is shown 393px wide', async ({ page }) => {
-  expect(await frameWidth(page, 'examples-list--phone')).toBe(393);
+  expect(await frameWidth(page, 'examples-list--phone-checks')).toBe(393);
 });
 
 // A value the presets do not have falls back to the same 320x568 frame without a word, in the

@@ -481,7 +481,7 @@ export const GroupAvatarsChecks: Story = {
 };
 
 /** The same list on a 375px screen: the previews give way, the page does not scroll sideways. */
-export const GroupAvatarsOnMobile: Story = {
+const groupAvatarsOnMobile: Story = {
   ...GroupAvatars,
   globals: mobileViewport,
   render: () => (
@@ -490,7 +490,7 @@ export const GroupAvatarsOnMobile: Story = {
 };
 
 export const GroupAvatarsOnMobileChecks: Story = {
-  ...GroupAvatarsOnMobile,
+  ...groupAvatarsOnMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
@@ -586,13 +586,13 @@ export const FlatReply: Story = {
 };
 
 /** A flat reply fits a 375px screen: the code block scrolls inside itself. */
-export const FlatReplyOnMobile: Story = {
+const flatReplyOnMobile: Story = {
   ...FlatReply,
   globals: mobileViewport,
 };
 
 export const FlatReplyOnMobileChecks: Story = {
-  ...FlatReplyOnMobile,
+  ...flatReplyOnMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
@@ -1006,13 +1006,13 @@ export const ComposerGenerating: Story = {
   ),
 };
 
-export const ComposerFooterAtMobile: Story = {
+const composerFooterAtMobile: Story = {
   ...ComposerGenerating,
   globals: mobileViewport,
 };
 
 export const ComposerFooterAtMobileChecks: Story = {
-  ...ComposerFooterAtMobile,
+  ...composerFooterAtMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
@@ -1212,13 +1212,13 @@ export const AiAssistant: Story = {
 };
 
 /** The same page on a phone: nothing widens, the footer keeps its line. */
-export const AiAssistantOnMobile: Story = {
+const aiAssistantOnMobile: Story = {
   ...AiAssistant,
   globals: mobileViewport,
 };
 
 export const AiAssistantOnMobileChecks: Story = {
-  ...AiAssistantOnMobile,
+  ...aiAssistantOnMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
@@ -1268,13 +1268,13 @@ export const ImageGenerator: Story = {
   ),
 };
 
-export const ImageGeneratorOnMobile: Story = {
+const imageGeneratorOnMobile: Story = {
   ...ImageGenerator,
   globals: mobileViewport,
 };
 
 export const ImageGeneratorOnMobileChecks: Story = {
-  ...ImageGeneratorOnMobile,
+  ...imageGeneratorOnMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
@@ -1382,13 +1382,13 @@ export const AiAssistantWithToolsAndSources: Story = {
   ),
 };
 
-export const AiAssistantWithToolsOnMobile: Story = {
+const aiAssistantWithToolsOnMobile: Story = {
   ...AiAssistantWithToolsAndSources,
   globals: mobileViewport,
 };
 
 export const AiAssistantWithToolsOnMobileChecks: Story = {
-  ...AiAssistantWithToolsOnMobile,
+  ...aiAssistantWithToolsOnMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);

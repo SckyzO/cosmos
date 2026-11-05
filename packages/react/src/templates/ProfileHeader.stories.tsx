@@ -149,14 +149,14 @@ export const WithoutOptionalParts: Story = {
   },
 };
 
-export const Mobile: Story = {
+const mobile: Story = {
   args: { stats: STATS, tabs: <ProfileTabs /> },
   parameters: { layout: 'fullscreen' },
   globals: mobileViewport,
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);

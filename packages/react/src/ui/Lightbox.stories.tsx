@@ -302,13 +302,13 @@ export const FromAProductCarousel: Story = {
 };
 
 /** Below `sm` the picture takes the width, and the arrows leave the edges for the band under it, 44px each. */
-export const OnAPhone: Story = {
+const onAPhone: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   render: () => <Gallery startOpen startIndex={2} />,
 };
 
-export const FromAProductCarouselOnAPhone: Story = {
+const fromAProductCarouselOnAPhone: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   render: () => <ProductPage />,
@@ -951,7 +951,7 @@ export const ControlsStayDarkInEveryTheme: Story = {
 
 /** A thumb-sized viewer on a phone: the picture takes the width, the arrows are 44px and flank the caption. */
 export const OnAPhoneChecks: Story = {
-  ...OnAPhone,
+  ...onAPhone,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     const viewer = await findViewer();
@@ -1089,7 +1089,7 @@ export const SlideOpensTheViewerAtItsPicture: Story = {
 };
 
 export const ProductPageOnAPhoneChecks: Story = {
-  ...FromAProductCarouselOnAPhone,
+  ...fromAProductCarouselOnAPhone,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

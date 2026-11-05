@@ -224,7 +224,7 @@ export const LoadError: Story = {
 };
 
 /** At 375px the action moves under the title, in every state. */
-export const Phone: Story = {
+const phone: Story = {
   globals: mobileViewport,
   args: REVENUE,
 };
@@ -304,7 +304,7 @@ export const ActionFollowsTheReadingDirection: Story = {
 };
 
 export const PhoneChecks: Story = {
-  ...Phone,
+  ...phone,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -1950,14 +1950,14 @@ const PhoneParts = () => (
 );
 
 /** At 375px the toggle stays on the title's row and the action wraps under it. */
-export const PartsOnAPhone: Story = {
+const partsOnAPhone: Story = {
   globals: mobileViewport,
   args: { title: '' },
   render: () => <PhoneParts />,
 };
 
 export const PartsOnAPhoneChecks: Story = {
-  ...PartsOnAPhone,
+  ...partsOnAPhone,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

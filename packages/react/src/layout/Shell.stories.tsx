@@ -587,14 +587,14 @@ const expectClosed = async (dialog: HTMLElement) => {
 const scrim = () => document.body.querySelector<HTMLElement>('[data-slot="backdrop"]')!;
 
 /** At 375px the sidebar is off screen: the Topbar shows the hamburger and the logo. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   parameters: mobileDocs,
   render: () => <MobileShell />,
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -609,14 +609,14 @@ export const MobileChecks: Story = {
 };
 
 /** The hamburger opens the sidebar as a panel from the start edge, over a scrim, with a close button. */
-export const MobileOpen: Story = {
+const mobileOpen: Story = {
   globals: mobileViewport,
   parameters: mobileDocs,
   render: () => <MobileShell defaultSidebarOpen />,
 };
 
 export const MobileOpenChecks: Story = {
-  ...MobileOpen,
+  ...mobileOpen,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     const dialog = await body().findByRole('dialog', { name: 'Navigation menu' });
@@ -630,7 +630,7 @@ export const MobileOpenChecks: Story = {
 };
 
 /** The host owns the open state: `sidebarOpen` and `onSidebarOpenChange`. */
-export const MobileControlled: Story = {
+const mobileControlled: Story = {
   globals: mobileViewport,
   parameters: mobileDocs,
   render: () => {
@@ -640,7 +640,7 @@ export const MobileControlled: Story = {
 };
 
 export const MobileControlledChecks: Story = {
-  ...MobileControlled,
+  ...mobileControlled,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     const hamburger = body().getByRole('button', { name: 'Open navigation' });
@@ -897,14 +897,14 @@ export const BoxedFillsANarrowWindow: Story = {
 };
 
 /** Below `lg` the boxed Shell is the phone layout: a topbar, the page, the drawer. */
-export const BoxedMobile: Story = {
+const boxedMobile: Story = {
   globals: mobileViewport,
   parameters: mobileDocs,
   render: () => <BoxedShell />,
 };
 
 export const BoxedMobileChecks: Story = {
-  ...BoxedMobile,
+  ...boxedMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
