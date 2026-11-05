@@ -17,3 +17,4 @@ export * from './typography';
 export * from './chat';
 export * from './comments';
 export * from './logs';
+export * from './labels';

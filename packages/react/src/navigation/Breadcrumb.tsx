@@ -9,8 +9,10 @@ import {
 import { ChevronRight, Ellipsis, Home } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import { useLabels } from '../labels/labelsContext';
 import { AppLink } from '../ui/AppLink';
 import { Menu } from '../ui/Menu';
+import { BREADCRUMB_LABELS, type BreadcrumbLabels } from './labels';
 
 export type BreadcrumbItem = {
   label: string;
@@ -35,11 +37,12 @@ export type BreadcrumbProps = {
    */
   homeIcon?: boolean;
   /**
-   * Name of the navigation landmark. Default `'Breadcrumb'`. A page that holds
-   * several breadcrumbs gives each its own, or a screen reader cannot tell
-   * them apart; a translated app passes its own wording.
+   * Name of the navigation landmark. Default `labels.landmark`, `'Breadcrumb'`. A page that holds
+   * several breadcrumbs gives each its own, or a screen reader cannot tell them apart.
    */
   'aria-label'?: string;
+  /** The texts the trail writes, over `LabelsProvider`'s `breadcrumb` and the English defaults. */
+  labels?: Partial<BreadcrumbLabels>;
   /**
    * Most crumbs shown at once (at least 2). A longer trail keeps its first crumb and its last
    * `maxItems - 1`, and the ones in between collapse into a "…" menu that links to them. Default:
@@ -182,10 +185,12 @@ export const Breadcrumb = ({
   items,
   separator = 'chevron',
   homeIcon = false,
-  'aria-label': ariaLabel = 'Breadcrumb',
+  'aria-label': ariaLabel,
   maxItems,
+  labels: ownLabels,
   className,
 }: BreadcrumbProps) => {
+  const labels = useLabels('breadcrumb', BREADCRUMB_LABELS, ownLabels);
   const navRef = useRef<HTMLElement>(null);
   const phone = !useMediaQuery('(min-width: 40rem)', true);
   // What sets the crumbs' widths: a change folds the trail again from none.
@@ -212,7 +217,7 @@ export const Breadcrumb = ({
   return (
     <nav
       ref={navRef}
-      aria-label={ariaLabel}
+      aria-label={ariaLabel ?? labels.landmark}
       className={clsx('flex items-center gap-1 overflow-x-auto', className)}
     >
       {shown.map(({ icon: Icon, label, href, onClick }, i) => {
@@ -220,7 +225,7 @@ export const Breadcrumb = ({
         // The first crumb is never collapsed: `i === 0` is the first item of the trail.
         const renderIcon = (className: string) =>
           homeIcon && i === 0 && !Icon ? (
-            <Home className={className} role="img" aria-label="Home" />
+            <Home className={className} role="img" aria-label={labels.home} />
           ) : (
             Icon && <Icon className={className} />
           );
@@ -231,12 +236,12 @@ export const Breadcrumb = ({
               <>
                 <Menu>
                   <Menu.Trigger
-                    aria-label={`Show ${hidden.length} more ${hidden.length === 1 ? 'page' : 'pages'}`}
+                    aria-label={labels.showHidden(hidden.length)}
                     className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 flex shrink-0 items-center rounded-sm px-2 py-1 transition-colors"
                   >
                     <Ellipsis className="h-4 w-4" aria-hidden />
                   </Menu.Trigger>
-                  <Menu.Content aria-label="Hidden pages">
+                  <Menu.Content aria-label={labels.hiddenMenu}>
                     {hidden.map((crumb) => (
                       <Menu.Item
                         key={crumb.label}

@@ -1,8 +1,10 @@
 import { Spinner } from '../ui/Spinner';
+import { useLabels } from '../labels/labelsContext';
+import { LOADING_STATE_LABELS, type LoadingStateLabels } from './labels';
 import { StateLayout } from './StateLayout';
 
 export type LoadingStateProps = {
-  /** Line shown next to the spinner. Default: 'Loading…' */
+  /** Line shown next to the spinner. Default `labels.title`, 'Loading…' */
   title?: string;
   /** Detail under the title. */
   description?: string;
@@ -10,6 +12,8 @@ export type LoadingStateProps = {
   message?: string;
   /** Tighter spacing, for a card or a table body. */
   compact?: boolean;
+  /** The texts it writes, over `LabelsProvider`'s `loadingState` and the English defaults. */
+  labels?: Partial<LoadingStateLabels>;
   className?: string;
 };
 
@@ -25,20 +29,24 @@ export const LoadingState = ({
   description,
   message,
   compact,
+  labels: ownLabels,
   className,
-}: LoadingStateProps) => (
-  <StateLayout
-    role="status"
-    intent="brand"
-    // The state's own role names it, so the spinner's would announce "Loading" twice.
-    media={
-      <span aria-hidden="true">
-        <Spinner size={compact ? 'sm' : 'md'} />
-      </span>
-    }
-    title={title ?? message ?? 'Loading…'}
-    description={description}
-    compact={compact}
-    className={className}
-  />
-);
+}: LoadingStateProps) => {
+  const labels = useLabels('loadingState', LOADING_STATE_LABELS, ownLabels);
+  return (
+    <StateLayout
+      role="status"
+      intent="brand"
+      // The state's own role names it, so the spinner's would announce "Loading" twice.
+      media={
+        <span aria-hidden="true">
+          <Spinner size={compact ? 'sm' : 'md'} />
+        </span>
+      }
+      title={title ?? message ?? labels.title}
+      description={description}
+      compact={compact}
+      className={className}
+    />
+  );
+};

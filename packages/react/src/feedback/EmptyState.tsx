@@ -1,6 +1,8 @@
 import type { ElementType, ReactNode } from 'react';
 import { Inbox } from 'lucide-react';
+import { useLabels } from '../labels/labelsContext';
 import type { Intent } from '../ui/intent';
+import { EMPTY_STATE_LABELS, type EmptyStateLabels } from './labels';
 import { StateLayout } from './StateLayout';
 
 /**
@@ -13,7 +15,7 @@ export type EmptyStateIntent = Extract<
 >;
 
 export type EmptyStateProps = {
-  /** Title (typically "No data" or domain-specific) */
+  /** Title, domain-specific. Default `labels.title`, "No data". */
   title?: string;
   /** Optional description below title */
   description?: string;
@@ -34,6 +36,8 @@ export type EmptyStateProps = {
   icon?: ElementType;
   /** Tighter spacing, for a card or a table body. */
   compact?: boolean;
+  /** The texts it writes, over `LabelsProvider`'s `emptyState` and the English defaults. */
+  labels?: Partial<EmptyStateLabels>;
   className?: string;
 };
 
@@ -45,24 +49,28 @@ export type EmptyStateProps = {
  * It is static: nothing announces it, since nothing changed under the user.
  */
 export const EmptyState = ({
-  title = 'No data',
+  title,
   description,
   children,
   action,
   intent = 'neutral',
   icon = Inbox,
   compact,
+  labels: ownLabels,
   className,
-}: EmptyStateProps) => (
-  <StateLayout
-    intent={intent}
-    icon={icon}
-    title={title}
-    description={description}
-    action={action}
-    compact={compact}
-    className={className}
-  >
-    {children}
-  </StateLayout>
-);
+}: EmptyStateProps) => {
+  const labels = useLabels('emptyState', EMPTY_STATE_LABELS, ownLabels);
+  return (
+    <StateLayout
+      intent={intent}
+      icon={icon}
+      title={title ?? labels.title}
+      description={description}
+      action={action}
+      compact={compact}
+      className={className}
+    >
+      {children}
+    </StateLayout>
+  );
+};
