@@ -1,6 +1,12 @@
 import { TEXT_SIZE } from './core/axes';
 import { CALENDAR_DARK_CLASS, CALENDAR_STEPS, MUTED, TEXT } from './core/colors';
 import { ChartEmpty, ChartSkeleton } from './core/frame';
+import {
+  CALENDAR_CHART_LABELS,
+  type CalendarChartLabels,
+  type CommonChartLabels,
+} from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { HeatGrid, type HeatCell } from './core/HeatGrid';
 import {
   cellMetrics,
@@ -50,6 +56,8 @@ export type CalendarChartProps = Omit<ChartProps, 'children' | 'height'> &
     moreLabel?: string;
     /** The language of the month, weekday and date names (BCP 47). Default `en-US`. */
     locale?: string;
+    /** The texts it writes, over `ChartLabelsProvider`'s `calendarChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & CalendarChartLabels>;
   };
 
 // Height of the empty state, which has no grid to take one from.
@@ -69,19 +77,27 @@ export const CalendarChart = ({
   weekStart = 1,
   formatValue = String,
   locale = 'en-US',
-  lessLabel = 'Less',
-  moreLabel = 'More',
-  emptyMessage = 'No data',
+  lessLabel,
+  moreLabel,
+  emptyMessage,
+  labels: ownLabels,
   loading,
   ariaLabel,
   width,
 }: CalendarChartProps) => {
-  const name = ariaLabel ?? 'Calendar chart';
-  if (loading) return <ChartSkeleton ariaLabel={name} height={EMPTY_HEIGHT} width={width} />;
+  const labels = useChartLabels('calendarChart', CALENDAR_CHART_LABELS, ownLabels);
+  const name = ariaLabel ?? labels.name;
+  if (loading)
+    return <ChartSkeleton ariaLabel={labels.loading(name)} height={EMPTY_HEIGHT} width={width} />;
   const days = collectDays(data);
   if (!days) {
     return (
-      <ChartEmpty message={emptyMessage} ariaLabel={name} height={EMPTY_HEIGHT} width={width} />
+      <ChartEmpty
+        message={emptyMessage ?? labels.empty}
+        ariaLabel={name}
+        height={EMPTY_HEIGHT}
+        width={width}
+      />
     );
   }
   const given = {
@@ -98,7 +114,12 @@ export const CalendarChart = ({
       : [];
   if (blocks.length === 0) {
     return (
-      <ChartEmpty message={emptyMessage} ariaLabel={name} height={EMPTY_HEIGHT} width={width} />
+      <ChartEmpty
+        message={emptyMessage ?? labels.empty}
+        ariaLabel={name}
+        height={EMPTY_HEIGHT}
+        width={width}
+      />
     );
   }
 
@@ -133,7 +154,8 @@ export const CalendarChart = ({
         value: formatValue(value),
       };
     });
-    const label = block.year !== undefined && blocks.length > 1 ? `${name}, ${block.year}` : name;
+    const label =
+      block.year !== undefined && blocks.length > 1 ? labels.yearName(name, block.year) : name;
     return { block, grid, metrics, columns, cells, label };
   });
 
@@ -171,6 +193,7 @@ export const CalendarChart = ({
             labelsAbove
             thinLabels={false}
             ariaLabel={label}
+            cellName={labels.cellName}
           />
         </div>
       ))}
@@ -186,7 +209,7 @@ export const CalendarChart = ({
           gap: metrics.gap,
         }}
       >
-        <span style={{ marginRight: 4 }}>{lessLabel}</span>
+        <span style={{ marginRight: 4 }}>{lessLabel ?? labels.less}</span>
         {CALENDAR_STEPS.map((step, i) => (
           <span
             key={i}
@@ -199,7 +222,7 @@ export const CalendarChart = ({
             }}
           />
         ))}
-        <span style={{ marginLeft: 4 }}>{moreLabel}</span>
+        <span style={{ marginLeft: 4 }}>{moreLabel ?? labels.more}</span>
       </div>
     </div>
   );

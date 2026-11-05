@@ -19,6 +19,8 @@ import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, MUTED, PANEL, seriesColor } from './core/colors';
 import { hasNoData, safeId, seriesKey, toRows } from './core/data';
 import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
+import { MIXED_CHART_LABELS, type MixedChartLabels, type CommonChartLabels } from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { referenceMarks } from './core/reference';
 import { isOuterInStack, roundedBarShape } from './core/roundedBar';
 import type {
@@ -65,6 +67,8 @@ export type MixedChartProps = ChartProps &
     showLegend?: boolean;
     /** Pile the `column` series on each other instead of grouping them side by side; the columns of each axis stack apart. */
     stackedColumns?: boolean;
+    /** The texts it writes, over `ChartLabelsProvider`'s `mixedChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & MixedChartLabels>;
   };
 
 const SIDES: MixedChartAxis[] = ['left', 'right'];
@@ -99,20 +103,30 @@ export const MixedChart = ({
   showLegend,
   legendPosition = 'top',
   stackedColumns = false,
-  emptyMessage = 'No data',
+  emptyMessage,
+  labels: ownLabels,
   loading,
   ariaLabel,
   children,
   height = 320,
   width,
 }: MixedChartProps) => {
+  const labels = useChartLabels('mixedChart', MIXED_CHART_LABELS, ownLabels);
   const uid = safeId(useId());
   const hidden = useHiddenSeries();
   const axis = useAxis();
-  const name = ariaLabel ?? `Mixed chart: ${series.map((s) => s.name).join(', ')}`;
-  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
+  const name = ariaLabel ?? labels.name(series.map((s) => s.name).join(', '));
+  if (loading)
+    return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+    return (
+      <ChartEmpty
+        message={emptyMessage ?? labels.empty}
+        ariaLabel={name}
+        height={height}
+        width={width}
+      />
+    );
   }
   const formatters = { left: formatValue, right: formatRightValue };
   const usedSides = SIDES.filter((side) => series.some((s) => axisOf(s) === side));

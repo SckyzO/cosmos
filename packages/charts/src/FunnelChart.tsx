@@ -11,6 +11,8 @@ import {
 import { TooltipCard } from './core/ChartTooltip';
 import { MUTED, PANEL, SERIES, TEXT, TRACK, seriesColor } from './core/colors';
 import { ChartEmpty, ChartSkeleton } from './core/frame';
+import { FUNNEL_CHART_LABELS, type FunnelChartLabels, type CommonChartLabels } from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { useElementWidth } from './core/useElementWidth';
 import {
   fadeShare,
@@ -47,6 +49,8 @@ export type FunnelChartProps = Omit<ChartProps, 'children'> &
      * the values show. Default true.
      */
     showConversion?: boolean;
+    /** The texts it writes, over `ChartLabelsProvider`'s `funnelChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & FunnelChartLabels>;
   };
 
 // A bar is 30px at the normal size and 24px on a narrow box; the flow takes
@@ -81,13 +85,15 @@ export const FunnelChart = ({
   colors,
   formatValue = String,
   showConversion = true,
-  emptyMessage = 'No data',
+  emptyMessage,
+  labels: ownLabels,
   loading,
   ariaLabel,
   height,
   width,
 }: FunnelChartProps) => {
-  const name = ariaLabel ?? `Funnel: ${stages.map((stage) => stage.label).join(', ')}`;
+  const labels = useChartLabels('funnelChart', FUNNEL_CHART_LABELS, ownLabels);
+  const name = ariaLabel ?? labels.name(stages.map((stage) => stage.label).join(', '));
   const frame = useRef<HTMLDivElement | null>(null);
   const list = useRef<HTMLUListElement>(null);
   const { ref: measure, width: measured } = useElementWidth();
@@ -102,10 +108,16 @@ export const FunnelChart = ({
   const [roving, setRoving] = useState(0);
   const [hover, setHover] = useState<Tip>();
   const [focus, setFocus] = useState<Tip>();
-  if (loading) return <ChartSkeleton ariaLabel={name} height={height ?? 160} width={width} />;
+  if (loading)
+    return <ChartSkeleton ariaLabel={labels.loading(name)} height={height ?? 160} width={width} />;
   if (isEmptyFunnel(stages)) {
     return (
-      <ChartEmpty message={emptyMessage} ariaLabel={name} height={height ?? 160} width={width} />
+      <ChartEmpty
+        message={emptyMessage ?? labels.empty}
+        ariaLabel={name}
+        height={height ?? 160}
+        width={width}
+      />
     );
   }
 
@@ -124,12 +136,12 @@ export const FunnelChart = ({
   const flowColor = (i: number) => (colors?.length ? seriesColor(i, colors) : SERIES[0]);
 
   const chip = (row: FunnelRow, i: number) => (i === 0 ? '100%' : formatRate(row.fromPrevious));
-  const note = (row: FunnelRow) => `${formatRate(row.fromFirst)} of ${first.label}`;
+  const note = (row: FunnelRow) => labels.rateOfFirst(formatRate(row.fromFirst), first.label);
   const nameOf = (row: FunnelRow, i: number) =>
     [
-      `${row.label}: ${formatValue(row.value)}`,
+      labels.stage(row.label, formatValue(row.value)),
       ...(showConversion && i > 0
-        ? [`${formatRate(row.fromPrevious)} of previous stage`, note(row)]
+        ? [labels.rateOfPrevious(formatRate(row.fromPrevious)), note(row)]
         : []),
     ].join(', ');
 
@@ -437,16 +449,16 @@ export const FunnelChart = ({
           <TooltipCard
             title={tipRow.label}
             rows={[
-              { name: 'Value', value: formatValue(tipRow.value), color: color(tip.index) },
+              { name: labels.value, value: formatValue(tipRow.value), color: color(tip.index) },
               ...(showConversion && tip.index > 0
                 ? [
                     {
-                      name: 'Of previous stage',
+                      name: labels.ofPrevious,
                       value: formatRate(tipRow.fromPrevious),
                       color: color(tip.index),
                     },
                     {
-                      name: `Of ${first.label}`,
+                      name: labels.ofFirst(first.label),
                       value: formatRate(tipRow.fromFirst),
                       color: color(tip.index),
                     },

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { BUMP_CHART_LABELS } from './labels';
 import {
   TIE_SPREAD,
   describeChange,
@@ -110,10 +111,26 @@ describe('rankChange', () => {
 
 describe('describeChange', () => {
   it('says the change in words', () => {
-    expect(describeChange({ direction: 'same', versus: 'May' })).toBe('unchanged vs May');
-    expect(describeChange({ direction: 'up', by: 2, versus: 'Apr' })).toBe('up 2 vs Apr');
-    expect(describeChange({ direction: 'down', by: 1, versus: 'Mar' })).toBe('down 1 vs Mar');
-    expect(describeChange({ direction: 'new' })).toBe('new entry');
+    const words = BUMP_CHART_LABELS;
+    expect(describeChange({ direction: 'same', versus: 'May' }, words)).toBe('unchanged vs May');
+    expect(describeChange({ direction: 'up', by: 2, versus: 'Apr' }, words)).toBe('up 2 vs Apr');
+    expect(describeChange({ direction: 'down', by: 1, versus: 'Mar' }, words)).toBe(
+      'down 1 vs Mar'
+    );
+    expect(describeChange({ direction: 'new' }, words)).toBe('new entry');
+  });
+
+  it('says it in the words it is given', () => {
+    const french = {
+      unchanged: (versus: string) => `inchangé par rapport à ${versus}`,
+      newEntry: 'nouvelle entrée',
+      up: (by: number, versus: string) => `en hausse de ${by} par rapport à ${versus}`,
+      down: (by: number, versus: string) => `en baisse de ${by} par rapport à ${versus}`,
+    };
+    expect(describeChange({ direction: 'up', by: 2, versus: 'avr.' }, french)).toBe(
+      'en hausse de 2 par rapport à avr.'
+    );
+    expect(describeChange({ direction: 'new' }, french)).toBe('nouvelle entrée');
   });
 });
 

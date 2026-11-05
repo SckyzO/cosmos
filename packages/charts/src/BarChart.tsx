@@ -16,6 +16,8 @@ import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, seriesColor } from './core/colors';
 import { hasNoData, seriesKey, toRows } from './core/data';
 import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
+import { BAR_CHART_LABELS, type BarChartLabels, type CommonChartLabels } from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { absolute, mirrorSeries, symmetricDomain } from './core/mirror';
 import { centralAxis, referenceMarks } from './core/reference';
 import { isOuterInStack, roundedBarShape } from './core/roundedBar';
@@ -71,6 +73,8 @@ export type BarChartProps = ChartProps &
      * Default off.
      */
     mirrored?: boolean;
+    /** The texts it writes, over `ChartLabelsProvider`'s `barChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & BarChartLabels>;
   };
 
 export const BarChart = ({
@@ -91,21 +95,31 @@ export const BarChart = ({
   distributed = false,
   negativeColor,
   mirrored = false,
-  emptyMessage = 'No data',
+  emptyMessage,
+  labels: ownLabels,
   loading,
   ariaLabel,
   children,
   height = 320,
   width,
 }: BarChartProps) => {
+  const labels = useChartLabels('barChart', BAR_CHART_LABELS, ownLabels);
   const hidden = useHiddenSeries();
   const axis = useAxis();
   // Recharts names the layout after the axis the categories sit on.
   const categoryKeys = useCategoryKeys(orientation === 'horizontal' ? 'vertical' : 'horizontal');
-  const name = ariaLabel ?? `Bar chart: ${series.map((s) => s.name).join(', ')}`;
-  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
+  const name = ariaLabel ?? labels.name(series.map((s) => s.name).join(', '));
+  if (loading)
+    return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+    return (
+      <ChartEmpty
+        message={emptyMessage ?? labels.empty}
+        ariaLabel={name}
+        height={height}
+        width={width}
+      />
+    );
   }
   const horizontal = orientation === 'horizontal';
   // Recharts names the layout after the axis the categories sit on.

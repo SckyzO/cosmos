@@ -3,6 +3,12 @@ import { TEXT_SIZE } from './core/axes';
 import { MUTED, SEQUENTIAL, seriesColor } from './core/colors';
 import { hasNoData } from './core/data';
 import { ChartEmpty, ChartSkeleton } from './core/frame';
+import {
+  HEATMAP_CHART_LABELS,
+  type HeatmapChartLabels,
+  type CommonChartLabels,
+} from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { HeatGrid, type HeatCell } from './core/HeatGrid';
 import type {
   ChartAxisTitleProps,
@@ -49,6 +55,8 @@ export type HeatmapChartProps = Omit<ChartProps, 'children'> &
     showValues?: boolean;
     /** Show the color legend. Default true. */
     showLegend?: boolean;
+    /** The texts it writes, over `ChartLabelsProvider`'s `heatmapChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & HeatmapChartLabels>;
   };
 
 // Round bucket sizes, × 10^n. Finer than 1-2-5 so that the buckets fit the
@@ -122,16 +130,26 @@ export const HeatmapChart = ({
   showValues = false,
   showLegend = true,
   legendPosition = 'top',
-  emptyMessage = 'No data',
+  emptyMessage,
+  labels: ownLabels,
   loading,
   ariaLabel,
   height = 320,
   width,
 }: HeatmapChartProps) => {
-  const name = ariaLabel ?? `Heatmap: ${series.map((s) => s.name).join(', ')}`;
-  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
+  const labels = useChartLabels('heatmapChart', HEATMAP_CHART_LABELS, ownLabels);
+  const name = ariaLabel ?? labels.name(series.map((s) => s.name).join(', '));
+  if (loading)
+    return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+    return (
+      <ChartEmpty
+        message={emptyMessage ?? labels.empty}
+        ariaLabel={name}
+        height={height}
+        width={width}
+      />
+    );
   }
   const colorRanges = (
     ranges ??
@@ -198,6 +216,7 @@ export const HeatmapChart = ({
           columns={categories.map(String)}
           cells={cells}
           ariaLabel={name}
+          cellName={labels.cellName}
           xTitle={xTitle}
           yTitle={yTitle}
         />

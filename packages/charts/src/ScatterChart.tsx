@@ -16,6 +16,14 @@ import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, GRID, seriesColor } from './core/colors';
 import { hasNoData, seriesKey } from './core/data';
 import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
+import {
+  BUBBLE_CHART_LABELS,
+  SCATTER_CHART_LABELS,
+  type BubbleChartLabels,
+  type CommonChartLabels,
+  type ScatterChartLabels,
+} from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { referenceMarks } from './core/reference';
 import type {
   ChartEmptyProps,
@@ -58,14 +66,18 @@ type XYChartProps = ChartProps &
 
 export type ScatterChartProps = XYChartProps & {
   series: { name: string; data: ScatterPoint[] }[];
+  /** The texts it writes, over `ChartLabelsProvider`'s `scatterChart` and `chart` and the English defaults. */
+  labels?: Partial<CommonChartLabels & ScatterChartLabels>;
 };
 
 export type BubbleChartProps = XYChartProps & {
   series: { name: string; data: BubblePoint[] }[];
-  /** Labels the size in the tooltip. Default `Size`. */
+  /** Labels the size in the tooltip. Default `labels.size`, `Size`. */
   sizeTitle?: string;
   /** Format the size in the tooltip (default: at most two decimals). */
   formatSize?: (value: number) => string;
+  /** The texts it writes, over `ChartLabelsProvider`'s `bubbleChart` and `chart` and the English defaults. */
+  labels?: Partial<CommonChartLabels & BubbleChartLabels>;
 };
 
 /** Drops the float noise of computed values: 33.333333 reads 33.33. */
@@ -81,6 +93,8 @@ type Bubbles = { sizeTitle: string; formatSize: (value: number) => string };
 type XYProps = XYChartProps & {
   series: { name: string; data: (ScatterPoint & { z?: number })[] }[];
   bubbles?: Bubbles;
+  /** The texts of the wrapper, resolved. */
+  labels: CommonChartLabels & ScatterChartLabels;
 };
 
 const XYChart = ({
@@ -95,7 +109,8 @@ const XYChart = ({
   referenceBands,
   showLegend,
   legendPosition = 'top',
-  emptyMessage = 'No data',
+  emptyMessage,
+  labels,
   loading,
   ariaLabel,
   children,
@@ -104,11 +119,18 @@ const XYChart = ({
 }: XYProps) => {
   const hidden = useHiddenSeries();
   const axis = useAxis();
-  const name =
-    ariaLabel ?? `${bubbles ? 'Bubble' : 'Scatter'} chart: ${series.map((s) => s.name).join(', ')}`;
-  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
+  const name = ariaLabel ?? labels.name(series.map((s) => s.name).join(', '));
+  if (loading)
+    return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+    return (
+      <ChartEmpty
+        message={emptyMessage ?? labels.empty}
+        ariaLabel={name}
+        height={height}
+        width={width}
+      />
+    );
   }
 
   // The card of the point under the pointer: its label, the series, then one
@@ -124,8 +146,8 @@ const XYChart = ({
         title={point.label}
         rows={[
           { name: series[point.series].name, value: '', color },
-          { name: xTitle ?? 'x', value: formatX(point.x), color: none },
-          { name: yTitle ?? 'y', value: formatY(point.y), color: none },
+          { name: xTitle ?? labels.x, value: formatX(point.x), color: none },
+          { name: yTitle ?? labels.y, value: formatY(point.y), color: none },
           ...(bubbles && point.z !== undefined
             ? [{ name: bubbles.sizeTitle, value: bubbles.formatSize(point.z), color: none }]
             : []),
@@ -143,7 +165,7 @@ const XYChart = ({
       <XAxis
         type="number"
         dataKey="x"
-        name={xTitle ?? 'x'}
+        name={xTitle ?? labels.x}
         domain={['auto', 'auto']}
         tickFormatter={formatX}
         {...axis}
@@ -152,7 +174,7 @@ const XYChart = ({
       <YAxis
         type="number"
         dataKey="y"
-        name={yTitle ?? 'y'}
+        name={yTitle ?? labels.y}
         domain={['auto', 'auto']}
         width="auto"
         tickFormatter={formatY}
@@ -193,11 +215,24 @@ const XYChart = ({
 };
 
 /** Points on two numeric axes, e.g. latency against load, one point per node. */
-export const ScatterChart = (props: ScatterChartProps) => <XYChart {...props} />;
+export const ScatterChart = ({ labels: ownLabels, ...props }: ScatterChartProps) => {
+  const labels = useChartLabels('scatterChart', SCATTER_CHART_LABELS, ownLabels);
+  return <XYChart {...props} labels={labels} />;
+};
 
 /** A scatter chart whose bubble size carries a third measure (`z`), e.g. request volume. */
 export const BubbleChart = ({
-  sizeTitle = 'Size',
+  sizeTitle,
   formatSize = formatNumber,
+  labels: ownLabels,
   ...props
-}: BubbleChartProps) => <XYChart {...props} bubbles={{ sizeTitle, formatSize }} />;
+}: BubbleChartProps) => {
+  const labels = useChartLabels('bubbleChart', BUBBLE_CHART_LABELS, ownLabels);
+  return (
+    <XYChart
+      {...props}
+      labels={labels}
+      bubbles={{ sizeTitle: sizeTitle ?? labels.size, formatSize }}
+    />
+  );
+};

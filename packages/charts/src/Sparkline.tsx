@@ -5,6 +5,8 @@ import { ChartTooltip } from './core/ChartTooltip';
 import { BORDER, ERROR, PANEL, SERIES } from './core/colors';
 import { hasNoData, safeId } from './core/data';
 import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
+import { SPARKLINE_LABELS, type SparklineLabels, type CommonChartLabels } from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { roundedBarShape } from './core/roundedBar';
 import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
 
@@ -32,28 +34,41 @@ export type SparklineProps = ChartProps &
     min?: number;
     /** Top of the scale. Default: the highest value of `data` (for `bar`, at least 0). */
     max?: number;
+    /** The texts it writes, over `ChartLabelsProvider`'s `sparkline` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & SparklineLabels>;
   };
 
 export const Sparkline = ({
   data,
   color = SERIES[0],
   variant = 'area',
-  label = 'value',
+  label: ownLabel,
   formatValue,
   min,
   max,
-  emptyMessage = 'No data',
+  emptyMessage,
+  labels: ownLabels,
   loading,
   ariaLabel,
   children,
   height = 60,
   width,
 }: SparklineProps) => {
+  const labels = useChartLabels('sparkline', SPARKLINE_LABELS, ownLabels);
   const uid = safeId(useId());
-  const name = ariaLabel ?? `Trend of ${label}`;
-  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
+  const label = ownLabel ?? labels.label;
+  const name = ariaLabel ?? labels.name(label);
+  if (loading)
+    return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData([{ data }])) {
-    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+    return (
+      <ChartEmpty
+        message={emptyMessage ?? labels.empty}
+        ariaLabel={name}
+        height={height}
+        width={width}
+      />
+    );
   }
   if (variant === 'bar') {
     const fillFor = (value: number) => (value < 0 ? ERROR : undefined);

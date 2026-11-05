@@ -1,6 +1,8 @@
 import type { SectorProps } from 'recharts';
 import { SERIES, TRACK } from './core/colors';
 import { percent } from './core/gauge';
+import type { CommonChartLabels } from './core/labels';
+import { useCommonLabels } from './core/labelsContext';
 import { RadialGauge } from './core/RadialGauge';
 import type { ChartProps } from './types';
 
@@ -15,6 +17,8 @@ export type StrokedGaugeProps = ChartProps & {
   max?: number;
   /** Format the center value, from `value` itself (not its share of the range). Default: `92%`. */
   formatValue?: (value: number) => string;
+  /** The texts it writes, over `ChartLabelsProvider`'s `chart` and the English defaults. */
+  labels?: Partial<CommonChartLabels>;
 };
 
 const RADIAN = Math.PI / 180;
@@ -92,23 +96,28 @@ export const StrokedGauge = ({
   min = 0,
   max = 100,
   formatValue = percent,
+  labels: ownLabels,
   ariaLabel,
   children,
   height = 280,
   width,
-}: StrokedGaugeProps) => (
-  <RadialGauge
-    value={value}
-    label={label}
-    min={min}
-    max={max}
-    text={formatValue(value)}
-    ariaLabel={ariaLabel}
-    hollow="88%"
-    shape={dashedGauge(color)}
-    height={height}
-    width={width}
-  >
-    {children}
-  </RadialGauge>
-);
+}: StrokedGaugeProps) => {
+  const labels = useCommonLabels(ownLabels);
+  return (
+    <RadialGauge
+      value={value}
+      label={label}
+      min={min}
+      max={max}
+      text={formatValue(value)}
+      ariaLabel={ariaLabel}
+      labels={labels}
+      hollow="88%"
+      shape={dashedGauge(color)}
+      height={height}
+      width={width}
+    >
+      {children}
+    </RadialGauge>
+  );
+};

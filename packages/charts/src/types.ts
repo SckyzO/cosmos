@@ -11,8 +11,10 @@ export type ChartSize = {
 export type ChartEmptyProps = {
   /**
    * Text drawn in place of the plot when the chart has no series, or only
-   * empty ones. Default `No data`; an empty string draws nothing. It is drawn
-   * as plain text: markup in it shows as written.
+   * empty ones. Default `labels.empty`, `No data`; an empty string draws nothing.
+   * It is drawn as plain text: markup in it shows as written.
+   *
+   * @deprecated Write `labels={{ empty: … }}`.
    */
   emptyMessage?: string;
 };

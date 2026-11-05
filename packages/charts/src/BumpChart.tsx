@@ -18,6 +18,8 @@ import { TooltipCard } from './core/ChartTooltip';
 import { BORDER, MUTED, PANEL, TEXT, seriesColor } from './core/colors';
 import { hasNoData, seriesKey } from './core/data';
 import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
+import { BUMP_CHART_LABELS, type BumpChartLabels, type CommonChartLabels } from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { useElementWidth } from './core/useElementWidth';
 import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
 
@@ -45,6 +47,8 @@ export type BumpChartProps = ChartProps &
      * written in it; `dot` draws a small filled dot.
      */
     points?: BumpChartPoints;
+    /** The texts it writes, over `ChartLabelsProvider`'s `bumpChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & BumpChartLabels>;
   };
 
 const defaultFormat = (rank: number) => `#${rank}`;
@@ -77,6 +81,7 @@ const BumpTooltip = ({
   colors,
   focus,
   format,
+  labels,
 }: {
   active?: boolean;
   label?: string | number;
@@ -86,6 +91,7 @@ const BumpTooltip = ({
   colors?: string[];
   focus: Focus;
   format: (rank: number) => string;
+  labels: Pick<BumpChartLabels, 'notRanked' | 'unchanged' | 'newEntry' | 'up' | 'down'>;
 }) => {
   const period = periods.indexOf(String(label));
   if (!active || period === -1) return null;
@@ -101,13 +107,13 @@ const BumpTooltip = ({
         color: seriesColor(i, colors),
         value:
           rank === undefined ? (
-            'not ranked'
+            labels.notRanked
           ) : (
             <>
               {format(rank)}
               {change && (
                 <span style={{ marginLeft: '0.5rem', fontWeight: 400, color: MUTED }}>
-                  {describeChange(change)}
+                  {describeChange(change, labels)}
                 </span>
               )}
             </>
@@ -122,16 +128,18 @@ export const BumpChart = ({
   colors,
   formatValue = defaultFormat,
   points = 'rank',
-  emptyMessage = 'No data',
+  emptyMessage,
+  labels: ownLabels,
   loading,
   ariaLabel,
   children,
   height = 320,
   width,
 }: BumpChartProps) => {
+  const labels = useChartLabels('bumpChart', BUMP_CHART_LABELS, ownLabels);
   const [focus, setFocus] = useState<Focus>(null);
   const { ref, width: measured } = useElementWidth();
-  const name = ariaLabel ?? `Bump chart: ${series.map((s) => s.name).join(', ')}`;
+  const name = ariaLabel ?? labels.name(series.map((s) => s.name).join(', '));
   const periods = useMemo(() => periodsOf(series), [series]);
   const ranks = useMemo(() => ranksOf(series, periods), [series, periods]);
   const plotted = useMemo(() => plottedRanks(ranks), [ranks]);
@@ -143,9 +151,17 @@ export const BumpChart = ({
       })),
     [periods, plotted]
   );
-  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
+  if (loading)
+    return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series) || periods.length === 0) {
-    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+    return (
+      <ChartEmpty
+        message={emptyMessage ?? labels.empty}
+        ariaLabel={name}
+        height={height}
+        width={width}
+      />
+    );
   }
 
   const compact = measured !== undefined && measured < COMPACT_BELOW;
@@ -308,6 +324,7 @@ export const BumpChart = ({
               colors={colors}
               focus={focus}
               format={formatValue}
+              labels={labels}
             />
           }
           cursor={{ stroke: BORDER, strokeDasharray: '4 4' }}

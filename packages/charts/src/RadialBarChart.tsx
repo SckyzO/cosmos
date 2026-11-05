@@ -11,6 +11,12 @@ import { ANIMATION } from './core/animation';
 import { TooltipCard } from './core/ChartTooltip';
 import { TRACK, seriesColor } from './core/colors';
 import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
+import {
+  RADIAL_BAR_CHART_LABELS,
+  type CommonChartLabels,
+  type RadialBarChartLabels,
+} from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { percent } from './core/gauge';
 import { CenterText } from './core/radial';
 import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
@@ -19,11 +25,17 @@ export type RadialBarChartProps = ChartProps &
   ChartEmptyProps &
   ChartLoadingProps & {
     series: number[];
-    labels: string[];
+    /** The name of each ring, in the order of `series`. */
+    names?: string[];
     /** Override the default Cosmos palette. */
     colors?: string[];
     /** Format the ring values and their average, on the 0–100 scale of the rings. Default: `78%`. */
     formatValue?: (value: number) => string;
+    /**
+     * The texts it writes, over `ChartLabelsProvider`'s `radialBarChart` and `chart` and the English
+     * defaults. An array of strings is the ring names, the old name of `names`.
+     */
+    labels?: string[] | Partial<CommonChartLabels & RadialBarChartLabels>;
   };
 
 type Ring = { name: string; value: number; raw: number; fill: string };
@@ -43,25 +55,40 @@ const RingTooltip = ({
 
 export const RadialBarChart = ({
   series,
-  labels,
+  names,
   colors,
   formatValue = percent,
-  emptyMessage = 'No data',
+  emptyMessage,
+  labels: labelsOrNames,
   loading,
   ariaLabel,
   children,
   height = 320,
   width,
 }: RadialBarChartProps) => {
+  const labels = useChartLabels(
+    'radialBarChart',
+    RADIAL_BAR_CHART_LABELS,
+    Array.isArray(labelsOrNames) ? undefined : labelsOrNames
+  );
+  const ringNames = names ?? (Array.isArray(labelsOrNames) ? labelsOrNames : []);
   // The ring the pointer is on, shown in the center in place of the average.
   const [active, setActive] = useState<number>();
-  const name = ariaLabel ?? `Radial bar chart: ${labels.join(', ')}`;
-  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
+  const name = ariaLabel ?? labels.name(ringNames.join(', '));
+  if (loading)
+    return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (series.length === 0) {
-    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+    return (
+      <ChartEmpty
+        message={emptyMessage ?? labels.empty}
+        ariaLabel={name}
+        height={height}
+        width={width}
+      />
+    );
   }
   // The arcs stop at the ends of the 0–100 scale; the center and the tooltip give the value.
-  const rings: Ring[] = labels.map((label, i) => ({
+  const rings: Ring[] = ringNames.map((label, i) => ({
     name: label,
     value: Math.min(100, Math.max(0, series[i])),
     raw: series[i],
@@ -94,7 +121,7 @@ export const RadialBarChart = ({
       />
       <CenterText
         value={formatValue(ring ? ring.raw : average)}
-        label={ring ? ring.name : 'Avg'}
+        label={ring ? ring.name : labels.average}
         valueSize="var(--text-xl, 1.25rem)"
       />
       <Tooltip

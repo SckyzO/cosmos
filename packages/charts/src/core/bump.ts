@@ -1,6 +1,8 @@
 // The pure part of `BumpChart`: periods, ranks, ties and the change in rank
 // from one period to the previous, in words.
 
+import type { BumpChartLabels } from './labels';
+
 export type BumpPoint = { x: string; rank: number };
 export type BumpSeries = { name: string; data: BumpPoint[] };
 
@@ -93,16 +95,21 @@ export const rankChange = (
 
 /**
  * The change in words, so that it never rests on a color or an arrow:
- * "unchanged vs May", "up 2 vs Apr", "down 1 vs Mar", "new entry".
+ * "unchanged vs May", "up 2 vs Apr", "down 1 vs Mar", "new entry" in English, from `labels`.
  */
-export const describeChange = (change: RankChange): string => {
+export const describeChange = (
+  change: RankChange,
+  labels: Pick<BumpChartLabels, 'unchanged' | 'newEntry' | 'up' | 'down'>
+): string => {
   switch (change.direction) {
     case 'same':
-      return `unchanged vs ${change.versus}`;
+      return labels.unchanged(change.versus);
     case 'new':
-      return 'new entry';
-    default:
-      return `${change.direction} ${change.by} vs ${change.versus}`;
+      return labels.newEntry;
+    case 'up':
+      return labels.up(change.by, change.versus);
+    case 'down':
+      return labels.down(change.by, change.versus);
   }
 };
 

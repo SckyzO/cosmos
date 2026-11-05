@@ -18,6 +18,12 @@ import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, seriesColor } from './core/colors';
 import { hasNoData, seriesKey } from './core/data';
 import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
+import {
+  BOX_PLOT_CHART_LABELS,
+  type BoxPlotChartLabels,
+  type CommonChartLabels,
+} from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { referenceMarks } from './core/reference';
 import type {
   ChartAxisTitleProps,
@@ -50,15 +56,18 @@ export type BoxPlotChartProps = ChartProps &
     formatValue?: (value: number) => string;
     /** Show the legend (auto-true when 2+ series). */
     showLegend?: boolean;
+    /** The texts it writes, over `ChartLabelsProvider`'s `boxPlotChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & BoxPlotChartLabels>;
   };
 
-// Top to bottom, the way a vertical box reads.
+// Top to bottom, the way a vertical box reads: the label that names the row, and the index of its
+// number in the summary.
 const ROWS = [
-  ['Max', 4],
-  ['Q3', 3],
-  ['Median', 2],
-  ['Q1', 1],
-  ['Min', 0],
+  ['max', 4],
+  ['q3', 3],
+  ['median', 2],
+  ['q1', 1],
+  ['min', 0],
 ] as const;
 
 const summaryKey = (index: number) => `box${index}`;
@@ -131,21 +140,31 @@ export const BoxPlotChart = ({
   referenceBands,
   showLegend,
   legendPosition = 'top',
-  emptyMessage = 'No data',
+  emptyMessage,
+  labels: ownLabels,
   loading,
   ariaLabel,
   children,
   height = 320,
   width,
 }: BoxPlotChartProps) => {
+  const labels = useChartLabels('boxPlotChart', BOX_PLOT_CHART_LABELS, ownLabels);
   const hidden = useHiddenSeries();
   const axis = useAxis();
   // Recharts names the layout after the axis the categories sit on.
   const categoryKeys = useCategoryKeys(orientation === 'horizontal' ? 'vertical' : 'horizontal');
-  const name = ariaLabel ?? `Box plot: ${series.map((s) => s.name).join(', ')}`;
-  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
+  const name = ariaLabel ?? labels.name(series.map((s) => s.name).join(', '));
+  if (loading)
+    return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+    return (
+      <ChartEmpty
+        message={emptyMessage ?? labels.empty}
+        ariaLabel={name}
+        height={height}
+        width={width}
+      />
+    );
   }
   const horizontal = orientation === 'horizontal';
   const rows: Row[] = categories.map((category, i) => ({
@@ -173,8 +192,8 @@ export const BoxPlotChart = ({
       const color = seriesColor(index, colors);
       return [
         ...(series.length > 1 ? [{ name: s.name, value: '', color }] : []),
-        ...ROWS.map(([title, at]) => ({
-          name: title,
+        ...ROWS.map(([row, at]) => ({
+          name: labels[row],
           value: formatValue(summary[at]),
           color: series.length > 1 ? 'transparent' : color,
         })),

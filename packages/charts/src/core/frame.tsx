@@ -93,13 +93,13 @@ export const ChartEmpty = ({ message, ariaLabel, height, width = '100%' }: Empty
 );
 
 type SkeletonProps = ChartSize & {
-  /** The chart's name: the skeleton is named by it and the word "loading". */
+  /** What names the skeleton: the chart's name with the word "loading" (`labels.loading(name)`). */
   ariaLabel: string;
 };
 
 /**
  * What a chart draws in place of its plot while `loading`: a block of the chart's
- * size in the theme's track gray. A busy group named by the chart, so a screen
+ * size in the theme's track gray. A busy group named by the chart and its state, so a screen
  * reader says what is on its way; it pulses where motion is welcome
  * (`motion-safe`, a Tailwind class like the legend's focus ring, which the
  * consumer's `@source` generates) and holds still under `prefers-reduced-motion`.
@@ -107,7 +107,7 @@ type SkeletonProps = ChartSize & {
 export const ChartSkeleton = ({ ariaLabel, height, width = '100%' }: SkeletonProps) => (
   <div
     role="group"
-    aria-label={`${ariaLabel}, loading`}
+    aria-label={ariaLabel}
     aria-busy="true"
     data-chart-loading=""
     className="motion-safe:animate-pulse"

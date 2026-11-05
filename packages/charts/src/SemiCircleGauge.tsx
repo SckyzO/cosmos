@@ -13,6 +13,12 @@ import { MUTED, PANEL, SERIES, TEXT, TRACK } from './core/colors';
 import { safeId } from './core/data';
 import { frameProps } from './core/frame';
 import {
+  SEMI_CIRCLE_GAUGE_LABELS,
+  type CommonChartLabels,
+  type SemiCircleGaugeLabels,
+} from './core/labels';
+import { useChartLabels } from './core/labelsContext';
+import {
   arcAngle,
   arcMark,
   clampTo,
@@ -20,7 +26,6 @@ import {
   DIAL_HUB,
   dialFace,
   dialTip,
-  gaugeName,
   needleOf,
   percent,
   rangeShare,
@@ -90,6 +95,8 @@ export type SemiCircleGaugeProps = Omit<ChartProps, 'height'> & {
    * as the box allows, up to this height: in a narrower box the gauge is shorter, never taller.
    */
   height?: number;
+  /** The texts it writes, over `ChartLabelsProvider`'s `semiCircleGauge` and `chart` and the English defaults. */
+  labels?: Partial<CommonChartLabels & SemiCircleGaugeLabels>;
 };
 
 // Room under the arc: the `showRange` labels, and a margin without them.
@@ -296,11 +303,13 @@ export const SemiCircleGauge = ({
   target,
   showZones = false,
   showNeedle = false,
+  labels: ownLabels,
   ariaLabel,
   children,
   height,
   width,
 }: SemiCircleGaugeProps) => {
+  const labels = useChartLabels('semiCircleGauge', SEMI_CIRCLE_GAUGE_LABELS, ownLabels);
   const { ref: box, width: boxWidth } = useElementWidth();
   const text = formatValue(value);
   // Under the arc: for a dial the hub, the value and its label (and the range labels); for the
@@ -319,12 +328,12 @@ export const SemiCircleGauge = ({
   const spans = showZones ? zoneSpans(min, max, warnAt, critAt) : [];
   // What the name adds after the value: the target, and the thresholds of the zones drawn.
   const notes = [
-    ...(target === undefined ? [] : [`target ${formatValue(target)}`]),
+    ...(target === undefined ? [] : [labels.target(formatValue(target))]),
     ...(warnAt !== undefined && spans.some((span) => span.status === 'warn')
-      ? [`warning from ${formatValue(warnAt)}`]
+      ? [labels.warnFrom(formatValue(warnAt))]
       : []),
     ...(critAt !== undefined && spans.some((span) => span.status === 'crit')
-      ? [`critical from ${formatValue(critAt)}`]
+      ? [labels.critFrom(formatValue(critAt))]
       : []),
   ];
   return (
@@ -338,7 +347,7 @@ export const SemiCircleGauge = ({
             height: radius + row,
             width: '100%',
             ariaLabel:
-              gaugeName(ariaLabel ?? (label || 'Gauge'), text) +
+              labels.gaugeName(ariaLabel ?? (label || labels.gauge), text) +
               notes.map((note) => `, ${note}`).join(''),
             keyboard: false,
           })}

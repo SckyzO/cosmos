@@ -13,6 +13,12 @@ import { GRID_PROPS, TEXT_SIZE, useAxis, xAxisTitle, yAxisTitle } from './core/a
 import { TooltipCard } from './core/ChartTooltip';
 import { BORDER, PANEL, SERIES, STATUS_CRIT, STATUS_WARN, TEXT } from './core/colors';
 import { frameProps } from './core/frame';
+import {
+  REALTIME_CHART_LABELS,
+  type CommonChartLabels,
+  type RealtimeChartLabels,
+} from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import type { ChartAxisTitleProps, ChartProps } from './types';
 
 export type RealtimeChartProps = ChartProps &
@@ -28,9 +34,9 @@ export type RealtimeChartProps = ChartProps &
     max?: number;
     warnThreshold?: number;
     critThreshold?: number;
-    /** Text of the warning threshold's label. Default `WARN`; an empty string draws the line alone. */
+    /** Text of the warning threshold's label. Default `labels.warn`, `WARN`; an empty string draws the line alone. */
     warnLabel?: string;
-    /** Text of the critical threshold's label. Default `CRIT`; an empty string draws the line alone. */
+    /** Text of the critical threshold's label. Default `labels.crit`, `CRIT`; an empty string draws the line alone. */
     critLabel?: string;
     /**
      * Label the x axis with the time of each sample (`14:03:25`, in local time), and the
@@ -39,6 +45,8 @@ export type RealtimeChartProps = ChartProps &
     showTimeAxis?: boolean;
     /** Format the y-axis labels and the tooltip values. */
     formatValue?: (value: number) => string;
+    /** The texts it writes, over `ChartLabelsProvider`'s `realtimeChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & RealtimeChartLabels>;
   };
 
 type Sample = { time: number; value: number };
@@ -92,17 +100,19 @@ export const RealtimeChart = ({
   max = 100,
   warnThreshold = 70,
   critThreshold = 85,
-  warnLabel = 'WARN',
-  critLabel = 'CRIT',
+  warnLabel,
+  critLabel,
   showTimeAxis = false,
   xTitle,
   yTitle,
   formatValue,
+  labels: ownLabels,
   ariaLabel,
   children,
   height = 240,
   width,
 }: RealtimeChartProps) => {
+  const labels = useChartLabels('realtimeChart', REALTIME_CHART_LABELS, ownLabels);
   const axis = useAxis();
   const [defaultGenerator] = useState(createDefaultGenerator);
   const generate = generator ?? defaultGenerator;
@@ -152,7 +162,7 @@ export const RealtimeChart = ({
     return (
       <TooltipCard
         title={showTimeAxis ? clock(sample.time) : undefined}
-        rows={[{ name: 'value', value: format(sample.value), color: SERIES[0] }]}
+        rows={[{ name: labels.value, value: format(sample.value), color: SERIES[0] }]}
       />
     );
   };
@@ -162,7 +172,7 @@ export const RealtimeChart = ({
       {...frameProps({
         height,
         width,
-        ariaLabel: ariaLabel ?? 'Live values, newest on the right',
+        ariaLabel: ariaLabel ?? labels.name,
       })}
       data={samples}
       // The label of the lowest value is centred on the bottom edge of the plot: without the time
@@ -190,15 +200,15 @@ export const RealtimeChart = ({
         {...axis}
         {...yAxisTitle(yTitle)}
       />
-      <Threshold y={warnThreshold} label={warnLabel} color={STATUS_WARN} />
-      <Threshold y={critThreshold} label={critLabel} color={STATUS_CRIT} />
+      <Threshold y={warnThreshold} label={warnLabel ?? labels.warn} color={STATUS_WARN} />
+      <Threshold y={critThreshold} label={critLabel ?? labels.crit} color={STATUS_CRIT} />
       <Tooltip
         content={tooltip}
         cursor={{ stroke: BORDER, strokeDasharray: '4 4' }}
         animationDuration={0}
       />
       <Line
-        name="value"
+        name={labels.value}
         dataKey="value"
         type="monotone"
         stroke={SERIES[0]}

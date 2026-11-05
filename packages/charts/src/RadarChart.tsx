@@ -14,6 +14,8 @@ import { ChartTooltip } from './core/ChartTooltip';
 import { BORDER, GRID, MUTED, seriesColor } from './core/colors';
 import { hasNoData, seriesKey, toRows } from './core/data';
 import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
+import { RADAR_CHART_LABELS, type RadarChartLabels, type CommonChartLabels } from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { radarSize } from './radarSize';
 import { useElementWidth } from './core/useElementWidth';
 import type { ChartEmptyProps, ChartLegendProps, ChartLoadingProps, ChartProps } from './types';
@@ -39,6 +41,8 @@ export type RadarChartProps = ChartProps &
      * polygons and the tooltip gives the values. `max` and `formatValue` still apply.
      */
     showScale?: boolean;
+    /** The texts it writes, over `ChartLabelsProvider`'s `radarChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & RadarChartLabels>;
   };
 
 export const RadarChart = ({
@@ -50,19 +54,29 @@ export const RadarChart = ({
   legendPosition = 'top',
   max,
   showScale = false,
-  emptyMessage = 'No data',
+  emptyMessage,
+  labels: ownLabels,
   loading,
   ariaLabel,
   children,
   height = 340,
   width,
 }: RadarChartProps) => {
+  const labels = useChartLabels('radarChart', RADAR_CHART_LABELS, ownLabels);
   const hidden = useHiddenSeries();
   const { ref: box, width: boxWidth } = useElementWidth();
-  const name = ariaLabel ?? `Radar chart: ${series.map((s) => s.name).join(', ')}`;
-  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
+  const name = ariaLabel ?? labels.name(series.map((s) => s.name).join(', '));
+  if (loading)
+    return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+    return (
+      <ChartEmpty
+        message={emptyMessage ?? labels.empty}
+        ariaLabel={name}
+        height={height}
+        width={width}
+      />
+    );
   }
   const legendVisible = showLegend ?? series.length > 1;
   // The polygons as large as the box allows, less the room of the axis names

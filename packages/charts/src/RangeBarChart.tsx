@@ -19,6 +19,12 @@ import { ChartLegend, legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, GRID, seriesColor } from './core/colors';
 import { hasNoData, seriesKey } from './core/data';
 import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
+import {
+  RANGE_BAR_CHART_LABELS,
+  type RangeBarChartLabels,
+  type CommonChartLabels,
+} from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { referenceMarks } from './core/reference';
 import type {
   ChartAxisTitleProps,
@@ -52,6 +58,8 @@ export type RangeBarChartProps = ChartProps &
     formatDate?: (timestamp: number) => string;
     /** Show the legend (auto-true when 2+ series). */
     showLegend?: boolean;
+    /** The texts it writes, over `ChartLabelsProvider`'s `rangeBarChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & RangeBarChartLabels>;
   };
 
 // The axis labels are UTC, so the default tooltip is too.
@@ -153,21 +161,31 @@ export const RangeBarChart = ({
   referenceBands,
   showLegend,
   legendPosition = 'top',
-  emptyMessage = 'No data',
+  emptyMessage,
+  labels: ownLabels,
   loading,
   ariaLabel,
   children,
   height = 320,
   width,
 }: RangeBarChartProps) => {
+  const labels = useChartLabels('rangeBarChart', RANGE_BAR_CHART_LABELS, ownLabels);
   const hidden = useHiddenSeries();
   const axis = useAxis();
   // Recharts names the layout after the axis the categories sit on.
   const categoryKeys = useCategoryKeys('vertical');
-  const name = ariaLabel ?? `Range chart: ${series.map((s) => s.name).join(', ')}`;
-  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
+  const name = ariaLabel ?? labels.name(series.map((s) => s.name).join(', '));
+  if (loading)
+    return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+    return (
+      <ChartEmpty
+        message={emptyMessage ?? labels.empty}
+        ariaLabel={name}
+        height={height}
+        width={width}
+      />
+    );
   }
 
   const categories = [...new Set(series.flatMap((s) => s.data.map((p) => p.x)))];
@@ -262,7 +280,7 @@ export const RangeBarChart = ({
       />
       {groupRows ? (
         <Bar
-          name="Ranges"
+          name={labels.ranges}
           dataKey={GROUP_KEY}
           maxBarSize={32}
           shape={rangesShape(GROUP_KEY, color, visible)}

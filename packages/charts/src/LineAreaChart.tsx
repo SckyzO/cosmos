@@ -7,6 +7,12 @@ import { legendProps, useHiddenSeries } from './core/ChartLegend';
 import { BORDER, PANEL, seriesColor } from './core/colors';
 import { hasNoData, safeId, seriesKey, toRows } from './core/data';
 import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
+import {
+  LINE_AREA_CHART_LABELS,
+  type LineAreaChartLabels,
+  type CommonChartLabels,
+} from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { referenceMarks } from './core/reference';
 import type {
   ChartAxisTitleProps,
@@ -50,6 +56,8 @@ export type LineAreaChartProps = ChartProps &
     stacked?: boolean;
     /** Mark every data point with a dot. Default off: a dot appears under the pointer only. */
     markers?: boolean;
+    /** The texts it writes, over `ChartLabelsProvider`'s `lineAreaChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & LineAreaChartLabels>;
   };
 
 export const LineAreaChart = ({
@@ -61,7 +69,8 @@ export const LineAreaChart = ({
   yTitle,
   referenceLines,
   referenceBands,
-  emptyMessage = 'No data',
+  emptyMessage,
+  labels: ownLabels,
   loading,
   ariaLabel,
   children,
@@ -73,13 +82,22 @@ export const LineAreaChart = ({
   stacked = false,
   markers = false,
 }: LineAreaChartProps) => {
+  const labels = useChartLabels('lineAreaChart', LINE_AREA_CHART_LABELS, ownLabels);
   const uid = safeId(useId());
   const hidden = useHiddenSeries();
   const axis = useAxis();
-  const name = ariaLabel ?? `Area chart: ${series.map((s) => s.name).join(', ')}`;
-  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
+  const name = ariaLabel ?? labels.name(series.map((s) => s.name).join(', '));
+  if (loading)
+    return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+    return (
+      <ChartEmpty
+        message={emptyMessage ?? labels.empty}
+        ariaLabel={name}
+        height={height}
+        width={width}
+      />
+    );
   }
   const legendVisible = showLegend ?? series.length > 1;
   return (
