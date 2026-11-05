@@ -22,8 +22,6 @@ export type SignUpFormValues = {
 export type SignUpFormProps = {
   onSubmit: (values: SignUpFormValues) => void | Promise<void>;
   signInHref?: string;
-  /** The sign-in link. Default `labels.signIn`. */
-  signInLabel?: string;
   termsHref?: string;
   privacyHref?: string;
   /** Show PasswordPolicyChecker live below the password field. Default `true`. */
@@ -45,8 +43,6 @@ export type SignUpFormProps = {
   title?: string;
   /** The line under the title. Default `labels.description`. */
   description?: string;
-  /** The submit button. Default `labels.submit`. */
-  submitLabel?: string;
   /** The texts it writes, over `LabelsProvider`'s `signUpForm` and the English defaults. */
   labels?: Partial<SignUpFormLabels>;
   /** Slot rendered above the form (e.g. social provider buttons). */
@@ -57,7 +53,6 @@ export type SignUpFormProps = {
 export const SignUpForm = ({
   onSubmit,
   signInHref,
-  signInLabel,
   termsHref = '#',
   privacyHref = '#',
   showPolicy = true,
@@ -67,7 +62,6 @@ export const SignUpForm = ({
   error,
   title,
   description,
-  submitLabel,
   labels: ownLabels,
   extraTop,
   className,
@@ -178,7 +172,7 @@ export const SignUpForm = ({
           disabled={loading}
         />
         <Button type="submit" loading={loading} disabled={!canSubmit} className="w-full">
-          {submitLabel ?? labels.submit}
+          {labels.submit}
         </Button>
       </div>
 
@@ -186,7 +180,7 @@ export const SignUpForm = ({
         <p className="mt-5 text-center text-xs text-[var(--color-text-muted)]">
           {labels.haveAccount}{' '}
           <Link href={signInHref} variant="colored">
-            {signInLabel ?? labels.signIn}
+            {labels.signIn}
           </Link>
         </p>
       )}

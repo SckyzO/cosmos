@@ -21,14 +21,8 @@ export type NewPasswordFormProps = {
   view?: NewPasswordFormView;
   /** `expired`: where to ask for another link. Without it, the view has no link to follow. */
   requestHref?: string;
-  /** `expired`: the link that asks for another one. Default `labels.request`. */
-  requestLabel?: string;
   /** `form` and `expired`: where "Back to sign in" goes; `done`: where "Continue to sign in" goes. */
   signInHref?: string;
-  /** The link back to the sign-in page. Default `labels.signIn`. */
-  signInLabel?: string;
-  /** `done`: the label of the link to the sign-in page. Default `labels.continue`. */
-  continueLabel?: string;
   /**
    * The password policy: what the rules say of a password, listed live under the field. Default
    * `defaultPasswordRules`. The form stays closed until they all hold; a list that comes back
@@ -46,8 +40,6 @@ export type NewPasswordFormProps = {
   title?: string;
   /** The line under the title. Default `labels.description`. */
   description?: string;
-  /** The submit button. Default `labels.submit`. */
-  submitLabel?: string;
   /** The texts it writes, over `LabelsProvider`'s `newPasswordForm` and the English defaults. */
   labels?: Partial<NewPasswordFormLabels>;
   className?: string;
@@ -64,17 +56,13 @@ export const NewPasswordForm = ({
   onSubmit,
   view = 'form',
   requestHref,
-  requestLabel,
   signInHref,
-  signInLabel,
-  continueLabel,
   rules: rulesProp,
   strength,
   loading = false,
   error,
   title,
   description,
-  submitLabel,
   labels: ownLabels,
   className,
 }: NewPasswordFormProps) => {
@@ -98,7 +86,7 @@ export const NewPasswordForm = ({
   const backLink = signInHref && (
     <Link href={signInHref} variant="subtle" className="justify-center">
       <ArrowLeft className="h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
-      {signInLabel ?? labels.signIn}
+      {labels.signIn}
     </Link>
   );
 
@@ -121,7 +109,7 @@ export const NewPasswordForm = ({
         <div className="mt-6 flex flex-col items-stretch gap-3">
           {requestHref && (
             <Link href={requestHref} variant="colored" className="justify-center font-medium">
-              {requestLabel ?? labels.request}
+              {labels.request}
             </Link>
           )}
           {backLink}
@@ -149,7 +137,7 @@ export const NewPasswordForm = ({
         {signInHref && (
           <div className="mt-6 flex flex-col items-stretch">
             <Link href={signInHref} variant="colored" className="justify-center font-medium">
-              {continueLabel ?? labels.continue}
+              {labels.continue}
             </Link>
           </div>
         )}
@@ -220,7 +208,7 @@ export const NewPasswordForm = ({
           )}
         </div>
         <Button type="submit" loading={loading} disabled={!canSubmit} className="w-full">
-          {submitLabel ?? labels.submit}
+          {labels.submit}
         </Button>
       </div>
 

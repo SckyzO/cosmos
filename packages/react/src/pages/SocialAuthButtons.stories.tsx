@@ -91,7 +91,7 @@ export const CustomLabel: Story = {
   decorators: [inSignInColumn],
   args: {
     providers: ['google', 'github'],
-    labelFor: (p) => `Sign in with ${p[0].toUpperCase() + p.slice(1)}`,
+    labels: { continueWith: (name) => `Sign in with ${name}` },
   },
 };
 

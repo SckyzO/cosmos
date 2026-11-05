@@ -15,12 +15,8 @@ export type SocialAuthButtonsProps = {
   loading?: SocialProvider | null;
   /** Render a "OR continue with" divider below the buttons. Default `true`. */
   divider?: boolean;
-  /** The line of the divider. Default `labels.divider`. */
-  dividerLabel?: string;
   /** `stacked` (1 per row) or `grid` (2 cols). Default `stacked`. */
   layout?: SocialAuthButtonsLayout;
-  /** Customize button label. Default `labels.continueWith`, `Continue with {Provider}`. */
-  labelFor?: (provider: SocialProvider) => string;
   /** The texts it writes, over `LabelsProvider`'s `socialAuthButtons` and the English defaults. */
   labels?: Partial<SocialAuthButtonsLabels>;
   /** Render at the top (above divider) or below (between form & nothing). */
@@ -116,9 +112,7 @@ export const SocialAuthButtons = ({
   onProviderClick,
   loading,
   divider = true,
-  dividerLabel,
   layout = 'stacked',
-  labelFor,
   labels: ownLabels,
   position = 'above',
   className,
@@ -132,7 +126,7 @@ export const SocialAuthButtons = ({
         const Icon = PROVIDER_ICON[provider];
         const isLoading = loading === provider;
         const isDisabled = loading !== undefined && loading !== null;
-        const label = labelFor ? labelFor(provider) : labels.continueWith(PROVIDER_NAME[provider]);
+        const label = labels.continueWith(PROVIDER_NAME[provider]);
         return (
           <button
             key={provider}
@@ -156,7 +150,7 @@ export const SocialAuthButtons = ({
     <div className="my-4 flex items-center gap-3">
       <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
       <span className="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400">
-        {dividerLabel ?? labels.divider}
+        {labels.divider}
       </span>
       <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
     </div>

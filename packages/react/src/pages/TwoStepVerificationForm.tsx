@@ -55,14 +55,8 @@ export type TwoStepVerificationFormProps = {
   /** `code` only: trigger onSubmit automatically when the user fills the last cell. Default `true`. */
   autoSubmit?: boolean;
   cancelHref?: string;
-  /** The link back to the sign-in page. Default `labels.cancel`. */
-  cancelLabel?: string;
   /** The title of the code entry. Default `labels.title`. */
   title?: string;
-  /** The submit button. Default `labels.submit`. */
-  submitLabel?: string;
-  /** The resend button. Default `labels.resend`. */
-  resendLabel?: string;
   className?: string;
 };
 
@@ -81,10 +75,7 @@ export const TwoStepVerificationForm = ({
   error,
   autoSubmit = true,
   cancelHref,
-  cancelLabel,
   title,
-  submitLabel,
-  resendLabel,
   className,
 }: TwoStepVerificationFormProps) => {
   const labels = useLabels('twoStepVerificationForm', TWO_STEP_VERIFICATION_FORM_LABELS, ownLabels);
@@ -187,12 +178,12 @@ export const TwoStepVerificationForm = ({
           disabled={loading || (isBackup ? backupValue.length === 0 : code.length !== length)}
           className="w-full"
         >
-          {submitLabel ?? labels.submit}
+          {labels.submit}
         </Button>
         {!isBackup && onResend && (
           // 44px tall, the touch target size, though the label is small.
           <ResendButton
-            label={resendLabel ?? labels.resend}
+            label={labels.resend}
             onResend={onResend}
             cooldown={resendCooldown}
             labels={labels}
@@ -223,7 +214,7 @@ export const TwoStepVerificationForm = ({
           <div className="flex justify-center">
             <Link href={cancelHref} variant="subtle">
               <ArrowLeft className="h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
-              {cancelLabel ?? labels.cancel}
+              {labels.cancel}
             </Link>
           </div>
         )}

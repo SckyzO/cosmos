@@ -6,18 +6,12 @@ import { useLabels } from '../labels/labelsContext';
 import { AlertBanner } from '../ui/AlertBanner';
 import { Button } from '../ui/Button';
 import { Link } from '../ui/Link';
-import {
-  RESET_PASSWORD_FORM_LABELS,
-  type ResendLabels,
-  type ResetPasswordFormLabels,
-} from './labels';
+import { RESET_PASSWORD_FORM_LABELS, type ResetPasswordFormLabels } from './labels';
 import { ResendButton } from './ResendButton';
 
 export type ResetPasswordFormProps = {
   onSubmit: (email: string) => void | Promise<void>;
   signInHref?: string;
-  /** The link back to the sign-in page. Default `labels.signIn`. */
-  signInLabel?: string;
   /**
    * Switch to the post-submit confirmation view. Default `false`. When it changes, the focus goes
    * to the heading of the new view, since the button that was pressed is gone with the old one;
@@ -32,12 +26,8 @@ export type ResetPasswordFormProps = {
   title?: string;
   /** The line under the title. Default `labels.description`. */
   description?: string;
-  /** The submit button. Default `labels.submit`. */
-  submitLabel?: string;
   /** Resend handler in the `sent` view. Hidden if not provided. */
   onResend?: () => void;
-  /** The resend button. Default `labels.resend`. */
-  resendLabel?: string;
   /**
    * Seconds the resend button waits before it can be pressed again, from the moment the `sent`
    * view shows (the e-mail was just sent) and from each press. Default `0`: no wait. While it
@@ -46,8 +36,6 @@ export type ResetPasswordFormProps = {
    * authority: show its refusal (a 429) through `error`.
    */
   resendCooldown?: number;
-  /** The words of the resend wait. Default `labels.resent`, `labels.ready` and `labels.availableIn`. */
-  resendLabels?: Partial<ResendLabels>;
   /** The texts it writes, over `LabelsProvider`'s `resetPasswordForm` and the English defaults. */
   labels?: Partial<ResetPasswordFormLabels>;
   className?: string;
@@ -56,18 +44,14 @@ export type ResetPasswordFormProps = {
 export const ResetPasswordForm = ({
   onSubmit,
   signInHref,
-  signInLabel,
   sent = false,
   sentEmail,
   loading = false,
   error,
   title,
   description,
-  submitLabel,
   onResend,
-  resendLabel,
   resendCooldown = 0,
-  resendLabels: resendWords,
   labels: ownLabels,
   className,
 }: ResetPasswordFormProps) => {
@@ -104,14 +88,10 @@ export const ResetPasswordForm = ({
         <div className="mt-6 flex flex-col items-stretch gap-2">
           {onResend && (
             <ResendButton
-              label={resendLabel ?? labels.resend}
+              label={labels.resend}
               onResend={onResend}
               cooldown={resendCooldown}
-              labels={{
-                resent: resendWords?.resent ?? labels.resent,
-                ready: resendWords?.ready ?? labels.ready,
-                availableIn: resendWords?.availableIn ?? labels.availableIn,
-              }}
+              labels={labels}
               disabled={loading}
               loading={loading}
               variant="secondary"
@@ -121,7 +101,7 @@ export const ResetPasswordForm = ({
           {signInHref && (
             <Link href={signInHref} variant="subtle" className="justify-center">
               <ArrowLeft className="h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
-              {signInLabel ?? labels.signIn}
+              {labels.signIn}
             </Link>
           )}
         </div>
@@ -170,7 +150,7 @@ export const ResetPasswordForm = ({
           disabled={loading || email.length === 0}
           className="w-full"
         >
-          {submitLabel ?? labels.submit}
+          {labels.submit}
         </Button>
       </div>
 
@@ -178,7 +158,7 @@ export const ResetPasswordForm = ({
         <p className="mt-5 text-center text-xs text-[var(--color-text-muted)]">
           <Link href={signInHref} variant="colored">
             <ArrowLeft className="h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
-            {signInLabel ?? labels.signIn}
+            {labels.signIn}
           </Link>
         </p>
       )}
