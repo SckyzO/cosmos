@@ -1,7 +1,9 @@
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { INTENT_ICON_SIZE, INTENT_STYLE, type Intent } from './intent';
+import { ALERT_BANNER_LABELS, type AlertBannerLabels } from './labels';
 
 export type AlertBannerIntent = Extract<Intent, 'success' | 'danger' | 'warning' | 'info'>;
 export type AlertBannerAppearance = 'tinted' | 'accent';
@@ -28,6 +30,8 @@ export type AlertBannerProps = {
   action?: ReactNode;
   /** Shows a close button that calls this. The host removes the banner. */
   onDismiss?: () => void;
+  /** The texts it writes (the close button), over `LabelsProvider`'s `alertBanner` and the English defaults. */
+  labels?: Partial<AlertBannerLabels>;
   className?: string;
 };
 
@@ -39,8 +43,10 @@ export const AlertBanner = ({
   children,
   action,
   onDismiss,
+  labels: ownLabels,
   className,
 }: AlertBannerProps) => {
+  const labels = useLabels('alertBanner', ALERT_BANNER_LABELS, ownLabels);
   const v = INTENT_STYLE[intent];
   const Icon = v.icon;
   const hasTitle = title !== undefined && title !== null && title !== false;
@@ -72,7 +78,7 @@ export const AlertBanner = ({
       {onDismiss && (
         <button
           type="button"
-          aria-label="Dismiss alert"
+          aria-label={labels.dismiss}
           onClick={() => onDismiss()}
           className={clsx(
             'focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 -my-1 -me-2 flex shrink-0 items-center justify-center rounded-md opacity-60 transition-colors hover:bg-black/5 hover:opacity-100 focus-visible:opacity-100 dark:hover:bg-white/10',

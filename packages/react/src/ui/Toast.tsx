@@ -1,8 +1,10 @@
 import { clsx } from 'clsx';
 import { Toaster as SonnerToaster, type ToasterProps } from 'sonner';
 import { useDocumentDirection } from '../hooks/direction';
+import { useLabels } from '../labels/labelsContext';
 import { useCosmosTheme } from '../settings/useCosmosTheme';
 import { INTENT_ICON_SIZE, INTENT_STYLE, type Intent } from './intent';
+import { TOASTER_LABELS, type ToasterLabels } from './labels';
 
 type StatusIntent = Extract<Intent, 'success' | 'info' | 'warning' | 'danger'>;
 
@@ -90,11 +92,19 @@ const ICONS = {
  * surface, every other toast the neutral card. Override per-instance by passing
  * props; a `toastOptions` of your own replaces the one of Cosmos, `unstyled` and
  * the classes with it.
+ *
+ * The names sonner gives its own controls (the close button of a toast, the region that holds them)
+ * are labels: `labels`, over `LabelsProvider`'s `toaster` and the English defaults. A
+ * `containerAriaLabel` or a `toastOptions.closeButtonAriaLabel` of your own wins.
  */
 
-export type CosmosToasterProps = ToasterProps;
+export type CosmosToasterProps = ToasterProps & {
+  /** The texts it hands to sonner, over `LabelsProvider`'s `toaster` and the English defaults. */
+  labels?: Partial<ToasterLabels>;
+};
 
-export const Toaster = (props: CosmosToasterProps) => {
+export const Toaster = ({ labels: ownLabels, ...props }: CosmosToasterProps) => {
+  const labels = useLabels('toaster', TOASTER_LABELS, ownLabels);
   const theme = useCosmosTheme();
   const documentDirection = useDocumentDirection();
   // Sonner's `position` names a corner of the screen, so the default has to be picked for the
@@ -107,8 +117,13 @@ export const Toaster = (props: CosmosToasterProps) => {
       closeButton
       duration={4000}
       icons={ICONS}
-      toastOptions={{ unstyled: true, classNames: CLASS_NAMES }}
+      containerAriaLabel={labels.region}
       {...props}
+      toastOptions={
+        props.toastOptions
+          ? { closeButtonAriaLabel: labels.close, ...props.toastOptions }
+          : { unstyled: true, classNames: CLASS_NAMES, closeButtonAriaLabel: labels.close }
+      }
     />
   );
 };

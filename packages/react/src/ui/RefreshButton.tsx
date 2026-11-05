@@ -1,7 +1,9 @@
 import { clsx } from 'clsx';
 import { Check, ChevronDown, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { FloatingPanel } from './FloatingPanel';
+import { REFRESH_BUTTON_LABELS, type RefreshButtonLabels } from './labels';
 
 export type RefreshOption = { label: string; ms: number };
 
@@ -59,7 +61,10 @@ export type RefreshButtonProps = {
   autoRefreshMs: number;
   onRefresh: () => void | Promise<void>;
   onIntervalChange: (ms: number) => void;
+  /** The intervals offered. Default `REFRESH_OPTIONS`, whose "Off" reads `labels.off`. */
   options?: RefreshOption[];
+  /** The texts it writes, over `LabelsProvider`'s `refreshButton` and the English defaults. */
+  labels?: Partial<RefreshButtonLabels>;
   className?: string;
 };
 
@@ -68,9 +73,13 @@ export const RefreshButton = ({
   autoRefreshMs,
   onRefresh,
   onIntervalChange,
-  options = REFRESH_OPTIONS,
+  options: optionsProp,
+  labels: ownLabels,
   className,
 }: RefreshButtonProps) => {
+  const labels = useLabels('refreshButton', REFRESH_BUTTON_LABELS, ownLabels);
+  const options =
+    optionsProp ?? REFRESH_OPTIONS.map((o) => (o.ms === 0 ? { ...o, label: labels.off } : o));
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const currentLabel = options.find((o) => o.ms === autoRefreshMs)?.label ?? '?';
@@ -90,7 +99,7 @@ export const RefreshButton = ({
         className="focus-visible:focus-indicator py-row-8 flex items-center gap-1.5 rounded-s-lg px-3 text-sm text-gray-600 transition-colors hover:bg-gray-50 focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
       >
         <RefreshCw className={clsx('h-4 w-4', refreshing && 'animate-spin')} />
-        <span>Refresh</span>
+        <span>{labels.refresh}</span>
         {isAutoActive && (
           <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
             <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-green-400 motion-reduce:animate-none" />
@@ -106,7 +115,7 @@ export const RefreshButton = ({
           ref={triggerRef}
           type="button"
           onClick={() => setOpen((v) => !v)}
-          aria-label="Choose refresh interval"
+          aria-label={labels.chooseInterval}
           aria-expanded={open}
           className="focus-visible:focus-indicator flex h-full items-center rounded-e-lg px-2 text-gray-400 transition-colors hover:bg-gray-50 focus-visible:ring-inset dark:text-gray-500 dark:hover:bg-gray-700"
         >

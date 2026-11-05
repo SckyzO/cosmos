@@ -19,6 +19,8 @@ import { exitAnimations } from '../hooks/exitAnimations';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { useControllableState } from '../hooks/useControllableState';
 import { useExitTransition } from '../hooks/useExitTransition';
+import { useLabels } from '../labels/labelsContext';
+import { LIGHTBOX_LABELS, type LightboxLabels } from './labels';
 import { mergeRefs } from './mergeRefs';
 import { clampIndex, indexForKey, isNearby } from './lightboxNav';
 import { OverlayLayerProvider, useFocusTrap, useOverlayLayer } from './overlayA11y';
@@ -50,24 +52,29 @@ export type LightboxProps = {
   onIndexChange?: (index: number) => void;
   /** Draws a strip of thumbnails under the picture, from `sm` up. Default `false`. */
   thumbnails?: boolean;
-  /** Accessible name of the viewer. Default "Picture viewer". */
+  /** Accessible name of the viewer. Default `labels.viewer`, "Picture viewer". */
   ariaLabel?: string;
-  /** Default "Previous picture". */
+  /** Default `labels.previous`, "Previous picture". */
   prevLabel?: string;
-  /** Default "Next picture". */
+  /** Default `labels.next`, "Next picture". */
   nextLabel?: string;
-  /** Default "Close". */
+  /** Default `labels.close`, "Close". */
   closeLabel?: string;
-  /** What is read out when the picture changes, from the 1-based `position`. Default "Picture 3 of 12". */
+  /** What is read out when the picture changes, from the 1-based `position`. Default `labels.counter`, "Picture 3 of 12". */
   counterLabel?: (position: number, total: number) => string;
-  /** Accessible name of the thumbnail strip. Default "Picture thumbnails". */
+  /** Accessible name of the thumbnail strip. Default `labels.thumbnails`, "Picture thumbnails". */
   thumbnailsLabel?: string;
-  /** Accessible name of the thumbnail of the 1-based `position`. Default "Go to picture 3". */
+  /** Accessible name of the thumbnail of the 1-based `position`. Default `labels.thumbnail`, "Go to picture 3". */
   thumbnailLabel?: (position: number, total: number) => string;
-  /** Shown when a picture can't be loaded. Default "This picture could not be loaded." */
+  /** Shown when a picture can't be loaded. Default `labels.error`, "This picture could not be loaded." */
   errorLabel?: string;
-  /** The button that loads the picture again. Default "Try again". */
+  /** The button that loads the picture again. Default `labels.retry`, "Try again". */
   retryLabel?: string;
+  /**
+   * The texts it writes (the names of the viewer and its controls, what is read out when the
+   * picture changes, the error), over `LabelsProvider`'s `lightbox` and the English defaults.
+   */
+  labels?: Partial<LightboxLabels>;
 };
 
 // The controls stay dark in every theme: a photo viewer, not a themed panel. White glyphs on a
@@ -249,22 +256,8 @@ function Thumbnails({ items, index, onSelect, label, thumbnailLabel }: Thumbnail
   );
 }
 
-type ViewerProps = Required<
-  Pick<
-    LightboxProps,
-    | 'items'
-    | 'thumbnails'
-    | 'ariaLabel'
-    | 'prevLabel'
-    | 'nextLabel'
-    | 'closeLabel'
-    | 'counterLabel'
-    | 'thumbnailsLabel'
-    | 'thumbnailLabel'
-    | 'errorLabel'
-    | 'retryLabel'
-  >
-> & {
+type ViewerProps = Required<Pick<LightboxProps, 'items' | 'thumbnails'>> & {
+  labels: LightboxLabels;
   index: number;
   onIndexChange: (index: number) => void;
   onClose: () => void;
@@ -286,15 +279,7 @@ function Viewer({
   onIndexChange,
   onClose,
   thumbnails,
-  ariaLabel,
-  prevLabel,
-  nextLabel,
-  closeLabel,
-  counterLabel,
-  thumbnailsLabel,
-  thumbnailLabel,
-  errorLabel,
-  retryLabel,
+  labels,
 }: ViewerProps) {
   const count = items.length;
   const several = count > 1;
@@ -398,7 +383,7 @@ function Viewer({
 
   const item = items[index];
   const position = index + 1;
-  const announcement = counterLabel(position, count);
+  const announcement = labels.counter(position, count);
 
   return createPortal(
     <OverlayLayerProvider value={layer}>
@@ -406,7 +391,7 @@ function Viewer({
         ref={mergedRootRef}
         role="dialog"
         aria-modal="true"
-        aria-label={ariaLabel}
+        aria-label={labels.viewer}
         tabIndex={-1}
         inert={!open}
         onKeyDown={onKeyDown}
@@ -463,7 +448,7 @@ function Viewer({
             )}
             <button
               type="button"
-              aria-label={closeLabel}
+              aria-label={labels.close}
               onClick={() => onClose()}
               className={clsx(CONTROL, 'ms-auto')}
             >
@@ -491,8 +476,8 @@ function Viewer({
                         key={slide.src}
                         item={slide}
                         current={i === index}
-                        errorLabel={errorLabel}
-                        retryLabel={retryLabel}
+                        errorLabel={labels.error}
+                        retryLabel={labels.retry}
                       />
                     )}
                   </div>
@@ -507,7 +492,7 @@ function Viewer({
                 <button
                   ref={prev}
                   type="button"
-                  aria-label={prevLabel}
+                  aria-label={labels.previous}
                   disabled={index === 0}
                   onClick={() => go(index - 1)}
                   className={clsx(CONTROL, ARROW, ARROW_PLACE.prev)}
@@ -517,7 +502,7 @@ function Viewer({
                 <button
                   ref={next}
                   type="button"
-                  aria-label={nextLabel}
+                  aria-label={labels.next}
                   disabled={index === count - 1}
                   onClick={() => go(index + 1)}
                   className={clsx(CONTROL, ARROW, ARROW_PLACE.next)}
@@ -533,8 +518,8 @@ function Viewer({
               items={items}
               index={index}
               onSelect={go}
-              label={thumbnailsLabel}
-              thumbnailLabel={thumbnailLabel}
+              label={labels.thumbnails}
+              thumbnailLabel={labels.thumbnail}
             />
           )}
 
@@ -566,7 +551,7 @@ function Viewer({
  * scrolling. The arrow keys, a swipe and the arrows move between pictures, never in a loop, and
  * follow the reading direction in right to left. The picture shown and its neighbours are loaded.
  *
- * Every text is a prop with an English default.
+ * Every text is a label with an English default.
  */
 export const Lightbox = ({
   items,
@@ -576,16 +561,29 @@ export const Lightbox = ({
   defaultIndex = 0,
   onIndexChange,
   thumbnails = false,
-  ariaLabel = 'Picture viewer',
-  prevLabel = 'Previous picture',
-  nextLabel = 'Next picture',
-  closeLabel = 'Close',
-  counterLabel = (position, total) => `Picture ${position} of ${total}`,
-  thumbnailsLabel = 'Picture thumbnails',
-  thumbnailLabel = (position) => `Go to picture ${position}`,
-  errorLabel = 'This picture could not be loaded.',
-  retryLabel = 'Try again',
+  ariaLabel,
+  prevLabel,
+  nextLabel,
+  closeLabel,
+  counterLabel,
+  thumbnailsLabel,
+  thumbnailLabel,
+  errorLabel,
+  retryLabel,
+  labels: ownLabels,
 }: LightboxProps) => {
+  const resolved = useLabels('lightbox', LIGHTBOX_LABELS, ownLabels);
+  const labels: LightboxLabels = {
+    viewer: ariaLabel ?? resolved.viewer,
+    previous: prevLabel ?? resolved.previous,
+    next: nextLabel ?? resolved.next,
+    close: closeLabel ?? resolved.close,
+    counter: counterLabel ?? resolved.counter,
+    thumbnails: thumbnailsLabel ?? resolved.thumbnails,
+    thumbnail: thumbnailLabel ?? resolved.thumbnail,
+    error: errorLabel ?? resolved.error,
+    retry: retryLabel ?? resolved.retry,
+  };
   const [current, setIndex] = useControllableState<number>({
     value: index,
     defaultValue: defaultIndex,
@@ -607,15 +605,7 @@ export const Lightbox = ({
       onIndexChange={setIndex}
       onClose={() => onOpenChange(false)}
       thumbnails={thumbnails}
-      ariaLabel={ariaLabel}
-      prevLabel={prevLabel}
-      nextLabel={nextLabel}
-      closeLabel={closeLabel}
-      counterLabel={counterLabel}
-      thumbnailsLabel={thumbnailsLabel}
-      thumbnailLabel={thumbnailLabel}
-      errorLabel={errorLabel}
-      retryLabel={retryLabel}
+      labels={labels}
     />
   );
 };

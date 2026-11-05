@@ -18,6 +18,8 @@ import {
   type NotificationRowProps,
 } from './NotificationRow';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
+import { NOTIFICATIONS_PANEL_LABELS, type NotificationsPanelLabels } from './labels';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,9 +32,14 @@ type Ctx = {
   setOpen: (v: boolean) => void;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
   align: 'start' | 'end';
+  /** What the root's `labels` prop gave. */
+  labels: Partial<NotificationsPanelLabels> | undefined;
 };
 
 const NotificationsPanelContext = createContext<Ctx | null>(null);
+
+// For the parts that may stand outside a panel (`Header`, `Empty`): the root's labels, if any.
+const useOwnLabels = () => useContext(NotificationsPanelContext)?.labels;
 
 const useCtx = (): Ctx => {
   const ctx = useContext(NotificationsPanelContext);
@@ -49,6 +56,11 @@ export type NotificationsPanelProps = {
   onOpenChange?: (open: boolean) => void;
   /** Edge of the trigger the panel lines up with: where the text starts or ends. Default `end`. */
   align?: 'start' | 'end';
+  /**
+   * The texts its parts write (the trigger's name, "Mark all as read", the empty state), over
+   * `LabelsProvider`'s `notificationsPanel` and the English defaults.
+   */
+  labels?: Partial<NotificationsPanelLabels>;
   children: ReactNode;
 };
 
@@ -57,6 +69,7 @@ const NotificationsPanelRoot = ({
   defaultOpen = false,
   onOpenChange,
   align = 'end',
+  labels,
   children,
 }: NotificationsPanelProps) => {
   const [open, setOpen] = useControllableState({
@@ -68,7 +81,7 @@ const NotificationsPanelRoot = ({
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <NotificationsPanelContext.Provider value={{ open, setOpen, triggerRef, align }}>
+    <NotificationsPanelContext.Provider value={{ open, setOpen, triggerRef, align, labels }}>
       {children}
     </NotificationsPanelContext.Provider>
   );
@@ -100,7 +113,8 @@ function NotificationsPanelTrigger({
   ref,
   ...rest
 }: NotificationsPanelTriggerProps) {
-  const { open, setOpen, triggerRef } = useCtx();
+  const { open, setOpen, triggerRef, labels: ownLabels } = useCtx();
+  const labels = useLabels('notificationsPanel', NOTIFICATIONS_PANEL_LABELS, ownLabels);
   const showPing = ping ?? (count > 0 && !muted);
   const Icon = muted ? BellOff : Bell;
   const display = count > 9999 ? '9999+' : String(count);
@@ -111,7 +125,7 @@ function NotificationsPanelTrigger({
       ref={mergeRefs(triggerRef, ref)}
       type="button"
       // The badge is visible text, so the name has to contain it (`label-content-name-mismatch`).
-      aria-label={`${muted ? 'Notifications (muted)' : 'Notifications'}${count > 0 ? `, ${display}` : ''}`}
+      aria-label={labels.trigger(count > 0 ? display : '', muted)}
       aria-expanded={open}
       onClick={() => setOpen(!open)}
       className={clsx(
@@ -160,7 +174,8 @@ const NotificationsPanelContent = ({
   className,
   children,
 }: NotificationsPanelContentProps) => {
-  const { open, setOpen, triggerRef, align } = useCtx();
+  const { open, setOpen, triggerRef, align, labels: ownLabels } = useCtx();
+  const labels = useLabels('notificationsPanel', NOTIFICATIONS_PANEL_LABELS, ownLabels);
   return (
     <FloatingPanel
       open={open}
@@ -169,7 +184,7 @@ const NotificationsPanelContent = ({
       placement={{ side: 'bottom', align, offset: 8 }}
       role="dialog"
       tabIndex={-1}
-      aria-label="Notifications"
+      aria-label={labels.panel}
       className={clsx(
         'overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900',
         width,
@@ -200,32 +215,35 @@ const NotificationsPanelHeader = ({
   onMarkAllRead,
   children,
   className,
-}: NotificationsPanelHeaderProps) => (
-  <div
-    className={clsx(
-      'flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800',
-      className
-    )}
-  >
-    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-      <bdi>{title}</bdi>
-    </h3>
-    {(onMarkAllRead || children) && (
-      <div className="flex items-center gap-2">
-        {onMarkAllRead && (
-          <button
-            type="button"
-            onClick={() => onMarkAllRead()}
-            className="text-brand-600 dark:text-brand-400 focus-visible:focus-indicator rounded-md px-1.5 py-0.5 text-xs font-medium transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
-          >
-            Mark all as read
-          </button>
-        )}
-        {children}
-      </div>
-    )}
-  </div>
-);
+}: NotificationsPanelHeaderProps) => {
+  const labels = useLabels('notificationsPanel', NOTIFICATIONS_PANEL_LABELS, useOwnLabels());
+  return (
+    <div
+      className={clsx(
+        'flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800',
+        className
+      )}
+    >
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+        <bdi>{title}</bdi>
+      </h3>
+      {(onMarkAllRead || children) && (
+        <div className="flex items-center gap-2">
+          {onMarkAllRead && (
+            <button
+              type="button"
+              onClick={() => onMarkAllRead()}
+              className="text-brand-600 dark:text-brand-400 focus-visible:focus-indicator rounded-md px-1.5 py-0.5 text-xs font-medium transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
+            >
+              {labels.markAllRead}
+            </button>
+          )}
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // ── Counters (CRIT/WARN/INFO pills) ──────────────────────────────────────────
 
@@ -343,26 +361,31 @@ function NotificationsPanelItem({
 // ── Empty ────────────────────────────────────────────────────────────────────
 
 export type NotificationsPanelEmptyProps = {
+  /** Default `labels.emptyTitle`, 'No active alerts'. */
   title?: string;
+  /** Default `labels.emptySubtitle`, 'All systems nominal.'. */
   subtitle?: string;
   icon?: ComponentType<{ className?: string }>;
 };
 
 const NotificationsPanelEmpty = ({
-  title = 'No active alerts',
-  subtitle = 'All systems nominal.',
+  title,
+  subtitle,
   icon: Icon = Bell,
-}: NotificationsPanelEmptyProps) => (
-  <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-    <Icon className="h-8 w-8 text-gray-300 dark:text-gray-700" />
-    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-      <bdi>{title}</bdi>
-    </p>
-    <p className="text-xs text-gray-500 dark:text-gray-400">
-      <bdi>{subtitle}</bdi>
-    </p>
-  </div>
-);
+}: NotificationsPanelEmptyProps) => {
+  const labels = useLabels('notificationsPanel', NOTIFICATIONS_PANEL_LABELS, useOwnLabels());
+  return (
+    <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
+      <Icon className="h-8 w-8 text-gray-300 dark:text-gray-700" />
+      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+        <bdi>{title ?? labels.emptyTitle}</bdi>
+      </p>
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        <bdi>{subtitle ?? labels.emptySubtitle}</bdi>
+      </p>
+    </div>
+  );
+};
 
 // ── Footer ───────────────────────────────────────────────────────────────────
 

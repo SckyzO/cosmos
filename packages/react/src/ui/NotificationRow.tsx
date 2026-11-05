@@ -1,8 +1,10 @@
 import { clsx } from 'clsx';
 import { AlertTriangle, CheckCircle2, Info, XCircle } from 'lucide-react';
 import type { ComponentPropsWithRef, ComponentType, ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { Badge } from './Badge';
 import type { Intent } from './intent';
+import { NOTIFICATION_ROW_LABELS, type NotificationRowLabels } from './labels';
 
 export type NotificationRowIntent = Extract<Intent, 'danger' | 'warning' | 'info' | 'success'>;
 
@@ -33,12 +35,12 @@ const INTENT_META: Record<
 };
 
 // Monitoring vocabulary on the badge: the label is data-facing, the prop is not.
-const BADGE_LABEL: Record<NotificationRowIntent, string> = {
-  danger: 'CRIT',
-  warning: 'WARN',
-  info: 'INFO',
-  success: 'OK',
-};
+const BADGE_LABEL = {
+  danger: 'crit',
+  warning: 'warn',
+  info: 'info',
+  success: 'ok',
+} as const satisfies Record<NotificationRowIntent, keyof NotificationRowLabels>;
 
 export type NotificationRowProps = ComponentPropsWithRef<'button'> & {
   /** Color of the chip and the badge, and the icon unless `icon` replaces it. */
@@ -56,8 +58,10 @@ export type NotificationRowProps = ComponentPropsWithRef<'button'> & {
   time?: ReactNode;
   /** Not read yet: a dot before the title and a tinted row. Default false. */
   unread?: boolean;
-  /** Badge label at the end of the row. If omitted, derived from `intent` (CRIT/WARN/INFO/OK). */
+  /** Badge label at the end of the row. If omitted, derived from `intent` (`labels`: CRIT/WARN/INFO/OK). */
   badgeLabel?: string;
+  /** The texts it writes, over `LabelsProvider`'s `notificationRow` and the English defaults. */
+  labels?: Partial<NotificationRowLabels>;
   /**
    * Controls at the end of the row (mark as read, delete…): icon buttons named for their row
    * (`aria-label="Delete: {title}"`), or a menu. They come after the row's own button and are
@@ -85,10 +89,12 @@ export function NotificationRow({
   unread = false,
   badgeLabel,
   actions,
+  labels: ownLabels,
   className,
   ref,
   ...rest
 }: NotificationRowProps) {
+  const labels = useLabels('notificationRow', NOTIFICATION_ROW_LABELS, ownLabels);
   const meta = INTENT_META[intent];
   const Icon = icon ?? meta.icon;
   // The tint and the hover belong to the row, so that with `actions` they cover the actions too.
@@ -119,7 +125,7 @@ export function NotificationRow({
           {unread && (
             <>
               <span aria-hidden className="bg-brand-500 h-2 w-2 shrink-0 rounded-full" />
-              <span className="sr-only">Unread: </span>
+              <span className="sr-only">{labels.unread} </span>
             </>
           )}
           <span className="min-w-0 truncate">
@@ -143,7 +149,7 @@ export function NotificationRow({
         )}
       </div>
       <Badge appearance="solid" intent={intent} size="sm" className="mt-0.5 shrink-0">
-        {badgeLabel ?? BADGE_LABEL[intent]}
+        {badgeLabel ?? labels[BADGE_LABEL[intent]]}
       </Badge>
     </button>
   );

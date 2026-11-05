@@ -1,5 +1,7 @@
 import { clsx } from 'clsx';
+import { useLabels } from '../labels/labelsContext';
 import type { Intent } from './intent';
+import { SPINNER_LABELS, type SpinnerLabels } from './labels';
 
 export type SpinnerSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
 
@@ -46,6 +48,8 @@ export type SpinnerProps = {
    * photographic surface (the overlay of `AvatarUploader`). It takes the place of `intent`.
    */
   onDark?: boolean;
+  /** The texts it writes (its name), over `LabelsProvider`'s `spinner` and the English defaults. */
+  labels?: Partial<SpinnerLabels>;
   /** Layout only (margin, position): the colors come from `intent` and `onDark`. */
   className?: string;
 };
@@ -54,16 +58,20 @@ export const Spinner = ({
   size = 'md',
   intent = 'brand',
   onDark = false,
+  labels: ownLabels,
   className,
-}: SpinnerProps) => (
-  <div
-    role="status"
-    aria-label="Loading"
-    className={clsx(
-      'animate-spin rounded-full',
-      onDark ? ON_DARK_CLASS : INTENT_CLASS[intent],
-      SIZE_CLASS[size],
-      className
-    )}
-  />
-);
+}: SpinnerProps) => {
+  const labels = useLabels('spinner', SPINNER_LABELS, ownLabels);
+  return (
+    <div
+      role="status"
+      aria-label={labels.loading}
+      className={clsx(
+        'animate-spin rounded-full',
+        onDark ? ON_DARK_CLASS : INTENT_CLASS[intent],
+        SIZE_CLASS[size],
+        className
+      )}
+    />
+  );
+};

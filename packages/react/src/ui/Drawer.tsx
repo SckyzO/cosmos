@@ -23,6 +23,8 @@ import { directionOf } from '../hooks/direction';
 import { useExitTransition } from '../hooks/useExitTransition';
 import { Backdrop, type BackdropVariant } from './Backdrop';
 import { useIsClient } from '../hooks/useIsClient';
+import { useLabels } from '../labels/labelsContext';
+import { DRAWER_LABELS, type DrawerLabels } from './labels';
 
 /** `start` and `end` are the edges of the line: the left and the right, swapped under `dir="rtl"`. */
 export type DrawerSide = 'start' | 'end' | 'bottom';
@@ -145,9 +147,14 @@ export type DrawerProps = {
    * it automatically and this is unnecessary.
    */
   ariaLabel?: string;
+  /** The texts it writes (the close buttons), over `LabelsProvider`'s `drawer` and the English defaults. */
+  labels?: Partial<DrawerLabels>;
   className?: string;
   children: ReactNode;
 };
+
+// What the root's `labels` prop gave, for `Drawer.Header`.
+const DrawerLabelsContext = createContext<Partial<DrawerLabels> | undefined>(undefined);
 
 const Root = ({
   open,
@@ -160,9 +167,11 @@ const Root = ({
   closeOutside = false,
   swipeToClose = false,
   ariaLabel,
+  labels: ownLabels,
   className,
   children,
 }: DrawerProps) => {
+  const labels = useLabels('drawer', DRAWER_LABELS, ownLabels);
   const titleId = useId();
   const trapRef = useFocusTrap<HTMLDivElement>(open);
   const scrimRef = useRef<HTMLDivElement>(null);
@@ -324,7 +333,9 @@ const Root = ({
         <OverlayLayerProvider value={layer}>
           <PortalContainerProvider value={container}>
             <SheetSwipeContext.Provider value={vertical && swipeToClose}>
-              <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
+              <DrawerLabelsContext value={ownLabels}>
+                <DialogTitleProvider value={titleId}>{children}</DialogTitleProvider>
+              </DrawerLabelsContext>
             </SheetSwipeContext.Provider>
           </PortalContainerProvider>
         </OverlayLayerProvider>
@@ -332,7 +343,7 @@ const Root = ({
           <button
             type="button"
             onClick={() => onClose()}
-            aria-label="Close drawer"
+            aria-label={labels.close}
             className={clsx(
               'absolute flex size-10 items-center justify-center rounded-full text-gray-300 transition-opacity duration-(--cosmos-motion-base) hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
               OUTSIDE_POSITION[side],
@@ -365,6 +376,7 @@ const Header = ({
   className,
   children,
 }: DrawerHeaderProps) => {
+  const labels = useLabels('drawer', DRAWER_LABELS, useContext(DrawerLabelsContext));
   const titleId = useDialogTitleId();
   return (
     <div
@@ -399,7 +411,7 @@ const Header = ({
           <button
             type="button"
             onClick={() => onClose()}
-            aria-label="Close drawer"
+            aria-label={labels.close}
             className="focus-visible:focus-indicator rounded-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
           >
             <X className="h-5 w-5" />

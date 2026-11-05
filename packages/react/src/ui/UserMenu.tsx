@@ -1,7 +1,10 @@
 import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
+import { createContext, useContext } from 'react';
 import type { ComponentType, ReactNode, ComponentPropsWithRef } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { Avatar, type AvatarProps } from './Avatar';
+import { USER_MENU_LABELS, type UserMenuLabels } from './labels';
 import { Menu, type MenuItemIntent } from './Menu';
 
 // The avatar always sits next to the user's name, in the trigger and in the header, so it is
@@ -21,11 +24,18 @@ export type UserMenuProps = {
   onOpenChange?: (open: boolean) => void;
   /** Edge of the trigger the menu lines up with: where the text starts or ends. Default `end`. */
   align?: 'start' | 'end';
+  /** The texts its parts write (the trigger's and the menu's names), over `LabelsProvider`'s `userMenu` and the English defaults. */
+  labels?: Partial<UserMenuLabels>;
   children: ReactNode;
 };
 
-const UserMenuRoot = ({ align = 'end', ...rest }: UserMenuProps) => (
-  <Menu align={align} {...rest} />
+// What the root's `labels` prop gave, for `UserMenu.Trigger` and `UserMenu.Content`.
+const UserMenuLabelsContext = createContext<Partial<UserMenuLabels> | undefined>(undefined);
+
+const UserMenuRoot = ({ align = 'end', labels, ...rest }: UserMenuProps) => (
+  <UserMenuLabelsContext value={labels}>
+    <Menu align={align} {...rest} />
+  </UserMenuLabelsContext>
 );
 
 // ── Trigger ──────────────────────────────────────────────────────────────────
@@ -46,6 +56,7 @@ function UserMenuTrigger({
   className,
   ...rest
 }: UserMenuTriggerProps) {
+  const labels = useLabels('userMenu', USER_MENU_LABELS, useContext(UserMenuLabelsContext));
   return (
     <Menu.Trigger
       className={clsx(
@@ -57,7 +68,7 @@ function UserMenuTrigger({
       <DecorativeAvatar src={avatarSrc} name={name} size="sm" />
       {/* Named by its content, "User menu for <name>", not by an `aria-label`: the visible text,
           the initials of an avatar with no image included, is then part of the name. */}
-      <span className="sr-only">User menu for </span>
+      <span className="sr-only">{labels.trigger} </span>
       <span
         className={clsx(
           hideName ? 'sr-only' : 'text-sm font-medium text-gray-700 dark:text-gray-200'
@@ -82,9 +93,10 @@ export type UserMenuContentProps = {
   children: ReactNode;
 };
 
-const UserMenuContent = (props: UserMenuContentProps) => (
-  <Menu.Content aria-label="User menu" {...props} />
-);
+const UserMenuContent = (props: UserMenuContentProps) => {
+  const labels = useLabels('userMenu', USER_MENU_LABELS, useContext(UserMenuLabelsContext));
+  return <Menu.Content aria-label={labels.menu} {...props} />;
+};
 
 // ── Header (avatar + name + email) ───────────────────────────────────────────
 

@@ -3,6 +3,8 @@ import { Star } from 'lucide-react';
 import { useState, type ReactNode, type Ref } from 'react';
 import { onRadioGroupKeyDown, radioTabIndex } from '../forms/radioGroupA11y';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
+import { RATING_LABELS, type RatingLabels } from './labels';
 
 export type RatingProps = {
   /** Rating, when controlled. `0` is "no rating", a value like any other. */
@@ -23,10 +25,13 @@ export type RatingProps = {
   /** Star size. Default `md`. */
   size?: 'sm' | 'md' | 'lg';
   /**
-   * Accessible name. Interactive: the name of the radio group (default "Rating"). Read-only: the
-   * subject, read before the value ("Product: 4.5 out of 5"); without it, "Rated 4.5 out of 5".
+   * Accessible name. Interactive: the name of the radio group (default `labels.group`, "Rating").
+   * Read-only: the subject, read before the value ("Product: 4.5 out of 5"); without it, "Rated 4.5
+   * out of 5".
    */
   label?: string;
+  /** The texts it writes, over `LabelsProvider`'s `rating` and the English defaults. */
+  labels?: Partial<RatingLabels>;
   /** Text after the stars, e.g. "(128 reviews)". */
   count?: ReactNode;
   /** Show the number ("4.5") next to the stars. */
@@ -41,8 +46,6 @@ export type RatingProps = {
 const STAR_SIZE = { sm: 'h-4 w-4', md: 'h-5 w-5', lg: 'h-7 w-7' } as const;
 const TEXT_SIZE = { sm: 'text-xs', md: 'text-sm', lg: 'text-base' } as const;
 
-const starName = (n: number) => `${n} ${n === 1 ? 'star' : 'stars'}`;
-
 export const Rating = ({
   value: valueProp,
   defaultValue = 0,
@@ -52,12 +55,14 @@ export const Rating = ({
   readOnly = false,
   size = 'md',
   label,
+  labels: ownLabels,
   count,
   showValue = false,
   disabled = false,
   className,
   ref,
 }: RatingProps) => {
+  const labels = useLabels('rating', RATING_LABELS, ownLabels);
   const [stored, setValue] = useControllableState({
     value: valueProp,
     defaultValue,
@@ -126,7 +131,7 @@ export const Rating = ({
       <span ref={ref} className={root}>
         <span
           role="img"
-          aria-label={label ? `${label}: ${value} out of ${max}` : `Rated ${value} out of ${max}`}
+          aria-label={label ? labels.ratedSubject(label, value, max) : labels.rated(value, max)}
           className="inline-flex gap-0.5"
         >
           {stars}
@@ -143,7 +148,7 @@ export const Rating = ({
     <span ref={ref} className={root}>
       <span
         role="radiogroup"
-        aria-label={label ?? 'Rating'}
+        aria-label={label ?? labels.group}
         aria-disabled={disabled || undefined}
         onKeyDown={onRadioGroupKeyDown}
         onMouseLeave={() => setHover(null)}
@@ -162,7 +167,7 @@ export const Rating = ({
                   type="button"
                   role="radio"
                   aria-checked={checked}
-                  aria-label={starName(v)}
+                  aria-label={labels.star(v)}
                   disabled={disabled}
                   tabIndex={radioTabIndex(checked, r, anyChecked)}
                   onClick={() => setValue(v)}

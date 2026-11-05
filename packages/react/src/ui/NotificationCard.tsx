@@ -1,7 +1,9 @@
 import { clsx } from 'clsx';
 import { X, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { INTENT_ICON_SIZE, INTENT_STYLE, type Intent } from './intent';
+import { NOTIFICATION_CARD_LABELS, type NotificationCardLabels } from './labels';
 
 // TUI Plus reference (Pattern 1 — "Simple"):
 //   <div class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black/5">
@@ -43,6 +45,8 @@ export type NotificationCardSimpleProps = {
   icon?: LucideIcon;
   /** When provided, renders an X button that calls this on click. */
   onDismiss?: () => void;
+  /** The texts it writes (the close button), over `LabelsProvider`'s `notificationCard` and the English defaults. */
+  labels?: Partial<NotificationCardLabels>;
   className?: string;
 };
 
@@ -52,8 +56,10 @@ const SimpleVariant = ({
   intent = 'success',
   icon,
   onDismiss,
+  labels: ownLabels,
   className,
 }: NotificationCardSimpleProps) => {
+  const labels = useLabels('notificationCard', NOTIFICATION_CARD_LABELS, ownLabels);
   const Icon = icon ?? INTENT_STYLE[intent].icon;
   return (
     <div
@@ -87,7 +93,7 @@ const SimpleVariant = ({
               <button
                 type="button"
                 onClick={() => onDismiss()}
-                aria-label="Dismiss notification"
+                aria-label={labels.dismiss}
                 className="focus-visible:focus-indicator inline-flex rounded-md text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
               >
                 <X className="size-5" aria-hidden />
@@ -111,6 +117,8 @@ export type NotificationCardCondensedProps = {
   onAction?: () => void;
   /** When provided, renders a trailing X button. */
   onDismiss?: () => void;
+  /** The texts it writes (the close button), over `LabelsProvider`'s `notificationCard` and the English defaults. */
+  labels?: Partial<NotificationCardLabels>;
   className?: string;
 };
 
@@ -119,40 +127,44 @@ const CondensedVariant = ({
   actionLabel,
   onAction,
   onDismiss,
+  labels: ownLabels,
   className,
-}: NotificationCardCondensedProps) => (
-  <div
-    role="status"
-    aria-live="polite"
-    className={clsx(
-      'pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-lg bg-gray-900 px-4 py-3 shadow-lg ring-1 ring-black/5 dark:bg-gray-800 dark:ring-white/10',
-      className
-    )}
-  >
-    <p className="flex-1 text-sm font-medium text-white">
-      <bdi>{title}</bdi>
-    </p>
-    {actionLabel && (
-      <button
-        type="button"
-        onClick={() => onAction?.()}
-        className="focus-visible:focus-indicator text-sm font-medium text-indigo-400 hover:text-indigo-300"
-      >
-        {actionLabel}
-      </button>
-    )}
-    {onDismiss && (
-      <button
-        type="button"
-        onClick={() => onDismiss()}
-        aria-label="Dismiss notification"
-        className="focus-visible:focus-indicator inline-flex rounded-md text-gray-400 hover:text-gray-200"
-      >
-        <X className="size-5" aria-hidden />
-      </button>
-    )}
-  </div>
-);
+}: NotificationCardCondensedProps) => {
+  const labels = useLabels('notificationCard', NOTIFICATION_CARD_LABELS, ownLabels);
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className={clsx(
+        'pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-lg bg-gray-900 px-4 py-3 shadow-lg ring-1 ring-black/5 dark:bg-gray-800 dark:ring-white/10',
+        className
+      )}
+    >
+      <p className="flex-1 text-sm font-medium text-white">
+        <bdi>{title}</bdi>
+      </p>
+      {actionLabel && (
+        <button
+          type="button"
+          onClick={() => onAction?.()}
+          className="focus-visible:focus-indicator text-sm font-medium text-indigo-400 hover:text-indigo-300"
+        >
+          {actionLabel}
+        </button>
+      )}
+      {onDismiss && (
+        <button
+          type="button"
+          onClick={() => onDismiss()}
+          aria-label={labels.dismiss}
+          className="focus-visible:focus-indicator inline-flex rounded-md text-gray-400 hover:text-gray-200"
+        >
+          <X className="size-5" aria-hidden />
+        </button>
+      )}
+    </div>
+  );
+};
 
 // ── Compound export ──────────────────────────────────────────────────────────
 

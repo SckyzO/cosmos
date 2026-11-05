@@ -7,8 +7,10 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { Avatar, type AvatarProps, type AvatarShape, type AvatarSize } from './Avatar';
 import { AVATAR_SHAPE_CLASS, AVATAR_SIZE_CLASS } from './avatarSizes';
+import { AVATAR_GROUP_LABELS, type AvatarGroupLabels } from './labels';
 
 export type AvatarGroupProps = {
   /** `Avatar` elements. Ignored when `avatars` is set. */
@@ -28,6 +30,8 @@ export type AvatarGroupProps = {
    * `ref`, so the host can anchor a popover on it.
    */
   onOverflowClick?: (hidden: number) => void;
+  /** The texts it writes (the name of the "+N"), over `LabelsProvider`'s `avatarGroup` and the English defaults. */
+  labels?: Partial<AvatarGroupLabels>;
   /** Ref of the "+N" button, when `onOverflowClick` is set. */
   ref?: Ref<HTMLButtonElement>;
   /**
@@ -89,8 +93,6 @@ const INITIALS_SHIFT_CLASS: Record<'tight' | 'normal', Record<AvatarSize, string
 const OVERFLOW_CLASS =
   'inline-flex shrink-0 items-center justify-center bg-gray-100 font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200';
 
-const overflowName = (hidden: number) => (hidden === 1 ? '1 more person' : `${hidden} more people`);
-
 /**
  * AvatarGroup — overlapping avatars with a "+N" for the rest.
  *
@@ -107,10 +109,12 @@ export const AvatarGroup = ({
   spacing = 'normal',
   'aria-label': ariaLabel,
   onOverflowClick,
+  labels: ownLabels,
   ref,
   renderOverflow,
   className,
 }: AvatarGroupProps) => {
+  const labels = useLabels('avatarGroup', AVATAR_GROUP_LABELS, ownLabels);
   const items: ReactElement<AvatarProps>[] = avatars
     ? avatars.map((a, i) => <Avatar key={i} {...a} />)
     : Children.toArray(children).filter(isValidElement<AvatarProps>);
@@ -141,7 +145,7 @@ export const AvatarGroup = ({
 
   let overflow: ReactNode = null;
   if (hidden > 0) {
-    const label = overflowName(hidden);
+    const label = labels.overflow(hidden);
     if (renderOverflow) {
       overflow = renderOverflow(hidden);
     } else if (onOverflowClick) {

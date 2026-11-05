@@ -1,12 +1,15 @@
 import { clsx } from 'clsx';
 import { Check, Save } from 'lucide-react';
 import type { ElementType, Ref } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { Button, type ButtonProps } from './Button';
+import { STATEFUL_SAVE_BUTTON_LABELS, type StatefulSaveButtonLabels } from './labels';
 
 export type SaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error';
 
 type StateConfig = {
-  label: string;
+  /** The key of `StatefulSaveButtonLabels` the state reads. */
+  label: keyof StatefulSaveButtonLabels;
   icon?: ElementType;
   intent?: ButtonProps['intent'];
   loading?: boolean;
@@ -14,22 +17,24 @@ type StateConfig = {
 };
 
 const STATE_CONFIG: Record<SaveState, StateConfig> = {
-  idle: { label: 'Save Changes', icon: Save },
-  dirty: { label: 'Save Changes', icon: Save, cls: 'animate-pulse motion-reduce:animate-none' },
-  saving: { label: 'Saving…', loading: true },
+  idle: { label: 'save', icon: Save },
+  dirty: { label: 'save', icon: Save, cls: 'animate-pulse motion-reduce:animate-none' },
+  saving: { label: 'saving', loading: true },
   // The `success` intent carries the dark text on green (white on green-500 is about 2.3:1).
-  saved: { label: 'Saved', icon: Check, intent: 'success' },
+  saved: { label: 'saved', icon: Check, intent: 'success' },
   // What to do next, not the name of the state: the save failed, the click saves again.
-  error: { label: 'Try again', intent: 'danger' },
+  error: { label: 'retry', intent: 'danger' },
 };
 
 export type StatefulSaveButtonProps = {
   state: SaveState;
   onClick: () => void;
-  /** Override label for `idle` / `dirty` states. */
+  /** Text of the `idle` and `dirty` states. Default `labels.save`. */
   label?: string;
-  /** Override label for `saved` state. */
+  /** Text of the `saved` state. Default `labels.saved`. */
   savedLabel?: string;
+  /** The texts it writes, over `LabelsProvider`'s `statefulSaveButton` and the English defaults. */
+  labels?: Partial<StatefulSaveButtonLabels>;
   className?: string;
   /** Ref to the `<button>`. */
   ref?: Ref<HTMLButtonElement>;
@@ -44,12 +49,15 @@ export const StatefulSaveButton = ({
   onClick,
   label,
   savedLabel,
+  labels: ownLabels,
   className,
   ref,
 }: StatefulSaveButtonProps) => {
-  const cfg = { ...STATE_CONFIG[state] };
-  if (label && (state === 'idle' || state === 'dirty')) cfg.label = label;
-  if (savedLabel && state === 'saved') cfg.label = savedLabel;
+  const labels = useLabels('statefulSaveButton', STATEFUL_SAVE_BUTTON_LABELS, ownLabels);
+  const cfg = STATE_CONFIG[state];
+  let text = labels[cfg.label];
+  if (label && (state === 'idle' || state === 'dirty')) text = label;
+  if (savedLabel && state === 'saved') text = savedLabel;
   const inactive = state === 'saving' || state === 'saved';
 
   return (
@@ -63,7 +71,7 @@ export const StatefulSaveButton = ({
       onClick={inactive ? undefined : () => onClick()}
       className={clsx(cfg.cls, className)}
     >
-      {cfg.label}
+      {text}
     </Button>
   );
 };

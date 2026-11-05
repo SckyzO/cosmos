@@ -1,7 +1,9 @@
 import { clsx } from 'clsx';
 import { Monitor, Moon, MoonStar, Sun, Sunset, type LucideIcon } from 'lucide-react';
 import type { ComponentPropsWithRef } from 'react';
-import { COSMOS_THEMES, type CosmosThemeChoice } from '../settings/appearance';
+import { useLabels } from '../labels/labelsContext';
+import type { CosmosThemeChoice } from '../settings/appearance';
+import { THEME_TOGGLE_LABELS, type ThemeToggleLabels } from './labels';
 
 export type ThemeToggleSize = 'sm' | 'md';
 
@@ -23,10 +25,11 @@ export type ThemeToggleProps<T extends CosmosThemeChoice = CosmosThemeChoice> = 
   size?: ThemeToggleSize;
   /**
    * The name of the button, which is also its tooltip, for the click that switches to a theme:
-   * `labels={{ dark: 'Passer au thème sombre' }}`. Default "Switch to light theme", "Switch to
-   * deep blue theme", "Switch to system theme"… from the theme's own name.
+   * `labels={{ dark: 'Passer au thème sombre' }}`, over `LabelsProvider`'s `themeToggle` and the
+   * English defaults: "Switch to light theme", "Switch to deep blue theme", "Switch to system
+   * theme"…
    */
-  labels?: Partial<Record<T, string>>;
+  labels?: Partial<ThemeToggleLabels>;
 };
 
 const SIZE_CLASS: Record<ThemeToggleSize, { box: string; icon: string }> = {
@@ -44,12 +47,6 @@ const ICON_FOR: Record<CosmosThemeChoice, LucideIcon> = {
   'deep-blue': MoonStar,
   system: Monitor,
 };
-
-// What a theme is called in "Switch to … theme": the name the themes carry everywhere else.
-const NAME_FOR = {
-  ...Object.fromEntries(COSMOS_THEMES.map(({ id, label }) => [id, label.toLowerCase()])),
-  system: 'system',
-} as Record<CosmosThemeChoice, string>;
 
 // The icons of the list share one cell: the current one is upright and opaque, the ones before it
 // have turned a quarter one way and the ones after it wait a quarter the other way, both
@@ -78,13 +75,14 @@ export function ThemeToggle<T extends CosmosThemeChoice = CosmosThemeChoice>({
   onChange,
   themes = DEFAULT_THEMES as readonly T[],
   size = 'md',
-  labels,
+  labels: ownLabels,
   className,
   ref,
   ...rest
 }: ThemeToggleProps<T>) {
+  const labels = useLabels('themeToggle', THEME_TOGGLE_LABELS, ownLabels);
   const next = themes[(themes.indexOf(theme) + 1) % themes.length] ?? theme;
-  const label = labels?.[next] ?? `Switch to ${NAME_FOR[next]} theme`;
+  const label = labels[next];
   // Every icon of the list is drawn, so the one that leaves and the one that arrives can move
   // together. A `theme` outside the list leads it.
   const order = [...new Set(themes.includes(theme) ? themes : [theme, ...themes])];

@@ -3,7 +3,9 @@ import { Cookie } from 'lucide-react';
 import { useRef, type ReactNode } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
 import { useExitTransition } from '../hooks/useExitTransition';
+import { useLabels } from '../labels/labelsContext';
 import { Button } from './Button';
+import { COOKIE_BANNER_LABELS, type CookieBannerLabels } from './labels';
 
 export type CookieBannerPosition = 'bottom' | 'top' | 'floating';
 
@@ -25,6 +27,7 @@ export type CookieBannerProps = {
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   position?: CookieBannerPosition;
+  /** Default `labels.title`, 'We use cookies'. Empty, the banner has no title. */
   title?: string;
   /**
    * Accessible name of the dialog, for a banner with no `title` to name it. With a `title`, the
@@ -34,15 +37,20 @@ export type CookieBannerProps = {
   message: ReactNode;
   /** Render the Settings button. Hidden if no handler. */
   onSettings?: () => void;
+  /** Text of the Settings button. Default `labels.settings`. */
   settingsLabel?: string;
   /** Render the Deny All button. Hidden if no handler. */
   onDeny?: () => void;
+  /** Text of the Deny button. Default `labels.deny`. */
   denyLabel?: string;
   /** Required Accept handler — primary action. */
   onAccept: () => void;
+  /** Text of the Accept button. Default `labels.accept`. */
   acceptLabel?: string;
   /** Show the Cookie icon next to the title. Default `true`. */
   showIcon?: boolean;
+  /** The texts it writes, over `LabelsProvider`'s `cookieBanner` and the English defaults. */
+  labels?: Partial<CookieBannerLabels>;
   className?: string;
 };
 
@@ -51,18 +59,21 @@ export const CookieBanner = ({
   defaultOpen = true,
   onOpenChange,
   position = 'bottom',
-  title = 'We use cookies',
+  title: titleProp,
   ariaLabel,
   message,
   onSettings,
-  settingsLabel = 'Cookie settings',
+  settingsLabel,
   onDeny,
-  denyLabel = 'Deny all',
+  denyLabel,
   onAccept,
-  acceptLabel = 'Accept all',
+  acceptLabel,
   showIcon = true,
+  labels: ownLabels,
   className,
 }: CookieBannerProps) => {
+  const labels = useLabels('cookieBanner', COOKIE_BANNER_LABELS, ownLabels);
+  const title = titleProp ?? labels.title;
   const [open, setOpen] = useControllableState({
     value: openProp,
     defaultValue: defaultOpen,
@@ -133,16 +144,16 @@ export const CookieBanner = ({
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {onSettings && (
             <Button variant="ghost" size="sm" onClick={handleSettings}>
-              {settingsLabel}
+              {settingsLabel ?? labels.settings}
             </Button>
           )}
           {onDeny && (
             <Button variant="secondary" size="sm" onClick={handleDeny}>
-              {denyLabel}
+              {denyLabel ?? labels.deny}
             </Button>
           )}
           <Button variant="primary" size="sm" onClick={handleAccept}>
-            {acceptLabel}
+            {acceptLabel ?? labels.accept}
           </Button>
         </div>
       </div>

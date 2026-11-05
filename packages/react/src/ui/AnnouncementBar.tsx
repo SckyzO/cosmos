@@ -2,8 +2,10 @@ import { clsx } from 'clsx';
 import { X } from 'lucide-react';
 import { useRef, useState, type ElementType, type ReactNode } from 'react';
 import { useExitTransition } from '../hooks/useExitTransition';
+import { useLabels } from '../labels/labelsContext';
 import { Fold } from './Fold';
 import { INTENT_ICON_SIZE, INTENT_STYLE, type Intent } from './intent';
+import { ANNOUNCEMENT_BAR_LABELS, type AnnouncementBarLabels } from './labels';
 
 export type AnnouncementBarIntent = Extract<
   Intent,
@@ -23,6 +25,8 @@ export type AnnouncementBarProps = {
   onDismiss?: () => void;
   /** Stick to the top of the viewport. */
   sticky?: boolean;
+  /** The texts it writes (the close button), over `LabelsProvider`'s `announcementBar` and the English defaults. */
+  labels?: Partial<AnnouncementBarLabels>;
   className?: string;
 };
 
@@ -38,8 +42,10 @@ export const AnnouncementBar = ({
   dismissible = false,
   onDismiss,
   sticky = false,
+  labels: ownLabels,
   className,
 }: AnnouncementBarProps) => {
+  const labels = useLabels('announcementBar', ANNOUNCEMENT_BAR_LABELS, ownLabels);
   const [open, setOpen] = useState(true);
   const ref = useRef<HTMLDivElement>(null);
   // Dismissed, the bar folds away (the page comes up under it) and is gone once it has.
@@ -75,7 +81,7 @@ export const AnnouncementBar = ({
           {dismissible && (
             <button
               type="button"
-              aria-label="Dismiss announcement"
+              aria-label={labels.dismiss}
               onClick={() => {
                 setOpen(false);
                 onDismiss?.();

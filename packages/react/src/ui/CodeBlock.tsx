@@ -1,6 +1,8 @@
 import { clsx } from 'clsx';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { Clipboard } from './Clipboard';
+import { CODE_BLOCK_LABELS, type CodeBlockLabels } from './labels';
 import { SectionLabel } from './SectionLabel';
 import { parseCode, parseLineRanges, splitLines, type CodeRow } from './codeLines';
 
@@ -47,6 +49,8 @@ export type CodeBlockProps = {
    * the commands are highlighted (as `bash`) and copied. Default `default`.
    */
   variant?: 'default' | 'terminal';
+  /** The texts it writes (the name of the scrolling region), over `LabelsProvider`'s `codeBlock` and the English defaults. */
+  labels?: Partial<CodeBlockLabels>;
   className?: string;
 };
 
@@ -100,8 +104,10 @@ export const CodeBlock = ({
   maxHeight,
   diff = false,
   variant = 'default',
+  labels: ownLabels,
   className,
 }: CodeBlockProps) => {
+  const labels = useLabels('codeBlock', CODE_BLOCK_LABELS, ownLabels);
   const terminal = variant === 'terminal';
   const mode = terminal ? 'terminal' : diff ? 'diff' : 'plain';
   const { rows, highlightText, copyText } = parseCode(code, mode);
@@ -206,7 +212,7 @@ export const CodeBlock = ({
         {...(scrolls && {
           tabIndex: 0,
           role: 'region',
-          'aria-label': `${filename ?? language ?? 'Code'}, code`,
+          'aria-label': labels.region(filename ?? language ?? labels.untitled),
         })}
         style={maxHeight === undefined ? undefined : { maxHeight }}
         className={clsx(

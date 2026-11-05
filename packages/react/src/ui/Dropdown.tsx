@@ -4,6 +4,8 @@ import { useRef } from 'react';
 import type { ElementType, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { FloatingPanel } from './FloatingPanel';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
+import { DROPDOWN_LABELS, type DropdownLabels } from './labels';
 
 export type DropdownOption = {
   value: string;
@@ -28,6 +30,7 @@ export type DropdownProps = {
   /** Initial value, when uncontrolled. None selected when omitted. */
   defaultValue?: string;
   onChange?: (value: string) => void;
+  /** What the trigger says while nothing is selected. Default `label`, else `labels.placeholder`. */
   placeholder?: string;
   /** Edge of the trigger the menu lines up with: where the text starts or ends. Default `start`. */
   align?: 'start' | 'end';
@@ -39,6 +42,8 @@ export type DropdownProps = {
   defaultOpen?: boolean;
   /** Called with the open state to move to. */
   onOpenChange?: (open: boolean) => void;
+  /** The texts it writes, over `LabelsProvider`'s `dropdown` and the English defaults. */
+  labels?: Partial<DropdownLabels>;
 };
 
 export const Dropdown = ({
@@ -55,7 +60,9 @@ export const Dropdown = ({
   open: openProp,
   defaultOpen = false,
   onOpenChange,
+  labels: ownLabels,
 }: DropdownProps) => {
+  const labels = useLabels('dropdown', DROPDOWN_LABELS, ownLabels);
   const [value, setValue] = useControllableState({
     value: valueProp,
     defaultValue,
@@ -94,7 +101,7 @@ export const Dropdown = ({
   };
 
   const selected = options.find((o): o is DropdownOption => !isDivider(o) && o.value === value);
-  const displayLabel = selected?.label ?? placeholder ?? label ?? 'Select…';
+  const displayLabel = selected?.label ?? placeholder ?? label ?? labels.placeholder;
 
   return (
     <div className={clsx('relative inline-block', className)}>

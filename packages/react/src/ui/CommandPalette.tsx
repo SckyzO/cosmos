@@ -12,8 +12,10 @@ import {
   type ComponentPropsWithRef,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { useLabels } from '../labels/labelsContext';
 import { BACKDROP_VARIANT_CLASS, type BackdropVariant } from './backdropStyle';
 import { isTypingTarget, matchesHotkey } from './hotkey';
+import { COMMAND_PALETTE_LABELS, type CommandPaletteLabels } from './labels';
 import { SectionLabel } from './SectionLabel';
 
 // ── Root (wraps cmdk's Command.Dialog) ───────────────────────────────────────
@@ -31,7 +33,16 @@ export type CommandPaletteProps = ComponentPropsWithoutRef<typeof Command.Dialog
    * 8px under a light veil, `blur-dark` under a dark one. Same look as `Backdrop`'s `variant`.
    */
   backdrop?: BackdropVariant;
+  /**
+   * The texts it writes (the name of the dialog, the close button of the input), over
+   * `LabelsProvider`'s `commandPalette` and the English defaults. `label`, cmdk's name for the
+   * dialog, wins over `labels.dialog`.
+   */
+  labels?: Partial<CommandPaletteLabels>;
 };
+
+// What the root's `labels` prop gave, for the input.
+const PaletteLabelsContext = createContext<Partial<CommandPaletteLabels> | undefined>(undefined);
 
 const CommandPaletteRoot = ({
   hotkey = 'mod+k',
@@ -42,9 +53,11 @@ const CommandPaletteRoot = ({
   overlayClassName,
   contentClassName,
   children,
-  label = 'Command palette',
+  label,
+  labels: ownLabels,
   ...rest
 }: CommandPaletteProps) => {
+  const labels = useLabels('commandPalette', COMMAND_PALETTE_LABELS, ownLabels);
   useEffect(() => {
     if (!hotkey) return;
     // A bare key (`/`) is a character: leave it to whatever field is being typed in.
@@ -67,7 +80,7 @@ const CommandPaletteRoot = ({
     <Command.Dialog
       open={open}
       onOpenChange={onOpenChange}
-      label={label}
+      label={label ?? labels.dialog}
       overlayClassName={clsx(
         'fixed inset-0 z-[9998]',
         BACKDROP_VARIANT_CLASS[backdrop],
@@ -86,7 +99,7 @@ const CommandPaletteRoot = ({
       className={className}
       {...rest}
     >
-      {children}
+      <PaletteLabelsContext value={ownLabels}>{children}</PaletteLabelsContext>
     </Command.Dialog>
   );
 };
@@ -102,6 +115,11 @@ export type CommandPaletteInputProps = ComponentPropsWithRef<typeof Command.Inpu
 };
 
 function CommandPaletteInput({ className, onClose, ref, ...rest }: CommandPaletteInputProps) {
+  const labels = useLabels(
+    'commandPalette',
+    COMMAND_PALETTE_LABELS,
+    useContext(PaletteLabelsContext)
+  );
   return (
     <div className="focus-within:border-brand-500 flex items-center gap-3 border-b border-gray-100 px-4 dark:border-gray-800">
       <Search className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
@@ -117,7 +135,7 @@ function CommandPaletteInput({ className, onClose, ref, ...rest }: CommandPalett
         <button
           type="button"
           onClick={() => onClose()}
-          aria-label="Close"
+          aria-label={labels.close}
           className="focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 flex shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >
           <X className="h-4 w-4" aria-hidden />

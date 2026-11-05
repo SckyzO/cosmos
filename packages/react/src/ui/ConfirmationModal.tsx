@@ -2,23 +2,30 @@ import { clsx } from 'clsx';
 import { AlertTriangle, Save, Trash2, X } from 'lucide-react';
 import { type ElementType, useId, useState } from 'react';
 import { Input } from '../forms/Input';
+import { useLabels } from '../labels/labelsContext';
 import type { BackdropVariant } from './Backdrop';
 import { Button } from './Button';
 import { Dialog } from './Dialog';
 import { INTENT_STYLE, type Intent } from './intent';
+import { CONFIRMATION_MODAL_LABELS, type ConfirmationModalLabels } from './labels';
 import { useDialogTitleId } from './overlayA11y';
 
 export type ConfirmationModalProps = {
   open: boolean;
+  /** Default `labels.title`, 'Unsaved changes'. */
   title?: string;
+  /** Default `labels.message`, 'You have unsaved changes. What would you like to do?'. */
   message?: string;
   /** Called by the Stay button, the close icon, the backdrop and Escape. */
   onClose: () => void;
   onDiscard?: () => void;
   onSave?: () => void;
   saving?: boolean;
+  /** @deprecated Write `labels={{ stay: … }}`. */
   stayLabel?: string;
+  /** @deprecated Write `labels={{ discard: … }}`. */
   discardLabel?: string;
+  /** @deprecated Write `labels={{ save: … }}`. */
   saveLabel?: string;
   /** Icon of the confirm button: a lucide-react component, or `null` for none. Default `Save`. */
   icon?: ElementType | null;
@@ -35,8 +42,10 @@ export type ConfirmationModalProps = {
    * time the dialog opens.
    */
   requireText?: string;
-  /** Label of the `requireText` field, for translations. Default `Type "<requireText>" to confirm`. */
+  /** Label of the `requireText` field. Default `labels.requireText`, `Type "<requireText>" to confirm`. */
   requireTextLabel?: string;
+  /** The texts it writes, over `LabelsProvider`'s `confirmationModal` and the English defaults. */
+  labels?: Partial<ConfirmationModalLabels>;
   /**
    * The scrim behind the dialog: `dim` (default) is the colour alone, `blur` blurs the page by
    * 8px under a light veil, `blur-dark` under a dark one. See `Backdrop`.
@@ -76,15 +85,16 @@ export const ConfirmationModal = ({
 
 // Rendered inside the Dialog, so the title can take the id the dialog is labelled by.
 const ConfirmationContent = ({
-  title = 'Unsaved changes',
-  message = 'You have unsaved changes. What would you like to do?',
+  title: titleProp,
+  message: messageProp,
+  labels: ownLabels,
   onClose,
   onDiscard,
   onSave,
   saving = false,
-  stayLabel = 'Stay',
-  discardLabel = 'Discard',
-  saveLabel = 'Save & go',
+  stayLabel,
+  discardLabel,
+  saveLabel,
   icon = Save,
   hideSave = false,
   intent = 'warning',
@@ -92,6 +102,9 @@ const ConfirmationContent = ({
   requireTextLabel,
   messageId,
 }: Omit<ConfirmationModalProps, 'open'> & { messageId: string }) => {
+  const labels = useLabels('confirmationModal', CONFIRMATION_MODAL_LABELS, ownLabels);
+  const title = titleProp ?? labels.title;
+  const message = messageProp ?? labels.message;
   const titleId = useDialogTitleId();
   // Rendered inside the Dialog, which unmounts its content once it has closed: the field starts empty.
   const [typed, setTyped] = useState('');
@@ -122,7 +135,7 @@ const ConfirmationContent = ({
           {requireText !== undefined && (
             <div className="mt-4">
               <Input
-                label={requireTextLabel ?? `Type "${requireText}" to confirm`}
+                label={requireTextLabel ?? labels.requireText(requireText)}
                 value={typed}
                 onChange={(e) => setTyped(e.target.value)}
                 onKeyDown={(e) => {
@@ -146,14 +159,14 @@ const ConfirmationContent = ({
           size="sm"
           icon={X}
           onClick={() => onClose()}
-          aria-label="Close"
+          aria-label={labels.close}
           className="-me-2 -mt-1 shrink-0"
         />
       </div>
 
       <div className="flex flex-nowrap items-center justify-end gap-2 border-t border-gray-100 px-6 py-4 dark:border-gray-800">
         <Button variant="secondary" onClick={() => onClose()} className="shrink-0">
-          {stayLabel}
+          {stayLabel ?? labels.stay}
         </Button>
         {onDiscard && (
           <Button
@@ -163,7 +176,7 @@ const ConfirmationContent = ({
             onClick={() => onDiscard()}
             className="shrink-0"
           >
-            {discardLabel}
+            {discardLabel ?? labels.discard}
           </Button>
         )}
         {!hideSave && onSave && (
@@ -173,7 +186,7 @@ const ConfirmationContent = ({
             onClick={() => onSave()}
             className="shrink-0"
           >
-            {saveLabel}
+            {saveLabel ?? labels.save}
           </Button>
         )}
       </div>
