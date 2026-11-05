@@ -56,8 +56,6 @@ export type BarListProps = {
    * height; five when there are none yet.
    */
   loading?: boolean;
-  /** Shown in place of the list when `items` is empty. Default `labels.empty`, `No data`. */
-  emptyMessage?: ReactNode;
   /** The texts it writes, over `LabelsProvider`'s `barList` and the English defaults. */
   labels?: Partial<BarListLabels>;
   /** Names the list for assistive technology ("Top pages"). */
@@ -103,7 +101,6 @@ export const BarList = ({
   intent = 'brand',
   onItemClick,
   loading = false,
-  emptyMessage,
   labels: ownLabels,
   'aria-label': ariaLabel,
   className,
@@ -142,7 +139,7 @@ export const BarList = ({
         className={clsx('text-sm text-[var(--color-text-muted)]', arrival.className, className)}
         onAnimationEnd={arrival.onAnimationEnd}
       >
-        {emptyMessage ?? labels.empty}
+        {labels.empty}
       </p>
     );
 

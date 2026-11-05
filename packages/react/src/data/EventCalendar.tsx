@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { SegmentedControl } from '../forms/SegmentedControl';
 import { useControllableState } from '../hooks/useControllableState';
 import { useMediaQuery } from '../hooks/useMediaQuery';
@@ -115,11 +115,6 @@ export type EventCalendarProps = {
    */
   locale?: string;
   /**
-   * Shown under the grid when no event falls in the period shown. Default `labels.empty`: `No
-   * events this month`, `No events this week` or `No events this day`.
-   */
-  emptyMessage?: ReactNode;
-  /**
    * The texts it writes (the view switch, the buttons, the names of the days and lists, the empty
    * lines…), over `LabelsProvider`'s `eventCalendar` and the English defaults.
    */
@@ -214,7 +209,6 @@ export const EventCalendar = ({
   onDayClick,
   onSlotClick,
   locale: ownLocale,
-  emptyMessage,
   labels: ownLabels,
   className,
 }: EventCalendarProps) => {
@@ -516,7 +510,7 @@ export const EventCalendar = ({
           role="status"
           className="border-t border-gray-200 px-4 py-3 text-center text-sm text-[var(--color-text-muted)] dark:border-gray-800"
         >
-          {emptyMessage ?? labels.empty(view)}
+          {labels.empty(view)}
         </p>
       )}
 

@@ -59,8 +59,6 @@ export type CountdownProps = {
    * defaults.
    */
   labels?: Partial<CountdownLabels>;
-  /** The suffixes of `inline`, `compact`, `card` and `display`. Default `labels.shortDays`… */
-  shortLabels?: Partial<Record<CountdownUnit, string>>;
   /**
    * `inline`, `card` and `display`: the text before the count (above it, in `card` and `display`).
    * Default `labels.ends`, `Ends in`; `null` for none.
@@ -130,7 +128,6 @@ export const Countdown = ({
   urgentBelow,
   onComplete,
   labels: ownLabels,
-  shortLabels,
   label: ownLabel,
   completedLabel: ownCompletedLabel,
   'aria-label': ariaLabel,
@@ -171,10 +168,10 @@ export const Countdown = ({
     seconds: labels.seconds,
   };
   const short: Record<CountdownUnit, string> = {
-    days: shortLabels?.days ?? labels.shortDays,
-    hours: shortLabels?.hours ?? labels.shortHours,
-    minutes: shortLabels?.minutes ?? labels.shortMinutes,
-    seconds: shortLabels?.seconds ?? labels.shortSeconds,
+    days: labels.shortDays,
+    hours: labels.shortHours,
+    minutes: labels.shortMinutes,
+    seconds: labels.shortSeconds,
   };
   // Dashes in the same layout until the browser is there, and for a target that is no date.
   const blank = !isClient || !Number.isFinite(targetMs);
