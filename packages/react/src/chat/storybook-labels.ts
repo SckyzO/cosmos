@@ -20,7 +20,7 @@ export const FRENCH_CHAT: LabelsInput = {
   },
   chatConversationList: {
     label: 'Conversations',
-    unread: 'non lus',
+    unread: (count) => `${count} non ${count <= 1 ? 'lu' : 'lus'}`,
     online: 'en ligne',
     away: 'absent',
     offline: 'hors ligne',

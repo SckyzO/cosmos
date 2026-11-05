@@ -31,8 +31,8 @@ export type ChatComposerLabels = {
 export type ChatConversationListLabels = {
   /** Accessible name of the list when the host passes no `label`. Default `Conversations`. */
   label: string;
-  /** Read after the unread count of a conversation. Default `unread`. */
-  unread: string;
+  /** Read in place of the unread count of a conversation, given the count. Default `3 unread`. */
+  unread: (count: number) => string;
   /** Read after the name of a conversation whose contact is online. Default `online`. */
   online: string;
   /** … away. Default `away`. */
@@ -125,7 +125,7 @@ export const CHAT_COMPOSER_LABELS: ChatComposerLabels = {
 
 export const CHAT_CONVERSATION_LIST_LABELS: ChatConversationListLabels = {
   label: 'Conversations',
-  unread: 'unread',
+  unread: (count) => `${count} unread`,
   online: 'online',
   away: 'away',
   offline: 'offline',
