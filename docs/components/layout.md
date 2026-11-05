@@ -243,8 +243,9 @@ them is the card it was.
 - `intent` is what the card means, `neutral` (default), `brand`, `info`, `success`, `warning` or
   `danger`, and `variant` is its surface. `outline` (default) is the plain card with the intent
   coloring its border. `tinted` gives the card a tint of the intent as its background, in a
-  colored border. `solid` fills it with the intent and writes in white; a neutral solid card is
-  dark in the light themes and light, with dark ink, in the dark ones. Solid is for simple
+  colored border. `solid` fills it with the intent and writes in white (in dark ink on the
+  warning orange, the theme's `--color-warning-500`); a neutral solid card is dark in the light
+  themes and light, with dark ink, in the dark ones. Solid is for simple
   content, a figure and a sentence: a `Table`, a chart or a form keeps its own colors and does
   not read on a fill. The icon tile follows the intent unless `iconTone`, `iconColor` or
   `iconBg` say otherwise; on a solid card it is drawn in the card's ink and ignores them.

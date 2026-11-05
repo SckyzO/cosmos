@@ -376,7 +376,8 @@ comparison) takes a darker shade in the light themes. Give the card a wider colu
 ```
 
 `variant="solid"` fills the card with its intent and writes in white on it, the 600 or 700 shade of
-the palette that keeps 4.5:1 in every theme: a status that has to stand out from across the room, as
+the palette that keeps 4.5:1 in every theme; warning is the theme's own orange
+(`--color-warning-500`, the one of the statuses and the gauges), in dark ink. It is for a status that has to stand out from across the room, as
 the alert counts of a monitoring screen. A neutral solid card is the dark ink of the theme, and turns
 light with dark ink in a dark theme. Under the pointer a solid link or button card keeps the edge of
 its fill and only rises. It is for a figure and its words: a colored `delta` or `chart` does not hold
