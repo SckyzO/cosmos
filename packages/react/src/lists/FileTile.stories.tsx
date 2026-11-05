@@ -239,7 +239,7 @@ export const AsLink: Story = {
 };
 
 /** At 375px the name truncates in both layouts and nothing widens the page. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   render: () => (
     <div className="flex flex-col gap-4" data-testid="mobile-box">
@@ -271,7 +271,7 @@ export const Mobile: Story = {
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByTestId('mobile-box'));

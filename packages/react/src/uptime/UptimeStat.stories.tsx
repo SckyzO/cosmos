@@ -111,23 +111,23 @@ export const CardLevels: Story = {
 };
 
 /** At 375px the row folds to two columns and the page does not scroll sideways. */
-export const MobileRow: Story = {
+const mobileRow: Story = {
   globals: mobileViewport,
 };
 
 export const MobileRowChecks: Story = {
-  ...MobileRow,
+  ...mobileRow,
   tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };
 
-export const MobileCard: Story = {
+const mobileCard: Story = {
   ...CardWithDays,
   globals: mobileViewport,
 };
 
 export const MobileCardChecks: Story = {
-  ...MobileCard,
+  ...mobileCard,
   tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };

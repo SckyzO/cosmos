@@ -105,7 +105,7 @@ export const WithHostFormat: Story = {
 };
 
 /** At 375px the field fills the screen and the list stays inside it. */
-export const MobileFillsTheScreen: Story = {
+const mobileFillsTheScreen: Story = {
   globals: mobileViewport,
   render: () => (
     <div className="p-4">
@@ -120,7 +120,7 @@ export const MobileFillsTheScreen: Story = {
 };
 
 export const MobileFillsTheScreenChecks: Story = {
-  ...MobileFillsTheScreen,
+  ...mobileFillsTheScreen,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);

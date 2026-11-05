@@ -85,14 +85,14 @@ export const CountGrows: Story = {
 };
 
 /** At 375px the stages stack, one row each, with the arrow and the rate between two rows. */
-export const OnNarrowScreen: Story = {
+const onNarrowScreen: Story = {
   globals: mobileViewport,
   tags: ['!autodocs'],
   args: { stages: DEALS, defaultSelectedId: 'qualified', 'aria-label': 'Deal pipeline' },
 };
 
 export const OnNarrowScreenChecks: Story = {
-  ...OnNarrowScreen,
+  ...onNarrowScreen,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

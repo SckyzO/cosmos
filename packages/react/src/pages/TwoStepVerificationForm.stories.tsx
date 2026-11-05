@@ -97,7 +97,7 @@ export const AuthenticatorSetup: Story = {
 };
 
 /** The code and the key stay inside a phone-wide card. */
-export const AuthenticatorSetupOnAPhone: Story = {
+const authenticatorSetupOnAPhone: Story = {
   ...AuthenticatorSetup,
   globals: mobileViewport,
 };
@@ -135,7 +135,7 @@ export const WithResendCooldown: Story = {
   },
 };
 
-export const BackupCodeOnPhone: Story = {
+const backupCodeOnPhone: Story = {
   globals: mobileViewport,
   args: { defaultMethod: 'backup', backupCode: true, cancelHref: '#' },
 };
@@ -291,7 +291,7 @@ export const AuthenticatorSetupChecks: Story = {
 };
 
 export const AuthenticatorSetupOnAPhoneChecks: Story = {
-  ...AuthenticatorSetupOnAPhone,
+  ...authenticatorSetupOnAPhone,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     const code = canvas.getByRole('img', { name: 'Authenticator setup code' });
@@ -436,7 +436,7 @@ export const BackupLoadingDisablesTheEntry: Story = {
 };
 
 export const BackupEntryFitsOnAPhone: Story = {
-  ...BackupCodeOnPhone,
+  ...backupCodeOnPhone,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     await userEvent.type(canvas.getByLabelText(/^Backup code/), '4f7a-91bc-4f7a-91bc-4f7a-91bc');

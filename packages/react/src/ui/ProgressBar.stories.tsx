@@ -431,7 +431,7 @@ export const SegmentsAreNamedByTheirParts: Story = {
   },
 };
 
-export const SegmentsOnNarrowScreen: Story = {
+const segmentsOnNarrowScreen: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   render: () => (
@@ -446,7 +446,7 @@ export const SegmentsOnNarrowScreen: Story = {
 };
 
 export const SegmentsOnNarrowScreenChecks: Story = {
-  ...SegmentsOnNarrowScreen,
+  ...segmentsOnNarrowScreen,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();

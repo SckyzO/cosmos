@@ -800,7 +800,7 @@ export const AmountCellKeepsItsOutput: Story = {
   },
 };
 
-export const MobileStickyFirstColumn: Story = {
+const mobileStickyFirstColumn: Story = {
   globals: mobileViewport,
   render: () => (
     <Table stickyFirstColumn striped>
@@ -830,7 +830,7 @@ export const MobileStickyFirstColumn: Story = {
 };
 
 export const MobileStickyFirstColumnChecks: Story = {
-  ...MobileStickyFirstColumn,
+  ...mobileStickyFirstColumn,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

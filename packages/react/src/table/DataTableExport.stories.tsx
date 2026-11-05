@@ -230,7 +230,7 @@ export const ExportFileNameDefaultsToExportCsv: Story = {
 };
 
 /** Below `sm` the button keeps its icon and its name "Export" and drops the label. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   render: () => (
     <DataTable
@@ -245,7 +245,7 @@ export const Mobile: Story = {
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

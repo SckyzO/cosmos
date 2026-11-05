@@ -614,13 +614,13 @@ export const PricingPageChecks: Story = {
 };
 
 /** The same page at 393px: the cards stack, one under the other, each as wide as the page. */
-export const PricingPageMobile: Story = {
+const pricingPageMobile: Story = {
   globals: mobileViewport,
   render: () => <PricingPageDemo />,
 };
 
 export const PricingPageMobileChecks: Story = {
-  ...PricingPageMobile,
+  ...pricingPageMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -797,14 +797,14 @@ export const BillingPageChecks: Story = {
 };
 
 /** The billing page at 393px: the cards stack, and the confirmation is a dialog over the page. */
-export const BillingPageMobile: Story = {
+const billingPageMobile: Story = {
   globals: mobileViewport,
   parameters: portalDocsParams.lg(),
   render: () => <BillingPageDemo />,
 };
 
 export const BillingPageMobileChecks: Story = {
-  ...BillingPageMobile,
+  ...billingPageMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

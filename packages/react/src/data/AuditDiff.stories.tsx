@@ -102,13 +102,13 @@ export const Translated: Story = {
 };
 
 /** Below `sm` each change stacks: the field, then Before and After under it, labelled. */
-export const Mobile: Story = {
+const mobile: Story = {
   args: { changes: userChanges.concat(LongText.args!.changes!.slice(0, 1)) },
   globals: mobileViewport,
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
@@ -168,7 +168,7 @@ export const HostileValues: Story = {
 };
 
 /** The history of a record: `Timeline` entries, each with its changes inline. */
-export const HistoryOfARecord: Story = {
+const historyOfARecord: Story = {
   parameters: { layout: 'padded' },
   render: () => (
     <div className="max-w-xl">
@@ -210,7 +210,7 @@ export const HistoryOfARecord: Story = {
 };
 
 export const HistoryOfARecordChecks: Story = {
-  ...HistoryOfARecord,
+  ...historyOfARecord,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => expectNoHorizontalOverflow(canvasElement),
 };

@@ -215,7 +215,7 @@ export const CustomEmptyMessage: Story = {
 };
 
 /** At 375px a long label truncates, the value (and the delta) stay visible, nothing widens the page. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: {
     showRank: true,
@@ -250,7 +250,7 @@ export const Mobile: Story = {
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     expectNoHorizontalOverflow();

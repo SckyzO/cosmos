@@ -245,7 +245,7 @@ export const ControlledOpen: Story = {
   },
 };
 
-export const LongNameStaysInTheRow: Story = {
+const longNameStaysInTheRow: Story = {
   // Short code: a block that scrolls inside itself would need a focus stop of its own.
   args: {
     name: 'search_internal_documentation_index_with_a_very_long_tool_name',
@@ -257,7 +257,7 @@ export const LongNameStaysInTheRow: Story = {
 };
 
 export const LongNameStaysInTheRowChecks: Story = {
-  ...LongNameStaysInTheRow,
+  ...longNameStaysInTheRow,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);

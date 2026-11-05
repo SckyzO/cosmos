@@ -91,13 +91,13 @@ export const NarrowContainer: Story = {
 };
 
 /** At 375px the oldest days are dropped, "N days ago" and the uptime follow, the page holds still. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: { legend: true },
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     expectNoHorizontalOverflow();

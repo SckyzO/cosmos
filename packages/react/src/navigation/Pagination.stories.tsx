@@ -206,13 +206,13 @@ export const ActivePageDiffersFromInactive: Story = {
 
 // ── Narrow screens (#291) ────────────────────────────────────────────────────
 
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: { page: 2, totalPages: 9, showInfo: true, pageSize: 10, total: 87 },
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const nav = canvas.getByRole('navigation', { name: 'Pagination' });
@@ -299,14 +299,14 @@ export const NoEdgesByDefault: Story = {
 };
 
 /** Below `sm` the edges stay with Previous and Next, around "Page 2 / 9". */
-export const MobileWithEdges: Story = {
+const mobileWithEdges: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   args: { page: 2, totalPages: 9, showEdges: true, showInfo: true, pageSize: 10, total: 87 },
 };
 
 export const MobileWithEdgesChecks: Story = {
-  ...MobileWithEdges,
+  ...mobileWithEdges,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByRole('navigation', { name: 'Pagination' }));
@@ -397,7 +397,7 @@ export const TextLabelsWithInfo: Story = {
 };
 
 /** The words stay below `sm`: "Previous · Page 5 / 10 · Next" fits on one row. */
-export const MobileTextLabels: Story = {
+const mobileTextLabels: Story = {
   globals: mobileViewport,
   args: {
     page: 5,
@@ -410,7 +410,7 @@ export const MobileTextLabels: Story = {
 };
 
 export const MobileTextLabelsChecks: Story = {
-  ...MobileTextLabels,
+  ...mobileTextLabels,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByRole('navigation', { name: 'Pagination' }));

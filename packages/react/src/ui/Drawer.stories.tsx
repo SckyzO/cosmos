@@ -342,14 +342,14 @@ export const BottomSheetWithoutHandleChecks: Story = {
 };
 
 /** At the `mobile` viewport the sheet spans the screen, stays under 85% of its height and does not widen the page. */
-export const BottomSheetOnMobile: Story = {
+const bottomSheetOnMobile: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   render: () => <SheetDemo rows={40} swipeToClose />,
 };
 
 export const BottomSheetOnMobileChecks: Story = {
-  ...BottomSheetOnMobile,
+  ...bottomSheetOnMobile,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     const sheet = await within(document.body).findByRole('dialog', { name: 'Server actions' });

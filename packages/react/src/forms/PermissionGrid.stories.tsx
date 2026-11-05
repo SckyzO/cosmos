@@ -219,9 +219,9 @@ export const Translated: Story = {
  * At 375px the grid scrolls inside its own frame, the page does not. The header row and the
  * first column stay in view, so a cell is always read with its permission and its action.
  */
-export const RoleEditorMobile: Story = { globals: mobileViewport };
+const roleEditorMobile: Story = { globals: mobileViewport };
 
-export const RoleMatrixMobile: Story = {
+const roleMatrixMobile: Story = {
   ...RoleMatrix,
   args: { ...RoleMatrix.args, maxHeight: 360 },
   globals: mobileViewport,
@@ -680,7 +680,7 @@ const frameOf = (canvasElement: HTMLElement) =>
 
 /** At the mobile width the page does not scroll sideways: the grid does, in its own frame. */
 export const RoleEditorMobileChecks: Story = {
-  ...RoleEditorMobile,
+  ...roleEditorMobile,
   tags: ['!dev', '!autodocs'],
   play: ({ canvasElement }) => {
     expectNoHorizontalOverflow();
@@ -690,7 +690,7 @@ export const RoleEditorMobileChecks: Story = {
 };
 
 export const RoleMatrixMobileChecks: Story = {
-  ...RoleMatrixMobile,
+  ...roleMatrixMobile,
   tags: ['!dev', '!autodocs'],
   play: ({ canvasElement }) => {
     expectNoHorizontalOverflow();
@@ -702,7 +702,7 @@ export const RoleMatrixMobileChecks: Story = {
 
 /** Scrolled down and along, the header row and the first column are still where they were. */
 export const PinnedPartsStayInView: Story = {
-  ...RoleMatrixMobile,
+  ...roleMatrixMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     const frame = frameOf(canvasElement);
@@ -735,7 +735,7 @@ export const PinnedPartsStayInView: Story = {
 
 /** Moving by keyboard to a far cell scrolls it clear of the pinned header and column. */
 export const FocusedCellNeverHidesUnderPinnedParts: Story = {
-  ...RoleMatrixMobile,
+  ...roleMatrixMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     const frame = frameOf(canvasElement);

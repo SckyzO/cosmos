@@ -87,7 +87,7 @@ export const InSplitLayout: Story = {
   ],
 };
 
-export const OnPhone: Story = {
+const onPhone: Story = {
   globals: mobileViewport,
   args: { signInHref: '#', strength: estimateStrength },
 };
@@ -375,7 +375,7 @@ export const FocusElsewhereIsLeftWhenTheViewSwitches: Story = {
 };
 
 export const FitsOnAPhone: Story = {
-  ...OnPhone,
+  ...onPhone,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     await userEvent.type(canvas.getByLabelText(/^New password/), 'Correct-Horse-9');

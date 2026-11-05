@@ -238,39 +238,39 @@ export const SyncedWithTheUrlHash: Story = {
 // ── 375px ───────────────────────────────────────────────────────────────────
 
 /** At 375px the search stays in the bar and the other controls move into "More options"; the lines of a step scroll sideways. */
-export const FailedBuildMobile: Story = {
+const failedBuildMobile: Story = {
   ...FailedBuild,
   globals: mobileViewport,
 };
 
 export const FailedBuildMobileChecks: Story = {
-  ...FailedBuildMobile,
+  ...failedBuildMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
   },
 };
 
-export const RunningStepMobile: Story = {
+const runningStepMobile: Story = {
   ...RunningStep,
   globals: mobileViewport,
 };
 
 export const RunningStepMobileChecks: Story = {
-  ...RunningStepMobile,
+  ...runningStepMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
   },
 };
 
-export const LongLogMobile: Story = {
+const longLogMobile: Story = {
   ...LongLog,
   globals: mobileViewport,
 };
 
 export const LongLogMobileChecks: Story = {
-  ...LongLogMobile,
+  ...longLogMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
@@ -670,7 +670,7 @@ export const TimestampsToggleAndElapsed: Story = {
 
 /** At 375px the options are in a menu: timestamps and wrap are checkable items, the search stays. */
 export const MobileMenuHoldsTheOptions: Story = {
-  ...FailedBuildMobile,
+  ...failedBuildMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);

@@ -316,13 +316,13 @@ export const NarrowWrapped: Story = {
 };
 
 /** At 375px the toolbar keeps Live and the search in the bar, and the rest goes into Filters. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   render: () => <LogConsole count={200} height={380} />,
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };

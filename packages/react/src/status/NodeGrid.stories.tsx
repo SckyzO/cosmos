@@ -181,7 +181,7 @@ export const Translated: Story = {
 };
 
 /** At 375px the marks wrap in the card and the page does not scroll sideways. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: { marks: SHAPES, legend: true },
 };
@@ -757,7 +757,7 @@ export const LabelsTranslateTheTexts: Story = {
 
 /** At 375px the page does not scroll sideways and the marks wrap inside the card. */
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     expectNoHorizontalOverflow();

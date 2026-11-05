@@ -565,7 +565,7 @@ export const RangePresets: Story = {
 };
 
 /** On a phone they sit under the calendar and wrap. */
-export const RangePresetsOnMobile: Story = {
+const rangePresetsOnMobile: Story = {
   parameters: portalDocsParams(760),
   globals: mobileViewport,
   args: { ...presetArgs, defaultOpen: true },
@@ -696,7 +696,7 @@ export const RangePresetsBesideTheCalendar: Story = {
 
 /** Under the calendar on a phone, wrapped, and inside the screen. */
 export const RangePresetsUnderTheCalendarOnMobile: Story = {
-  ...RangePresetsOnMobile,
+  ...rangePresetsOnMobile,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     const dialog = await dialogWithPresets();

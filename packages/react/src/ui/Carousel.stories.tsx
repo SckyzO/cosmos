@@ -234,13 +234,13 @@ const Gallery = ({ count = PHOTOS.length }: { count?: number }) => (
 export const WithThumbnails: Story = { render: () => <Gallery count={5} /> };
 
 /** More thumbnails than fit: the strip scrolls sideways and keeps the current one in view. */
-export const ThumbnailsOverflowing: Story = {
+const thumbnailsOverflowing: Story = {
   globals: mobileViewport,
   render: () => <Gallery />,
 };
 
 export const ThumbnailsOverflowingChecks: Story = {
-  ...ThumbnailsOverflowing,
+  ...thumbnailsOverflowing,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const strip = await canvas.findByRole('group', { name: 'Slide thumbnails' });

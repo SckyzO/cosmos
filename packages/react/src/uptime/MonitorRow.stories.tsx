@@ -179,25 +179,25 @@ export const StaleCards: Story = {
   ),
 };
 
-export const StaleMobile: Story = {
+const staleMobile: Story = {
   ...Stale,
   globals: mobileViewport,
 };
 
 export const StaleMobileChecks: Story = {
-  ...StaleMobile,
+  ...staleMobile,
   tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };
 
 /** At 375px a row stacks: the status and name, then the beats, with the figures on the first line. */
-export const MobileRows: Story = {
+const mobileRows: Story = {
   render: () => <Rows />,
   globals: mobileViewport,
 };
 
 export const MobileRowsChecks: Story = {
-  ...MobileRows,
+  ...mobileRows,
   tags: ['!dev', '!autodocs'],
   play: ({ canvasElement }) => {
     expectNoHorizontalOverflow();
@@ -206,13 +206,13 @@ export const MobileRowsChecks: Story = {
   },
 };
 
-export const MobileCards: Story = {
+const mobileCards: Story = {
   render: Cards.render,
   globals: mobileViewport,
 };
 
 export const MobileCardsChecks: Story = {
-  ...MobileCards,
+  ...mobileCards,
   tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
 };

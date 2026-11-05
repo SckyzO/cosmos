@@ -71,13 +71,13 @@ export const ManySources: Story = {
   },
 };
 
-export const OnMobile: Story = {
+const onMobile: Story = {
   ...ManySources,
   globals: mobileViewport,
 };
 
 export const OnMobileChecks: Story = {
-  ...OnMobile,
+  ...onMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);

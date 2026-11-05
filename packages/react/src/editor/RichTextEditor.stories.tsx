@@ -234,13 +234,13 @@ export const Controlled: Story = {
   },
 };
 
-export const Narrow: Story = {
+const narrow: Story = {
   globals: mobileViewport,
   args: { defaultValue: SAMPLE },
 };
 
 export const NarrowChecks: Story = {
-  ...Narrow,
+  ...narrow,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     await textbox(canvasElement);
@@ -248,13 +248,13 @@ export const NarrowChecks: Story = {
   },
 };
 
-export const NarrowFormats: Story = {
+const narrowFormats: Story = {
   ...Formats,
   globals: mobileViewport,
 };
 
 export const NarrowFormatsChecks: Story = {
-  ...NarrowFormats,
+  ...narrowFormats,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const text = await textbox(canvasElement);

@@ -324,14 +324,14 @@ const PagePreview = () => (
  * Below `sm` the page title goes (the page has its own heading) and the actions marked with
  * `max-sm:hidden` move into the "More actions" menu given as `moreActions`.
  */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   parameters: { ...portalDocsParams.lg(), layout: 'fullscreen' },
   render: () => <MobileTopbar onSelect={fn()} page={<PagePreview />} />,
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByRole('banner'));

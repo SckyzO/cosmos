@@ -261,7 +261,7 @@ export const WithoutIconHasNoTile: Story = {
 };
 
 /** Below `sm` the tile drops to 40px and the title column keeps its wrap behaviour. */
-export const MobileWithIcon: Story = {
+const mobileWithIcon: Story = {
   globals: mobileViewport,
   args: {
     title: 'Integrations',
@@ -276,7 +276,7 @@ export const MobileWithIcon: Story = {
 };
 
 export const MobileWithIconChecks: Story = {
-  ...MobileWithIcon,
+  ...mobileWithIcon,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement, canvas }) => {
     expectNoHorizontalOverflow();
@@ -347,7 +347,7 @@ export const BreadcrumbComesBeforeTheTitleInTheDom: Story = {
  * Below `sm` the actions wrap under the meta items, at the start of the line, even when they would
  * fit beside the title. The icon tile stays beside the text column, which holds the breadcrumb.
  */
-export const MobileBreadcrumbMetaAndActions: Story = {
+const mobileBreadcrumbMetaAndActions: Story = {
   globals: mobileViewport,
   args: {
     title: 'Checkout fails with a 502',
@@ -366,7 +366,7 @@ export const MobileBreadcrumbMetaAndActions: Story = {
 };
 
 export const MobileBreadcrumbMetaAndActionsChecks: Story = {
-  ...MobileBreadcrumbMetaAndActions,
+  ...mobileBreadcrumbMetaAndActions,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement, canvas }) => {
     expectNoHorizontalOverflow();

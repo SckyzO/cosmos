@@ -69,7 +69,7 @@ const titleOf = (card: HTMLElement) =>
  * per column. `Last seen` is `mobile: 'hidden'`, `Team` is relabelled `Squad`. The second line of
  * the toolbar has the "Filters" button, the "Sort by" select and the columns button.
  */
-export const Cards: Story = {
+const cardsStory: Story = {
   globals: mobileViewport,
   render: () => (
     <DataTable
@@ -88,7 +88,7 @@ export const Cards: Story = {
 };
 
 export const CardsChecks: Story = {
-  ...Cards,
+  ...cardsStory,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -105,7 +105,7 @@ export const CardsChecks: Story = {
 };
 
 /** The same cards on a table with only a title and an action: no pairs, no sort, no toolbar. */
-export const CardsWithoutPairs: Story = {
+const cardsWithoutPairs: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   render: () => (
@@ -121,7 +121,7 @@ export const CardsWithoutPairs: Story = {
 };
 
 export const CardsWithoutPairsChecks: Story = {
-  ...CardsWithoutPairs,
+  ...cardsWithoutPairs,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -208,7 +208,7 @@ export const CardsAreAListForScreenReaders: Story = {
 };
 
 /** The checkbox of a card selects its row, and the toolbar counts it. */
-export const CardsSelection: Story = {
+const cardsSelection: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   args: { onSelectionChange: fn() },
@@ -226,7 +226,7 @@ export const CardsSelection: Story = {
 };
 
 export const CardsSelectionChecks: Story = {
-  ...CardsSelection,
+  ...cardsSelection,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas, args }) => {
     const first = canvas.getByRole('checkbox', { name: 'Select row user-1' });
@@ -243,7 +243,7 @@ export const CardsSelectionChecks: Story = {
 };
 
 /** The action at the end of a card's first line opens its menu, and acts on that row. */
-export const CardsRowAction: Story = {
+const cardsRowAction: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   args: { onRowClick: fn() },
@@ -267,7 +267,7 @@ export const CardsRowAction: Story = {
 };
 
 export const CardsRowActionChecks: Story = {
-  ...CardsRowAction,
+  ...cardsRowAction,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas, args }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Actions for Grace Hopper' }));
@@ -282,7 +282,7 @@ export const CardsRowActionChecks: Story = {
 };
 
 /** "Sort by" lists the sortable columns, both ways; the cards follow, and "Default order" undoes it. */
-export const CardsSort: Story = {
+const cardsSort: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   render: () => (
@@ -297,7 +297,7 @@ export const CardsSort: Story = {
 };
 
 export const CardsSortChecks: Story = {
-  ...CardsSort,
+  ...cardsSort,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const sort = canvas.getByRole('combobox', { name: 'Sort by' });
@@ -325,7 +325,7 @@ export const CardsSortChecks: Story = {
 };
 
 /** Loading keeps the cards' place, with a status for screen readers; an empty table says so. */
-export const CardsLoadingAndEmpty: Story = {
+const cardsLoadingAndEmpty: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   render: () => (
@@ -360,7 +360,7 @@ export const CardsLoadingAndEmpty: Story = {
 };
 
 export const CardsLoadingAndEmptyChecks: Story = {
-  ...CardsLoadingAndEmpty,
+  ...cardsLoadingAndEmpty,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -433,7 +433,7 @@ const userDetail = (r: Person) => (
  * With `renderExpandedRow`, a card gets a chevron button on its title line, before the checkbox:
  * the detail opens inside the card, under its fields. Editing (`edit`) is not offered in cards.
  */
-export const ExpandableCards: Story = {
+const expandableCards: Story = {
   globals: mobileViewport,
   render: () => (
     <DataTable
@@ -451,7 +451,7 @@ export const ExpandableCards: Story = {
 };
 
 export const CardChevronExpandsAndCollapses: Story = {
-  ...ExpandableCards,
+  ...expandableCards,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -500,7 +500,8 @@ export const CardChevronExpandsAndCollapses: Story = {
  * as the detail row of the table does.
  */
 export const CardDetailUnfolds: Story = {
-  ...ExpandableCards,
+  tags: ['!dev', '!autodocs'],
+  ...expandableCards,
   parameters: { settleMotion: false },
   render: () => (
     <DataTable
@@ -515,7 +516,7 @@ export const CardDetailUnfolds: Story = {
 };
 
 export const CardDetailUnfoldsAndFoldsBack: Story = {
-  ...ExpandableCards,
+  ...expandableCards,
   tags: ['!dev', '!autodocs'],
   parameters: { settleMotion: false },
   render: () => (
@@ -619,14 +620,14 @@ const ReloadingCards = () => {
 };
 
 /** A reload with rows on screen: the cards dim and the spinner shows after the wait, as the table does. */
-export const CardsWaitBeforeTheVeil: Story = {
+const cardsWaitBeforeTheVeil: Story = {
   globals: mobileViewport,
   parameters: { settleMotion: false },
   render: () => <ReloadingCards />,
 };
 
 export const CardsWaitBeforeTheVeilChecks: Story = {
-  ...CardsWaitBeforeTheVeil,
+  ...cardsWaitBeforeTheVeil,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     const list = canvas.getAllByRole('list').find((el) => el.tagName === 'UL')!;

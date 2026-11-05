@@ -350,7 +350,7 @@ export const SelectionWorksInTheWindow: Story = {
 };
 
 /** At 375px the windowed table scrolls in its own area and the page does not move sideways. */
-export const OnAPhone: Story = {
+const onAPhone: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   render: () => (
@@ -367,7 +367,7 @@ export const OnAPhone: Story = {
 };
 
 export const OnAPhoneChecks: Story = {
-  ...OnAPhone,
+  ...onAPhone,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     await expect(bodyRows(canvas.getByRole('table', { name: 'Nodes' })).length).toBeLessThan(40);

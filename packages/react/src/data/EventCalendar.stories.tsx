@@ -407,12 +407,12 @@ export const TimeShownOnTimedEventsOnly: Story = {
  * Below `sm` the weekday names shrink to one letter, the chips to dots, and the picked day (today
  * to begin with) lists its events under the grid.
  */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ args, canvas }) => {
     expectNoHorizontalOverflow();
@@ -1267,19 +1267,19 @@ export const WeekMirrorsInRightToLeft: Story = {
  * Below `sm` a week is a strip of its seven days, a dot for each event, and the grid of the picked
  * day under it; Previous and Next move by a week. The view keeps its name: this is how the week fits.
  */
-export const WeekMobile: Story = {
+const weekMobile: Story = {
   args: { ...gridArgs, defaultView: 'week', onSlotClick: fn() },
   globals: mobileViewport,
 };
 
 /** The day is the same grid, one column wide already. */
-export const DayMobile: Story = {
+const dayMobile: Story = {
   args: { ...gridArgs, defaultView: 'day' },
   globals: mobileViewport,
 };
 
 export const WeekMobileChecks: Story = {
-  ...WeekMobile,
+  ...weekMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ args, canvas }) => {
     expectNoHorizontalOverflow();
@@ -1334,7 +1334,7 @@ export const WeekMobileChecks: Story = {
 };
 
 export const DayMobileChecks: Story = {
-  ...DayMobile,
+  ...dayMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

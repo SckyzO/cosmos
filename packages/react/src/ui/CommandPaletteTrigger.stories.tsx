@@ -134,13 +134,13 @@ export const SizesChecks: Story = {
  * Below `sm` the button is a square icon button: the key hint is gone, the placeholder stays as
  * the accessible name.
  */
-export const IconButtonOnAPhone: Story = {
+const iconButtonOnAPhone: Story = {
   globals: mobileViewport,
   render: () => <InTopbar />,
 };
 
 export const IconButtonOnAPhoneChecks: Story = {
-  ...IconButtonOnAPhone,
+  ...iconButtonOnAPhone,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const button = within(canvasElement).getByRole('button', { name: /Search projects/ });

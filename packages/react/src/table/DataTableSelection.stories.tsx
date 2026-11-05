@@ -113,13 +113,13 @@ export const BulkActionsFoldIntoAMenu: Story = {
  * In cards mode on a phone the bulk actions are icon buttons with their names, on the count's
  * line; the search is on the line under it, then the cards' own sort line.
  */
-export const BulkActionsOnAPhone: Story = {
+const bulkActionsOnAPhone: Story = {
   globals: mobileViewport,
   render: () => <Orders mobileLayout="cards" defaultSelection={selected} />,
 };
 
 export const BulkActionsOnAPhoneChecks: Story = {
-  ...BulkActionsOnAPhone,
+  ...bulkActionsOnAPhone,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -198,7 +198,7 @@ export const BulkActionsAsNodesChecks: Story = {
  * Cards mode: a "Filters" button with the number of active filters opens a sheet with the filter
  * of each filterable column. Two filters are active here.
  */
-export const FiltersOnAPhone: Story = {
+const filtersOnAPhone: Story = {
   globals: mobileViewport,
   render: () => (
     <Orders
@@ -209,7 +209,7 @@ export const FiltersOnAPhone: Story = {
 };
 
 export const FiltersOnAPhoneChecks: Story = {
-  ...FiltersOnAPhone,
+  ...filtersOnAPhone,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

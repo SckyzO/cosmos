@@ -131,7 +131,7 @@ export const ShortcutsListedInTheOverlay: Story = {
 // ── Narrow screens ───────────────────────────────────────────────────────────
 
 /** At 375px the back link takes its own row if the pager does not fit beside it. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: { noun: 'purchase order' },
   render: (args) => (
@@ -142,7 +142,7 @@ export const Mobile: Story = {
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByTestId('mobile-box'));
@@ -155,7 +155,7 @@ export const MobileChecks: Story = {
   },
 };
 
-export const MobileCompact: Story = {
+const mobileCompact: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   args: { variant: 'compact' },
@@ -167,7 +167,7 @@ export const MobileCompact: Story = {
 };
 
 export const MobileCompactChecks: Story = {
-  ...MobileCompact,
+  ...mobileCompact,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByTestId('mobile-box'));

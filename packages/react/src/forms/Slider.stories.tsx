@@ -116,7 +116,7 @@ export const Controlled: Story = {
 };
 
 /** At 375px a long label wraps and the value stays on the row: nothing widens the page. */
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   args: {
     label: 'Monthly budget for the whole infrastructure team, every environment included',
@@ -128,7 +128,7 @@ export const Mobile: Story = {
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);

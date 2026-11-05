@@ -332,14 +332,14 @@ export const WithDetailDrawer: Story = {
  * Below `sm` the board scrolls sideways in its own container: one column wide, the next one
  * peeking, snapping on touch. A card still drags to the next column.
  */
-export const OnNarrowScreen: Story = {
+const onNarrowScreen: Story = {
   tags: ['!autodocs'],
   globals: mobileViewport,
   args: { defaultValue: sprint() },
 };
 
 export const OnNarrowScreenChecks: Story = {
-  ...OnNarrowScreen,
+  ...onNarrowScreen,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

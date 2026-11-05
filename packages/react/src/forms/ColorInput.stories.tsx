@@ -110,7 +110,7 @@ export const InAFormRowChecks: Story = {
 };
 
 /** At 375px the swatches wrap and the field stays inside the screen. */
-export const MobileWrapsTheSwatches: Story = {
+const mobileWrapsTheSwatches: Story = {
   globals: mobileViewport,
   render: () => (
     <div className="p-4">
@@ -120,7 +120,7 @@ export const MobileWrapsTheSwatches: Story = {
 };
 
 export const MobileWrapsTheSwatchesChecks: Story = {
-  ...MobileWrapsTheSwatches,
+  ...mobileWrapsTheSwatches,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);

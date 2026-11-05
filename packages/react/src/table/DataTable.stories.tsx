@@ -234,13 +234,13 @@ export const PagerIsANavigation: Story = {
   },
 };
 
-export const Mobile: Story = {
+const mobile: Story = {
   globals: mobileViewport,
   render: () => <DataTable rows={rows} columns={columns} rowKey={(r) => r.host} pageSize={10} />,
 };
 
 export const MobileChecks: Story = {
-  ...Mobile,
+  ...mobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -1229,13 +1229,13 @@ const wideColumns = columns.map((c) => ({ ...c, width: '160px' }));
 
 const scrollerOf = (table: HTMLElement) => table.parentElement as HTMLElement;
 
-export const MobileScrollsWithAnEdgeFade: Story = {
+const mobileScrollsWithAnEdgeFade: Story = {
   globals: mobileViewport,
   render: () => <DataTable rows={rows} columns={wideColumns} rowKey={(r) => r.host} pageSize={5} />,
 };
 
 export const MobileScrollsWithAnEdgeFadeChecks: Story = {
-  ...MobileScrollsWithAnEdgeFade,
+  ...mobileScrollsWithAnEdgeFade,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -1338,7 +1338,7 @@ export const ColumnsWithoutWidthScrollOnAPhone: Story = {
   },
 };
 
-export const PinnedStartColumn: Story = {
+const pinnedStartColumn: Story = {
   globals: mobileViewport,
   render: () => (
     <DataTable
@@ -1352,7 +1352,7 @@ export const PinnedStartColumn: Story = {
 };
 
 export const PinnedStartColumnChecks: Story = {
-  ...PinnedStartColumn,
+  ...pinnedStartColumn,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -1763,7 +1763,7 @@ export const DefaultFiltersStartUncontrolled: Story = {
   },
 };
 
-export const StatusTabsMobile: Story = {
+const statusTabsMobile: Story = {
   globals: mobileViewport,
   render: () => (
     <DataTable
@@ -1784,7 +1784,7 @@ export const StatusTabsMobile: Story = {
 };
 
 export const StatusTabsMobileChecks: Story = {
-  ...StatusTabsMobile,
+  ...statusTabsMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -1952,7 +1952,7 @@ export const NoPageSizeSelectByDefault: Story = {
   },
 };
 
-export const PageSizeOptionsMobile: Story = {
+const pageSizeOptionsMobile: Story = {
   globals: mobileViewport,
   render: () => (
     <DataTable
@@ -1966,7 +1966,7 @@ export const PageSizeOptionsMobile: Story = {
 };
 
 export const PageSizeOptionsMobileChecks: Story = {
-  ...PageSizeOptionsMobile,
+  ...pageSizeOptionsMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

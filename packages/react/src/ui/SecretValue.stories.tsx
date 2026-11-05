@@ -207,13 +207,13 @@ export const AutoHideMasksTheValueAgain: Story = {
 };
 
 /** The buttons wrap under the value on a phone, and the page does not scroll sideways. */
-export const MobileButtonsWrapUnderTheValue: Story = {
+const mobileButtonsWrapUnderTheValue: Story = {
   globals: mobileViewport,
   args: { value: WEBHOOK.repeat(2), label: 'Webhook secret', defaultRevealed: true },
 };
 
 export const MobileButtonsWrapUnderTheValueChecks: Story = {
-  ...MobileButtonsWrapUnderTheValue,
+  ...mobileButtonsWrapUnderTheValue,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

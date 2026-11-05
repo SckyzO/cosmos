@@ -190,13 +190,13 @@ export const WithMenus: Story = {
 };
 
 // Below `lg` the items leave the bar: the menu button stays, and the bar never widens the page.
-export const WithMenusMobile: Story = {
+const withMenusMobile: Story = {
   ...WithMenus,
   globals: mobileViewport,
 };
 
 export const WithMenusMobileChecks: Story = {
-  ...WithMenusMobile,
+  ...withMenusMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
@@ -253,13 +253,13 @@ export const MultiColumnWithSecondary: Story = {
 };
 
 // Below `lg` the secondary panel stacks under the main column instead of squeezing it.
-export const MultiColumnMobile: Story = {
+const multiColumnMobile: Story = {
   ...MultiColumnWithSecondary,
   globals: mobileViewport,
 };
 
 export const MultiColumnMobileChecks: Story = {
-  ...MultiColumnMobile,
+  ...multiColumnMobile,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();

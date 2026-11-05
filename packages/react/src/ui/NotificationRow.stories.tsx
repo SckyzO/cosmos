@@ -495,7 +495,7 @@ export const Page: Story = {
 };
 
 /** The same page on a phone: the rows truncate their text, and the actions stay on the row. */
-export const PageOnAPhone: Story = {
+const pageOnAPhone: Story = {
   parameters: { layout: 'fullscreen' },
   globals: mobileViewport,
   render: () => <NotificationsPage />,
@@ -568,7 +568,7 @@ export const PageKeyboardOrder: Story = {
 };
 
 export const PageOnAPhoneChecks: Story = {
-  ...PageOnAPhone,
+  ...pageOnAPhone,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas, canvasElement }) => {
     expectNoHorizontalOverflow();
