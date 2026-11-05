@@ -13,7 +13,7 @@ import {
 } from './storybook-recharts';
 import { SunburstChart, type SunburstNode } from './SunburstChart';
 import { ChartLabelsProvider } from './ChartLabelsProvider';
-import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
+import { frenchChartLabels } from './locales/fr';
 
 // Headcount of a company: five divisions, three levels. 313 people.
 const ORG: SunburstNode[] = [
@@ -1299,21 +1299,21 @@ export const LabelsFromProviderAndProp: Story = {
     labels: { shareOfTotal: 'Poids' },
   },
   render: (args) => (
-    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+    <ChartLabelsProvider labels={frenchChartLabels}>
       <SunburstChart {...args} />
     </ChartLabelsProvider>
   ),
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(arcs(canvasElement)).toHaveLength(4));
     await expect(arcs(canvasElement).map((arc) => arc.getAttribute('aria-label'))).toEqual([
-      'Ventes : 40, 40% du total',
-      'Ventes, Nord : 30, 75% de Ventes',
-      'Ventes, Sud : 10, 25% de Ventes',
-      'Support : 60, 60% du total',
+      'Ventes\u202f: 40, 40% du total',
+      'Ventes, Nord\u202f: 30, 75% de Ventes',
+      'Ventes, Sud\u202f: 10, 25% de Ventes',
+      'Support\u202f: 60, 60% du total',
     ]);
     await expect(centerOf(canvasElement)).toEqual(['100', 'Total']);
     await expect(outlineOf(canvasElement)?.textContent).toBe(
-      'Ventes : 40Nord : 30Sud : 10Support : 60'
+      'Ventes\u202f: 40Nord\u202f: 30Sud\u202f: 10Support\u202f: 60'
     );
     const nord = arcs(canvasElement)[1];
     await userEvent.hover(nord);

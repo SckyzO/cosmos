@@ -14,7 +14,7 @@ import {
 } from './storybook-recharts';
 import { WorldMap, type WorldMapMarker, type WorldMapRoute } from './WorldMap';
 import { ChartLabelsProvider } from './ChartLabelsProvider';
-import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
+import { frenchChartLabels } from './locales/fr';
 
 const geography = world as unknown as Topology;
 
@@ -1502,7 +1502,7 @@ export const LabelsFromProviderAndProp: Story = {
     labels: { noData: 'Sans valeur' },
   },
   render: (args) => (
-    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+    <ChartLabelsProvider labels={frenchChartLabels}>
       <WorldMap {...args} />
     </ChartLabelsProvider>
   ),
@@ -1528,7 +1528,7 @@ export const LabelsFromProviderAndProp: Story = {
     // The largest country is the first stop of the keyboard: the live region says it.
     await userEvent.tab();
     await waitFor(() =>
-      expect(statusOf(canvasElement)).toBe('United States of America, Valeur : 48.2k')
+      expect(statusOf(canvasElement)).toBe('United States of America, Valeur\u202f: 48.2k')
     );
     await userEvent.tab();
   },

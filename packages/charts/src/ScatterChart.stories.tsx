@@ -29,7 +29,7 @@ import {
   tooltipCard,
 } from './storybook-recharts';
 import { ChartLabelsProvider } from './ChartLabelsProvider';
-import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
+import { frenchChartLabels } from './locales/fr';
 
 // Deterministic noise in (-1, 1): the same points on every run and screenshot.
 const noise = (i: number) => (Math.sin(i * 12.9898) * 43758.5453) % 1;
@@ -595,7 +595,7 @@ export const LabelsFromProviderAndProp: Story = {
   tags: ['!dev', '!autodocs'],
   args: { series: [{ name: 'DC1', data: [{ x: 40, y: 12, label: 'node-1' }] }] },
   render: (args) => (
-    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+    <ChartLabelsProvider labels={frenchChartLabels}>
       <div data-testid="scatter">
         <ScatterChart {...args} labels={{ y: 'latence' }} />
       </div>
@@ -611,8 +611,11 @@ export const LabelsFromProviderAndProp: Story = {
     const chart = (id: string) =>
       canvasElement.querySelector(`[data-testid="${id}"]`) as HTMLElement;
     await waitFor(() => {
-      expect(surface(chart('scatter'))).toHaveAttribute('aria-label', 'Nuage de points : DC1');
-      expect(surface(chart('bubble'))).toHaveAttribute('aria-label', 'Graphique à bulles : DC1');
+      expect(surface(chart('scatter'))).toHaveAttribute('aria-label', 'Nuage de points\u202f: DC1');
+      expect(surface(chart('bubble'))).toHaveAttribute(
+        'aria-label',
+        'Graphique à bulles\u202f: DC1'
+      );
     });
     await hoverFirstPoint(chart('scatter'));
     await expect(tooltipRows(chart('scatter'))).toEqual(['DC1', 'abscisse40', 'latence12']);

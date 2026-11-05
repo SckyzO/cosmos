@@ -12,7 +12,7 @@ import { MixedChart } from './MixedChart';
 import { RadarChart } from './RadarChart';
 import { RangeBarChart } from './RangeBarChart';
 import { Sparkline } from './Sparkline';
-import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
+import { frenchChartLabels } from './locales/fr';
 import { legendTexts, surface } from './storybook-recharts';
 
 const meta = {
@@ -44,7 +44,7 @@ const Charts = () => (
 
 /** One dictionary at the root translates what the charts write themselves. */
 export const French: Story = {
-  args: { labels: FRENCH_CHART_LABELS },
+  args: { labels: frenchChartLabels },
   render: (args) => (
     <ChartLabelsProvider {...args}>
       <Charts />
@@ -66,8 +66,8 @@ export const ProviderTranslatesTheCharts: Story = {
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(named(canvasElement)).toEqual([
-        'Histogramme : CPU, Mémoire',
-        'Histogramme : Incidents',
+        'Histogramme\u202f: CPU, Mémoire',
+        'Histogramme\u202f: Incidents',
         'Tendance de valeur, chargement',
       ])
     );
@@ -86,7 +86,7 @@ export const ProviderTranslatesTheCharts: Story = {
 /** The charts that write a name and nothing else you read, under one provider. */
 export const NamesFromTheProvider: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { labels: FRENCH_CHART_LABELS },
+  args: { labels: frenchChartLabels },
   render: (args) => (
     <ChartLabelsProvider {...args}>
       <div className="grid gap-4 md:grid-cols-2">
@@ -115,12 +115,12 @@ export const NamesFromTheProvider: Story = {
     await waitFor(() =>
       expect(named(canvasElement).sort()).toEqual(
         [
-          'Courbes : CPU, Mémoire',
-          'Graphique mixte : CPU, Mémoire',
-          'Radar : CPU, Mémoire',
-          'Carte de chaleur : CPU, Mémoire',
-          'Histogramme : CPU, Mémoire',
-          'Plages : Maintenance',
+          'Courbes\u202f: CPU, Mémoire',
+          'Graphique mixte\u202f: CPU, Mémoire',
+          'Radar\u202f: CPU, Mémoire',
+          'Carte de chaleur\u202f: CPU, Mémoire',
+          'Histogramme\u202f: CPU, Mémoire',
+          'Plages\u202f: Maintenance',
         ].sort()
       )
     );
@@ -130,7 +130,7 @@ export const NamesFromTheProvider: Story = {
 /** A chart's own `labels` win over the provider, and the name the app passes in over both. */
 export const OwnLabelsWinOverTheProvider: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { labels: FRENCH_CHART_LABELS },
+  args: { labels: frenchChartLabels },
   render: (args) => (
     <ChartLabelsProvider {...args}>
       <BarChart
@@ -156,7 +156,7 @@ export const OwnLabelsWinOverTheProvider: Story = {
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(named(canvasElement)).toEqual([
-        'Histogramme : Incidents',
+        'Histogramme\u202f: Incidents',
         'Tendance de valeur (en cours)',
         'Charge par trimestre',
       ])
@@ -170,7 +170,7 @@ export const OwnLabelsWinOverTheProvider: Story = {
 /** A nested provider replaces the keys it gives and keeps the outer one's others. */
 export const NestedProviderOverridesKeyByKey: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { labels: FRENCH_CHART_LABELS },
+  args: { labels: frenchChartLabels },
   render: (args) => (
     <ChartLabelsProvider {...args}>
       <ChartLabelsProvider labels={{ chart: { empty: 'Vide' }, barChart: { name: () => 'Inner' } }}>

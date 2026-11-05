@@ -20,7 +20,7 @@ import {
   tooltipCard,
 } from './storybook-recharts';
 import { ChartLabelsProvider } from './ChartLabelsProvider';
-import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
+import { frenchChartLabels } from './locales/fr';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
 
@@ -813,7 +813,7 @@ export const LabelsFromProviderAndProp: Story = {
   tags: ['!dev', '!autodocs'],
   args: { series: WITH_ENTRIES, labels: { newEntry: 'nouveau' } },
   render: (args) => (
-    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+    <ChartLabelsProvider labels={frenchChartLabels}>
       <Box {...args} width={880} />
     </ChartLabelsProvider>
   ),
@@ -821,7 +821,7 @@ export const LabelsFromProviderAndProp: Story = {
     await drawn(canvasElement, 6);
     await expect(surface(canvasElement)).toHaveAttribute(
       'aria-label',
-      'Classement : Aurora, Basalt, Cobalt, Dune, Ember, Fjord'
+      'Classement\u202f: Aurora, Basalt, Cobalt, Dune, Ember, Fjord'
     );
     await userEvent.tab();
     const card = () => tooltipCard(canvasElement) as HTMLElement;

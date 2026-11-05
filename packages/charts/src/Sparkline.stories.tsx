@@ -13,7 +13,7 @@ import {
   tooltipCard,
 } from './storybook-recharts';
 import { ChartLabelsProvider } from './ChartLabelsProvider';
-import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
+import { frenchChartLabels } from './locales/fr';
 
 const REQUESTS = [10, 22, 18, 25, 30, 28, 35, 31, 29, 36, 32, 40];
 const SERVICES = [
@@ -437,7 +437,7 @@ export const BarNamedImage: Story = {
 export const LabelsFromProviderAndProp: Story = {
   tags: ['!dev', '!autodocs'],
   render: (args) => (
-    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+    <ChartLabelsProvider labels={frenchChartLabels}>
       <div data-testid="provider">
         <Sparkline {...args} />
       </div>
