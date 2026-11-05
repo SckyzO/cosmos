@@ -19,23 +19,19 @@ import {
 import { useChartLabels } from './core/labelsContext';
 import { percent } from './core/gauge';
 import { CenterText } from './core/radial';
-import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
+import type { ChartLoadingProps, ChartProps } from './types';
 
 export type RadialBarChartProps = ChartProps &
-  ChartEmptyProps &
   ChartLoadingProps & {
     series: number[];
     /** The name of each ring, in the order of `series`. */
-    names?: string[];
+    names: string[];
     /** Override the default Cosmos palette. */
     colors?: string[];
     /** Format the ring values and their average, on the 0–100 scale of the rings. Default: `78%`. */
     formatValue?: (value: number) => string;
-    /**
-     * The texts it writes, over `ChartLabelsProvider`'s `radialBarChart` and `chart` and the English
-     * defaults. An array of strings is the ring names, the old name of `names`.
-     */
-    labels?: string[] | Partial<CommonChartLabels & RadialBarChartLabels>;
+    /** The texts it writes, over `ChartLabelsProvider`'s `radialBarChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & RadialBarChartLabels>;
   };
 
 type Ring = { name: string; value: number; raw: number; fill: string };
@@ -58,37 +54,24 @@ export const RadialBarChart = ({
   names,
   colors,
   formatValue = percent,
-  emptyMessage,
-  labels: labelsOrNames,
+  labels: ownLabels,
   loading,
   ariaLabel,
   children,
   height = 320,
   width,
 }: RadialBarChartProps) => {
-  const labels = useChartLabels(
-    'radialBarChart',
-    RADIAL_BAR_CHART_LABELS,
-    Array.isArray(labelsOrNames) ? undefined : labelsOrNames
-  );
-  const ringNames = names ?? (Array.isArray(labelsOrNames) ? labelsOrNames : []);
+  const labels = useChartLabels('radialBarChart', RADIAL_BAR_CHART_LABELS, ownLabels);
   // The ring the pointer is on, shown in the center in place of the average.
   const [active, setActive] = useState<number>();
-  const name = ariaLabel ?? labels.name(ringNames.join(', '));
+  const name = ariaLabel ?? labels.name(names.join(', '));
   if (loading)
     return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (series.length === 0) {
-    return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={height}
-        width={width}
-      />
-    );
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
   // The arcs stop at the ends of the 0–100 scale; the center and the tooltip give the value.
-  const rings: Ring[] = ringNames.map((label, i) => ({
+  const rings: Ring[] = names.map((label, i) => ({
     name: label,
     value: Math.min(100, Math.max(0, series[i])),
     raw: series[i],

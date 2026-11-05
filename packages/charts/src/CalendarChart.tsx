@@ -21,7 +21,7 @@ import {
   yearSpans,
   type WeekStart,
 } from './calendarGrid';
-import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
+import type { ChartLoadingProps, ChartProps } from './types';
 
 export type CalendarDay = {
   /** The date, `YYYY-MM-DD`. A day listed twice adds up; anything else is ignored. */
@@ -30,7 +30,6 @@ export type CalendarDay = {
 };
 
 export type CalendarChartProps = Omit<ChartProps, 'children' | 'height'> &
-  ChartEmptyProps &
   ChartLoadingProps & {
     data: CalendarDay[];
     /**
@@ -50,10 +49,6 @@ export type CalendarChartProps = Omit<ChartProps, 'children' | 'height'> &
     weekStart?: WeekStart;
     /** Format the value in the tooltip and in the name of each day. */
     formatValue?: (value: number) => string;
-    /** Text at the low end of the scale under the grid. Default `Less`. */
-    lessLabel?: string;
-    /** Text at the high end of the scale under the grid. Default `More`. */
-    moreLabel?: string;
     /** The language of the month, weekday and date names (BCP 47). Default `en-US`. */
     locale?: string;
     /** The texts it writes, over `ChartLabelsProvider`'s `calendarChart` and `chart` and the English defaults. */
@@ -77,9 +72,6 @@ export const CalendarChart = ({
   weekStart = 1,
   formatValue = String,
   locale = 'en-US',
-  lessLabel,
-  moreLabel,
-  emptyMessage,
   labels: ownLabels,
   loading,
   ariaLabel,
@@ -92,12 +84,7 @@ export const CalendarChart = ({
   const days = collectDays(data);
   if (!days) {
     return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={EMPTY_HEIGHT}
-        width={width}
-      />
+      <ChartEmpty message={labels.empty} ariaLabel={name} height={EMPTY_HEIGHT} width={width} />
     );
   }
   const given = {
@@ -114,12 +101,7 @@ export const CalendarChart = ({
       : [];
   if (blocks.length === 0) {
     return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={EMPTY_HEIGHT}
-        width={width}
-      />
+      <ChartEmpty message={labels.empty} ariaLabel={name} height={EMPTY_HEIGHT} width={width} />
     );
   }
 
@@ -209,7 +191,7 @@ export const CalendarChart = ({
           gap: metrics.gap,
         }}
       >
-        <span style={{ marginRight: 4 }}>{lessLabel ?? labels.less}</span>
+        <span style={{ marginRight: 4 }}>{labels.less}</span>
         {CALENDAR_STEPS.map((step, i) => (
           <span
             key={i}
@@ -222,7 +204,7 @@ export const CalendarChart = ({
             }}
           />
         ))}
-        <span style={{ marginLeft: 4 }}>{moreLabel ?? labels.more}</span>
+        <span style={{ marginLeft: 4 }}>{labels.more}</span>
       </div>
     </div>
   );

@@ -34,10 +34,6 @@ export type RealtimeChartProps = ChartProps &
     max?: number;
     warnThreshold?: number;
     critThreshold?: number;
-    /** Text of the warning threshold's label. Default `labels.warn`, `WARN`; an empty string draws the line alone. */
-    warnLabel?: string;
-    /** Text of the critical threshold's label. Default `labels.crit`, `CRIT`; an empty string draws the line alone. */
-    critLabel?: string;
     /**
      * Label the x axis with the time of each sample (`14:03:25`, in local time), and the
      * tooltip with it, and `xTitle` has an axis to name. Default off: no x axis.
@@ -100,8 +96,6 @@ export const RealtimeChart = ({
   max = 100,
   warnThreshold = 70,
   critThreshold = 85,
-  warnLabel,
-  critLabel,
   showTimeAxis = false,
   xTitle,
   yTitle,
@@ -200,8 +194,8 @@ export const RealtimeChart = ({
         {...axis}
         {...yAxisTitle(yTitle)}
       />
-      <Threshold y={warnThreshold} label={warnLabel ?? labels.warn} color={STATUS_WARN} />
-      <Threshold y={critThreshold} label={critLabel ?? labels.crit} color={STATUS_CRIT} />
+      <Threshold y={warnThreshold} label={labels.warn} color={STATUS_WARN} />
+      <Threshold y={critThreshold} label={labels.crit} color={STATUS_CRIT} />
       <Tooltip
         content={tooltip}
         cursor={{ stroke: BORDER, strokeDasharray: '4 4' }}

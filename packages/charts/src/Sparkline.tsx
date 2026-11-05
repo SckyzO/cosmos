@@ -8,10 +8,9 @@ import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
 import { SPARKLINE_LABELS, type SparklineLabels, type CommonChartLabels } from './core/labels';
 import { useChartLabels } from './core/labelsContext';
 import { roundedBarShape } from './core/roundedBar';
-import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
+import type { ChartLoadingProps, ChartProps } from './types';
 
 export type SparklineProps = ChartProps &
-  ChartEmptyProps &
   ChartLoadingProps & {
     data: number[];
     /** A CSS color. Default: the accent. */
@@ -46,7 +45,6 @@ export const Sparkline = ({
   formatValue,
   min,
   max,
-  emptyMessage,
   labels: ownLabels,
   loading,
   ariaLabel,
@@ -61,14 +59,7 @@ export const Sparkline = ({
   if (loading)
     return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData([{ data }])) {
-    return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={height}
-        width={width}
-      />
-    );
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
   if (variant === 'bar') {
     const fillFor = (value: number) => (value < 0 ? ERROR : undefined);

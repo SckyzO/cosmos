@@ -12,12 +12,11 @@ import {
 } from './core/labels';
 import { useChartLabels } from './core/labelsContext';
 import { textOn } from './core/readable';
-import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
+import type { ChartLoadingProps, ChartProps } from './types';
 
 export type TreemapDatum = { x: string; y: number };
 
 export type TreemapChartProps = ChartProps &
-  ChartEmptyProps &
   ChartLoadingProps & {
     series: { name?: string; data: TreemapDatum[] }[];
     /**
@@ -224,7 +223,6 @@ export const TreemapChart = ({
   colors,
   formatValue = String,
   showValues = false,
-  emptyMessage,
   labels: ownLabels,
   loading,
   ariaLabel,
@@ -242,14 +240,7 @@ export const TreemapChart = ({
   // A tile with no area cannot be seen, hovered or focused.
   const drawn = series.map((s) => ({ ...s, data: s.data.filter((d) => d.y > 0) }));
   if (hasNoData(drawn)) {
-    return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={height}
-        width={width}
-      />
-    );
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
   // One color per name, so a name has the same color in every group.
   const colorByName = new Map<string, string>();

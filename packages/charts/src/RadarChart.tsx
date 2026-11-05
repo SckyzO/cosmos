@@ -18,10 +18,9 @@ import { RADAR_CHART_LABELS, type RadarChartLabels, type CommonChartLabels } fro
 import { useChartLabels } from './core/labelsContext';
 import { radarSize } from './radarSize';
 import { useElementWidth } from './core/useElementWidth';
-import type { ChartEmptyProps, ChartLegendProps, ChartLoadingProps, ChartProps } from './types';
+import type { ChartLegendProps, ChartLoadingProps, ChartProps } from './types';
 
 export type RadarChartProps = ChartProps &
-  ChartEmptyProps &
   ChartLoadingProps &
   ChartLegendProps & {
     /** One polygon per series; one value per category, in the same order. */
@@ -54,7 +53,6 @@ export const RadarChart = ({
   legendPosition = 'top',
   max,
   showScale = false,
-  emptyMessage,
   labels: ownLabels,
   loading,
   ariaLabel,
@@ -69,14 +67,7 @@ export const RadarChart = ({
   if (loading)
     return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={height}
-        width={width}
-      />
-    );
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
   const legendVisible = showLegend ?? series.length > 1;
   // The polygons as large as the box allows, less the room of the axis names

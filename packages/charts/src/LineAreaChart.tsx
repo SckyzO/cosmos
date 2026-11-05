@@ -16,7 +16,6 @@ import { useChartLabels } from './core/labelsContext';
 import { referenceMarks } from './core/reference';
 import type {
   ChartAxisTitleProps,
-  ChartEmptyProps,
   ChartLegendProps,
   ChartLoadingProps,
   ChartProps,
@@ -32,7 +31,6 @@ export type LineAreaChartSeriesStyle = 'solid' | 'dashed' | 'step';
 const DASH = '6 4';
 
 export type LineAreaChartProps = ChartProps &
-  ChartEmptyProps &
   ChartLoadingProps &
   ChartLegendProps &
   ChartAxisTitleProps &
@@ -69,7 +67,6 @@ export const LineAreaChart = ({
   yTitle,
   referenceLines,
   referenceBands,
-  emptyMessage,
   labels: ownLabels,
   loading,
   ariaLabel,
@@ -90,14 +87,7 @@ export const LineAreaChart = ({
   if (loading)
     return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={height}
-        width={width}
-      />
-    );
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
   const legendVisible = showLegend ?? series.length > 1;
   return (

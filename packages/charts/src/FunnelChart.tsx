@@ -23,12 +23,11 @@ import {
   type FunnelRow,
 } from './funnel';
 import { TEXT_SIZE } from './core/axes';
-import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
+import type { ChartLoadingProps, ChartProps } from './types';
 
 export type { FunnelStage } from './funnel';
 
 export type FunnelChartProps = Omit<ChartProps, 'children'> &
-  ChartEmptyProps &
   ChartLoadingProps & {
     /**
      * The stages, drawn top to bottom in the order given: the wrapper does not
@@ -85,7 +84,6 @@ export const FunnelChart = ({
   colors,
   formatValue = String,
   showConversion = true,
-  emptyMessage,
   labels: ownLabels,
   loading,
   ariaLabel,
@@ -112,12 +110,7 @@ export const FunnelChart = ({
     return <ChartSkeleton ariaLabel={labels.loading(name)} height={height ?? 160} width={width} />;
   if (isEmptyFunnel(stages)) {
     return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={height ?? 160}
-        width={width}
-      />
+      <ChartEmpty message={labels.empty} ariaLabel={name} height={height ?? 160} width={width} />
     );
   }
 

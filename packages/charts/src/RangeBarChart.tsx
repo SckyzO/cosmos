@@ -28,7 +28,6 @@ import { useChartLabels } from './core/labelsContext';
 import { referenceMarks } from './core/reference';
 import type {
   ChartAxisTitleProps,
-  ChartEmptyProps,
   ChartLegendProps,
   ChartLoadingProps,
   ChartProps,
@@ -43,7 +42,6 @@ export type RangeBarPoint = {
 };
 
 export type RangeBarChartProps = ChartProps &
-  ChartEmptyProps &
   ChartLoadingProps &
   ChartLegendProps &
   ChartAxisTitleProps &
@@ -161,7 +159,6 @@ export const RangeBarChart = ({
   referenceBands,
   showLegend,
   legendPosition = 'top',
-  emptyMessage,
   labels: ownLabels,
   loading,
   ariaLabel,
@@ -178,14 +175,7 @@ export const RangeBarChart = ({
   if (loading)
     return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={height}
-        width={width}
-      />
-    );
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
 
   const categories = [...new Set(series.flatMap((s) => s.data.map((p) => p.x)))];

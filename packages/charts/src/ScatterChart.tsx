@@ -25,13 +25,7 @@ import {
 } from './core/labels';
 import { useChartLabels } from './core/labelsContext';
 import { referenceMarks } from './core/reference';
-import type {
-  ChartEmptyProps,
-  ChartLegendProps,
-  ChartLoadingProps,
-  ChartProps,
-  ChartReferenceProps,
-} from './types';
+import type { ChartLegendProps, ChartLoadingProps, ChartProps, ChartReferenceProps } from './types';
 
 export type ScatterPoint = {
   x: number;
@@ -46,7 +40,6 @@ export type BubblePoint = ScatterPoint & {
 };
 
 type XYChartProps = ChartProps &
-  ChartEmptyProps &
   ChartLoadingProps &
   ChartLegendProps &
   ChartReferenceProps & {
@@ -72,8 +65,6 @@ export type ScatterChartProps = XYChartProps & {
 
 export type BubbleChartProps = XYChartProps & {
   series: { name: string; data: BubblePoint[] }[];
-  /** Labels the size in the tooltip. Default `labels.size`, `Size`. */
-  sizeTitle?: string;
   /** Format the size in the tooltip (default: at most two decimals). */
   formatSize?: (value: number) => string;
   /** The texts it writes, over `ChartLabelsProvider`'s `bubbleChart` and `chart` and the English defaults. */
@@ -109,7 +100,6 @@ const XYChart = ({
   referenceBands,
   showLegend,
   legendPosition = 'top',
-  emptyMessage,
   labels,
   loading,
   ariaLabel,
@@ -123,14 +113,7 @@ const XYChart = ({
   if (loading)
     return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={height}
-        width={width}
-      />
-    );
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
 
   // The card of the point under the pointer: its label, the series, then one
@@ -222,17 +205,10 @@ export const ScatterChart = ({ labels: ownLabels, ...props }: ScatterChartProps)
 
 /** A scatter chart whose bubble size carries a third measure (`z`), e.g. request volume. */
 export const BubbleChart = ({
-  sizeTitle,
   formatSize = formatNumber,
   labels: ownLabels,
   ...props
 }: BubbleChartProps) => {
   const labels = useChartLabels('bubbleChart', BUBBLE_CHART_LABELS, ownLabels);
-  return (
-    <XYChart
-      {...props}
-      labels={labels}
-      bubbles={{ sizeTitle: sizeTitle ?? labels.size, formatSize }}
-    />
-  );
+  return <XYChart {...props} labels={labels} bubbles={{ sizeTitle: labels.size, formatSize }} />;
 };

@@ -24,7 +24,7 @@ import {
 } from './core/labels';
 import { useChartLabels } from './core/labelsContext';
 import { useElementWidth } from './core/useElementWidth';
-import type { ChartAxisTitleProps, ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
+import type { ChartAxisTitleProps, ChartLoadingProps, ChartProps } from './types';
 import {
   barText,
   signed,
@@ -36,7 +36,6 @@ import {
 export type { WaterfallDatum } from './waterfall';
 
 export type WaterfallChartProps = ChartProps &
-  ChartEmptyProps &
   ChartLoadingProps &
   ChartAxisTitleProps & {
     /**
@@ -173,7 +172,6 @@ export const WaterfallChart = ({
   colors,
   xTitle,
   yTitle,
-  emptyMessage,
   labels: ownLabels,
   loading,
   ariaLabel,
@@ -193,14 +191,7 @@ export const WaterfallChart = ({
   if (loading)
     return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (data.length === 0) {
-    return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={height}
-        width={width}
-      />
-    );
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
 
   const palette: Palette = {

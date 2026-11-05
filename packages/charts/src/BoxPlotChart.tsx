@@ -27,7 +27,6 @@ import { useChartLabels } from './core/labelsContext';
 import { referenceMarks } from './core/reference';
 import type {
   ChartAxisTitleProps,
-  ChartEmptyProps,
   ChartLegendProps,
   ChartLoadingProps,
   ChartProps,
@@ -40,7 +39,6 @@ export type BoxPlotChartOrientation = 'vertical' | 'horizontal';
 export type BoxPlotSummary = [min: number, q1: number, median: number, q3: number, max: number];
 
 export type BoxPlotChartProps = ChartProps &
-  ChartEmptyProps &
   ChartLoadingProps &
   ChartLegendProps &
   ChartAxisTitleProps &
@@ -140,7 +138,6 @@ export const BoxPlotChart = ({
   referenceBands,
   showLegend,
   legendPosition = 'top',
-  emptyMessage,
   labels: ownLabels,
   loading,
   ariaLabel,
@@ -157,14 +154,7 @@ export const BoxPlotChart = ({
   if (loading)
     return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={height}
-        width={width}
-      />
-    );
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
   const horizontal = orientation === 'horizontal';
   const rows: Row[] = categories.map((category, i) => ({

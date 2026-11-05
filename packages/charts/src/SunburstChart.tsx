@@ -41,12 +41,11 @@ import {
   type Move,
   type SunburstNode,
 } from './sunburst';
-import type { ChartEmptyProps, ChartLegendProps, ChartLoadingProps, ChartProps } from './types';
+import type { ChartLegendProps, ChartLoadingProps, ChartProps } from './types';
 
 export type { SunburstNode } from './sunburst';
 
 export type SunburstChartProps = Omit<ChartProps, 'children'> &
-  ChartEmptyProps &
   ChartLoadingProps &
   ChartLegendProps & {
     /**
@@ -159,7 +158,6 @@ export const SunburstChart = ({
   onSelect,
   selected,
   defaultSelected,
-  emptyMessage,
   labels: ownLabels,
   loading,
   ariaLabel,
@@ -226,7 +224,7 @@ export const SunburstChart = ({
   if (legendItems.length === 0) {
     return (
       <ChartEmpty
-        message={emptyMessage ?? labels.empty}
+        message={labels.empty}
         ariaLabel={name}
         height={height ?? PLACEHOLDER_HEIGHT}
         width={width}

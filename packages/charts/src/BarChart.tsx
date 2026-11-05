@@ -23,7 +23,6 @@ import { centralAxis, referenceMarks } from './core/reference';
 import { isOuterInStack, roundedBarShape } from './core/roundedBar';
 import type {
   ChartAxisTitleProps,
-  ChartEmptyProps,
   ChartLegendProps,
   ChartLoadingProps,
   ChartProps,
@@ -33,7 +32,6 @@ import type {
 export type BarChartOrientation = 'vertical' | 'horizontal';
 
 export type BarChartProps = ChartProps &
-  ChartEmptyProps &
   ChartLoadingProps &
   ChartLegendProps &
   ChartAxisTitleProps &
@@ -95,7 +93,6 @@ export const BarChart = ({
   distributed = false,
   negativeColor,
   mirrored = false,
-  emptyMessage,
   labels: ownLabels,
   loading,
   ariaLabel,
@@ -112,14 +109,7 @@ export const BarChart = ({
   if (loading)
     return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={height}
-        width={width}
-      />
-    );
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
   const horizontal = orientation === 'horizontal';
   // Recharts names the layout after the axis the categories sit on.

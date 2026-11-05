@@ -12,7 +12,6 @@ import { useChartLabels } from './core/labelsContext';
 import { HeatGrid, type HeatCell } from './core/HeatGrid';
 import type {
   ChartAxisTitleProps,
-  ChartEmptyProps,
   ChartLegendPosition,
   ChartLegendProps,
   ChartLoadingProps,
@@ -30,7 +29,6 @@ export type HeatmapColorRange = {
 };
 
 export type HeatmapChartProps = Omit<ChartProps, 'children'> &
-  ChartEmptyProps &
   ChartLoadingProps &
   ChartLegendProps &
   ChartAxisTitleProps & {
@@ -130,7 +128,6 @@ export const HeatmapChart = ({
   showValues = false,
   showLegend = true,
   legendPosition = 'top',
-  emptyMessage,
   labels: ownLabels,
   loading,
   ariaLabel,
@@ -142,14 +139,7 @@ export const HeatmapChart = ({
   if (loading)
     return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={height}
-        width={width}
-      />
-    );
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
   const colorRanges = (
     ranges ??

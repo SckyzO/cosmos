@@ -25,7 +25,6 @@ import { referenceMarks } from './core/reference';
 import { isOuterInStack, roundedBarShape } from './core/roundedBar';
 import type {
   ChartAxisTitleProps,
-  ChartEmptyProps,
   ChartLegendProps,
   ChartLoadingProps,
   ChartProps,
@@ -44,7 +43,6 @@ export type MixedChartSeries = {
 };
 
 export type MixedChartProps = ChartProps &
-  ChartEmptyProps &
   ChartLoadingProps &
   ChartLegendProps &
   ChartAxisTitleProps &
@@ -103,7 +101,6 @@ export const MixedChart = ({
   showLegend,
   legendPosition = 'top',
   stackedColumns = false,
-  emptyMessage,
   labels: ownLabels,
   loading,
   ariaLabel,
@@ -119,14 +116,7 @@ export const MixedChart = ({
   if (loading)
     return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series)) {
-    return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={height}
-        width={width}
-      />
-    );
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
   const formatters = { left: formatValue, right: formatRightValue };
   const usedSides = SIDES.filter((side) => series.some((s) => axisOf(s) === side));

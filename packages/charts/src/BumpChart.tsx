@@ -21,14 +21,13 @@ import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
 import { BUMP_CHART_LABELS, type BumpChartLabels, type CommonChartLabels } from './core/labels';
 import { useChartLabels } from './core/labelsContext';
 import { useElementWidth } from './core/useElementWidth';
-import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
+import type { ChartLoadingProps, ChartProps } from './types';
 
 export type { BumpPoint, BumpSeries } from './core/bump';
 
 export type BumpChartPoints = 'rank' | 'dot';
 
 export type BumpChartProps = ChartProps &
-  ChartEmptyProps &
   ChartLoadingProps & {
     /**
      * One entry per ranked item. `data` lists the rank (1 is the top) of the
@@ -128,7 +127,6 @@ export const BumpChart = ({
   colors,
   formatValue = defaultFormat,
   points = 'rank',
-  emptyMessage,
   labels: ownLabels,
   loading,
   ariaLabel,
@@ -154,14 +152,7 @@ export const BumpChart = ({
   if (loading)
     return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (hasNoData(series) || periods.length === 0) {
-    return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={height}
-        width={width}
-      />
-    );
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
 
   const compact = measured !== undefined && measured < COMPACT_BELOW;

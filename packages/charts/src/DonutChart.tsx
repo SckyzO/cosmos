@@ -10,17 +10,16 @@ import { DONUT_CHART_LABELS, type CommonChartLabels, type DonutChartLabels } fro
 import { useChartLabels } from './core/labelsContext';
 import { CenterText } from './core/radial';
 import { shares } from './core/shares';
-import type { ChartEmptyProps, ChartLegendProps, ChartLoadingProps, ChartProps } from './types';
+import type { ChartLegendProps, ChartLoadingProps, ChartProps } from './types';
 
 export type DonutChartVariant = 'donut' | 'pie';
 
 export type DonutChartProps = ChartProps &
-  ChartEmptyProps &
   ChartLoadingProps &
   ChartLegendProps & {
     series: number[];
     /** The name of each slice, in the order of `series`. */
-    names?: string[];
+    names: string[];
     /** Override the default Cosmos palette. */
     colors?: string[];
     /** Format the slice values in the center and the tooltip, and the total. */
@@ -37,11 +36,8 @@ export type DonutChartProps = ChartProps &
      * the figures sit in columns at the right edge of the legend.
      */
     legendValues?: boolean;
-    /**
-     * The texts it writes, over `ChartLabelsProvider`'s `donutChart` and `chart` and the English
-     * defaults. An array of strings is the slice names, the old name of `names`.
-     */
-    labels?: string[] | Partial<CommonChartLabels & DonutChartLabels>;
+    /** The texts it writes, over `ChartLabelsProvider`'s `donutChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & DonutChartLabels>;
   };
 
 // A pie's legend entries all carry the pie's data key: key them by position.
@@ -63,39 +59,26 @@ export const DonutChart = ({
   centerValue,
   legendValues = false,
   legendPosition = 'bottom',
-  emptyMessage,
-  labels: labelsOrNames,
+  labels: ownLabels,
   loading,
   ariaLabel,
   children,
   height = 280,
   width,
 }: DonutChartProps) => {
-  const labels = useChartLabels(
-    'donutChart',
-    DONUT_CHART_LABELS,
-    Array.isArray(labelsOrNames) ? undefined : labelsOrNames
-  );
-  const sliceNames = names ?? (Array.isArray(labelsOrNames) ? labelsOrNames : []);
+  const labels = useChartLabels('donutChart', DONUT_CHART_LABELS, ownLabels);
   const hidden = useHiddenSeries();
   // The slice the pointer is on, shown in the center in place of the total.
   const [active, setActive] = useState<number>();
   const pie = variant === 'pie';
-  const name = ariaLabel ?? (pie ? labels.pieName : labels.name)(sliceNames.join(', '));
+  const name = ariaLabel ?? (pie ? labels.pieName : labels.name)(names.join(', '));
   if (loading)
     return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (series.length === 0) {
-    return (
-      <ChartEmpty
-        message={emptyMessage ?? labels.empty}
-        ariaLabel={name}
-        height={height}
-        width={width}
-      />
-    );
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
   // A hidden slice keeps its place (and its legend entry) at zero.
-  const data = sliceNames.map((label, i) => ({
+  const data = names.map((label, i) => ({
     name: label,
     value: hidden.hidden.has(seriesKey(i)) ? 0 : series[i],
     fill: seriesColor(i, colors),
