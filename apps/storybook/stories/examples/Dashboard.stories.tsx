@@ -347,7 +347,7 @@ const RevenueCard = ({
       errorDescription="The request timed out. Your other widgets are up to date."
       onRetry={onRetry}
       empty={empty}
-      emptyMessage="No revenue yet"
+      labels={{ empty: 'No revenue yet' }}
       minBodyHeight={revenue.minHeight}
       className="lg:col-span-2"
     >
@@ -377,7 +377,7 @@ const PlansCard = ({ view, state }: { view: View; state: ScreenState }) => {
       desc={empty ? 'Active today' : 'Active on 29 Oct'}
       loading={state === 'loading'}
       empty={empty}
-      emptyMessage="No subscribers yet"
+      labels={{ empty: 'No subscribers yet' }}
       minBodyHeight={plans.minHeight}
     >
       <DonutChart
