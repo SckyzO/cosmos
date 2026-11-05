@@ -130,7 +130,7 @@ an `href`, a `Menu.Group`, a `Menu.Separator`) that follows the menu button patt
 and the arrows open it, the arrows move between the links, Escape closes it and gives the focus
 back to the trigger, Tab leaves it. Mark the group `active` while one of its links is the current
 page, and that link with `aria-current="page"`. Items that do not fit move, from the last, into a
-"More" menu (`moreLabel` renames it) and come back when there is room. Only `Navbar.Item` and
+"More" menu (`labels.more` on `Navbar` renames it) and come back when there is room. Only `Navbar.Item` and
 `Navbar.Menu` placed directly in `Navbar.Items` move; `Navbar.Items` inside a `Navbar.Brand` takes
 the room the bar leaves, and anywhere else it needs a bounded width (`min-w-0 flex-1`) to measure
 against. Below `md` the items leave the bar and `Navbar.MobileMenuButton` opens your own menu.

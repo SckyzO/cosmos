@@ -60,7 +60,7 @@ read carries `aria-current="location"` and the accent tint, and follows the scro
 element that slides from button to button (200ms, easing in and out, as the underline of `Tabs`),
 placed with no transition the first time and after a resize. `topOffset`
 keeps the row below a fixed header, and `onNavigate` replaces the scroll with your own. Below
-`sm` the row becomes a native select named by `jumpLabel` that shows the section being read and
+`sm` the row becomes a native select named by `labels.jump` that shows the section being read and
 goes to the one picked.
 
 ```tsx
