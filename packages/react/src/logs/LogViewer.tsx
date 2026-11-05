@@ -120,8 +120,6 @@ export type LogViewerProps = {
    * stream read aloud line by line cannot be followed.
    */
   announceErrors?: boolean;
-  /** Shown when no line is left to draw. Default `labels.noLines`, `No log lines.` */
-  emptyMessage?: string;
   /** The texts it and its parts write, over `LabelsProvider`'s `logViewer` and the English defaults. */
   labels?: Partial<LogViewerLabels>;
   /** BCP 47 tag for the times (`fr-FR`). Default: the browser's language. */
@@ -498,7 +496,6 @@ export const LogViewer = ({
   onOpenLine,
   currentId,
   announceErrors: announce = false,
-  emptyMessage,
   labels: ownLabels,
   locale,
   timeZone,
@@ -843,7 +840,7 @@ export const LogViewer = ({
           <div ref={contentRef}>
             {count === 0 ? (
               <p dir="auto" className={clsx('m-0 px-3 py-2 font-sans text-sm', palette.muted)}>
-                {emptyMessage ?? labels.noLines}
+                {labels.noLines}
               </p>
             ) : (
               <>
