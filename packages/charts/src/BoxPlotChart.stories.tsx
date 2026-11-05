@@ -28,6 +28,8 @@ import {
   surface,
   tooltipCard,
 } from './storybook-recharts';
+import { ChartLabelsProvider } from './ChartLabelsProvider';
+import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
 
 const SERVICES = ['api-gateway', 'auth', 'catalog', 'checkout', 'search', 'payment'];
 const DCS = ['DC1 Paris', 'DC2 Frankfurt', 'DC3 London', 'DC4 Tokyo'];
@@ -180,7 +182,7 @@ export const AxisTitlesChecks: Story = {
   },
 };
 
-/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+/** With no data, the chart draws `labels.empty` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], categories: [] },
 };
@@ -552,4 +554,32 @@ export const HorizontalArrowKeysWalkTheCategories: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...Horizontal.args, ariaLabel: 'Response times per service' },
   play: expectCategoryArrowKeys(SERVICES),
+};
+
+/** The provider writes the name and the rows of the tooltip; the chart's own `labels` win over it. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    categories: ['api'],
+    series: [{ name: 'Response time', data: [[8, 14, 19, 27, 64]] }],
+    labels: { median: 'Milieu' },
+  },
+  render: (args) => (
+    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+      <BoxPlotChart {...args} />
+    </ChartLabelsProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(surface(canvasElement)).toHaveAttribute(
+        'aria-label',
+        'Boîte à moustaches : Response time'
+      )
+    );
+    await openTooltip(canvasElement);
+    await expect(
+      [...(tooltipCard(canvasElement)?.querySelectorAll('li') ?? [])].map((li) => li.textContent)
+    ).toEqual(['Maximum64', 'Quartile 327', 'Milieu19', 'Quartile 114', 'Minimum8']);
+    await closeTooltip(canvasElement);
+  },
 };

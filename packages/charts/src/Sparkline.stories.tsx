@@ -12,6 +12,8 @@ import {
   surface,
   tooltipCard,
 } from './storybook-recharts';
+import { ChartLabelsProvider } from './ChartLabelsProvider';
+import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
 
 const REQUESTS = [10, 22, 18, 25, 30, 28, 35, 31, 29, 36, 32, 40];
 const SERVICES = [
@@ -98,7 +100,7 @@ export const CustomColor: Story = {
   ),
 };
 
-/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+/** With no data, the chart draws `labels.empty` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { data: [] },
   render: (args) => (
@@ -429,4 +431,34 @@ export const BarNamedImage: Story = {
   tags: ['!dev', '!autodocs'],
   args: { variant: 'bar', ariaLabel: 'Orders per hour' },
   play: expectAccessibleChart({ keyboard: false }),
+};
+
+/** The provider writes the name and the value's name; the chart's own `labels` win over it, and the `label` the app gives over both. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+      <div data-testid="provider">
+        <Sparkline {...args} />
+      </div>
+      <div data-testid="own">
+        <Sparkline {...args} labels={{ label: 'trafic' }} />
+      </div>
+      <div data-testid="label">
+        <Sparkline {...args} label="CPU" labels={{ label: 'trafic' }} />
+      </div>
+    </ChartLabelsProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    const chart = (id: string) =>
+      canvasElement.querySelector(`[data-testid="${id}"]`) as HTMLElement;
+    await waitFor(() => {
+      expect(surface(chart('provider'))).toHaveAttribute('aria-label', 'Tendance de valeur');
+      expect(surface(chart('own'))).toHaveAttribute('aria-label', 'Tendance de trafic');
+      expect(surface(chart('label'))).toHaveAttribute('aria-label', 'Tendance de CPU');
+    });
+    await openTooltip(chart('provider'));
+    await expect(tooltipCard(chart('provider'))?.querySelector('li')).toHaveTextContent('valeur');
+    await closeTooltip(chart('provider'));
+  },
 };

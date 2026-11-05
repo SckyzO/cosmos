@@ -26,6 +26,7 @@ import { TreemapChart } from './TreemapChart';
 import { WaterfallChart } from './WaterfallChart';
 import { WorldMap } from './WorldMap';
 import { TRACK } from './core/colors';
+import type { CommonChartLabels } from './core/labels';
 import {
   animationConditions,
   computedColor,
@@ -36,7 +37,7 @@ import {
   themeColor,
   tickTexts,
 } from './storybook-recharts';
-import type { ChartEmptyProps, ChartLoadingProps } from './types';
+import type { ChartLoadingProps } from './types';
 
 // What every wrapper takes in common, checked on all of them at once: a wrapper
 // that forgets to pass a prop on to the frame drops it without a type error.
@@ -57,7 +58,10 @@ const BOX = [
 const RANGE = [{ x: 'api', y: [1700000000000, 1700003600000] as [number, number] }];
 
 // What a wrapper that can have no data, or still be waiting for it, takes besides its data.
-type StateProps = ChartEmptyProps & ChartLoadingProps & { ariaLabel?: string };
+type StateProps = ChartLoadingProps & {
+  ariaLabel?: string;
+  labels?: Partial<CommonChartLabels>;
+};
 
 type Chart = {
   /** What marks its plot in the DOM, when it is not a Recharts SVG. */
@@ -78,12 +82,12 @@ const CHARTS: Record<string, Chart> = {
     empty: (props) => <BarChart series={[]} categories={[]} {...props} />,
   },
   DonutChart: {
-    filled: (props) => <DonutChart series={[5, 3, 2]} labels={['a', 'b', 'c']} {...props} />,
-    empty: (props) => <DonutChart series={[]} labels={[]} {...props} />,
+    filled: (props) => <DonutChart series={[5, 3, 2]} names={['a', 'b', 'c']} {...props} />,
+    empty: (props) => <DonutChart series={[]} names={[]} {...props} />,
   },
   RadialBarChart: {
-    filled: (props) => <RadialBarChart series={[60, 40]} labels={['a', 'b']} {...props} />,
-    empty: (props) => <RadialBarChart series={[]} labels={[]} {...props} />,
+    filled: (props) => <RadialBarChart series={[60, 40]} names={['a', 'b']} {...props} />,
+    empty: (props) => <RadialBarChart series={[]} names={[]} {...props} />,
   },
   TreemapChart: {
     filled: (props) => (
@@ -289,7 +293,7 @@ const expectEveryNoData = (root: HTMLElement, text: string) =>
     ).toEqual(Object.fromEntries(EMPTY_NAMES.map((name) => [name, text])))
   );
 
-const emptyCharts = (props: ChartEmptyProps) => (
+const emptyCharts = (props: StateProps) => (
   <Grid names={EMPTY_NAMES}>{(name) => CHARTS[name].empty?.(props)}</Grid>
 );
 
@@ -305,15 +309,15 @@ export const EmptyChartsShowTheDefaultMessage: Story = {
   },
 };
 
-/** `emptyMessage` replaces the default message, on every chart that can be empty. */
+/** `labels.empty` replaces the default message, on every chart that can be empty. */
 export const EmptyMessageReplacesTheDefault: Story = {
-  render: () => emptyCharts({ emptyMessage: 'Nothing to show' }),
+  render: () => emptyCharts({ labels: { empty: 'Nothing to show' } }),
   play: ({ canvasElement }) => expectEveryNoData(canvasElement, 'Nothing to show'),
 };
 
-/** An empty `emptyMessage` draws nothing at all. */
+/** An empty `labels.empty` draws nothing at all. */
 export const EmptyStringDrawsNothing: Story = {
-  render: () => emptyCharts({ emptyMessage: '' }),
+  render: () => emptyCharts({ labels: { empty: '' } }),
   play: async ({ canvasElement }) => {
     await waitFor(() =>
       expect(EMPTY_NAMES.filter((name) => noData(canvasElement, name) !== null)).toEqual(
@@ -326,7 +330,7 @@ export const EmptyStringDrawsNothing: Story = {
 
 /** The message is plain text: markup in it shows as written. */
 export const HtmlInEmptyMessageRendersAsText: Story = {
-  render: () => emptyCharts({ emptyMessage: HOSTILE }),
+  render: () => emptyCharts({ labels: { empty: HOSTILE } }),
   play: async ({ canvasElement }) => {
     await expectEveryNoData(canvasElement, HOSTILE);
     await expectNoInjectedImage(canvasElement);
@@ -450,7 +454,7 @@ export const LoadingChartsDrawASkeleton: Story = {
 export const LoadingWinsOverNoData: Story = {
   render: () => (
     <Grid names={LOADING_NAMES}>
-      {(name) => CHARTS[name].empty?.({ loading: true, emptyMessage: 'Nothing to show' })}
+      {(name) => CHARTS[name].empty?.({ loading: true, labels: { empty: 'Nothing to show' } })}
     </Grid>
   ),
   play: async ({ canvasElement }) => {

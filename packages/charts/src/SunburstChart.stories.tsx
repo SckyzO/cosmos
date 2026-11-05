@@ -12,6 +12,8 @@ import {
   themeColor,
 } from './storybook-recharts';
 import { SunburstChart, type SunburstNode } from './SunburstChart';
+import { ChartLabelsProvider } from './ChartLabelsProvider';
+import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
 
 // Headcount of a company: five divisions, three levels. 313 people.
 const ORG: SunburstNode[] = [
@@ -1018,7 +1020,7 @@ export const LoadingChecks: Story = {
 /** A chart that is loading has no data yet, or has some: the skeleton wins over the message and over the data. */
 export const LoadingWinsOverNoDataAndData: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { loading: true, data: [], emptyMessage: 'Nobody here' },
+  args: { loading: true, data: [], labels: { empty: 'Nobody here' } },
   render: (args) => (
     <>
       <div data-testid="empty">
@@ -1099,7 +1101,7 @@ export const LoadingFitsNarrowBox: Story = {
   },
 };
 
-/** No data: `emptyMessage` in place of the circle, and nothing around it. */
+/** No data: `labels.empty` in place of the circle, and nothing around it. */
 export const Empty: Story = {
   args: { data: [] },
 };
@@ -1123,7 +1125,7 @@ export const EmptyWhenNothingHasAValue: Story = {
       { name: 'A', value: 0 },
       { name: 'B', children: [{ name: 'b', value: -1 }] },
     ],
-    emptyMessage: 'Nobody here',
+    labels: { empty: 'Nobody here' },
   },
   play: async ({ canvasElement }) => {
     await waitFor(() =>
@@ -1276,5 +1278,51 @@ export const LegendChipsAreTheSeries: Story = {
       toHex(getComputedStyle(button.firstElementChild as Element).backgroundColor)
     );
     await expect(chips).toEqual(SERIES.slice(0, 5).map((color) => resolved(color)));
+  },
+};
+
+/** The provider writes the center label, the shares, the names of the sectors and the outline; the chart's own `labels` win over it. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    data: [
+      {
+        name: 'Ventes',
+        children: [
+          { name: 'Nord', value: 30 },
+          { name: 'Sud', value: 10 },
+        ],
+      },
+      { name: 'Support', value: 60 },
+    ],
+    centerLabel: undefined,
+    labels: { shareOfTotal: 'Poids' },
+  },
+  render: (args) => (
+    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+      <SunburstChart {...args} />
+    </ChartLabelsProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(arcs(canvasElement)).toHaveLength(4));
+    await expect(arcs(canvasElement).map((arc) => arc.getAttribute('aria-label'))).toEqual([
+      'Ventes : 40, 40% du total',
+      'Ventes, Nord : 30, 75% de Ventes',
+      'Ventes, Sud : 10, 25% de Ventes',
+      'Support : 60, 60% du total',
+    ]);
+    await expect(centerOf(canvasElement)).toEqual(['100', 'Total']);
+    await expect(outlineOf(canvasElement)?.textContent).toBe(
+      'Ventes : 40Nord : 30Sud : 10Support : 60'
+    );
+    const nord = arcs(canvasElement)[1];
+    await userEvent.hover(nord);
+    await waitFor(() => expect(tooltipOf(canvasElement)).not.toBeNull());
+    await expect(
+      [...(tooltipOf(canvasElement)?.querySelectorAll('li') ?? [])].map((li) => li.textContent)
+    ).toEqual(['Nord30', 'Poids30%']);
+    await expect(centerOf(canvasElement)).toEqual(['30', 'Nord', '30% du total']);
+    await userEvent.unhover(nord);
+    await waitFor(() => expect(tooltipOf(canvasElement)).toBeNull());
   },
 };

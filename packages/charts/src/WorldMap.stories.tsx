@@ -13,6 +13,8 @@ import {
   themeColor,
 } from './storybook-recharts';
 import { WorldMap, type WorldMapMarker, type WorldMapRoute } from './WorldMap';
+import { ChartLabelsProvider } from './ChartLabelsProvider';
+import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
 
 const geography = world as unknown as Topology;
 
@@ -1477,5 +1479,57 @@ export const MarkerKeysFollowTextSize: Story = {
       if (previous === null) html.removeAttribute('data-text-size');
       else html.setAttribute('data-text-size', previous);
     }
+  },
+};
+
+/**
+ * The provider writes the name, the headers of the reading tables, the live region, the legend
+ * and the keys; the chart's own `labels` win over it.
+ */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    label: undefined,
+    markers: [
+      { id: 'rtm', label: 'Rotterdam', coordinates: [4.48, 51.92], value: 6240 },
+      { id: 'nyc', label: 'New York', coordinates: [-74.0, 40.71], value: 2600 },
+      { id: 'sha', label: 'Shanghai', coordinates: [121.47, 31.23], value: 5600 },
+    ],
+    routes: [
+      { from: 'rtm', to: 'nyc', value: 720 },
+      { from: 'sha', to: 'rtm', value: 1240 },
+    ],
+    labels: { noData: 'Sans valeur' },
+  },
+  render: (args) => (
+    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+      <WorldMap {...args} />
+    </ChartLabelsProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    const name = 'Carte du monde, valeur par pays, de 700 à 48.2k, 3 marqueurs, 2 routes';
+    await waitFor(() => expect(mapOf(canvasElement)).toHaveAttribute('aria-label', name));
+    const heads = (kind: string) =>
+      [...canvasElement.querySelectorAll(`[data-world-table="${kind}"] thead th`)].map(
+        (th) => th.textContent
+      );
+    await expect(heads('')).toEqual(['Pays', 'Valeur']);
+    await expect(heads('markers')).toEqual(['Marqueur', 'Valeur']);
+    await expect(heads('routes')).toEqual(['Route', 'Valeur']);
+    await expect(
+      [...canvasElement.querySelectorAll('[data-world-table] caption')].map((c) => c.textContent)
+    ).toEqual([name, 'Marqueurs', 'Routes']);
+    await expect(tableRows(canvasElement, 'routes')[0]).toEqual(['Shanghai à Rotterdam', '1.2k']);
+    // The provider's words in the keys, the chart's own for the swatch.
+    await expect(legendTexts(canvasElement).at(-1)).toBe('Sans valeur');
+    await expect(canvasElement.querySelector('[data-world-width-key]')).toHaveTextContent(
+      'de 720 à 1.2k'
+    );
+    // The largest country is the first stop of the keyboard: the live region says it.
+    await userEvent.tab();
+    await waitFor(() =>
+      expect(statusOf(canvasElement)).toBe('United States of America, Valeur : 48.2k')
+    );
+    await userEvent.tab();
   },
 };

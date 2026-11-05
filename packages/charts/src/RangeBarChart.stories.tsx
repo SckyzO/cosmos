@@ -188,7 +188,7 @@ export const TimeAxisTicksChecks: Story = {
   },
 };
 
-/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+/** With no data, the chart draws `labels.empty` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [] },
 };

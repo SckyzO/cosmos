@@ -18,7 +18,10 @@ import {
   switchTheme,
   themeColor,
   tooltipCard,
+  surface,
 } from './storybook-recharts';
+import { ChartLabelsProvider } from './ChartLabelsProvider';
+import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
 
 const SEVERITIES = ['CRIT', 'WARN', 'OK', 'INFO', 'UNK'];
 const REGIONS = ['eu-west', 'eu-central', 'us-east', 'us-west', 'ap-south'];
@@ -57,31 +60,31 @@ type Story = StoryObj<typeof meta>;
 
 /** The center shows the total; the legend sits below. */
 export const BottomLegend: Story = {
-  args: { series: [44, 23, 18, 9, 6], labels: SEVERITIES },
+  args: { series: [44, 23, 18, 9, 6], names: SEVERITIES },
 };
 
 /** `legendPosition="right"` moves the legend beside the donut. */
 export const RightLegend: Story = {
-  args: { series: [44, 23, 18, 9, 6], labels: SEVERITIES, legendPosition: 'right' },
+  args: { series: [44, 23, 18, 9, 6], names: SEVERITIES, legendPosition: 'right' },
 };
 
 export const TwoSlices: Story = {
-  args: { series: [732, 268], labels: ['Used (GiB)', 'Free (GiB)'] },
+  args: { series: [732, 268], names: ['Used (GiB)', 'Free (GiB)'] },
 };
 
 /** `colors` overrides the palette, here with the status colors. */
 export const CustomColors: Story = {
-  args: { series: [71, 21, 8], labels: ['OK', 'WARN', 'CRIT'], colors: STATUS_COLORS },
+  args: { series: [71, 21, 8], names: ['OK', 'WARN', 'CRIT'], colors: STATUS_COLORS },
 };
 
 /** `formatValue` formats the total, the value of the hovered slice and the tooltip. */
 export const FormattedValues: Story = {
-  args: { series: [732, 268], labels: ['Used', 'Free'], formatValue: gib },
+  args: { series: [732, 268], names: ['Used', 'Free'], formatValue: gib },
 };
 
 /** New `series` animate the slices to their new size. */
 export const UpdatingSeries: Story = {
-  args: { series: REQUESTS_BY_RANGE['Last hour'], labels: REGIONS },
+  args: { series: REQUESTS_BY_RANGE['Last hour'], names: REGIONS },
   render: (args) => {
     const [range, setRange] = useState<Range>('Last hour');
     return (
@@ -107,7 +110,7 @@ export const UpdatingSeries: Story = {
 
 /** `variant="pie"` fills the disc: no hole, no center text. */
 export const Pie: Story = {
-  args: { series: [44, 23, 18, 9, 6], labels: SEVERITIES, variant: 'pie' },
+  args: { series: [44, 23, 18, 9, 6], names: SEVERITIES, variant: 'pie' },
 };
 
 export const PieChecks: Story = {
@@ -132,7 +135,7 @@ export const PieChecks: Story = {
 /** A donut has a hole: the middle of it is no slice. */
 export const DonutHasAHole: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { series: [44, 23, 18, 9, 6], labels: SEVERITIES },
+  args: { series: [44, 23, 18, 9, 6], names: SEVERITIES },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(slices(canvasElement)).toHaveLength(5));
     // The pie can still be taking its size when its slices exist: read its middle until it has.
@@ -150,7 +153,7 @@ export const DonutHasAHole: Story = {
 /** A pie still tells its slices in the tooltip and the legend, and the legend still hides a slice. */
 export const PieKeepsItsLegendAndTooltip: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { series: [30, 20, 50], labels: ['a', 'b', 'c'], variant: 'pie' },
+  args: { series: [30, 20, 50], names: ['a', 'b', 'c'], variant: 'pie' },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(slices(canvasElement)).toHaveLength(3));
     await hoverSlice(canvasElement, 2, '50');
@@ -171,7 +174,7 @@ export const PieKeepsItsLegendAndTooltip: Story = {
 export const CenterText: Story = {
   args: {
     series: [732, 268],
-    labels: ['Used', 'Free'],
+    names: ['Used', 'Free'],
     formatValue: gib,
     centerValue: '1 TB',
     centerLabel: 'Capacity',
@@ -199,7 +202,7 @@ export const CenterTextChecks: Story = {
 /** Each of the two replaces its own half; an empty `centerLabel` draws no label. */
 export const CenterTextOverridesOneHalf: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { series: [10, 30], labels: ['a', 'b'] },
+  args: { series: [10, 30], names: ['a', 'b'] },
   render: (args) => (
     <div className="grid gap-4 md:grid-cols-3">
       <div data-case="value">
@@ -231,7 +234,7 @@ export const CenterTextOverridesOneHalf: Story = {
 export const LegendValues: Story = {
   args: {
     series: [44, 23, 18, 9, 6],
-    labels: SEVERITIES,
+    names: SEVERITIES,
     legendValues: true,
     formatValue: (v) => `${v} alerts`,
   },
@@ -256,7 +259,7 @@ export const LegendValuesChecks: Story = {
 /** The shares add up to 100 even when each rounds the other way. */
 export const LegendSharesAddUpTo100: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { series: [1, 1, 1], labels: ['a', 'b', 'c'], legendValues: true },
+  args: { series: [1, 1, 1], names: ['a', 'b', 'c'], legendValues: true },
   play: async ({ canvasElement }) => {
     await waitFor(() => {
       const shares = legendFigures(canvasElement).map((entry) => parseInt(entry.share, 10));
@@ -269,7 +272,7 @@ export const LegendSharesAddUpTo100: Story = {
 /** Hiding a slice keeps its figures and the others' shares: they are the series', not the visible ones'. */
 export const LegendFiguresSurviveHidingASlice: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { series: [30, 20, 50], labels: ['a', 'b', 'c'], legendValues: true },
+  args: { series: [30, 20, 50], names: ['a', 'b', 'c'], legendValues: true },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(legendFigures(canvasElement)).toHaveLength(3));
     const before = legendFigures(canvasElement);
@@ -286,7 +289,7 @@ export const LegendValuesAlignInAColumn: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
     series: [4400, 230, 18, 9, 6],
-    labels: ['Long service name', 'B', 'C', 'D', 'E'],
+    names: ['Long service name', 'B', 'C', 'D', 'E'],
     legendValues: true,
   },
   render: (args) => (
@@ -327,7 +330,7 @@ export const HtmlInLegendValuesRendersAsText: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
     series: [40, 60],
-    labels: [HOSTILE, 'Normal'],
+    names: [HOSTILE, 'Normal'],
     legendValues: true,
     formatValue: (v) => `${HOSTILE}${v}`,
     centerLabel: HOSTILE,
@@ -352,7 +355,7 @@ export const LegendValuesFitNarrowBox: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
     series: [44, 23, 18, 9, 6],
-    labels: ['Production cluster', 'Staging cluster', 'Development', 'Sandbox', 'Unknown'],
+    names: ['Production cluster', 'Staging cluster', 'Development', 'Sandbox', 'Unknown'],
     legendValues: true,
     legendPosition: 'left',
     width: 900,
@@ -365,9 +368,9 @@ export const LegendValuesFitNarrowBox: Story = {
   play: expectFitsNarrowBox,
 };
 
-/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+/** With no data, the chart draws `labels.empty` (default "No data") in place of the plot. */
 export const Empty: Story = {
-  args: { series: [], labels: [] },
+  args: { series: [], names: [] },
 };
 
 export const EmptyChecks: Story = {
@@ -408,7 +411,7 @@ const hoverSlice = (root: HTMLElement, index: number, text: string) =>
  */
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { series: [40, 60], labels: [HOSTILE, 'Normal'] },
+  args: { series: [40, 60], names: [HOSTILE, 'Normal'] },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(legendTexts(canvasElement)).toEqual([HOSTILE, 'Normal']));
     await waitFor(() => expect(slices(canvasElement)).toHaveLength(2));
@@ -457,7 +460,7 @@ export const FormatValueFormatsLabels: Story = {
 export const TextFollowsTheme: Story = {
   tags: ['!dev', '!autodocs'],
   globals: { theme: 'dark' },
-  args: { series: [44, 23, 18], labels: ['CRIT', 'WARN', 'OK'] },
+  args: { series: [44, 23, 18], names: ['CRIT', 'WARN', 'OK'] },
   play: async ({ canvasElement }) => {
     const legendColor = () =>
       resolveColor(
@@ -486,7 +489,7 @@ export const TextFollowsTheme: Story = {
 /** The slices take the default palette of the theme. */
 export const PaletteFromTheme: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { series: [5, 4, 3, 2, 1], labels: ['a', 'b', 'c', 'd', 'e'] },
+  args: { series: [5, 4, 3, 2, 1], names: ['a', 'b', 'c', 'd', 'e'] },
   play: async ({ canvasElement }) => {
     const tokens = [
       '--color-brand-500',
@@ -506,7 +509,7 @@ export const PaletteFromTheme: Story = {
 /** A click on a legend entry hides its slice and the total follows; another click brings it back. */
 export const LegendTogglesSlices: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { series: [30, 20, 50], labels: ['a', 'b', 'c'] },
+  args: { series: [30, 20, 50], names: ['a', 'b', 'c'] },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const drawn = () => slices(canvasElement).filter((el) => el.getAttribute('d'));
@@ -530,7 +533,7 @@ export const LegendTogglesSlices: Story = {
 /** `legendPosition` puts the legend on each side of the plot. */
 export const LegendOnEachSide: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { series: [5, 3, 2], labels: ['a', 'b', 'c'] },
+  args: { series: [5, 3, 2], names: ['a', 'b', 'c'] },
   render: (args) => (
     <LegendSides>
       {(legendPosition) => <DonutChart {...args} legendPosition={legendPosition} />}
@@ -542,7 +545,7 @@ export const LegendOnEachSide: Story = {
 /** The center stays in the middle of the ring, whichever side the legend takes. */
 export const CenterFollowsThePlot: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { series: [5, 3, 2], labels: ['a', 'b', 'c'] },
+  args: { series: [5, 3, 2], names: ['a', 'b', 'c'] },
   render: (args) => (
     <LegendSides>
       {(legendPosition) => <DonutChart {...args} legendPosition={legendPosition} />}
@@ -574,4 +577,33 @@ export const NamedAndKeyboardReachable: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...BottomLegend.args, ariaLabel: 'Alerts by severity' },
   play: expectKeyboardWalk({ announcesOnFocus: false }),
+};
+
+/** The provider writes the names and the center label; the chart's own `labels` win over it. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: [44, 23], names: ['Critique', 'Mineur'] },
+  render: (args) => (
+    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+      <div data-testid="own">
+        <DonutChart {...args} labels={{ total: 'Somme' }} />
+      </div>
+      <div data-testid="provider">
+        <DonutChart {...args} />
+      </div>
+      <div data-testid="pie">
+        <DonutChart {...args} variant="pie" />
+      </div>
+    </ChartLabelsProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    const chart = (id: string) =>
+      canvasElement.querySelector(`[data-testid="${id}"]`) as HTMLElement;
+    await waitFor(() => {
+      expect(surface(chart('provider'))).toHaveAttribute('aria-label', 'Anneau : Critique, Mineur');
+      expect(surface(chart('pie'))).toHaveAttribute('aria-label', 'Camembert : Critique, Mineur');
+    });
+    await expect(centerText(chart('provider'))?.label).toBe('Total');
+    await expect(centerText(chart('own'))?.label).toBe('Somme');
+  },
 };

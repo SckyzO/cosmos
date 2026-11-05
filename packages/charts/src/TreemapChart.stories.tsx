@@ -11,6 +11,8 @@ import {
   switchTheme,
   themeColor,
 } from './storybook-recharts';
+import { ChartLabelsProvider } from './ChartLabelsProvider';
+import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
 
 const BLUE_RAMP = ['#1e3a8a', '#2563eb', '#93c5fd', '#dbeafe'];
 const tb = (v: number) => `${v} TB`;
@@ -279,7 +281,7 @@ export const GroupHeaderFollowsTheme: Story = {
   },
 };
 
-/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+/** With no data, the chart draws `labels.empty` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [] },
 };
@@ -302,7 +304,7 @@ export const OnlyZerosIsEmpty: Story = {
         ],
       },
     ],
-    emptyMessage: 'Nothing used',
+    labels: { empty: 'Nothing used' },
   },
   play: expectEmptyMessage('Nothing used'),
 };
@@ -520,5 +522,40 @@ export const NamedAndKeyboardReachable: Story = {
     await expect(canvasElement.contains(document.activeElement)).toBe(false);
     await waitFor(() => expect(cardOf(canvasElement)).toBeNull());
     await expect(ringed()).toBe(0);
+  },
+};
+
+/** The provider writes the name, the names of the tiles and of the groups; the chart's own `labels` win over it. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    series: [
+      {
+        data: [
+          { x: 'api', y: 5 },
+          { x: 'web', y: 3 },
+        ],
+      },
+      { name: 'Fixe', data: [{ x: 'db', y: 4 }] },
+    ],
+    labels: { series: (n) => `Lot ${n}` },
+  },
+  render: (args) => (
+    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+      <TreemapChart {...args} />
+    </ChartLabelsProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(tilesOf(canvasElement)).toHaveLength(3));
+    await expect(canvasElement.querySelector('[role="group"]')).toHaveAttribute(
+      'aria-label',
+      'Carte arborescente : api, web, db'
+    );
+    // A series with no name is the group the chart numbers; a tile is named from its group.
+    await expect(tilesOf(canvasElement).map((tile) => tile.getAttribute('aria-label'))).toEqual([
+      'Lot 1, api : 5',
+      'Lot 1, web : 3',
+      'Fixe, db : 4',
+    ]);
   },
 };

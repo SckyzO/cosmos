@@ -19,7 +19,10 @@ import {
   themeColor,
   tickTexts,
   tooltipCard,
+  openTooltip,
 } from './storybook-recharts';
+import { ChartLabelsProvider } from './ChartLabelsProvider';
+import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
 
 const k = (value: number) => `${value}k`;
 
@@ -324,7 +327,7 @@ export const CustomColorsChecks: Story = {
   },
 };
 
-/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+/** With no data, the chart draws `labels.empty` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { data: [] },
 };
@@ -335,9 +338,9 @@ export const EmptyChecks: Story = {
   play: expectEmptyMessage('No data'),
 };
 
-/** `emptyMessage` says why there is nothing to draw. */
+/** `labels.empty` says why there is nothing to draw. */
 export const EmptyWithMessage: Story = {
-  args: { data: [], emptyMessage: 'No movements this quarter' },
+  args: { data: [], labels: { empty: 'No movements this quarter' } },
 };
 
 export const EmptyWithMessageChecks: Story = {
@@ -708,5 +711,41 @@ export const TextReadsInTheFourThemes: Story = {
         themeColor('--color-text-primary')
       );
     }
+  },
+};
+
+/** The provider writes the name and the tooltip rows; the chart's own `labels` win over it. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    data: [
+      { label: 'Départ', value: 10, kind: 'total' },
+      { label: 'Ventes', value: 5 },
+      { label: 'Remises', value: -2 },
+    ],
+    labels: { runningTotal: 'Solde' },
+  },
+  render: (args) => (
+    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+      <WaterfallChart {...args} />
+    </ChartLabelsProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(surface(canvasElement)).toHaveAttribute(
+        'aria-label',
+        'Cascade : Départ, Ventes, Remises'
+      )
+    );
+    const rows = () =>
+      [...(tooltipCard(canvasElement)?.querySelectorAll('li') ?? [])].map((li) => li.textContent);
+    // The middle bar is a step up: its kind, then the total it leads to.
+    // The card keeps the last bar's rows until it repaints: wait for the bar under the pointer.
+    await openTooltip(canvasElement, 0.5);
+    await waitFor(() => expect(rows()).toEqual(['Hausse+5', 'Solde15']));
+    await closeTooltip(canvasElement);
+    await openTooltip(canvasElement, 0.15);
+    await waitFor(() => expect(rows()).toEqual(['Total10']));
+    await closeTooltip(canvasElement);
   },
 };
