@@ -1096,5 +1096,6 @@ export const TallPageScrollsOnlyInTheShell: Story = {
 /** The same on a phone, where the box that scrolls is the one around the page. */
 export const TallPageOnAPhoneScrollsOnlyInTheShell: Story = {
   ...TallPageScrollsOnlyInTheShell,
+  tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
 };
