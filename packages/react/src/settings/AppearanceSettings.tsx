@@ -47,10 +47,6 @@ export type AppearanceSettingsProps<T extends CosmosThemeChoice = CosmosTheme> =
   accent: CosmosAccent;
   onThemeChange: (theme: T) => void;
   onAccentChange: (accent: CosmosAccent) => void;
-  /** Heading of the theme group. Default `labels.theme`, `'Theme'`. */
-  themeLabel?: string;
-  /** Heading of the accent group. Default `labels.accent`, `'Accent color'`. */
-  accentLabel?: string;
   /**
    * Themes to offer. Default: all of `COSMOS_THEMES`. Add `COSMOS_SYSTEM_THEME`
    * to offer "System", then resolve it with `applyAppearance`.
@@ -80,14 +76,6 @@ export type AppearanceSettingsProps<T extends CosmosThemeChoice = CosmosTheme> =
   motion?: CosmosMotion;
   /** Shows the animations group: normal or reduced. */
   onMotionChange?: (motion: CosmosMotion) => void;
-  /** Heading of the font group. Default `labels.font`, `'Font'`. */
-  fontLabel?: string;
-  /** Heading of the text size group. Default `labels.textSize`, `'Text size'`. */
-  textSizeLabel?: string;
-  /** Heading of the density group. Default `labels.density`, `'Density'`. */
-  densityLabel?: string;
-  /** Heading of the animations group. Default `labels.motion`, `'Animations'`. */
-  motionLabel?: string;
   /**
    * Fonts to offer. Default: all of `COSMOS_FONTS`. Offer only the fonts whose
    * CSS the app imports (`@sckyzo/cosmos-theme/fonts/<id>`).
@@ -148,8 +136,6 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
   accent,
   onThemeChange,
   onAccentChange,
-  themeLabel,
-  accentLabel,
   themes: themesProp,
   accents: accentsProp,
   themeColumns: themeColumnsProp,
@@ -161,10 +147,6 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
   onDensityChange,
   motion = 'full',
   onMotionChange,
-  fontLabel,
-  textSizeLabel,
-  densityLabel,
-  motionLabel,
   fonts: fontsProp,
   textSizes: textSizesProp,
   densities: densitiesProp,
@@ -196,7 +178,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
     <div className={clsx('space-y-6', className)}>
       <div>
         <p id={themeHeadingId} className={headingClass}>
-          {themeLabel ?? labels.theme}
+          {labels.theme}
         </p>
         <PalettePicker
           aria-labelledby={themeHeadingId}
@@ -210,7 +192,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
       </div>
       <div>
         <p id={accentHeadingId} className={headingClass}>
-          {accentLabel ?? labels.accent}
+          {labels.accent}
         </p>
         <AccentPicker
           aria-labelledby={accentHeadingId}
@@ -224,7 +206,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
       {onFontChange && (
         <div>
           <p id={fontHeadingId} className={headingClass}>
-            {fontLabel ?? labels.font}
+            {labels.font}
           </p>
           <OptionPicker
             aria-labelledby={fontHeadingId}
@@ -252,7 +234,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
       {onTextSizeChange && (
         <div>
           <p id={textSizeHeadingId} className={headingClass}>
-            {textSizeLabel ?? labels.textSize}
+            {labels.textSize}
           </p>
           <OptionPicker
             aria-labelledby={textSizeHeadingId}
@@ -280,7 +262,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
       {onDensityChange && (
         <div>
           <p id={densityHeadingId} className={headingClass}>
-            {densityLabel ?? labels.density}
+            {labels.density}
           </p>
           <OptionPicker
             aria-labelledby={densityHeadingId}
@@ -308,7 +290,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
       {onMotionChange && (
         <div>
           <p id={motionHeadingId} className={headingClass}>
-            {motionLabel ?? labels.motion}
+            {labels.motion}
           </p>
           <OptionPicker
             aria-labelledby={motionHeadingId}

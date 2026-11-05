@@ -13,8 +13,6 @@ export type AppearanceMenuProps<T extends CosmosThemeChoice = CosmosTheme> = Omi
   AppearanceSettingsProps<T>,
   'className' | 'stickyHeadings' | 'labels'
 > & {
-  /** Trigger label (title + aria-label), also the panel's name. Default `labels.label`, `'Appearance'`. */
-  label?: string;
   /** The texts it writes (its name, the reset button), over `LabelsProvider`'s `appearanceMenu` and the English defaults. */
   labels?: Partial<AppearanceMenuLabels>;
   /** Trigger size, as `ThemeToggle`. `md` (default) = 40px, `sm` = 32px. */
@@ -41,7 +39,6 @@ const SIZE_CLASS: Record<AppearanceMenuSize, { box: string; icon: string }> = {
  * outside or the button close it.
  */
 export const AppearanceMenu = <T extends CosmosThemeChoice = CosmosTheme>({
-  label: labelProp,
   labels: ownLabels,
   size = 'md',
   onReset,
@@ -49,7 +46,7 @@ export const AppearanceMenu = <T extends CosmosThemeChoice = CosmosTheme>({
   ...settings
 }: AppearanceMenuProps<T>) => {
   const labels = useLabels('appearanceMenu', APPEARANCE_MENU_LABELS, ownLabels);
-  const label = labelProp ?? labels.label;
+  const label = labels.label;
   const { box, icon } = SIZE_CLASS[size];
   return (
     <Popover>
