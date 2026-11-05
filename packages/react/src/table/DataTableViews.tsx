@@ -64,7 +64,7 @@ export const DataTableViews = <T,>({
         <Menu.Content aria-label={labels.views} width="w-64">
           <Menu.Group label={labels.views}>
             {views.length === 0 && (
-              <div role="presentation" className="px-4 py-2 text-sm text-gray-500">
+              <div role="presentation" className="px-4 py-2 text-sm text-[var(--color-text-muted)]">
                 {labels.noViews}
               </div>
             )}
