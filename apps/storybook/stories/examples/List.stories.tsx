@@ -388,7 +388,7 @@ const OrdersScreen = ({
           // Status tabs on one column, search, saved views, column filters and the Columns menu.
           filterTabs={tabsFor(counts)}
           defaultSearchValue={defaultSearchValue}
-          searchPlaceholder="Search orders, customers"
+          labels={{ searchPlaceholder: 'Search orders, customers' }}
           defaultFilters={defaultFilters}
           defaultSort={extreme ? null : { key: 'date', direction: 'desc' }}
           defaultViews={VIEWS}
