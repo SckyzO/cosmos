@@ -25,9 +25,21 @@ const fr: LabelsInput = {
 <LabelsProvider labels={fr}>{app}</LabelsProvider>;
 ```
 
-- **One key per component.** `CosmosLabels` lists them, and `englishLabels` holds the English of
-  every one of them: copy it to start a translation. Leave out a component or a key and it stays
-  English.
+The French of every component ships with the package, as an entry of its own that an app loads
+when it shows French: `import()` makes it a file only a French page downloads, and the English
+stays built in.
+
+```tsx
+import { frenchLabels } from '@sckyzo/cosmos-react/locales/fr';
+
+<LabelsProvider labels={frenchLabels} locale="fr-FR">
+  {app}
+</LabelsProvider>;
+```
+
+- **One key per component.** `CosmosLabels` lists them, `englishLabels` holds the English of every
+  one of them and `frenchLabels` the French: copy one to start a translation. Leave out a component
+  or a key and it stays English.
 - **A text that holds a value is a function.** `showHidden: (count) => …` gets the number, so the
   plural and the word order are yours.
 - **Per instance.** Every component that writes text takes a `labels` prop for its own key, which
@@ -43,7 +55,24 @@ const fr: LabelsInput = {
   `en-US` (`BarList`, `PipelineStages`, `TrendDelta`) still do.
 
 The provider holds one language. To switch languages, pass it the dictionary of the language on
-show, from your own i18n library or a plain object per locale.
+show, from your own i18n library or a plain object per locale, loaded when it is picked:
+
+```tsx
+const dictionaries: Record<string, () => Promise<LabelsInput>> = {
+  en: async () => ({}),
+  fr: () => import('@sckyzo/cosmos-react/locales/fr').then((m) => m.frenchLabels),
+};
+
+const [language, setLanguage] = useState({ code: 'en', labels: {} as LabelsInput });
+const switchTo = async (code: string) => setLanguage({ code, labels: await dictionaries[code]() });
+
+<LabelsProvider labels={language.labels} locale={language.code}>
+  {app}
+</LabelsProvider>;
+```
+
+Storybook has a **Language** menu in its toolbar (`&globals=language:fr`): it shows every story under
+`frenchLabels`, `fr-FR` and `frenchChartLabels`, so the whole catalogue can be read in French.
 
 The charts have a provider of their own. `@sckyzo/cosmos-charts` imports neither this package nor
 the theme, so it cannot read `LabelsProvider`: mount `ChartLabelsProvider` next to it, with the

@@ -201,7 +201,7 @@ import { ChartLabelsProvider, type ChartLabelsInput } from '@sckyzo/cosmos-chart
 
 const fr: ChartLabelsInput = {
   chart: { empty: 'Aucune donnée', loading: (name) => `${name}, chargement` },
-  barChart: { name: (series) => `Histogramme : ${series}` },
+  barChart: { name: (series) => `Histogramme\u202f: ${series}` },
   boxPlotChart: { median: 'Médiane', q1: 'Quartile 1', q3: 'Quartile 3' },
   calendarChart: { less: 'Moins', more: 'Plus' },
 };
@@ -209,11 +209,20 @@ const fr: ChartLabelsInput = {
 <ChartLabelsProvider labels={fr}>{app}</ChartLabelsProvider>;
 ```
 
+The French of every chart ships with the package, as an entry of its own that an app loads when it
+shows French (`import()` makes it a file only a French page downloads):
+
+```tsx
+import { frenchChartLabels } from '@sckyzo/cosmos-charts/locales/fr';
+
+<ChartLabelsProvider labels={frenchChartLabels}>{app}</ChartLabelsProvider>;
+```
+
 - **`chart` is what every chart writes**: the empty message, the name of the loading skeleton, the
   name of a gauge with no label, the name of a heatmap cell. A chart that writes more has a key of
   its own (`barChart`, `calendarChart`, `worldMap`…). `ChartLabels` lists them, and
-  `englishChartLabels` holds the English of every one: copy it to start a translation. Leave out a
-  chart or a key and it stays English.
+  `englishChartLabels` holds the English of every one and `frenchChartLabels` the French: copy one
+  to start a translation. Leave out a chart or a key and it stays English.
 - **A text that holds a value is a function.** `name: (series) => …` gets the series names joined
   with a comma (`CPU, Memory`), `up: (by, versus) => …` the number of places and the period it is
   compared with, so the word order and the plurals are yours.
