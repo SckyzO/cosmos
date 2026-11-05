@@ -435,7 +435,10 @@ Groups are always open: they do not collapse.
 Storybook: [Password Strength Meter](https://sckyzo.github.io/cosmos/?path=/docs/forms-password-strength-meter--docs), [Password Policy Checker](https://sckyzo.github.io/cosmos/?path=/docs/forms-password-policy-checker--docs).
 
 `PasswordPolicyChecker` lists the rules a password must meet, each with a tick or a cross; a screen
-reader also hears "met" or "not met" after each label (`labels` translates both words).
+reader also hears "met" or "not met" after each label (`labels` translates both words, and the
+title). `defaultPasswordRules(password, labels)` words its five rules with the `minLength`,
+`uppercase`, `lowercase`, `number` and `symbol` keys of the same `labels`, in English when it is
+called with the password alone; `SignUpForm` and `NewPasswordForm` pass it their provider's.
 `PasswordStrengthMeter` is the other half: how strong the password is, not whether it follows the
 rules. `score` is 0 to 4 (zxcvbn's scale): that many of the four slots of the bar fill, and the
 level reads above them ("Password strength: Fair"). A slot grows in from the start edge when the
