@@ -55,7 +55,7 @@ export const ColumnsMenu: Story = {
       rowKey={(r) => r.id}
       columnsMenu
       defaultSearchValue=""
-      searchPlaceholder="Search users…"
+      labels={{ searchPlaceholder: 'Search users…' }}
     />
   ),
 };

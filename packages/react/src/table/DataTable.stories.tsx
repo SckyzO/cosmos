@@ -16,6 +16,7 @@ import {
   startEdge,
   startOffset,
 } from '../storybook-helpers';
+import { LabelsProvider, type LabelsInput } from '../labels/LabelsProvider';
 import { ColumnFilterDropdown } from './ColumnFilterDropdown';
 import { DataTable } from './DataTable';
 import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from './Table';
@@ -27,6 +28,10 @@ import { RowActionsMenu } from './RowActionsMenu';
 import { TableAmountCell, TableDescriptionCell, TableIdCell } from './cells';
 import {
   alertColumns,
+  FRENCH_ACTIVE_FILTERS_LABELS,
+  FRENCH_COLUMN_FILTER_LABELS,
+  FRENCH_COLUMN_HEADER_LABELS,
+  FRENCH_TABLE_LABELS,
   makeHosts,
   PEOPLE,
   peopleColumns,
@@ -487,7 +492,7 @@ export const WithGlobalSearch: Story = {
       rowKey={(r) => r.host}
       pageSize={10}
       defaultSearchValue=""
-      searchPlaceholder="Search by name…"
+      labels={{ searchPlaceholder: 'Search by name…' }}
     />
   ),
 };
@@ -510,7 +515,7 @@ export const SelectionBulkSearchCombined: Story = {
           onSelectionChange={setSelection}
           searchValue={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Filter by name…"
+          labels={{ searchPlaceholder: 'Filter by name…' }}
           bulkActions={(selected) => (
             <>
               <Button variant="ghost" size="sm" icon={Download}>
@@ -1521,7 +1526,7 @@ export const WithStatusTabs: Story = {
       columns={teammateColumns}
       rowKey={(r) => r.id}
       filterTabs={statusTabs}
-      searchPlaceholder="Search members…"
+      labels={{ searchPlaceholder: 'Search members…' }}
       defaultSearchValue=""
       aria-label="Members"
     />
@@ -2139,5 +2144,151 @@ export const ToolbarFollowsTheReadingDirection: Story = {
         startOffset(clear, holder)
       );
     }
+  },
+};
+
+// ── Labels ───────────────────────────────────────────────────────────────────
+
+const FRENCH: LabelsInput = {
+  dataTable: FRENCH_TABLE_LABELS,
+  columnHeader: FRENCH_COLUMN_HEADER_LABELS,
+  columnFilterDropdown: FRENCH_COLUMN_FILTER_LABELS,
+  activeFiltersBar: FRENCH_ACTIVE_FILTERS_LABELS,
+  rowActionsMenu: { trigger: 'Actions de la ligne' },
+};
+
+const teamColumns = pickColumns(peopleColumns, ['name', 'role', 'team']);
+
+/**
+ * A table with every part that writes a word, under a provider with the French labels: the
+ * toolbar of a selection, the export, the columns and bulk menus, the expanders, the row action
+ * column, the status tabs, the page size and the pager's name.
+ */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: portalDocsParams.lg(),
+  render: () => (
+    <LabelsProvider labels={FRENCH}>
+      <DataTable
+        aria-label="Équipe"
+        rows={PEOPLE}
+        columns={teamColumns}
+        rowKey={(p) => p.id}
+        pageSize={5}
+        pageSizeOptions={[5, 10]}
+        defaultSearchValue=""
+        selectable
+        defaultSelection={new Set(['user-1'])}
+        bulkActionItems={[
+          { key: 'archive', label: 'Archiver', onClick: () => {} },
+          { key: 'remove', label: 'Retirer', intent: 'danger', onClick: () => {} },
+        ]}
+        exportable
+        columnsMenu
+        renderExpandedRow={(p) => p.email}
+        renderRowAction={() => (
+          <RowActionsMenu>
+            <Menu.Item>Voir</Menu.Item>
+          </RowActionsMenu>
+        )}
+        filterTabs={{ columnKey: 'team', options: [{ value: 'Core', label: 'Core' }] }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const search = canvas.getByRole('searchbox', { name: 'Rechercher dans les lignes' });
+    await expect(search).toHaveAttribute('placeholder', 'Rechercher…');
+    // The bar of the selection.
+    await expect(canvas.getByText('1 sélectionnée')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Effacer' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Exporter 1' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Archiver' })).toBeVisible();
+    // The bulk actions that fold are in the DOM, hidden when the bar is wide.
+    await expect(canvas.getByRole('button', { name: 'Actions', hidden: true })).toBeInTheDocument();
+    // The columns of the table.
+    await expect(
+      canvas.getByRole('checkbox', { name: 'Sélectionner toutes les lignes' })
+    ).toBeVisible();
+    await expect(
+      canvas.getByRole('checkbox', { name: 'Sélectionner la ligne user-1' })
+    ).toBeChecked();
+    await expect(canvas.getByRole('columnheader', { name: 'Détails' })).toBeInTheDocument();
+    await expect(canvas.getByRole('columnheader', { name: 'Action' })).toBeVisible();
+    await expect(canvas.getAllByRole('button', { name: 'Actions de la ligne' })).toHaveLength(5);
+    await expect(canvas.getByRole('button', { name: 'Filtrer Role' })).toBeVisible();
+    // The expander says what it does, then what it does next.
+    await userEvent.click(canvas.getByRole('button', { name: 'Afficher les détails de user-1' }));
+    await expect(
+      canvas.getByRole('button', { name: 'Masquer les détails de user-1' })
+    ).toHaveAttribute('aria-expanded', 'true');
+    // The footer and the tabs.
+    await expect(canvas.getByRole('tab', { name: 'Tous' })).toBeVisible();
+    await expect(canvas.getByRole('navigation', { name: 'Pagination de Équipe' })).toBeVisible();
+    await expect(canvas.getByRole('combobox', { name: 'Lignes par page' })).toBeVisible();
+    // The menu of the columns, a portal.
+    await userEvent.click(canvas.getByRole('button', { name: 'Colonnes' }));
+    const menu = within(await within(document.body).findByRole('menu', { name: 'Colonnes' }));
+    await expect(menu.getByRole('group', { name: 'Colonnes' })).toBeVisible();
+  },
+};
+
+/** The table's own `labels` win over the provider's, key by key; the provider keeps the rest. */
+export const OwnLabelsWinOverTheProvider: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={FRENCH}>
+      <DataTable
+        aria-label="Équipe"
+        rows={PEOPLE}
+        columns={teamColumns}
+        rowKey={(p) => p.id}
+        pageSize={5}
+        defaultSearchValue=""
+        selectable
+        exportable
+        labels={{ search: 'Chercher', export: () => 'Télécharger' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('searchbox', { name: 'Chercher' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Télécharger' })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'Exporter' })).toBeNull();
+    await expect(
+      canvas.getByRole('checkbox', { name: 'Sélectionner toutes les lignes' })
+    ).toBeVisible();
+  },
+};
+
+/** The loading and empty states, and the button that undoes a search that hid every row. */
+export const StatesTranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={FRENCH}>
+      <DataTable
+        aria-label="Chargement"
+        rows={[]}
+        columns={teamColumns}
+        rowKey={(p) => p.id}
+        loading
+        loadingRows={2}
+      />
+      <DataTable
+        aria-label="Équipe"
+        rows={PEOPLE}
+        columns={teamColumns}
+        rowKey={(p) => p.id}
+        defaultSearchValue="zzz"
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Chargement…')).toBeInTheDocument();
+    await expect(canvas.getByText('Aucun résultat')).toBeVisible();
+    await userEvent.click(canvas.getByRole('button', { name: 'Effacer les filtres' }));
+    await expect(canvas.queryByText('Aucun résultat')).toBeNull();
+    await expect(canvas.getByRole('searchbox', { name: 'Rechercher dans les lignes' })).toHaveValue(
+      ''
+    );
   },
 };

@@ -88,7 +88,7 @@ export const Export: Story = {
       exportFileName="team.csv"
       columnsMenu
       defaultSearchValue=""
-      searchPlaceholder="Search users…"
+      labels={{ searchPlaceholder: 'Search users…' }}
     />
   ),
 };

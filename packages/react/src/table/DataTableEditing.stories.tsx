@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { DataTable } from './DataTable';
-import { editableColumns, REFUSED_HOST, useFakeSaves } from './storybook-fixtures';
+import { LabelsProvider } from '../labels/LabelsProvider';
+import { DataTable, type DataTableProps } from './DataTable';
+import {
+  editableColumns,
+  FRENCH_TABLE_LABELS,
+  REFUSED_HOST,
+  useFakeSaves,
+} from './storybook-fixtures';
 
 // Inline editing (`edit` on a column, `editTrigger`, `onCellEdit`, `onRowEdit`), in its own file
 // with the other DataTable additions: DataTable.stories.tsx is already one of the largest stories
@@ -21,7 +27,15 @@ type Story = StoryObj<typeof meta>;
 const cellSaved = fn();
 const rowSaved = fn();
 
-const Hosts = ({ trigger, delay }: { trigger: 'cell' | 'button' | 'row'; delay?: number }) => {
+const Hosts = ({
+  trigger,
+  delay,
+  labels,
+}: {
+  trigger: 'cell' | 'button' | 'row';
+  delay?: number;
+  labels?: DataTableProps<unknown>['labels'];
+}) => {
   const { rows, onCellEdit, onRowEdit } = useFakeSaves(delay);
   return (
     <DataTable
@@ -30,6 +44,7 @@ const Hosts = ({ trigger, delay }: { trigger: 'cell' | 'button' | 'row'; delay?:
       columns={editableColumns}
       rowKey={(r) => r.host}
       editTrigger={trigger}
+      labels={labels}
       onCellEdit={(row, key, value) => {
         cellSaved(row.host, key, value);
         return onCellEdit(row, key, value);
@@ -326,5 +341,62 @@ export const RowRejectedSaveKeepsTheFieldsOpenWithTheError: Story = {
     ).toHaveValue('R-15');
     await expect(rack).toHaveAccessibleDescription(/Not saved/);
     await expect(within(row).getByRole('button', { name: 'Save' })).toBeEnabled();
+  },
+};
+
+/** Editing a cell in place under the French labels: the field, the hint, the spinner and the pencil. */
+export const CellEditingTranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ dataTable: FRENCH_TABLE_LABELS }}>
+      <Hosts trigger="cell" delay={600} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    cellSaved.mockClear();
+    const row = rowOf(canvas, 'node-a01');
+    await userEvent.click(within(row).getByRole('button', { name: /R-12.*, modifier Rack/ }));
+    const field = within(row).getByRole('textbox', { name: 'Rack de node-a01' });
+    await expect(within(row).getByText('Entrée enregistre · Échap annule')).toBeVisible();
+    await userEvent.type(field, '4{Enter}');
+    const cell = within(row)
+      .getByRole('button', { name: /, modifier Rack/ })
+      .closest('td')!;
+    await expect(within(cell).getByRole('img', { name: 'Enregistrement' })).toBeVisible();
+    await waitFor(() => expect(cell).not.toHaveAttribute('aria-busy'));
+  },
+};
+
+/** The pencil of a cell and the buttons of its editor, in French. */
+export const PencilEditingTranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ dataTable: FRENCH_TABLE_LABELS }}>
+      <Hosts trigger="button" />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const row = rowOf(canvas, 'node-a01');
+    await userEvent.click(within(row).getByRole('button', { name: 'Modifier Rack de node-a01' }));
+    await expect(within(row).getByRole('button', { name: 'Enregistrer' })).toBeVisible();
+    await expect(within(row).getByRole('button', { name: 'Annuler' })).toBeVisible();
+  },
+};
+
+/** The buttons of a row in edit, in French; the table's own `labels` win over the provider's. */
+export const RowEditingTranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ dataTable: FRENCH_TABLE_LABELS }}>
+      <Hosts trigger="row" labels={{ cancel: 'Abandonner' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const row = rowOf(canvas, 'node-a01');
+    await userEvent.click(within(row).getByRole('button', { name: 'Modifier node-a01' }));
+    await expect(within(row).getByRole('button', { name: 'Enregistrer' })).toBeVisible();
+    await expect(within(row).getByRole('button', { name: 'Abandonner' })).toBeVisible();
+    await expect(within(row).queryByRole('button', { name: 'Annuler' })).toBeNull();
+    await expect(within(row).getByRole('textbox', { name: 'Rack de node-a01' })).toBeVisible();
   },
 };

@@ -56,7 +56,7 @@ const Orders = (props: OrdersProps) => (
     rowKey={(r) => r.id}
     selectable
     defaultSearchValue=""
-    searchPlaceholder="Search orders, customers"
+    labels={{ searchPlaceholder: 'Search orders, customers' }}
     columnsMenu
     exportable
     bulkActionItems={actions()}
