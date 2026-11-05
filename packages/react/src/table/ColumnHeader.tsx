@@ -2,9 +2,11 @@ import { clsx } from 'clsx';
 import { ChevronDown, ChevronsUpDown, ChevronUp, Filter } from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { ColumnFilterDropdown } from './ColumnFilterDropdown';
 import { HEADER_CELL, HEADER_CELL_PADDING } from './density';
+import { COLUMN_HEADER_LABELS, type ColumnHeaderLabels } from './labels';
 import type { DataTableDensity, SortDirection } from './types';
 
 export type ColumnHeaderProps = {
@@ -22,6 +24,8 @@ export type ColumnHeaderProps = {
   onFilterClear?: () => void;
   /** Cell padding, matching the `density` of the table it heads. Default: the page's. */
   density?: DataTableDensity;
+  /** The texts it writes, over `LabelsProvider`'s `columnHeader` and the English defaults. */
+  labels?: Partial<ColumnHeaderLabels>;
   className?: string;
   /** Inline style of the header cell (a pinned column's offset). */
   style?: CSSProperties;
@@ -50,14 +54,16 @@ export const ColumnHeader = ({
   onFilterToggle,
   onFilterClear,
   density,
+  labels: ownLabels,
   className,
   style,
 }: ColumnHeaderProps) => {
+  const labels = useLabels('columnHeader', COLUMN_HEADER_LABELS, ownLabels);
   const [open, setOpen] = useState(false);
   const filterCount = filterSelected.size;
   // The button shows how many values are checked; its name says so too, with the number as a
   // word of its own (WCAG 2.5.3). A comma, not parentheses: those do not count in a name.
-  const filterName = typeof label === 'string' ? `Filter ${label}` : 'Filter column';
+  const filterName = typeof label === 'string' ? labels.filter(label) : labels.filterColumn;
   // The label and the filter button: the dropdown opens under them, aligned to their start.
   const anchorRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLButtonElement>(null);
@@ -100,7 +106,9 @@ export const ColumnHeader = ({
               type="button"
               aria-expanded={open}
               onClick={() => setOpen((v) => !v)}
-              aria-label={filterCount > 0 ? `${filterName}, ${filterCount} selected` : filterName}
+              aria-label={
+                filterCount > 0 ? labels.filterSelected(filterName, filterCount) : filterName
+              }
               className={clsx(
                 'focus-visible:focus-indicator flex items-center gap-1 rounded-sm p-0.5 transition-colors hover:bg-gray-200 dark:hover:bg-white/10',
                 filterCount > 0 && 'text-brand-600 dark:text-brand-400'

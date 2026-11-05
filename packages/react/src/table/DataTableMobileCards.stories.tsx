@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { Menu } from '../ui/Menu';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 import { tokenMs, transitionDelayMs, transitionMs } from '../storybook-motion';
@@ -18,6 +19,7 @@ import {
 import { DataTable } from './DataTable';
 import { RowActionsMenu } from './RowActionsMenu';
 import {
+  FRENCH_TABLE_LABELS,
   PEOPLE,
   patchColumns,
   peopleColumns,
@@ -81,7 +83,7 @@ const cardsStory: Story = {
       selectable
       columnsMenu
       defaultSearchValue=""
-      searchPlaceholder="Search users…"
+      labels={{ searchPlaceholder: 'Search users…' }}
       renderRowAction={rowAction()}
     />
   ),
@@ -650,5 +652,61 @@ export const CardsWaitBeforeTheVeilChecks: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Reload' }));
     await expect(list.inert).toBe(false);
     await waitFor(() => expect(getComputedStyle(list).opacity).toBe('1'), { timeout: 3000 });
+  },
+};
+
+/**
+ * The cards, the sort select and the filters sheet under the French labels of a provider; the
+ * table's own `labels` win over them, and the rest stays the provider's.
+ */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  render: () => (
+    <LabelsProvider labels={{ dataTable: FRENCH_TABLE_LABELS }}>
+      <DataTable
+        aria-label="Users"
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        mobileLayout="cards"
+        selectable
+        renderExpandedRow={(r) => r.email}
+        labels={{ sortBy: 'Classer par' }}
+      />
+      <DataTable
+        aria-label="Chargement"
+        rows={[]}
+        columns={[columns[0]!]}
+        rowKey={(r) => r.id}
+        mobileLayout="cards"
+        loading
+        loadingRows={2}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    // Its own `sortBy` wins; the options are the provider's.
+    const sort = canvas.getByRole('combobox', { name: 'Classer par' });
+    await expect(
+      within(sort).getByRole('option', { name: 'Ordre par défaut' })
+    ).toBeInTheDocument();
+    await expect(within(sort).getByRole('option', { name: 'User, croissant' })).toBeInTheDocument();
+    await expect(
+      within(sort).getByRole('option', { name: 'Role, décroissant' })
+    ).toBeInTheDocument();
+    await expect(
+      canvas.getByRole('checkbox', { name: 'Sélectionner la ligne user-1' })
+    ).toBeVisible();
+    await expect(
+      canvas.getByRole('button', { name: 'Afficher les détails de user-1' })
+    ).toBeVisible();
+    // The table below `sm` is out of the accessibility tree: one status, the cards'.
+    await expect(canvas.getByRole('status')).toHaveTextContent('Chargement…');
+    // The filters sheet, a portal.
+    await userEvent.click(canvas.getByRole('button', { name: 'Filtres' }));
+    const sheet = within(document.body);
+    await expect(await sheet.findByRole('button', { name: 'Afficher 6 lignes' })).toBeVisible();
+    await expect(sheet.getByRole('button', { name: 'Tout effacer' })).toBeVisible();
   },
 };

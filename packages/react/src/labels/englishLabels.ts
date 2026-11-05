@@ -1,3 +1,29 @@
+import {
+  CHAT_COMPOSER_LABELS,
+  CHAT_CONVERSATION_LIST_LABELS,
+  CHAT_MESSAGE_ACTIONS_LABELS,
+  CHAT_MESSAGE_LABELS,
+  CHAT_SOURCES_LABELS,
+  CHAT_SUGGESTIONS_LABELS,
+  CHAT_THREAD_LABELS,
+  CHAT_TOOL_CALL_LABELS,
+  CHAT_TYPING_INDICATOR_LABELS,
+  CHATBOT_LABELS,
+} from '../chat/labels';
+import { COMMENT_COMPOSER_LABELS, COMMENT_LABELS, COMMENT_THREAD_LABELS } from '../comments/labels';
+import {
+  AUDIT_DIFF_LABELS,
+  BAR_LIST_LABELS,
+  COUNTDOWN_LABELS,
+  EVENT_CALENDAR_LABELS,
+  INTEGRATION_CARD_LABELS,
+  KANBAN_BOARD_LABELS,
+  KPI_CARD_LABELS,
+  MINI_CALENDAR_LABELS,
+  PIPELINE_STAGES_LABELS,
+  PLAN_CARD_LABELS,
+  TREND_DELTA_LABELS,
+} from '../data/labels';
 import { EMPTY_STATE_LABELS, ERROR_STATE_LABELS, LOADING_STATE_LABELS } from '../feedback/labels';
 import {
   AVATAR_UPLOADER_LABELS,
@@ -25,6 +51,7 @@ import {
   UPLOAD_QUEUE_LABELS,
   ZOOM_BAR_LABELS,
 } from '../forms/labels';
+import { FILE_TILE_LABELS, STACKED_LIST_LABELS } from '../lists/labels';
 import { BREADCRUMB_LABELS } from '../navigation/labels';
 import {
   NEW_PASSWORD_FORM_LABELS,
@@ -34,6 +61,13 @@ import {
   SOCIAL_AUTH_BUTTONS_LABELS,
   TWO_STEP_VERIFICATION_FORM_LABELS,
 } from '../pages/labels';
+import {
+  ACTIVE_FILTERS_BAR_LABELS,
+  COLUMN_FILTER_DROPDOWN_LABELS,
+  COLUMN_HEADER_LABELS,
+  DATA_TABLE_LABELS,
+  ROW_ACTIONS_MENU_LABELS,
+} from '../table/labels';
 import type { CosmosLabels } from './cosmosLabels';
 
 /**
@@ -42,22 +76,48 @@ import type { CosmosLabels } from './cosmosLabels';
  * that never imports this object ships none of the others.
  */
 export const englishLabels: CosmosLabels = {
+  activeFiltersBar: ACTIVE_FILTERS_BAR_LABELS,
+  auditDiff: AUDIT_DIFF_LABELS,
   avatarUploader: AVATAR_UPLOADER_LABELS,
+  barList: BAR_LIST_LABELS,
   breadcrumb: BREADCRUMB_LABELS,
   calendar: CALENDAR_LABELS,
   cardExpiryInput: CARD_EXPIRY_INPUT_LABELS,
   cardFields: CARD_FIELDS_LABELS,
+  chatComposer: CHAT_COMPOSER_LABELS,
+  chatConversationList: CHAT_CONVERSATION_LIST_LABELS,
+  chatMessage: CHAT_MESSAGE_LABELS,
+  chatMessageActions: CHAT_MESSAGE_ACTIONS_LABELS,
+  chatSources: CHAT_SOURCES_LABELS,
+  chatSuggestions: CHAT_SUGGESTIONS_LABELS,
+  chatThread: CHAT_THREAD_LABELS,
+  chatToolCall: CHAT_TOOL_CALL_LABELS,
+  chatTypingIndicator: CHAT_TYPING_INDICATOR_LABELS,
+  chatbot: CHATBOT_LABELS,
   colorInput: COLOR_INPUT_LABELS,
+  columnFilterDropdown: COLUMN_FILTER_DROPDOWN_LABELS,
+  columnHeader: COLUMN_HEADER_LABELS,
   combobox: COMBOBOX_LABELS,
+  comment: COMMENT_LABELS,
+  commentComposer: COMMENT_COMPOSER_LABELS,
+  commentThread: COMMENT_THREAD_LABELS,
+  countdown: COUNTDOWN_LABELS,
+  dataTable: DATA_TABLE_LABELS,
   datePicker: DATE_PICKER_LABELS,
   dropzone: DROPZONE_LABELS,
   emptyState: EMPTY_STATE_LABELS,
   errorState: ERROR_STATE_LABELS,
   errorSummary: ERROR_SUMMARY_LABELS,
+  eventCalendar: EVENT_CALENDAR_LABELS,
   fileInput: FILE_INPUT_LABELS,
+  fileTile: FILE_TILE_LABELS,
   formFooter: FORM_FOOTER_LABELS,
+  integrationCard: INTEGRATION_CARD_LABELS,
+  kanbanBoard: KANBAN_BOARD_LABELS,
+  kpiCard: KPI_CARD_LABELS,
   lineItemsEditor: LINE_ITEMS_LABELS,
   loadingState: LOADING_STATE_LABELS,
+  miniCalendar: MINI_CALENDAR_LABELS,
   multiSelect: MULTI_SELECT_LABELS,
   newPasswordForm: NEW_PASSWORD_FORM_LABELS,
   numberInput: NUMBER_INPUT_LABELS,
@@ -66,13 +126,18 @@ export const englishLabels: CosmosLabels = {
   passwordPolicyChecker: PASSWORD_POLICY_LABELS,
   passwordStrengthMeter: PASSWORD_STRENGTH_LABELS,
   phoneInput: PHONE_INPUT_LABELS,
+  pipelineStages: PIPELINE_STAGES_LABELS,
+  planCard: PLAN_CARD_LABELS,
   resetPasswordForm: RESET_PASSWORD_FORM_LABELS,
+  rowActionsMenu: ROW_ACTIONS_MENU_LABELS,
   searchInput: SEARCH_INPUT_LABELS,
   signInForm: SIGN_IN_FORM_LABELS,
   signUpForm: SIGN_UP_FORM_LABELS,
   slider: SLIDER_LABELS,
   socialAuthButtons: SOCIAL_AUTH_BUTTONS_LABELS,
+  stackedList: STACKED_LIST_LABELS,
   tagInput: TAG_INPUT_LABELS,
+  trendDelta: TREND_DELTA_LABELS,
   twoStepVerificationForm: TWO_STEP_VERIFICATION_FORM_LABELS,
   uploadQueue: UPLOAD_QUEUE_LABELS,
   zoomBar: ZOOM_BAR_LABELS,

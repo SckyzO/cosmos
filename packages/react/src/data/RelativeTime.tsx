@@ -1,13 +1,14 @@
 import { useCallback } from 'react';
 import { useIsClient } from '../hooks/useIsClient';
 import { useTicker } from '../hooks/useTicker';
+import { useLocale } from '../labels/labelsContext';
 import { TimeLabel, TimePlaceholder } from './TimeLabel';
 import { formatRelative, nextRelativeDelay, toTimestamp, type DateTimeValue } from './time';
 
 export type RelativeTimeProps = {
   /** The moment to describe: a `Date`, a timestamp in milliseconds or an ISO 8601 string. */
   value: DateTimeValue;
-  /** BCP 47 tag (`fr-FR`). Default: the browser's language. */
+  /** BCP 47 tag (`fr-FR`). Default `LabelsProvider`'s `locale`, else the browser's language. */
   locale?: string;
   /** IANA zone of the tooltip's full date. Default: the browser's zone. */
   timeZone?: string;
@@ -28,12 +29,13 @@ export type RelativeTimeProps = {
  */
 export const RelativeTime = ({
   value,
-  locale,
+  locale: ownLocale,
   timeZone,
   tooltip = false,
   now,
   className,
 }: RelativeTimeProps) => {
+  const locale = useLocale(ownLocale);
   const isClient = useIsClient();
   const timestamp = toTimestamp(value);
   const read = useCallback(

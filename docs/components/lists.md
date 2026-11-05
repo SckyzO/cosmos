@@ -3,6 +3,10 @@
 Storybook group: Lists, with the upload components of Forms that go with the file tiles and the
 notifications panel of Overlays that goes with the notification row.
 
+The words these components write ("Select", "Star", "Unread:", "More actions", "Shared") are their
+`labels`: `<StackedList.Item labels={{ star: 'Favori' }} />` for one, or the `stackedList` and `fileTile`
+keys of `LabelsProvider` for every one; see [Translating](../guides/translating.md).
+
 ## Stacked list rows
 
 Storybook: [Stacked List](https://sckyzo.github.io/cosmos/?path=/docs/lists-stacked-list--docs).
@@ -50,8 +54,8 @@ holds no selection, no read flags and no open row of its own.
 - `selected` is the row open in a master-detail layout, not a picked row. The title takes
   `aria-current`, and the row a tint and a 3px bar at its start edge.
 - `checked` / `defaultChecked` / `onCheckedChange` add a checkbox at the start of the row, named
-  "Select" followed by the title. `selectLabel` changes that word when the box does not pick the
-  row: `selectLabel="Mark done:"` on a task list reads "Mark done: Review the copy". A picked row
+  "Select" followed by the title. `labels.select` changes that word when the box does not pick the
+  row: `labels={{ select: 'Mark done:' }}` on a task list reads "Mark done: Review the copy". A picked row
   takes a light accent tint. `starred` /
   `defaultStarred` / `onStarredChange` add a star toggle (`aria-pressed`, named "Star" and the title);
   a set star always shows, an empty one shows when the row is hovered or has focus. All three follow
@@ -175,12 +179,14 @@ internal: true }`). `onSubmit(text, mode)` receives the selected mode's `value`;
   it gets the text alone, as before. `mode` / `defaultMode` / `onModeChange` work as on other
   fields, and a mode may carry its own `placeholder` and `submitLabel`. An `internal` mode tints
   the field and the submit button like `variant="internal"` tints a comment, with a lock and the
-  line `internalNotice` ("Internal note: only your team sees this."), announced when the mode
-  changes. `modeLabel` names the control.
+  line `labels.internalNotice` ("Internal note: only your team sees this."), announced when the
+  mode changes. `labels.modeLabel` names the control.
 - `time` is a node, as in `Timeline`: a `RelativeTime`, a `<time>` or your own text.
 - Every text can be translated: `labels` on `CommentThread` reaches all its comments (a
-  comment's own `labels` win), `emptyTitle` and `label` on the thread, and the composer's own
-  `label`, `placeholder`, `submitLabel` and `cancelLabel`.
+  comment's own `labels` win), `emptyTitle` and `label` on the thread, and on the composer its
+  `label` and its `labels` (`placeholder`, `submit`, `cancel`, `modeLabel`, `internalNotice`). The
+  provider has a key for each: `comment`, `commentThread` (the list's name and the empty title) and
+  `commentComposer`.
 
 ## Notifications
 

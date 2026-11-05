@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { MessageCircle, RotateCcw, X } from 'lucide-react';
 import { useId, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useLabels } from '../labels/labelsContext';
 import { useOverlayLayer, usePortalFocus } from '../ui/overlayA11y';
 import { mergeRefs } from '../ui/mergeRefs';
 import { panelOrigin } from '../ui/panelOrigin';
@@ -12,6 +13,7 @@ import { ChatComposer } from './ChatComposer';
 import { ChatMessage, type ChatMessageStatus } from './ChatMessage';
 import { ChatSuggestions } from './ChatSuggestions';
 import { ChatThread, ChatTypingIndicator } from './ChatThread';
+import { CHATBOT_LABELS, type ChatbotLabels } from './labels';
 
 export type ChatbotMessage = {
   id: string;
@@ -36,11 +38,11 @@ export type ChatbotProps = {
   /** Initial open state, when uncontrolled. Default `false`. */
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
-  /** Name of the bot, shown in the panel header. Default `Assistant`. */
+  /** Name of the bot, shown in the panel header. Default `labels.title`, `Assistant`. */
   title?: string;
   /** Line under the title, e.g. `Replies in a few seconds`. */
   subtitle?: string;
-  /** Name read before the user's messages. Default `You`. */
+  /** Name read before the user's messages. Default `labels.you`, `You`. */
   userName?: string;
   /** The bot is composing a reply: shows the typing indicator. */
   typing?: boolean;
@@ -51,8 +53,12 @@ export type ChatbotProps = {
   onRetry?: () => void;
   /** Unread messages, shown as a badge on the launcher while the panel is closed. */
   unreadCount?: number;
-  /** Accessible name of the launcher. Default `Open chat`. */
-  launcherLabel?: string;
+  /**
+   * The texts the panel writes itself (the launcher, the close and retry buttons, the name of the
+   * log), over `LabelsProvider`'s `chatbot` and the English defaults. The composer, the suggestions
+   * and the thread inside it read their own keys (`chatComposer`, `chatSuggestions`, `chatThread`).
+   */
+  labels?: Partial<ChatbotLabels>;
 };
 
 /**
@@ -72,16 +78,19 @@ export const Chatbot = ({
   open: openProp,
   defaultOpen = false,
   onOpenChange,
-  title = 'Assistant',
+  title: ownTitle,
   subtitle,
-  userName = 'You',
+  userName: ownUserName,
   typing = false,
   suggestions,
   error,
   onRetry,
   unreadCount = 0,
-  launcherLabel = 'Open chat',
+  labels: ownLabels,
 }: ChatbotProps) => {
+  const labels = useLabels('chatbot', CHATBOT_LABELS, ownLabels);
+  const title = ownTitle ?? labels.title;
+  const userName = ownUserName ?? labels.you;
   const [open, setOpen] = useControllableState({
     value: openProp,
     defaultValue: defaultOpen,
@@ -148,7 +157,7 @@ export const Chatbot = ({
             </div>
             <button
               type="button"
-              aria-label="Close chat"
+              aria-label={labels.close}
               onClick={() => setOpen(false)}
               className="focus-visible:focus-indicator rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-gray-100 hover:text-[var(--color-text-primary)] dark:hover:bg-gray-800"
             >
@@ -156,7 +165,7 @@ export const Chatbot = ({
             </button>
           </header>
 
-          <ChatThread label={`Conversation with ${title}`} className="flex-1">
+          <ChatThread label={labels.conversationWith(title)} className="flex-1">
             {messages.map((m, i) => (
               <ChatMessage
                 key={m.id}
@@ -185,7 +194,7 @@ export const Chatbot = ({
                   className="focus-visible:focus-indicator inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium hover:bg-red-100 dark:hover:bg-red-500/20"
                 >
                   <RotateCcw className="h-3 w-3" aria-hidden />
-                  Retry
+                  {labels.retry}
                 </button>
               )}
             </div>
@@ -200,7 +209,7 @@ export const Chatbot = ({
       <button
         ref={launcherRef}
         type="button"
-        aria-label={unread ? `${launcherLabel}, ${unreadCount} unread` : launcherLabel}
+        aria-label={unread ? labels.launcherUnread(labels.launcher, unreadCount) : labels.launcher}
         aria-expanded={open}
         onClick={() => setOpen(!open)}
         className={clsx(

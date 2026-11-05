@@ -6,6 +6,12 @@ import type { HealthStatus } from '../status/types';
 import { placeholderAvatar } from '../storybook-avatars';
 import { Badge } from '../ui/Badge';
 import { TableIdentityCell } from './cells';
+import type {
+  ActiveFiltersBarLabels,
+  ColumnFilterDropdownLabels,
+  ColumnHeaderLabels,
+  DataTableLabels,
+} from './labels';
 import type { ColumnDef, ColumnEdit } from './types';
 
 // The rows and columns the table stories share, by domain: hosts, people and orders. Fixed values
@@ -634,3 +640,79 @@ export const orderColumns: ColumnDef<Order>[] = [
     render: (r) => `€${r.total.toFixed(2)}`,
   },
 ];
+
+// ── French labels ────────────────────────────────────────────────────────────
+// A whole dictionary for the stories that check the table writes what an app gives it.
+
+export const FRENCH_TABLE_LABELS: DataTableLabels = {
+  emptyTitle: 'Aucun résultat',
+  searchPlaceholder: 'Rechercher…',
+  search: 'Rechercher dans les lignes',
+  clearSearch: 'Effacer la recherche',
+  clearFilters: 'Effacer les filtres',
+  loading: 'Chargement…',
+  detailsHeader: 'Détails',
+  actionHeader: 'Action',
+  showDetails: (row) => `Afficher les détails de ${row}`,
+  hideDetails: (row) => `Masquer les détails de ${row}`,
+  selectRow: (row) => `Sélectionner la ligne ${row}`,
+  selectAll: 'Sélectionner toutes les lignes',
+  selected: (count) => `${count} ${count === 1 ? 'sélectionnée' : 'sélectionnées'}`,
+  clearSelection: 'Effacer',
+  pagination: (name) => `Pagination de ${name}`,
+  export: (selected) => (selected > 0 ? `Exporter ${selected}` : 'Exporter'),
+  rowsPerPage: 'Lignes par page',
+  filterAll: 'Tous',
+  columns: 'Colonnes',
+  bulkActions: 'Actions',
+  views: 'Vues',
+  viewModified: (name) => `${name} (modifiée)`,
+  noViews: 'Aucune vue enregistrée',
+  saveViewAs: 'Enregistrer sous…',
+  renameView: 'Renommer…',
+  deleteView: 'Supprimer',
+  saveViewTitle: 'Enregistrer la vue sous',
+  renameViewTitle: 'Renommer la vue',
+  rename: 'Renommer',
+  deleteViewTitle: (name) => `Supprimer « ${name} » ?`,
+  deleteViewMessage: 'La vue est supprimée. Le tableau garde ce qu’il affiche maintenant.',
+  viewName: 'Nom de la vue',
+  viewNameEmpty: 'Saisissez un nom.',
+  viewNameTaken: 'Une vue porte déjà ce nom.',
+  filters: 'Filtres',
+  clearAll: 'Tout effacer',
+  showRows: (count) => `Afficher ${count} ${count === 1 ? 'ligne' : 'lignes'}`,
+  sortBy: 'Trier par',
+  defaultOrder: 'Ordre par défaut',
+  sortAscending: (column) => `${column}, croissant`,
+  sortDescending: (column) => `${column}, décroissant`,
+  saving: 'Enregistrement',
+  editField: (column, row) => `${column} de ${row}`,
+  editCell: (column, row) => `Modifier ${column} de ${row}`,
+  editCellHint: (column) => `, modifier ${column}`,
+  editKeys: 'Entrée enregistre · Échap annule',
+  edit: 'Modifier',
+  editRow: (row) => `Modifier ${row}`,
+  save: 'Enregistrer',
+  cancel: 'Annuler',
+  notSaved: 'Non enregistré',
+};
+
+export const FRENCH_ACTIVE_FILTERS_LABELS: ActiveFiltersBarLabels = {
+  title: 'Filtres actifs :',
+  clearOne: (column) => `Effacer le filtre ${column}`,
+  clearAll: 'Tout effacer',
+};
+
+export const FRENCH_COLUMN_FILTER_LABELS: ColumnFilterDropdownLabels = {
+  searchPlaceholder: 'Rechercher…',
+  noResults: 'Aucun résultat',
+  clear: (count) => `Effacer (${count} ${count === 1 ? 'sélectionné' : 'sélectionnés'})`,
+};
+
+export const FRENCH_COLUMN_HEADER_LABELS: ColumnHeaderLabels = {
+  filter: (column) => `Filtrer ${column}`,
+  filterColumn: 'Filtrer la colonne',
+  filterSelected: (name, count) =>
+    `${name}, ${count} ${count === 1 ? 'sélectionné' : 'sélectionnés'}`,
+};

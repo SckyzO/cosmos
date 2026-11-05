@@ -465,26 +465,6 @@ test('the package uses logical utilities only', () => {
 
 /** The files that still write English in place, translated a group at a time: the list only shrinks. */
 const TEXT_DEFERRED: string[] = [
-  'packages/react/src/chat/Chatbot.tsx',
-  'packages/react/src/chat/ChatComposer.tsx',
-  'packages/react/src/chat/ChatConversationList.tsx',
-  'packages/react/src/chat/ChatMessageActions.tsx',
-  'packages/react/src/chat/ChatSources.tsx',
-  'packages/react/src/chat/ChatSuggestions.tsx',
-  'packages/react/src/chat/ChatThread.tsx',
-  'packages/react/src/chat/ChatToolCall.tsx',
-  'packages/react/src/comments/CommentComposer.tsx',
-  'packages/react/src/comments/CommentThread.tsx',
-  'packages/react/src/data/BarList.tsx',
-  'packages/react/src/data/Countdown.tsx',
-  'packages/react/src/data/EventCalendarChip.tsx',
-  'packages/react/src/data/EventCalendarStrip.tsx',
-  'packages/react/src/data/EventCalendarTimeGrid.tsx',
-  'packages/react/src/data/EventCalendar.tsx',
-  'packages/react/src/data/KanbanBoard.tsx',
-  'packages/react/src/data/KpiCard.tsx',
-  'packages/react/src/data/MiniCalendar.tsx',
-  'packages/react/src/data/PlanCard.tsx',
   'packages/react/src/editor/ImageForm.tsx',
   'packages/react/src/editor/LinkForm.tsx',
   'packages/react/src/layout/Divider.tsx',
@@ -492,9 +472,6 @@ const TEXT_DEFERRED: string[] = [
   'packages/react/src/layout/Sidebar.tsx',
   'packages/react/src/layout/SiteFooter.tsx',
   'packages/react/src/layout/Topbar.tsx',
-  'packages/react/src/lists/FileTile.tsx',
-  'packages/react/src/lists/GridList.tsx',
-  'packages/react/src/lists/StackedList.tsx',
   'packages/react/src/logs/JobLogToolbar.tsx',
   'packages/react/src/logs/JobLog.tsx',
   'packages/react/src/logs/LogEntryDetail.tsx',
@@ -516,18 +493,6 @@ const TEXT_DEFERRED: string[] = [
   'packages/react/src/status/HealthSummary.tsx',
   'packages/react/src/status/NodeGrid.tsx',
   'packages/react/src/status/StaleBadge.tsx',
-  'packages/react/src/table/ActiveFiltersBar.tsx',
-  'packages/react/src/table/ColumnFilterDropdown.tsx',
-  'packages/react/src/table/ColumnHeader.tsx',
-  'packages/react/src/table/DataTableBulkActions.tsx',
-  'packages/react/src/table/DataTableColumnsMenu.tsx',
-  'packages/react/src/table/DataTableFilterTabs.tsx',
-  'packages/react/src/table/DataTableMobileCards.tsx',
-  'packages/react/src/table/DataTableMobileFilters.tsx',
-  'packages/react/src/table/DataTable.tsx',
-  'packages/react/src/table/DataTableViews.tsx',
-  'packages/react/src/table/InlineEdit.tsx',
-  'packages/react/src/table/PageSizeSelect.tsx',
   'packages/react/src/templates/SectionCard.tsx',
   'packages/react/src/ui/AlertBanner.tsx',
   'packages/react/src/ui/AnnouncementBar.tsx',
@@ -566,7 +531,18 @@ const TEXT_DEFERRED: string[] = [
  * Words the check takes for text and that are not: `file`, the exact `text` it reports and why,
  * so each exception is a decision and not a leftover. An entry that no longer matches fails too.
  */
-const TEXT_ALLOWED: { file: string; text: string; reason: string }[] = [];
+const TEXT_ALLOWED: { file: string; text: string; reason: string }[] = [
+  {
+    file: 'packages/react/src/table/DataTable.tsx',
+    text: 'export.csv',
+    reason: "the default name of the downloaded file, an identifier of the host's, not text shown",
+  },
+  {
+    file: 'packages/react/src/lists/GridList.tsx',
+    text: 'gap-6',
+    reason: 'the default of gapClassName, a Tailwind class, not text',
+  },
+];
 
 // The props a browser shows or a screen reader reads out, as JSX attributes.
 const TEXT_PROPS = new Set([

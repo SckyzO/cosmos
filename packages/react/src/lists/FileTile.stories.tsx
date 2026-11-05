@@ -2,6 +2,7 @@ import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { Download, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { Menu } from '../ui/Menu';
 import {
   bothDirections,
@@ -571,5 +572,36 @@ export const TileAndRowMirrorInRightToLeft: Story = {
     expectMirrored(canvasElement, (box) =>
       item(box, 'row').querySelector('span[class*="--radius-lg"]')
     );
+  },
+};
+
+/** The Shared badge and the star's name come from the provider; the tile's own labels win. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{ fileTile: { shared: 'Partagé', star: (name) => `Mettre ${name} en favori` } }}
+    >
+      <GridList cols={2}>
+        <FileTile name="Rapport.pdf" kind="pdf" shared defaultStarred={false} />
+        <FileTile
+          name="Notes.docx"
+          kind="document"
+          layout="row"
+          shared
+          defaultStarred={false}
+          labels={{ shared: 'Public' }}
+        />
+      </GridList>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Partagé')).toBeVisible();
+    await expect(
+      canvas.getByRole('button', { name: 'Mettre Rapport.pdf en favori' })
+    ).toBeVisible();
+    // The row's own `shared` wins over the provider's; its star is still the provider's.
+    await expect(canvas.getByText('Public')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Mettre Notes.docx en favori' })).toBeVisible();
   },
 };

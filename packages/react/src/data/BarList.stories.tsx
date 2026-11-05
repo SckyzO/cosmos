@@ -19,6 +19,7 @@ import {
   expectNoFadeFromFirstRender,
   LoadToggle,
 } from '../storybook-arrival';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { BarList, type BarListItem } from './BarList';
 import { TrendDelta } from './TrendDelta';
 
@@ -211,7 +212,7 @@ export const Empty: Story = {
 };
 
 export const CustomEmptyMessage: Story = {
-  args: { items: [], emptyMessage: 'No visits in this period' },
+  args: { items: [], labels: { empty: 'No visits in this period' } },
 };
 
 /** At 375px a long label truncates, the value (and the delta) stay visible, nothing widens the page. */
@@ -520,7 +521,7 @@ export const LoadingWithoutItemsShowsFiveRows: Story = {
 /** No items: the message in place of the list, no empty `ul`. */
 export const EmptyShowsMessage: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { items: [], emptyMessage: 'Nothing here yet' },
+  args: { items: [], labels: { empty: 'Nothing here yet' } },
   play: async ({ canvas }) => {
     expect(canvas.getByText('Nothing here yet')).toBeVisible();
     expect(canvas.queryByRole('list')).toBeNull();
@@ -605,5 +606,20 @@ export const RowsFromTheFirstRenderDoNotFade: Story = {
     await expectNoFadeFromFirstRender(canvas, () =>
       canvas.getByRole('list', { name: 'Top pages' })
     );
+  },
+};
+
+/** The provider writes the empty line, and the list's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ barList: { empty: 'Aucune donnée' } }}>
+      <BarList items={[]} />
+      <BarList items={[]} labels={{ empty: 'Rien à classer' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Aucune donnée')).toBeVisible();
+    await expect(canvas.getByText('Rien à classer')).toBeVisible();
   },
 };

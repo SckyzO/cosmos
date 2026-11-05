@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity, Archive, MessageCircle, MoreVertical, Trash2 } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { placeholderAvatar } from '../storybook-avatars';
 import {
   bothDirections,
@@ -1320,7 +1321,7 @@ export const UnreadStates: Story = {
 };
 
 /**
- * A checklist: the row's checkbox ticks a task off, so `selectLabel` names it "Mark done: …" in
+ * A checklist: the row's checkbox ticks a task off, so `labels.select` names it "Mark done: …" in
  * place of the default "Select …".
  */
 export const Checklist: Story = {
@@ -1328,14 +1329,14 @@ export const Checklist: Story = {
     <div className="max-w-md">
       <StackedList card title="My tasks">
         <StackedList.Item
-          selectLabel="Mark done:"
+          labels={{ select: 'Mark done:' }}
           defaultChecked={false}
           title="Review the pricing page copy"
           subtitle="Atlas Redesign"
           trailing={<Badge intent="danger">Today</Badge>}
         />
         <StackedList.Item
-          selectLabel="Mark done:"
+          labels={{ select: 'Mark done:' }}
           defaultChecked
           title="Fix invoice rounding on EU plans"
           subtitle="Billing Revamp"
@@ -1621,7 +1622,7 @@ export const UnreadOmittedKeepsTheCurrentLook: Story = {
   },
 };
 
-/** The checkbox is named with `selectLabel` and the title, and ticks like any other. */
+/** The checkbox is named with `labels.select` and the title, and ticks like any other. */
 export const SelectLabelNamesTheCheckbox: Story = {
   ...Checklist,
   tags: ['!dev', '!autodocs'],
@@ -1639,7 +1640,7 @@ export const SelectLabelNamesTheCheckbox: Story = {
   },
 };
 
-/** Without `selectLabel` the checkbox is named "Select" and the title, as it always was. */
+/** Without `labels.select` the checkbox is named "Select" and the title, as it always was. */
 export const SelectLabelDefaultsToSelect: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
@@ -2080,5 +2081,68 @@ export const RowsMirrorInRightToLeft: Story = {
     expect(end(rtl).chevron).toBeCloseTo(end(ltr).chevron, 0);
     expect(getComputedStyle(ltr.querySelector('svg.lucide-chevron-right')!).scale).toBe('none');
     expect(getComputedStyle(rtl.querySelector('svg.lucide-chevron-right')!).scale).toBe('-1 1');
+  },
+};
+
+const FRENCH_LIST = {
+  stackedList: {
+    selectAll: 'Tout sélectionner',
+    select: 'Sélectionner',
+    unread: 'Non lu :',
+    star: 'Favori',
+    moreActions: "Plus d'actions",
+  },
+};
+
+/**
+ * The words of the selection bar, of a row's checkbox, star and unread mark come from the
+ * provider; a row's own labels win over them.
+ */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={FRENCH_LIST}>
+      <StackedList>
+        <StackedList.Header checked={false} onCheckedChange={() => {}}>
+          Courrier
+        </StackedList.Header>
+        <StackedList.Item
+          title="Ana Ruiz"
+          unread
+          onClick={() => {}}
+          defaultChecked={false}
+          defaultStarred
+        />
+        <StackedList.Item title="Tâche" defaultChecked={false} labels={{ select: 'Terminer :' }} />
+      </StackedList>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('checkbox', { name: 'Tout sélectionner' })).toBeVisible();
+    await expect(canvas.getByRole('checkbox', { name: 'Sélectionner Ana Ruiz' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Non lu : Ana Ruiz' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Favori Ana Ruiz' })).toBeVisible();
+    // Its own `select` wins; the other rows keep the provider's.
+    await expect(canvas.getByRole('checkbox', { name: 'Terminer : Tâche' })).toBeVisible();
+    await expect(canvas.queryByRole('checkbox', { name: 'Sélectionner Tâche' })).toBeNull();
+  },
+};
+
+/** The menu a phone folds the row's actions into is named by the provider too. */
+export const MoreActionsTranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  render: () => (
+    <LabelsProvider labels={FRENCH_LIST}>
+      <StackedList>
+        <StackedList.Item
+          title="Ana Ruiz"
+          actions={[{ label: 'Archiver', icon: Archive, onSelect: () => {} }]}
+        />
+      </StackedList>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: "Plus d'actions Ana Ruiz" })).toBeVisible();
   },
 };

@@ -1,5 +1,7 @@
 import { clsx } from 'clsx';
 import { Fragment, type ComponentPropsWithRef, type ReactNode, type Ref } from 'react';
+import { useLabels } from '../labels/labelsContext';
+import { AUDIT_DIFF_LABELS, type AuditDiffLabels } from './labels';
 import { isLongText, wordDiff } from './wordDiff';
 
 export type AuditChange = {
@@ -15,22 +17,6 @@ export type AuditChange = {
 
 export type AuditDiffVariant = 'table' | 'inline';
 
-/** The texts the component writes itself, to translate or reword. */
-export type AuditDiffLabels = {
-  /** Header of the first column of the `table` variant. */
-  field: string;
-  /** Header of the old values, and the "before" a screen reader hears in `inline`. */
-  before: string;
-  /** Header of the new values, and the "after" a screen reader hears in `inline`. */
-  after: string;
-  /** Read in place of the "—" shown for a value that is absent. */
-  empty: string;
-  /** Read before a word the new text no longer has. */
-  removed: string;
-  /** Read before a word the new text adds. */
-  added: string;
-};
-
 export type AuditDiffProps = Omit<ComponentPropsWithRef<'div'>, 'children'> & {
   /** One entry per field that changed. */
   changes: AuditChange[];
@@ -45,17 +31,8 @@ export type AuditDiffProps = Omit<ComponentPropsWithRef<'div'>, 'children'> & {
    * value this renders. Not called for an absent value, which shows "—".
    */
   formatValue?: (value: unknown, change: AuditChange, side: 'before' | 'after') => ReactNode;
-  /** Replaces the texts of the component, e.g. for another language. Merged over the English ones. */
+  /** The texts it writes, over `LabelsProvider`'s `auditDiff` and the English defaults. */
   labels?: Partial<AuditDiffLabels>;
-};
-
-const DEFAULT_LABELS: AuditDiffLabels = {
-  field: 'Field',
-  before: 'Before',
-  after: 'After',
-  empty: 'empty',
-  removed: 'removed:',
-  added: 'added:',
 };
 
 const isAbsent = (value: unknown) => value === undefined || value === null || value === '';
@@ -156,14 +133,14 @@ export const AuditDiff = ({
   changes,
   variant = 'table',
   formatValue,
-  labels: labelOverrides,
+  labels: ownLabels,
   className,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
   ref,
   ...rest
 }: AuditDiffProps) => {
-  const labels = { ...DEFAULT_LABELS, ...labelOverrides };
+  const labels = useLabels('auditDiff', AUDIT_DIFF_LABELS, ownLabels);
   const name = { 'aria-label': ariaLabel, 'aria-labelledby': ariaLabelledBy };
 
   if (variant === 'inline') {

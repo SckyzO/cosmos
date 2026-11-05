@@ -26,6 +26,7 @@ import {
   mobileViewport,
   startOffset,
 } from '../storybook-helpers';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { COSMOS_ACCENTS } from '../settings/appearance';
 import {
   expectFadesInAfterSkeleton,
@@ -1136,5 +1137,30 @@ export const FiguresSkipTheFadeWhenReduced: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Load' }));
     await waitFor(() => expect(fadeIns(sessionsCard(canvas)())).toHaveLength(0));
     await expect(canvas.getByText('84 210')).toBeVisible();
+  },
+};
+
+/** The exact value's caption and its screen reader text, from the provider; the card's own win. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{ kpiCard: { exactValue: 'Valeur exacte', exactValueHint: ', valeur exacte' } }}
+    >
+      <KpiCard label="Revenu" value="12,4 M€" exactValue="12 418 906,40 €" />
+      <KpiCard
+        label="Tickets"
+        value="1,2k"
+        exactValue="1 184"
+        labels={{ exactValueHint: ', soit exactement' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const hints = canvasElement.querySelectorAll('.sr-only');
+    await expect(hints[0]).toHaveTextContent(', valeur exacte 12 418 906,40 €');
+    await expect(hints[1]).toHaveTextContent(', soit exactement 1 184');
+    await userEvent.hover(canvas.getByText('12,4 M€'));
+    await expect(await within(document.body).findAllByText('Valeur exacte')).not.toHaveLength(0);
   },
 };

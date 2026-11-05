@@ -19,11 +19,11 @@ describe('rowChanges', () => {
 
 describe('saveErrorMessage', () => {
   it('reads an Error, a string, and falls back to a plain line', () => {
-    expect(saveErrorMessage(new Error('Rack is full'))).toBe('Rack is full');
-    expect(saveErrorMessage('Refused')).toBe('Refused');
-    expect(saveErrorMessage(new Error(''))).toBe('Not saved');
-    expect(saveErrorMessage(undefined)).toBe('Not saved');
-    expect(saveErrorMessage({ code: 500 })).toBe('Not saved');
+    expect(saveErrorMessage(new Error('Rack is full'), 'Not saved')).toBe('Rack is full');
+    expect(saveErrorMessage('Refused', 'Not saved')).toBe('Refused');
+    expect(saveErrorMessage(new Error(''), 'Not saved')).toBe('Not saved');
+    expect(saveErrorMessage(undefined, 'Not saved')).toBe('Not saved');
+    expect(saveErrorMessage({ code: 500 }, 'Not saved')).toBe('Not saved');
   });
 });
 

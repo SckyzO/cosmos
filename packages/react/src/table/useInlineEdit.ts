@@ -27,6 +27,8 @@ export type EditState =
     };
 
 type Options<T> = {
+  /** The error shown when a save is rejected with no message. */
+  notSaved: string;
   onCellEdit?: (row: T, columnKey: string, value: string) => void | PromiseLike<unknown>;
   onRowEdit?: (row: T, changes: Record<string, string>) => void | PromiseLike<unknown>;
 };
@@ -43,7 +45,7 @@ const ROW_SAVE = '\u0001save';
  *
  * Internal to the package, not exported.
  */
-export const useInlineEdit = <T>({ onCellEdit, onRowEdit }: Options<T>) => {
+export const useInlineEdit = <T>({ notSaved, onCellEdit, onRowEdit }: Options<T>) => {
   const [state, setState] = useState<EditState | null>(null);
   const current = useRef<EditState | null>(null);
   const set = (next: EditState | null) => {
@@ -113,7 +115,7 @@ export const useInlineEdit = <T>({ onCellEdit, onRowEdit }: Options<T>) => {
     try {
       result = save();
     } catch (reason) {
-      set({ ...cur, saving: false, error: saveErrorMessage(reason) });
+      set({ ...cur, saving: false, error: saveErrorMessage(reason, notSaved) });
       return;
     }
     if (refocus) focusBack.current = refocus;
@@ -132,7 +134,7 @@ export const useInlineEdit = <T>({ onCellEdit, onRowEdit }: Options<T>) => {
       (reason: unknown) => {
         if (current.current !== saving) return;
         if (focusWasLost()) focusBack.current = reopenFocus;
-        const error = saveErrorMessage(reason);
+        const error = saveErrorMessage(reason, notSaved);
         set(
           cur.kind === 'cell'
             ? { ...cur, saving: false, error, focusField: focusWasLost() || inTable() }

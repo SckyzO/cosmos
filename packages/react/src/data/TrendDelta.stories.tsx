@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 import { bothDirections, expectReadsLeftToRight } from '../storybook-helpers';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { TrendDelta } from './TrendDelta';
 
 const meta = {
@@ -161,5 +162,31 @@ export const ValueReadsLeftToRightInRightToLeft: Story = {
       for (const name of ['trending-up', 'trending-down'])
         expect(getComputedStyle(box.querySelector(`svg.lucide-${name}`)!).scale).toBe('none');
     }
+  },
+};
+
+/** The hidden word before the figure is the provider's, and the digits follow its locale. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      locale="fr-FR"
+      labels={{ trendDelta: { increase: 'hausse', decrease: 'baisse', noChange: 'stable' } }}
+    >
+      <p data-testid="up">
+        <TrendDelta value={12.4} />
+      </p>
+      <p data-testid="down">
+        <TrendDelta value={-3.1} />
+      </p>
+      <p data-testid="flat">
+        <TrendDelta value={0} labels={{ noChange: 'inchangé' }} />
+      </p>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByTestId('up')).toHaveTextContent(/^hausse \+12,4\s?%$/);
+    await expect(canvas.getByTestId('down')).toHaveTextContent(/^baisse (-|−)3,1\s?%$/);
+    await expect(canvas.getByTestId('flat')).toHaveTextContent(/^inchangé 0,0\s?%$/);
   },
 };

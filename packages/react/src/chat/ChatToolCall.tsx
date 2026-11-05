@@ -2,10 +2,12 @@ import { clsx } from 'clsx';
 import { AlertCircle, Check, ChevronRight, Wrench } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import { Fold } from '../ui/Fold';
 import { Spinner } from '../ui/Spinner';
 import { SectionLabel } from '../ui/SectionLabel';
 import { INTENT_STYLE } from '../ui/intent';
+import { CHAT_TOOL_CALL_LABELS, type ChatToolCallLabels } from './labels';
 
 export type ChatToolCallStatus = 'running' | 'done' | 'failed';
 
@@ -25,6 +27,8 @@ export type ChatToolCallProps = {
   /** Initial open state, when uncontrolled. Default `false`. */
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** The texts it writes, over `LabelsProvider`'s `chatToolCall` and the English defaults. */
+  labels?: Partial<ChatToolCallLabels>;
   className?: string;
 };
 
@@ -49,8 +53,10 @@ export const ChatToolCall = ({
   open: openProp,
   defaultOpen = false,
   onOpenChange,
+  labels: ownLabels,
   className,
 }: ChatToolCallProps) => {
+  const labels = useLabels('chatToolCall', CHAT_TOOL_CALL_LABELS, ownLabels);
   const [open, setOpen] = useControllableState({
     value: openProp,
     defaultValue: defaultOpen,
@@ -61,12 +67,12 @@ export const ChatToolCall = ({
 
   const statusText =
     status === 'running'
-      ? 'Running'
+      ? labels.running
       : status === 'failed'
-        ? 'Failed'
+        ? labels.failed
         : duration
-          ? `Done in ${duration}`
-          : 'Done';
+          ? labels.doneIn(duration)
+          : labels.done;
   const statusColor =
     status === 'running'
       ? 'text-[var(--color-text-muted)]'
@@ -124,13 +130,13 @@ export const ChatToolCall = ({
         <div className="grid gap-3 border-t border-[var(--color-border)] px-3 py-2.5">
           {input !== undefined && (
             <div className="min-w-0">
-              <Caption>Input</Caption>
+              <Caption>{labels.input}</Caption>
               {input}
             </div>
           )}
           {output !== undefined && (
             <div className="min-w-0">
-              <Caption>Output</Caption>
+              <Caption>{labels.output}</Caption>
               {output}
             </div>
           )}

@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import type { ElementType } from 'react';
 import { useIsClient } from '../hooks/useIsClient';
+import { useLocale } from '../labels/labelsContext';
 import { Badge } from '../ui/Badge';
 import { TimeLabel, TimePlaceholder } from './TimeLabel';
 import {
@@ -26,7 +27,7 @@ export type DateTimeProps = {
    * `Intl.DateTimeFormat` options. Default `datetime`.
    */
   format?: DateTimeFormat | Intl.DateTimeFormatOptions;
-  /** BCP 47 tag (`fr-FR`). Default: the browser's language. */
+  /** BCP 47 tag (`fr-FR`). Default `LabelsProvider`'s `locale`, else the browser's language. */
   locale?: string;
   /** IANA zone (`Asia/Tokyo`). Default: the browser's zone. */
   timeZone?: string;
@@ -74,7 +75,7 @@ const STACKED_PLACEHOLDER_WIDTH = '10ch';
 export const DateTime = ({
   value,
   format = 'datetime',
-  locale,
+  locale: ownLocale,
   timeZone,
   hour12,
   showZone = false,
@@ -83,6 +84,7 @@ export const DateTime = ({
   tooltip = false,
   className,
 }: DateTimeProps) => {
+  const locale = useLocale(ownLocale);
   const isClient = useIsClient();
   // Without an icon, a plain date is the `<time>` alone, and `className` is on it. Otherwise
   // something wraps it, and carries `className`.

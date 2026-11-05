@@ -6,6 +6,7 @@ import {
   type ComponentPropsWithRef,
   type ReactNode,
 } from 'react';
+import { useLocale } from '../labels/labelsContext';
 import { Amount } from './Amount';
 import type { MoneySignDisplay } from './money';
 
@@ -104,7 +105,10 @@ function Note({ className, children, ref, ...rest }: TotalsNoteProps) {
 export type TotalsProps = Omit<ComponentPropsWithRef<'ul'>, 'children'> & {
   /** ISO 4217 code (`'EUR'`) of every amount. Without it, they are plain numbers. */
   currency?: string;
-  /** BCP 47 locale of every amount. Default: the user's. Pass it when the page is in one. */
+  /**
+   * BCP 47 locale of every amount. Default `LabelsProvider`'s `locale`, else the user's. Pass it
+   * when the page is in one.
+   */
   locale?: string;
   /**
    * Which amounts get a sign. Default `negative`: a minus in front of a discount, nothing in front
@@ -117,13 +121,14 @@ export type TotalsProps = Omit<ComponentPropsWithRef<'ul'>, 'children'> & {
 
 function TotalsRoot({
   currency,
-  locale,
+  locale: ownLocale,
   signDisplay,
   className,
   children,
   ref,
   ...rest
 }: TotalsProps) {
+  const locale = useLocale(ownLocale);
   const format = useMemo(
     () => ({ currency, locale, signDisplay }),
     [currency, locale, signDisplay]

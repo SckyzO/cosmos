@@ -13,6 +13,7 @@ import {
   startOffset,
 } from '../storybook-helpers';
 import { Pencil } from 'lucide-react';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { AuditDiff, type AuditChange } from './AuditDiff';
 import { Timeline } from './Timeline';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
@@ -484,5 +485,43 @@ export const MirrorsInRightToLeft: Story = {
       for (const phone of within(box).getAllByText('+33 1 23 45 67 89'))
         expectReadsLeftToRight(phone);
     }
+  },
+};
+
+/** The headers and the screen reader words come from the provider; the diff's own labels win. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        auditDiff: {
+          field: 'Champ',
+          before: 'Avant',
+          after: 'Après',
+          empty: 'vide',
+          removed: 'supprimé :',
+          added: 'ajouté :',
+        },
+      }}
+    >
+      <AuditDiff changes={userChanges} aria-label="Modifications" />
+      <AuditDiff
+        changes={userChanges.slice(0, 1)}
+        variant="inline"
+        aria-label="Modification"
+        labels={{ before: 'Ancienne valeur' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const table = within(canvas.getByRole('table', { name: 'Modifications' }));
+    await expect(table.getByRole('columnheader', { name: 'Champ' })).toBeVisible();
+    await expect(table.getByRole('columnheader', { name: 'Avant' })).toBeVisible();
+    await expect(table.getByRole('columnheader', { name: 'Après' })).toBeVisible();
+    await expect(table.getAllByText('vide').length).toBeGreaterThan(0);
+    // The inline form reads its own `before`, and the provider's `after`.
+    const inline = canvas.getByLabelText('Modification');
+    await expect(inline).toHaveTextContent('Ancienne valeur');
+    await expect(inline).toHaveTextContent('Après');
   },
 };

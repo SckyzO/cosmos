@@ -14,6 +14,7 @@ import {
   mobileViewport,
   startOffset,
 } from '../storybook-helpers';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { PipelineStages, type PipelineStage } from './PipelineStages';
 
 const meta = {
@@ -430,5 +431,37 @@ export const StagesAndArrowsMirrorInRightToLeft: Story = {
       // The next stage is further along the line than the first.
       expect(startOffset(stage(box, 1), box)).toBeGreaterThan(startOffset(stage(box, 0), box));
     }
+  },
+};
+
+/** The conversion read aloud is the provider's sentence, and its locale writes the figures. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      locale="fr-FR"
+      labels={{
+        pipelineStages: {
+          conversion: (rate, from) => `${rate} depuis ${from}`,
+          previousStage: "l'étape précédente",
+        },
+      }}
+    >
+      <PipelineStages stages={DEALS} aria-label="Tunnel" />
+      <PipelineStages
+        stages={[
+          { id: 'a', label: <em>Lead</em>, count: 1240 },
+          { id: 'b', label: 'Gagné', count: 620 },
+        ]}
+        aria-label="Autre tunnel"
+        labels={{ previousStage: "l'étape d'avant" }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    // 64 of the 136 that were qualified: 47,1 %, and the counts are grouped as in French.
+    await expect(canvas.getByText('47,1 % depuis Qualified')).toBeInTheDocument();
+    await expect(canvas.getByText("50,0 % depuis l'étape d'avant")).toBeInTheDocument();
+    await expect(canvas.getByText('1 240')).toBeVisible();
   },
 };

@@ -7,3 +7,15 @@ export * from './ChatToolCall';
 export * from './ChatSources';
 export * from './ChatConversationList';
 export * from './Chatbot';
+export type {
+  ChatbotLabels,
+  ChatComposerLabels,
+  ChatConversationListLabels,
+  ChatMessageActionsLabels,
+  ChatMessageLabels,
+  ChatSourcesLabels,
+  ChatSuggestionsLabels,
+  ChatThreadLabels,
+  ChatToolCallLabels,
+  ChatTypingIndicatorLabels,
+} from './labels';

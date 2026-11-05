@@ -3,8 +3,11 @@ import { ArrowDown, ArrowRight } from 'lucide-react';
 import type { ReactNode, Ref } from 'react';
 import { onRadioGroupKeyDown, radioTabIndex } from '../forms/radioGroupA11y';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels, useLocale } from '../labels/labelsContext';
 import type { Intent } from '../ui/intent';
+import { PIPELINE_STAGES_LABELS, type PipelineStagesLabels } from './labels';
 import { conversionRate, formatRate } from './pipeline-stages';
+import { useNumberFormat } from './useNumberFormat';
 
 export type PipelineStageIntent = Extract<
   Intent,
@@ -31,8 +34,14 @@ export type PipelineStagesProps = {
    * (`54.8%`). A stage that follows a stage at 0 has none. Default `true`.
    */
   showConversion?: boolean;
-  /** Writes a count. Default: grouped digits, `1,240`. */
+  /** Writes a count. Default: grouped digits, `1,240`, in `locale`. */
   formatCount?: (count: number) => string;
+  /**
+   * BCP 47 locale of the default digits and of the conversion rates (`'fr-FR'`: `1 240`, `54,8 %`).
+   * Default `LabelsProvider`'s `locale`; with none, counts are `en-US` and rates have a `.`, the
+   * same on every machine. `formatCount` wins for the counts.
+   */
+  locale?: string;
   /** The picked stage, when controlled. */
   selectedId?: string;
   /** The picked stage, when uncontrolled. None is picked when omitted. */
@@ -41,6 +50,8 @@ export type PipelineStagesProps = {
   onSelectedChange?: (id: string) => void;
   /** Names the list, or the group of stages when they can be picked. */
   'aria-label'?: string;
+  /** The texts it writes, over `LabelsProvider`'s `pipelineStages` and the English defaults. */
+  labels?: Partial<PipelineStagesLabels>;
   className?: string;
   /** Ref to the root: an `ol`, or a `div` when the stages can be picked. */
   ref?: Ref<HTMLElement>;
@@ -53,10 +64,6 @@ const DOT: Record<PipelineStageIntent, string> = {
   danger: 'bg-red-500',
   info: 'bg-blue-500',
 };
-
-// A fixed locale keeps the default output the same on every machine.
-const GROUPED = new Intl.NumberFormat('en-US');
-const defaultFormat = (count: number) => GROUPED.format(count);
 
 // The 1px inside the border, drawn on a pseudo-element: the picked stage reads 2px wide without
 // moving the layout, and the focus ring (a box-shadow) is left alone.
@@ -74,7 +81,9 @@ const SELECTED_EDGE =
 export const PipelineStages = ({
   stages,
   showConversion = true,
-  formatCount = defaultFormat,
+  formatCount,
+  locale: ownLocale,
+  labels: ownLabels,
   selectedId: selectedIdProp,
   defaultSelectedId,
   onSelectedChange,
@@ -82,6 +91,10 @@ export const PipelineStages = ({
   className,
   ref,
 }: PipelineStagesProps) => {
+  const labels = useLabels('pipelineStages', PIPELINE_STAGES_LABELS, ownLabels);
+  const locale = useLocale(ownLocale);
+  const grouped = useNumberFormat(locale);
+  const format = formatCount ?? ((count: number) => grouped.format(count));
   const selectable =
     selectedIdProp !== undefined ||
     defaultSelectedId !== undefined ||
@@ -101,8 +114,8 @@ export const PipelineStages = ({
   const items = stages.map((stage, index) => {
     const previous = index > 0 ? stages[index - 1] : undefined;
     const rate = previous ? conversionRate(previous.count, stage.count) : null;
-    const rateText = showConversion && rate !== null ? formatRate(rate) : null;
-    const from = typeof previous?.label === 'string' ? previous.label : 'the previous stage';
+    const rateText = showConversion && rate !== null ? formatRate(rate, locale) : null;
+    const from = typeof previous?.label === 'string' ? previous.label : labels.previousStage;
     const checked = stage.id === selectedId;
 
     const content = (
@@ -123,7 +136,7 @@ export const PipelineStages = ({
         </span>
         <span className="flex shrink-0 items-baseline gap-2 sm:flex-col sm:items-start sm:gap-0">
           <span className="text-base font-semibold text-[var(--color-text-primary)] tabular-nums sm:text-2xl">
-            <bdi>{formatCount(stage.count)}</bdi>
+            <bdi>{format(stage.count)}</bdi>
           </span>
           {stage.amount !== undefined && (
             <span
@@ -137,7 +150,7 @@ export const PipelineStages = ({
             </span>
           )}
         </span>
-        {rateText && <span className="sr-only">{`${rateText} from ${from}`}</span>}
+        {rateText && <span className="sr-only">{labels.conversion(rateText, from)}</span>}
       </>
     );
 

@@ -2,6 +2,12 @@
 
 Storybook group: Data. Audit entries, kanban boards, KPI cards, totals and amounts, plan cards, dates and clocks.
 
+Every word these components write (an empty line, the name of a button, what a screen reader is told
+while a card moves) is a key of their `labels`: `<BarList labels={{ empty: 'Aucune donnée' }} />` for one
+instance, or the component's key of `LabelsProvider` (`barList`, `eventCalendar`, `kanbanBoard`,
+`planCard`…) for every one; see [Translating](../guides/translating.md). The dates, times, amounts and
+figures take the provider's `locale` when the component's own is not set.
+
 ## Audit diff
 
 Storybook: [Audit Diff](https://sckyzo.github.io/cosmos/?path=/docs/data-audit-diff--docs).
@@ -160,7 +166,8 @@ under them as bars over the days they cover.
   change.
 - **Dates and times** come from `Intl` in the `locale`: the title of a week is `May 4 – 10, 2026`
   and `Apr 27 – May 3, 2026` across two months. The grid stays Gregorian and Monday first whatever
-  the locale; the toolbar's labels stay in English.
+  the locale; the words of the toolbar and of the lists (Today, Previous month, "+2 more"…) are
+  `labels`.
 
 **Changed since 0.5.0.** `month`, `defaultMonth` and `onMonthChange` are now `date`, `defaultDate`
 and `onDateChange`, with no alias: rename them, and the month view behaves as before (any day of
@@ -218,7 +225,8 @@ formatMoney(1234, { currency: 'JPY', locale: 'en-US' }); // "¥1,234"
 ```
 
 - Without `currency`, the value is a plain number (up to three decimals). Without `locale`, it is
-  the user's: pass one when the text around it is in a given language, and in tests and stories.
+  `LabelsProvider`'s, else the user's: pass one when the text around it is in a given language, and in
+  tests and stories.
 - `Amount` sits in a `<bdi>`, so in a right-to-left page the sign and the digits keep their order
   and a minus never jumps to the other side of the figure. It is one line (`whitespace-nowrap`) in
   tabular digits, and takes the colour and weight of the text around it: tint it with `className`.
@@ -273,14 +281,14 @@ yearly price, "Save 20%" and the billed total are yours to pass.
   third pushes that card's action down.
 - `action` is a `Button`, as wide as the card. Give every action `size="lg"`, the height the card
   keeps for it; the card draws its own `current` button at that size. `current` marks the plan the
-  customer is on: the card draws a disabled `secondary` button (`currentLabel`, default "Current
+  customer is on: the card draws a disabled `secondary` button (`labels.current`, default "Current
   plan") in place of `action`.
 - `highlighted` is the plan to look at first: an accent outline and a shadow. `highlightLabel`
   ("Most popular") is a `Ribbon` pill in the corner, and the name wraps before it. Keep the label
   short.
 - `features` is a list of `{ label, included? }`. An excluded feature gets a muted dash and muted
   text, never a strike-through. A screen reader hears "Included:" or "Not included:" before each
-  (`includedLabel` and `notIncludedLabel` translate them). `children` go under the list, or in its
+  (`labels.included` and `labels.notIncluded` translate them). `children` go under the list, or in its
   place.
 - The name is the heading of the card, an `h3` by default (`headingLevel`, 2 to 6). The card is an
   `<article>` named by it.
@@ -326,7 +334,8 @@ the locale nor the zone, and keep the room of their text until then.
   days 2 days 4 hours read 52 hours. In `card` and `display` the days leave the clock once there are
   none. `intent` colors the count, and `urgentBelow` (seconds left) turns it `danger` for the last
   stretch, whatever the `intent`. `onComplete` is called once, at zero, and the countdown stops
-  there. `labels`, `shortLabels`, `label` and `completedLabel` translate its text.
+  there. `labels` translates its text (the captions, the suffixes of the one-line forms, and the defaults of
+  `label` and `completedLabel`, which take any node of yours).
 
 `Clock` and `Countdown` are `role="timer"`, which a screen reader does not announce as it changes.
 Every one of them takes `now`, which freezes it at that moment and sets no timer: use it for

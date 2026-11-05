@@ -22,6 +22,7 @@ import {
   mobileViewport,
   startOffset,
 } from '../storybook-helpers';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { ChatComposer } from './ChatComposer';
 import { ChatConversationList, type ChatConversation } from './ChatConversationList';
 import { ChatMessage, type ChatMessageProps } from './ChatMessage';
@@ -32,6 +33,7 @@ import { ChatToolCall } from './ChatToolCall';
 import { CodeBlock } from '../ui/CodeBlock';
 import { ImageGrid } from '../ui/ImageGrid';
 import { ChatDaySeparator, ChatThread, ChatTypingIndicator } from './ChatThread';
+import { FRENCH_CHAT } from './storybook-labels';
 
 // The back arrow points toward the start of the line, so it turns around in right to left.
 const BackIcon = mirroredIcon(ArrowLeft);
@@ -1063,7 +1065,7 @@ export const StopReplacesSend: Story = {
 
 export const StopLabelIsTranslatable: Story = {
   tags: ['!dev', '!autodocs'],
-  render: () => <ChatComposer onSend={() => {}} generating stopLabel="Arrêter" />,
+  render: () => <ChatComposer onSend={() => {}} generating labels={{ stop: 'Arrêter' }} />,
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Arrêter' })).toBeVisible();
   },
@@ -1206,7 +1208,11 @@ export const AiAssistant: Story = {
         <AssistantReply actions={replyActions}>{richReply}</AssistantReply>
       </ChatThread>
       <ChatSuggestions suggestions={PROMPTS.slice(0, 2)} onSelect={() => {}} />
-      <ChatComposer placeholder="Ask anything…" onSend={() => {}} footer={<ComposerFooter />} />
+      <ChatComposer
+        labels={{ placeholder: 'Ask anything…' }}
+        onSend={() => {}}
+        footer={<ComposerFooter />}
+      />
     </Frame>
   ),
 };
@@ -1260,7 +1266,7 @@ export const ImageGenerator: Story = {
         </AssistantReply>
       </ChatThread>
       <ChatComposer
-        placeholder="Describe an image…"
+        labels={{ placeholder: 'Describe an image…' }}
         onSend={() => {}}
         footer={<ComposerFooter />}
       />
@@ -1377,7 +1383,11 @@ export const AiAssistantWithToolsAndSources: Story = {
           <ChatToolCall name="run_tests" status="running" className="my-1" />
         </AssistantReply>
       </ChatThread>
-      <ChatComposer placeholder="Ask anything…" onSend={() => {}} footer={<ComposerFooter />} />
+      <ChatComposer
+        labels={{ placeholder: 'Ask anything…' }}
+        onSend={() => {}}
+        footer={<ComposerFooter />}
+      />
     </Frame>
   ),
 };
@@ -1526,5 +1536,79 @@ export const ConversationListFollowsTheReadingDirection: Story = {
       const row = within(directionBox(canvasElement, dir)).getByRole('button');
       expect(getComputedStyle(row).textAlign, dir).toBe('start');
     }
+  },
+};
+
+/**
+ * The thread, its messages' delivery states and actions, the typing line, the composer, the
+ * suggestions and the conversation list under a provider with French labels. A component's own
+ * labels win over the provider's.
+ */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={FRENCH_CHAT}>
+      <ChatThread>
+        <ChatMessage
+          direction="outgoing"
+          sender="Vous"
+          time="09:13"
+          status="delivered"
+          text="Oui"
+        />
+        <ChatMessage
+          direction="incoming"
+          sender="Ana Ruiz"
+          text="Terminé."
+          actions={
+            <ChatMessageActions text="Terminé." onRegenerate={() => {}} defaultFeedback={null} />
+          }
+        />
+        <ChatMessage
+          direction="outgoing"
+          sender="Vous"
+          status="failed"
+          text="Et la suite ?"
+          labels={{ failed: 'Échec de l’envoi' }}
+        />
+        <ChatTypingIndicator name="Ana Ruiz" />
+      </ChatThread>
+      <ChatSuggestions suggestions={['Merci']} onSelect={() => {}} />
+      <ChatComposer onSend={() => {}} generating onStop={() => {}} />
+      <ChatComposer onSend={() => {}} labels={{ placeholder: 'Votre réponse…' }} />
+      <ChatConversationList
+        conversations={[
+          { id: 'a', name: 'Ana Ruiz', unread: 3, presence: 'online' },
+          { id: 'b', name: 'Ben Okafor', presence: 'away' },
+          { id: 'c', name: 'Chloé Martin', presence: 'offline' },
+        ]}
+        onSelect={() => {}}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('log', { name: 'Discussion' })).toBeVisible();
+    await expect(canvas.getByText('Remis')).toBeInTheDocument();
+    // The message's own `failed` wins over the provider's.
+    await expect(canvas.getByText('Échec de l’envoi')).toBeInTheDocument();
+    await expect(canvas.queryByText('Non envoyé')).toBeNull();
+    await expect(canvas.getByText('Ana Ruiz est en train d’écrire')).toBeInTheDocument();
+    const actions = canvas.getByRole('group', { name: 'Actions sur la réponse' });
+    for (const name of ['Copier la réponse', 'Régénérer', 'Bonne réponse', 'Mauvaise réponse']) {
+      await expect(within(actions).getByRole('button', { name })).toBeInTheDocument();
+    }
+    await expect(canvas.getByRole('list', { name: 'Réponses suggérées' })).toBeVisible();
+    // The first composer is generating: Stop. The second keeps the provider's field, its own placeholder.
+    await expect(canvas.getByRole('button', { name: 'Arrêter la génération' })).toBeVisible();
+    await expect(canvas.getByPlaceholderText('Votre réponse…')).toBeVisible();
+    await expect(canvas.getByPlaceholderText('Écrire un message…')).toBeVisible();
+    await expect(canvas.getAllByRole('textbox', { name: 'Votre message' })).toHaveLength(2);
+    // The conversation list: the unread count and the presence are read after the name.
+    const list = within(canvas.getByRole('navigation', { name: 'Conversations' }));
+    await expect(
+      list.getByRole('button', { name: /Ana Ruiz.*, en ligne.*3 non lus/ })
+    ).toBeVisible();
+    await expect(list.getByRole('button', { name: /Ben Okafor.*, absent/ })).toBeVisible();
+    await expect(list.getByRole('button', { name: /Chloé Martin.*, hors ligne/ })).toBeVisible();
   },
 };

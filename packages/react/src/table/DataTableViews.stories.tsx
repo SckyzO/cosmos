@@ -1,9 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 import { DataTable } from './DataTable';
-import { PEOPLE, patchColumns, peopleColumns, pickColumns } from './storybook-fixtures';
+import {
+  FRENCH_TABLE_LABELS,
+  PEOPLE,
+  patchColumns,
+  peopleColumns,
+  pickColumns,
+} from './storybook-fixtures';
 import type { DataTableView } from './types';
 
 // The saved views of DataTable live in their own file, with the same `Tables/DataTable` family:
@@ -99,7 +106,7 @@ export const SavedViews: Story = {
           defaultPageSize={5}
           pageSizeOptions={[3, 5, 10]}
           defaultSearchValue=""
-          searchPlaceholder="Search users…"
+          labels={{ searchPlaceholder: 'Search users…' }}
           columnsMenu
           exportable
           views={views}
@@ -518,5 +525,84 @@ export const MobileChecks: Story = {
     await expect(canvas.getByRole('button', { name: 'Export' })).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Columns' })).toBeVisible();
     await expect(canvas.getByLabelText(/search rows/i)).toBeVisible();
+  },
+};
+
+/**
+ * The Views menu and its dialogs under the French labels of a provider; the table's own `labels`
+ * win over them, and the rest stays the provider's.
+ */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ dataTable: FRENCH_TABLE_LABELS }}>
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        defaultViews={VIEWS}
+        defaultActiveView="everyone"
+        labels={{ saveViewAs: 'Nouvelle vue…' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const open = async (button: string | RegExp) => {
+      await userEvent.click(canvas.getByRole('button', { name: button }));
+      return within(await body.findByRole('menu', { name: 'Vues' }));
+    };
+    // With the active view named, the button takes its name; the menu is "Vues".
+    let menu = await open(/^Everyone/);
+    await expect(menu.getByRole('menuitemradio', { name: 'Core engineers' })).toBeVisible();
+    await expect(menu.getByRole('menuitem', { name: 'Renommer…' })).toBeVisible();
+    await expect(menu.getByRole('menuitem', { name: 'Supprimer' })).toBeVisible();
+    // Its own label wins over the provider's "Enregistrer sous…".
+    await expect(menu.getByRole('menuitem', { name: 'Nouvelle vue…' })).toBeVisible();
+    await expect(menu.queryByRole('menuitem', { name: 'Enregistrer sous…' })).toBeNull();
+
+    await userEvent.click(menu.getByRole('menuitem', { name: 'Renommer…' }));
+    const dialog = within(await body.findByRole('dialog', { name: 'Renommer la vue' }));
+    const field = dialog.getByRole('textbox', { name: 'Nom de la vue' });
+    await userEvent.clear(field);
+    await userEvent.type(field, '{Enter}');
+    await expect(dialog.getByText('Saisissez un nom.')).toBeVisible();
+    await userEvent.type(field, 'core engineers{Enter}');
+    await expect(dialog.getByText('Une vue porte déjà ce nom.')).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Renommer' })).toBeVisible();
+    await userEvent.click(dialog.getByRole('button', { name: 'Annuler' }));
+    await gone('dialog');
+
+    menu = await open(/^Everyone/);
+    await userEvent.click(menu.getByRole('menuitem', { name: 'Supprimer' }));
+    const alert = within(
+      await body.findByRole('alertdialog', { name: 'Supprimer « Everyone » ?' })
+    );
+    await expect(
+      alert.getByText('La vue est supprimée. Le tableau garde ce qu’il affiche maintenant.')
+    ).toBeVisible();
+    await expect(alert.getByRole('button', { name: 'Supprimer' })).toBeVisible();
+    await userEvent.click(alert.getByRole('button', { name: 'Annuler' }));
+    await gone('alertdialog');
+  },
+};
+
+/** With no view saved the button is "Vues" and the menu says so. */
+export const NoViewsTranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ dataTable: FRENCH_TABLE_LABELS }}>
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        defaultViews={[]}
+        defaultSearchValue=""
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Vues' }));
+    const menu = within(await body.findByRole('menu', { name: 'Vues' }));
+    await expect(menu.getByText('Aucune vue enregistrée')).toBeVisible();
   },
 };

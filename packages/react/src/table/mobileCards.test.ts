@@ -6,6 +6,7 @@ import {
   parseMobileSort,
   splitMobileColumns,
 } from './mobileCards';
+import { DATA_TABLE_LABELS } from './labels';
 import type { ColumnDef } from './types';
 
 const col = (key: string, extra: Partial<ColumnDef<unknown>> = {}): ColumnDef<unknown> => ({
@@ -51,17 +52,33 @@ describe('splitMobileColumns', () => {
 
 describe('sort options', () => {
   it('lists both directions of the sortable columns, after the default order', () => {
-    const options = mobileSortOptions([
-      col('name', { sortable: true, label: 'Name' }),
-      col('email'),
-      col('age', { sortable: true, mobileLabel: 'Years' }),
-    ]);
+    const options = mobileSortOptions(
+      [
+        col('name', { sortable: true, label: 'Name' }),
+        col('email'),
+        col('age', { sortable: true, mobileLabel: 'Years' }),
+      ],
+      DATA_TABLE_LABELS
+    );
     expect(options).toEqual([
       { value: '', label: 'Default order' },
       { value: 'name:asc', label: 'Name, ascending' },
       { value: 'name:desc', label: 'Name, descending' },
       { value: 'age:asc', label: 'Years, ascending' },
       { value: 'age:desc', label: 'Years, descending' },
+    ]);
+  });
+
+  it('writes the words of the labels it is given', () => {
+    const options = mobileSortOptions([col('name', { sortable: true, label: 'Nom' })], {
+      defaultOrder: 'Ordre par défaut',
+      sortAscending: (column) => `${column}, croissant`,
+      sortDescending: (column) => `${column}, décroissant`,
+    });
+    expect(options.map((o) => o.label)).toEqual([
+      'Ordre par défaut',
+      'Nom, croissant',
+      'Nom, décroissant',
     ]);
   });
 

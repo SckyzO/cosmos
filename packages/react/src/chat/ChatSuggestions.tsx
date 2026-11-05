@@ -1,12 +1,16 @@
 import { clsx } from 'clsx';
+import { useLabels } from '../labels/labelsContext';
+import { CHAT_SUGGESTIONS_LABELS, type ChatSuggestionsLabels } from './labels';
 
 export type ChatSuggestionsProps = {
   /** The suggested replies, one chip each. Nothing renders when the list is empty. */
   suggestions: string[];
   /** Called with the text of the chip the user picks. */
   onSelect: (text: string) => void;
-  /** Accessible name of the list. Default `Suggested replies`. */
+  /** Accessible name of the list. Default `labels.label`, `Suggested replies`. */
   label?: string;
+  /** The texts it writes, over `LabelsProvider`'s `chatSuggestions` and the English defaults. */
+  labels?: Partial<ChatSuggestionsLabels>;
   className?: string;
 };
 
@@ -17,12 +21,17 @@ export type ChatSuggestionsProps = {
 export const ChatSuggestions = ({
   suggestions,
   onSelect,
-  label = 'Suggested replies',
+  label,
+  labels: ownLabels,
   className,
 }: ChatSuggestionsProps) => {
+  const labels = useLabels('chatSuggestions', CHAT_SUGGESTIONS_LABELS, ownLabels);
   if (suggestions.length === 0) return null;
   return (
-    <ul aria-label={label} className={clsx('flex flex-wrap gap-2 px-3 pb-2', className)}>
+    <ul
+      aria-label={label ?? labels.label}
+      className={clsx('flex flex-wrap gap-2 px-3 pb-2', className)}
+    >
       {suggestions.map((s) => (
         <li key={s}>
           <button

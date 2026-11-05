@@ -84,7 +84,7 @@ const LogTable = () => (
     rowKey={keyOf}
     pageSize={10}
     defaultSearchValue=""
-    searchPlaceholder="Search messages…"
+    labels={{ searchPlaceholder: 'Search messages…' }}
     renderExpandedRow={(line) => <LogEntryDetail line={line} timeZone="UTC" />}
     defaultExpandedRows={new Set([keyOf(ERROR_LINE)])}
   />

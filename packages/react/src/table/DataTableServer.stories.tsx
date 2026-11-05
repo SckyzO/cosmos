@@ -100,7 +100,7 @@ const ServerTable = ({ latency }: { latency: number }) => {
       loading={latency > 0 && pending}
       searchValue={search}
       onSearchChange={setSearch}
-      searchPlaceholder="Search orders…"
+      labels={{ searchPlaceholder: 'Search orders…' }}
       filters={filters}
       onFiltersChange={setFilters}
       sort={sort}

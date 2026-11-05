@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Intent } from '../ui/intent';
+import type { KanbanBoardLabels } from './labels';
 
 // The data and the pure logic behind `KanbanBoard`: where a card is, what a move produces, what
 // is announced. Nothing here reads the DOM or the drag library.
@@ -22,7 +23,7 @@ export type KanbanColumn = {
   cards: KanbanCard[];
   /** Color of the dot before the title. Default `neutral`. */
   intent?: Intent;
-  /** Shown in place of the cards when there are none. Default `No cards`. */
+  /** Shown in place of the cards when there are none. Default `labels.empty`, `No cards`. */
   empty?: ReactNode;
 };
 
@@ -157,32 +158,44 @@ export const applyGroups = (
 
 // ── What is announced ────────────────────────────────────────────────────────
 
-const where = (at: CardPosition) =>
-  `Column ${at.columnTitle}, position ${at.index + 1} of ${at.size}.`;
+// The words come from the board's labels, so each announcement is one sentence the app words.
 
 /** On pick up. */
-export const announcePickUp = (columns: readonly KanbanColumn[], cardId: string) => {
+export const announcePickUp = (
+  columns: readonly KanbanColumn[],
+  cardId: string,
+  labels: Pick<KanbanBoardLabels, 'pickedUp'>
+) => {
   const at = cardPosition(columns, cardId);
-  return at && `Picked up ${at.title}. ${where(at)}`;
+  return at && labels.pickedUp(at.title, at.columnTitle, at.index + 1, at.size);
 };
 
 /** On each move: the new column and position. */
-export const announceMove = (columns: readonly KanbanColumn[], cardId: string) => {
+export const announceMove = (
+  columns: readonly KanbanColumn[],
+  cardId: string,
+  labels: Pick<KanbanBoardLabels, 'moved'>
+) => {
   const at = cardPosition(columns, cardId);
-  return at && where(at);
+  return at && labels.moved(at.columnTitle, at.index + 1, at.size);
 };
 
 /** On drop, and after a move from the card's menu. */
-export const announceDrop = (columns: readonly KanbanColumn[], cardId: string) => {
+export const announceDrop = (
+  columns: readonly KanbanColumn[],
+  cardId: string,
+  labels: Pick<KanbanBoardLabels, 'dropped'>
+) => {
   const at = cardPosition(columns, cardId);
-  return at && `${at.title} dropped in ${at.columnTitle}, position ${at.index + 1} of ${at.size}.`;
+  return at && labels.dropped(at.title, at.columnTitle, at.index + 1, at.size);
 };
 
 /** On cancel: `columns` is the board before the pick up. */
-export const announceCancel = (columns: readonly KanbanColumn[], cardId: string) => {
+export const announceCancel = (
+  columns: readonly KanbanColumn[],
+  cardId: string,
+  labels: Pick<KanbanBoardLabels, 'cancelled'>
+) => {
   const at = cardPosition(columns, cardId);
-  return (
-    at &&
-    `Move cancelled. ${at.title} is back in ${at.columnTitle}, position ${at.index + 1} of ${at.size}.`
-  );
+  return at && labels.cancelled(at.title, at.columnTitle, at.index + 1, at.size);
 };

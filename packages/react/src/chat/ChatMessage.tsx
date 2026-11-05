@@ -1,7 +1,9 @@
 import { clsx } from 'clsx';
 import { AlertCircle, Check, CheckCheck, Clock } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { Avatar } from '../ui/Avatar';
+import { CHAT_MESSAGE_LABELS, type ChatMessageLabels } from './labels';
 import { MessageText } from './MessageText';
 
 export type ChatMessageDirection = 'incoming' | 'outgoing';
@@ -59,17 +61,19 @@ type ChatMessageBaseProps = {
    * touch they always show, and keyboard focus always reveals them.
    */
   actions?: ReactNode;
+  /** The texts it writes (the delivery states), over `LabelsProvider`'s `chatMessage` and English. */
+  labels?: Partial<ChatMessageLabels>;
   className?: string;
 };
 
 export type ChatMessageProps = ChatMessageBaseProps & ChatMessageContent;
 
-const STATUS: Record<ChatMessageStatus, { icon: typeof Check; label: string }> = {
-  sending: { icon: Clock, label: 'Sending' },
-  sent: { icon: Check, label: 'Sent' },
-  delivered: { icon: CheckCheck, label: 'Delivered' },
-  read: { icon: CheckCheck, label: 'Read' },
-  failed: { icon: AlertCircle, label: 'Not sent' },
+const STATUS_ICON: Record<ChatMessageStatus, typeof Check> = {
+  sending: Clock,
+  sent: Check,
+  delivered: CheckCheck,
+  read: CheckCheck,
+  failed: AlertCircle,
 };
 
 /**
@@ -91,11 +95,13 @@ export const ChatMessage = ({
   streaming = false,
   bubble = true,
   actions,
+  labels: ownLabels,
   className,
 }: ChatMessageProps) => {
+  const labels = useLabels('chatMessage', CHAT_MESSAGE_LABELS, ownLabels);
   const outgoing = direction === 'outgoing';
   const flat = !outgoing && !bubble;
-  const state = status && STATUS[status];
+  const StatusIcon = status && STATUS_ICON[status];
   const body = (
     <>
       {/* A bdi: the sender's name must not decide the direction of the text next to it (`dir="auto"`). */}
@@ -109,9 +115,9 @@ export const ChatMessage = ({
       )}
     </>
   );
-  const meta = (time || state) && (
+  const meta = (time || StatusIcon) && (
     <span
-      aria-hidden={!state || undefined}
+      aria-hidden={!StatusIcon || undefined}
       className={clsx(
         'text-3xs flex items-center gap-1 px-1',
         !actions && 'mt-0.5',
@@ -123,13 +129,13 @@ export const ChatMessage = ({
           <bdi>{time}</bdi>
         </time>
       )}
-      {state && (
+      {StatusIcon && status && (
         <>
-          <state.icon
+          <StatusIcon
             aria-hidden
             className={clsx('h-3 w-3', status === 'read' && 'text-brand-600 dark:text-brand-400')}
           />
-          <span className="sr-only">{state.label}</span>
+          <span className="sr-only">{labels[status]}</span>
         </>
       )}
     </span>

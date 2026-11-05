@@ -2,7 +2,9 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { ActiveFiltersBar, type ActiveFilter } from './ActiveFiltersBar';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { expectTextContrast, inEachTheme } from '../storybook-helpers';
+import { FRENCH_ACTIVE_FILTERS_LABELS } from './storybook-fixtures';
 
 const FILTERS: ActiveFilter[] = [
   { key: 'severity', label: 'severity', value: 'Critical, Warning' },
@@ -69,5 +71,28 @@ export const ContrastInEveryTheme: Story = {
       expectTextContrast(canvas.getByText('Platform team'));
       expectTextContrast(canvas.getByText('severity'));
     });
+  },
+};
+
+/** The provider's words reach the bar and its chips; the bar's own `labels` win over them. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ activeFiltersBar: FRENCH_ACTIVE_FILTERS_LABELS }}>
+      <ActiveFiltersBar
+        filters={FILTERS}
+        onClearOne={() => {}}
+        onClearAll={() => {}}
+        labels={{ clearAll: 'Réinitialiser' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Filtres actifs :')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Effacer le filtre severity' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Effacer le filtre owner' })).toBeVisible();
+    // Its own label wins over the provider's "Tout effacer".
+    await expect(canvas.getByRole('button', { name: 'Réinitialiser' })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'Tout effacer' })).toBeNull();
   },
 };

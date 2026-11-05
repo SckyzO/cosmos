@@ -50,4 +50,10 @@ describe('formatRate', () => {
   it('writes a rate over 100', () => {
     expect(formatRate(112.5)).toBe('112.5%');
   });
+
+  it('writes the decimal and the percent sign of a locale, when there is one', () => {
+    expect(formatRate(54.838, 'en-US')).toBe('54.8%');
+    expect(formatRate(54.838, 'fr-FR')).toMatch(/^54,8\s%$/);
+    expect(formatRate(1112.5, 'en-US')).toBe('1112.5%');
+  });
 });

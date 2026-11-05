@@ -34,6 +34,7 @@ import {
   type SlotCursor,
 } from './calendar-grid';
 import type { CalendarEvent } from './EventCalendar';
+import type { EventCalendarLabels } from './labels';
 import {
   DayEventsPopover,
   EventChip,
@@ -87,12 +88,14 @@ const TimedEvent = ({
   segment,
   height,
   fmt,
+  labels,
   onClick,
 }: {
   event: CalendarEvent;
   segment: DaySegment;
   height: number;
   fmt: CalendarFormats;
+  labels: EventCalendarLabels;
   onClick?: (event: CalendarEvent) => void;
 }) => {
   const intent = event.intent ?? 'brand';
@@ -119,8 +122,8 @@ const TimedEvent = ({
       >
         <bdi>{oneLine ? start : range}</bdi>
       </span>
-      {segment.before && <span className="sr-only">, continued from the previous day</span>}
-      {segment.after && <span className="sr-only">, continues on the next day</span>}
+      {segment.before && <span className="sr-only">{labels.continuedFrom}</span>}
+      {segment.after && <span className="sr-only">{labels.continuesOn}</span>}
     </>
   );
   if (!onClick) {
@@ -150,6 +153,7 @@ export type EventCalendarTimeGridProps = {
   /** The current moment: the line sits at its time, on its day. */
   now: Date;
   fmt: CalendarFormats;
+  labels: EventCalendarLabels;
   /** Names the scrolling area. */
   label: string;
   /** Days that PageUp and PageDown move the keyboard cursor by. */
@@ -168,6 +172,7 @@ export const EventCalendarTimeGrid = ({
   events,
   now,
   fmt,
+  labels,
   label,
   periodDays,
   header = true,
@@ -307,8 +312,11 @@ export const EventCalendarTimeGrid = ({
   const status =
     active && shownCursor
       ? shownCursor.allDay
-        ? `${fmt.fullDate(shownCursor.date)}, all-day. Press Enter to choose this day.`
-        : `${fmt.fullDate(shownCursor.date)}, ${fmt.time(slotStart(shownCursor.date, shownCursor.minutes))}. Press Enter to choose this time.`
+        ? labels.cursorOnDay(fmt.fullDate(shownCursor.date))
+        : labels.cursorOnSlot(
+            fmt.fullDate(shownCursor.date),
+            fmt.time(slotStart(shownCursor.date, shownCursor.minutes))
+          )
       : '';
 
   return (
@@ -377,12 +385,12 @@ export const EventCalendarTimeGrid = ({
           {(bars.length > 0 || interactive) && (
             <div
               role="group"
-              aria-label="All-day events"
+              aria-label={labels.allDayEvents}
               className="relative border-y border-gray-200 py-1 dark:border-gray-800"
             >
               <div aria-hidden className={clsx('absolute inset-0 grid', COLUMNS[count])}>
                 <span className="text-2xs pe-2 pt-1 text-end text-gray-500 dark:text-gray-400">
-                  all-day
+                  {labels.allDay}
                 </span>
                 {days.map((day) => (
                   <div
@@ -515,6 +523,7 @@ export const EventCalendarTimeGrid = ({
                           segment={{ startMin, endMin, ...edges }}
                           height={height}
                           fmt={fmt}
+                          labels={labels}
                           onClick={onEventClick}
                         />
                       </li>
@@ -530,6 +539,7 @@ export const EventCalendarTimeGrid = ({
                       open={openKey === moreKey}
                       onOpenChange={(open) => setOpenKey(open ? moreKey : null)}
                       label={dayLabel}
+                      labels={labels}
                       hidden={group.indices.length}
                       events={dayEvents}
                       timeOn={(event) => timeOn(event, day)}

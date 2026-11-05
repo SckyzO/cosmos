@@ -21,10 +21,12 @@ import {
   expectNoFadeFromFirstRender,
   LoadToggle,
 } from '../storybook-arrival';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { AvatarGroup } from '../ui/AvatarGroup';
 import { Drawer } from '../ui/Drawer';
 import { Tag } from '../ui/Tag';
 import { KanbanBoard, type KanbanCard, type KanbanColumn, type KanbanMove } from './KanbanBoard';
+import type { KanbanBoardLabels } from './labels';
 
 const meta = {
   title: 'Data/Kanban Board',
@@ -1278,6 +1280,76 @@ export const BoardFromTheFirstRenderDoesNotFade: Story = {
   play: async ({ canvas }) => {
     await expectNoFadeFromFirstRender(canvas, () =>
       canvas.getByRole('group', { name: 'Sprint board' })
+    );
+  },
+};
+
+const FRENCH_KANBAN: KanbanBoardLabels = {
+  board: 'Tableau kanban',
+  dragInstructions:
+    'Appuyez sur Espace ou Entrée pour saisir la carte. Déplacez-la avec les flèches, déposez-la avec Espace ou Entrée, annulez avec Échap.',
+  pickedUp: (title, column, position, size) =>
+    `${title} saisie. Colonne ${column}, position ${position} sur ${size}.`,
+  moved: (column, position, size) => `Colonne ${column}, position ${position} sur ${size}.`,
+  dropped: (title, column, position, size) =>
+    `${title} déposée dans ${column}, position ${position} sur ${size}.`,
+  cancelled: (title, column, position, size) =>
+    `Déplacement annulé. ${title} est revenue dans ${column}, position ${position} sur ${size}.`,
+  moveCard: (title) => `Déplacer la carte : ${title}`,
+  cardActions: (title) => `Actions de la carte : ${title}`,
+  actionsFor: (title) => `Actions pour ${title}`,
+  moveTo: 'Déplacer vers',
+  moveUp: 'Monter',
+  moveDown: 'Descendre',
+  cards: (count) => (count === 1 ? 'carte' : 'cartes'),
+  empty: 'Aucune carte',
+  addCard: 'Ajouter une carte',
+  addCardTo: (column) => `à ${column}`,
+};
+
+/**
+ * The provider words the board, its cards' grip and menu, the empty column, the add button and
+ * what a screen reader is told after a move from the menu; the board's own labels win over it.
+ */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  parameters: portalDocsParams.lg(),
+  render: () => (
+    <LabelsProvider labels={{ kanbanBoard: FRENCH_KANBAN }}>
+      <KanbanBoard
+        ariaLabel={undefined}
+        defaultValue={[...sprint().slice(0, 1), { id: 'later', title: 'Plus tard', cards: [] }]}
+        onAddCard={() => {}}
+        labels={{ addCard: 'Nouvelle carte' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('group', { name: 'Tableau kanban' })).toBeVisible();
+    const todo = within(canvas.getByRole('region', { name: 'To do' }));
+    await expect(todo.getByText('4')).toHaveTextContent('4 cartes');
+    await expect(
+      canvas.getByRole('button', { name: `Déplacer la carte : ${TITLES.billing}` })
+    ).toBeVisible();
+    await expect(
+      within(canvas.getByRole('region', { name: 'Plus tard' })).getByText('Aucune carte')
+    ).toBeVisible();
+    // Its own `addCard` wins; the rest of the button's name is the provider's.
+    await expect(canvas.getByRole('button', { name: 'Nouvelle carte à Plus tard' })).toBeVisible();
+    await userEvent.click(
+      canvas.getByRole('button', { name: `Actions de la carte : ${TITLES.billing}` })
+    );
+    const items = within(
+      await within(document.body).findByRole('menu', { name: `Actions pour ${TITLES.billing}` })
+    );
+    await expect(items.getByRole('group', { name: 'Déplacer vers' })).toBeVisible();
+    await expect(items.getByRole('menuitem', { name: 'Monter' })).toBeDisabled();
+    await userEvent.click(items.getByRole('menuitem', { name: 'Descendre' }));
+    // The move from the menu is announced in the provider's words.
+    await waitFor(() =>
+      expect(canvas.getByRole('status')).toHaveTextContent(
+        `${TITLES.billing} déposée dans To do, position 2 sur 4.`
+      )
     );
   },
 };

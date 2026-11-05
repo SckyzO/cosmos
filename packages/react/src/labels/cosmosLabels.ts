@@ -1,3 +1,29 @@
+import type {
+  ChatbotLabels,
+  ChatComposerLabels,
+  ChatConversationListLabels,
+  ChatMessageActionsLabels,
+  ChatMessageLabels,
+  ChatSourcesLabels,
+  ChatSuggestionsLabels,
+  ChatThreadLabels,
+  ChatToolCallLabels,
+  ChatTypingIndicatorLabels,
+} from '../chat/labels';
+import type { CommentComposerLabels, CommentLabels, CommentThreadLabels } from '../comments/labels';
+import type {
+  AuditDiffLabels,
+  BarListLabels,
+  CountdownLabels,
+  EventCalendarLabels,
+  IntegrationCardLabels,
+  KanbanBoardLabels,
+  KpiCardLabels,
+  MiniCalendarLabels,
+  PipelineStagesLabels,
+  PlanCardLabels,
+  TrendDeltaLabels,
+} from '../data/labels';
 import type { EmptyStateLabels, ErrorStateLabels, LoadingStateLabels } from '../feedback/labels';
 import type {
   AvatarUploaderLabels,
@@ -25,6 +51,7 @@ import type {
   UploadQueueLabels,
   ZoomBarLabels,
 } from '../forms/labels';
+import type { FileTileLabels, StackedListLabels } from '../lists/labels';
 import type { BreadcrumbLabels } from '../navigation/labels';
 import type {
   NewPasswordFormLabels,
@@ -34,6 +61,13 @@ import type {
   SocialAuthButtonsLabels,
   TwoStepVerificationLabels,
 } from '../pages/labels';
+import type {
+  ActiveFiltersBarLabels,
+  ColumnFilterDropdownLabels,
+  ColumnHeaderLabels,
+  DataTableLabels,
+  RowActionsMenuLabels,
+} from '../table/labels';
 
 /**
  * Every text the components write themselves, one key per component, so an app translates them
@@ -43,22 +77,48 @@ import type {
  * `englishLabels` holds the defaults, a starting point for a translation.
  */
 export type CosmosLabels = {
+  activeFiltersBar: ActiveFiltersBarLabels;
+  auditDiff: AuditDiffLabels;
   avatarUploader: AvatarUploaderLabels;
+  barList: BarListLabels;
   breadcrumb: BreadcrumbLabels;
   calendar: CalendarLabels;
   cardExpiryInput: CardExpiryInputLabels;
   cardFields: CardFieldsLabels;
+  chatComposer: ChatComposerLabels;
+  chatConversationList: ChatConversationListLabels;
+  chatMessage: ChatMessageLabels;
+  chatMessageActions: ChatMessageActionsLabels;
+  chatSources: ChatSourcesLabels;
+  chatSuggestions: ChatSuggestionsLabels;
+  chatThread: ChatThreadLabels;
+  chatToolCall: ChatToolCallLabels;
+  chatTypingIndicator: ChatTypingIndicatorLabels;
+  chatbot: ChatbotLabels;
   colorInput: ColorInputLabels;
+  columnFilterDropdown: ColumnFilterDropdownLabels;
+  columnHeader: ColumnHeaderLabels;
   combobox: ComboboxLabels;
+  comment: CommentLabels;
+  commentComposer: CommentComposerLabels;
+  commentThread: CommentThreadLabels;
+  countdown: CountdownLabels;
+  dataTable: DataTableLabels;
   datePicker: DatePickerLabels;
   dropzone: DropzoneLabels;
   emptyState: EmptyStateLabels;
   errorState: ErrorStateLabels;
   errorSummary: ErrorSummaryLabels;
+  eventCalendar: EventCalendarLabels;
   fileInput: FileInputLabels;
+  fileTile: FileTileLabels;
   formFooter: FormFooterLabels;
+  integrationCard: IntegrationCardLabels;
+  kanbanBoard: KanbanBoardLabels;
+  kpiCard: KpiCardLabels;
   lineItemsEditor: LineItemsLabels;
   loadingState: LoadingStateLabels;
+  miniCalendar: MiniCalendarLabels;
   multiSelect: MultiSelectLabels;
   newPasswordForm: NewPasswordFormLabels;
   numberInput: NumberInputLabels;
@@ -67,13 +127,18 @@ export type CosmosLabels = {
   passwordPolicyChecker: PasswordPolicyLabels;
   passwordStrengthMeter: PasswordStrengthLabels;
   phoneInput: PhoneInputLabels;
+  pipelineStages: PipelineStagesLabels;
+  planCard: PlanCardLabels;
   resetPasswordForm: ResetPasswordFormLabels;
+  rowActionsMenu: RowActionsMenuLabels;
   searchInput: SearchInputLabels;
   signInForm: SignInFormLabels;
   signUpForm: SignUpFormLabels;
   slider: SliderLabels;
   socialAuthButtons: SocialAuthButtonsLabels;
+  stackedList: StackedListLabels;
   tagInput: TagInputLabels;
+  trendDelta: TrendDeltaLabels;
   twoStepVerificationForm: TwoStepVerificationLabels;
   uploadQueue: UploadQueueLabels;
   zoomBar: ZoomBarLabels;

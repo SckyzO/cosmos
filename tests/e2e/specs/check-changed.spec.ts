@@ -24,6 +24,19 @@ test('a changed component selects its stories and those of the components that r
   expect(picked.filter((f) => f.startsWith('packages/charts/'))).toEqual([]);
 });
 
+test('a changed group of labels selects the components that read it, not every story', () => {
+  const picked = select('packages/react/src/feedback/labels.ts');
+  expect(picked).toContain('packages/react/src/feedback/EmptyState.stories.tsx');
+  expect(picked).not.toContain('packages/react/src/typography/Kbd.stories.tsx');
+  expect(picked).not.toContain('packages/react/src/forms/Input.stories.tsx');
+});
+
+test('a changed labels registry selects every component that reads labels', () => {
+  const picked = select('packages/react/src/labels/cosmosLabels.ts');
+  expect(picked).toContain('packages/react/src/navigation/Breadcrumb.stories.tsx');
+  expect(picked).toContain('packages/react/src/chat/Chatbot.stories.tsx');
+});
+
 test('a changed story file selects itself only', () => {
   expect(select('packages/react/src/ui/Accordion.stories.tsx')).toEqual([
     'packages/react/src/ui/Accordion.stories.tsx',

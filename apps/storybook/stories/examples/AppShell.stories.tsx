@@ -347,7 +347,7 @@ const homeCrumbs = (workspace: Workspace) => (
 const TaskRow = ({ task }: { task: Task }) => (
   <StackedList.Item
     // The row's own checkbox ticks the task off: it is named "Mark done: <task>", not "Select".
-    selectLabel="Mark done:"
+    labels={{ select: 'Mark done:' }}
     defaultChecked={false}
     title={task.title}
     subtitle={

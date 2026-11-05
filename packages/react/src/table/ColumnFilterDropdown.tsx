@@ -1,5 +1,7 @@
 import { clsx } from 'clsx';
 import { useState } from 'react';
+import { useLabels } from '../labels/labelsContext';
+import { COLUMN_FILTER_DROPDOWN_LABELS, type ColumnFilterDropdownLabels } from './labels';
 
 export type ColumnFilterDropdownProps = {
   values: string[];
@@ -7,6 +9,8 @@ export type ColumnFilterDropdownProps = {
   searchable?: boolean;
   onToggle: (value: string) => void;
   onClear: () => void;
+  /** The texts it writes, over `LabelsProvider`'s `columnFilterDropdown` and the English defaults. */
+  labels?: Partial<ColumnFilterDropdownLabels>;
   className?: string;
 };
 
@@ -22,8 +26,10 @@ export const ColumnFilterDropdown = ({
   searchable = true,
   onToggle,
   onClear,
+  labels: ownLabels,
   className,
 }: ColumnFilterDropdownProps) => {
+  const labels = useLabels('columnFilterDropdown', COLUMN_FILTER_DROPDOWN_LABELS, ownLabels);
   const [query, setQuery] = useState('');
   const visible = query
     ? values.filter((v) => v.toLowerCase().includes(query.toLowerCase()))
@@ -42,14 +48,14 @@ export const ColumnFilterDropdown = ({
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search…"
+            placeholder={labels.searchPlaceholder}
             className="focus:field-focus h-ctrl-28 w-full rounded-lg border border-gray-200 px-2.5 text-xs placeholder:text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
           />
         </div>
       )}
       <div className="max-h-52 overflow-y-auto py-1">
         {visible.length === 0 ? (
-          <p className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">No results</p>
+          <p className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">{labels.noResults}</p>
         ) : (
           visible.map((val) => (
             <label
@@ -74,7 +80,7 @@ export const ColumnFilterDropdown = ({
             onClick={() => onClear()}
             className="focus-visible:focus-indicator py-row-6 w-full rounded-lg px-2 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
           >
-            Clear ({selected.size} selected)
+            {labels.clear(selected.size)}
           </button>
         </div>
       )}

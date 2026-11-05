@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { bothDirections, directionBox, expectMirrored, startOffset } from '../storybook-helpers';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { MiniCalendar } from './MiniCalendar';
 
 const meta = {
@@ -387,5 +388,28 @@ export const DaysAreWideEnoughToTap: Story = {
     await expect(days.length).toBeGreaterThan(27);
     for (const day of days)
       await expect(day.getBoundingClientRect().width).toBeGreaterThanOrEqual(28);
+  },
+};
+
+/** The provider's locale writes the month, its labels name the buttons; the calendar's own labels win. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      locale="fr-FR"
+      labels={{ miniCalendar: { previousMonth: 'Mois précédent', nextMonth: 'Mois suivant' } }}
+    >
+      <MiniCalendar
+        today={new Date(2026, 4, 7)}
+        selected={new Date(2026, 4, 7)}
+        labels={{ nextMonth: 'Mois prochain' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Mois précédent' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Mois prochain' })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'Mois suivant' })).toBeNull();
+    await expect(canvas.getByRole('button', { name: 'mai 2026' })).toBeVisible();
   },
 };

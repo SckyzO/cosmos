@@ -10,7 +10,9 @@ import {
   mobileViewport,
   startOffset,
 } from '../storybook-helpers';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { ChatSources, type ChatSource } from './ChatSources';
+import { FRENCH_CHAT } from './storybook-labels';
 
 const SOURCES: ChatSource[] = [
   {
@@ -216,5 +218,21 @@ export const ChipsFollowTheReadingDirection: Story = {
       // The title and the domain are islands: the page's direction does not reorder them.
       expect(getComputedStyle(chip.querySelector('bdi')!).unicodeBidi).toBe('isolate');
     }
+  },
+};
+
+/** The caption and the hidden mention of a new tab come from the provider; the list's own labels win. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={FRENCH_CHAT}>
+      <ChatSources sources={SOURCES} />
+      <ChatSources sources={SOURCES.slice(0, 1)} labels={{ label: 'Références' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Sources')).toBeVisible();
+    await expect(canvas.getByText('Références')).toBeVisible();
+    await expect(canvas.getAllByText('(s’ouvre dans un nouvel onglet)').length).toBe(4);
   },
 };

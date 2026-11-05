@@ -20,6 +20,7 @@ import {
 } from '../storybook-helpers';
 import { Button } from '../ui/Button';
 import { ConfirmationModal } from '../ui/ConfirmationModal';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { formatMoney } from './money';
 import { PlanCard, type PlanCardProps, type PlanFeature } from './PlanCard';
 
@@ -461,10 +462,8 @@ export const HeadingLevelAndLabels: Story = {
         price={29}
         {...USD}
         headingLevel={2}
-        includedLabel="Inclus :"
-        notIncludedLabel="Non inclus :"
+        labels={{ included: 'Inclus :', notIncluded: 'Non inclus :', current: 'Offre actuelle' }}
         current
-        currentLabel="Offre actuelle"
         features={[{ label: 'Support' }, { label: 'SSO', included: false }]}
       />
     </div>
@@ -884,5 +883,43 @@ export const HighlightMirrorsInRightToLeft: Story = {
         `${dir}: mark at the start`
       ).toBeLessThan(30);
     }
+  },
+};
+
+/** The current plan's button and the marks before the features, from the provider; a card's own wins. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      locale="fr-FR"
+      labels={{
+        planCard: {
+          current: 'Offre actuelle',
+          included: 'Inclus :',
+          notIncluded: 'Non inclus :',
+        },
+      }}
+    >
+      <PlanCard
+        name="Pro"
+        price={29}
+        currency="EUR"
+        period="par mois"
+        current
+        features={[
+          { label: 'Support', included: true },
+          { label: 'SSO', included: false },
+        ]}
+      />
+      <PlanCard name="Équipe" price={9} labels={{ current: 'Votre offre' }} current />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Offre actuelle' })).toBeDisabled();
+    await expect(canvas.getByText('Inclus :')).toBeInTheDocument();
+    await expect(canvas.getByText('Non inclus :')).toBeInTheDocument();
+    // The amount follows the provider's locale.
+    await expect(canvas.getByText(/^29\s€$/)).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Votre offre' })).toBeDisabled();
   },
 };

@@ -2,7 +2,9 @@ import { clsx } from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { createCalendarFormats, isoDate, isoWeekday, sameDay } from './calendar-dates';
+import { MINI_CALENDAR_LABELS, type MiniCalendarLabels } from './labels';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels, useLocale } from '../labels/labelsContext';
 
 export type MiniCalendarProps = {
   today?: Date;
@@ -16,12 +18,13 @@ export type MiniCalendarProps = {
   eventDays?: Set<string>;
   /**
    * BCP 47 language tag (`'fr-FR'`) for the weekday names, the month title and the
-   * accessible name of each day. Defaults to the browser's locale. The grid itself
-   * stays Gregorian, weeks starting on Monday, whatever the locale. The button
-   * labels (Previous month, Next month) stay English. An invalid tag throws a
-   * `RangeError`.
+   * accessible name of each day. Defaults to `LabelsProvider`'s `locale`, else the browser's. The
+   * grid itself stays Gregorian, weeks starting on Monday, whatever the locale. The button names
+   * (Previous month, Next month) are `labels`. An invalid tag throws a `RangeError`.
    */
   locale?: string;
+  /** The texts it writes, over `LabelsProvider`'s `miniCalendar` and the English defaults. */
+  labels?: Partial<MiniCalendarLabels>;
   className?: string;
 };
 
@@ -35,9 +38,11 @@ export const MiniCalendar = ({
   defaultSelected,
   onSelect,
   eventDays,
-  locale,
+  locale: ownLocale,
+  labels: ownLabels,
   className,
 }: MiniCalendarProps) => {
+  const labels = useLabels('miniCalendar', MINI_CALENDAR_LABELS, ownLabels);
   const [selected, select] = useControllableState({
     value: selectedProp,
     defaultValue: defaultSelected,
@@ -63,6 +68,7 @@ export const MiniCalendar = ({
 
   // The accessible name of a day button is its full date, "Thursday, May 7, 2026"
   // in en-US. The visible text stays the bare day number.
+  const locale = useLocale(ownLocale);
   const fmt = useMemo(() => createCalendarFormats(locale), [locale]);
 
   const goPrev = () => setView((v) => new Date(v.getFullYear(), v.getMonth() - 1, 1));
@@ -80,7 +86,7 @@ export const MiniCalendar = ({
         <button
           type="button"
           onClick={goPrev}
-          aria-label="Previous month"
+          aria-label={labels.previousMonth}
           className="focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 flex items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5"
         >
           <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
@@ -95,7 +101,7 @@ export const MiniCalendar = ({
         <button
           type="button"
           onClick={goNext}
-          aria-label="Next month"
+          aria-label={labels.nextMonth}
           className="focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 flex items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/5"
         >
           <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />

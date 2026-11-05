@@ -11,6 +11,7 @@ import {
   useEffect,
   useId,
   useInsertionEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -20,10 +21,12 @@ import { flushSync } from 'react-dom';
 import { Sk } from '../feedback/Skeleton';
 import { useAfterSkeleton } from '../feedback/useAfterSkeleton';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import { useScrollFade } from '../hooks/useScrollFade';
 import type { Intent } from '../ui/intent';
 import { Menu } from '../ui/Menu';
 import { mergeRefs } from '../ui/mergeRefs';
+import { KANBAN_BOARD_LABELS, type KanbanBoardLabels } from './labels';
 import {
   announceCancel,
   announceDrop,
@@ -75,8 +78,14 @@ export type KanbanBoardProps = {
   renderCard?: (card: KanbanCard, columnId: string) => ReactNode;
   /** Shows skeleton columns, as many as `value` has (three when it has none), and sets `aria-busy`. */
   loading?: boolean;
-  /** Names the board for assistive technology. Default `Kanban board`. */
+  /** Names the board for assistive technology. Default `labels.board`, `Kanban board`. */
   ariaLabel?: string;
+  /**
+   * The texts it writes (the names of the grip and the menu of a card, what a screen reader is
+   * told while a card moves, the empty column and the add button), over `LabelsProvider`'s
+   * `kanbanBoard` and the English defaults.
+   */
+  labels?: Partial<KanbanBoardLabels>;
   className?: string;
   /** Ref of the board's root element. */
   ref?: Ref<HTMLDivElement>;
@@ -107,7 +116,7 @@ const LANE_WIDTH = 'w-[85%] max-w-[300px] shrink-0 sm:w-72 sm:max-w-none';
 const ICON_BUTTON =
   'focus-visible:focus-indicator relative z-10 flex size-6 shrink-0 items-center justify-center rounded-md text-[var(--color-text-muted)] transition-colors hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/10';
 
-type BoardState = { columns: KanbanColumn[]; shown: KanbanColumn[] };
+type BoardState = { columns: KanbanColumn[]; shown: KanbanColumn[]; labels: KanbanBoardLabels };
 
 // A value the drag library's callbacks read when they run, kept up to date after each render. Not a
 // ref: the plugins are set up while rendering, and only read it later.
@@ -123,25 +132,29 @@ const box = <T,>(initial: T) => {
 
 // The drag library's plugins, with the screen reader's words for a card. The announcements read the
 // board when they speak, not when they are set up: the plugin outlives a render.
-const dragPlugins = (id: string, read: () => BoardState) => {
+const dragPlugins = (id: string, instructions: string, read: () => BoardState) => {
   const announcements: Announcements = {
     dragstart: ({ operation: { source } }) => {
       const cardId = cardIdOf(source?.id);
-      return cardId ? announcePickUp(read().shown, cardId) : undefined;
+      if (!cardId) return undefined;
+      const { shown, labels } = read();
+      return announcePickUp(shown, cardId, labels);
     },
     dragover: (event) => {
       const cardId = cardIdOf(event.operation.source?.id);
       if (!cardId) return undefined;
-      const { shown } = read();
+      const { shown, labels } = read();
       const groups = toGroups(shown);
       const next = move(groups, event);
-      return next === groups ? undefined : announceMove(applyGroups(shown, next), cardId);
+      return next === groups ? undefined : announceMove(applyGroups(shown, next), cardId, labels);
     },
     dragend: (event) => {
       const cardId = cardIdOf(event.operation.source?.id);
       if (!cardId) return undefined;
-      const { columns, shown } = read();
-      return event.canceled ? announceCancel(columns, cardId) : announceDrop(shown, cardId);
+      const { columns, shown, labels } = read();
+      return event.canceled
+        ? announceCancel(columns, cardId, labels)
+        : announceDrop(shown, cardId, labels);
     },
   };
   return [
@@ -150,10 +163,7 @@ const dragPlugins = (id: string, read: () => BoardState) => {
       id,
       // Only the moves are debounced: a run of arrow presses says its last stop.
       debounce: 150,
-      screenReaderInstructions: {
-        draggable:
-          'Press Space or Enter to pick up the card. Use the arrow keys to move it, Space or Enter to drop it, Escape to cancel.',
-      },
+      screenReaderInstructions: { draggable: instructions },
       announcements,
     }),
   ];
@@ -249,6 +259,7 @@ type SortableCardProps = {
   onMove: (cardId: string, toColumnId: string, index: number) => void;
   onOpen?: (card: KanbanCard, columnId: string) => void;
   renderCard?: (card: KanbanCard, columnId: string) => ReactNode;
+  labels: KanbanBoardLabels;
 };
 
 const SortableCard = ({
@@ -259,6 +270,7 @@ const SortableCard = ({
   onMove,
   onOpen,
   renderCard,
+  labels,
 }: SortableCardProps) => {
   const { ref, handleRef, isDragSource } = useSortable({
     id: cardKey(card.id),
@@ -284,7 +296,7 @@ const SortableCard = ({
           <button
             type="button"
             ref={handleRef}
-            aria-label={`Move card: ${card.title}`}
+            aria-label={labels.moveCard(card.title)}
             // The grip is the only part that starts a drag, and the only one that gives up
             // touch scrolling: the rest of the card keeps scrolling the board.
             className={clsx(
@@ -298,16 +310,16 @@ const SortableCard = ({
         actions={
           <Menu align="end">
             <Menu.Trigger
-              aria-label={`Card actions: ${card.title}`}
+              aria-label={labels.cardActions(card.title)}
               data-kanban-actions={card.id}
               className={clsx(ICON_BUTTON, '-me-1.5 -mt-0.5')}
             >
               {ACTIONS_ICON}
             </Menu.Trigger>
-            <Menu.Content aria-label={`Actions for ${card.title}`} width="w-52">
+            <Menu.Content aria-label={labels.actionsFor(card.title)} width="w-52">
               {others.length > 0 && (
                 <>
-                  <Menu.Group label="Move to">
+                  <Menu.Group label={labels.moveTo}>
                     {others.map((other) => (
                       <Menu.Item
                         key={other.id}
@@ -325,14 +337,14 @@ const SortableCard = ({
                 disabled={index === 0}
                 onSelect={() => onMove(card.id, columnId, index - 1)}
               >
-                Move up
+                {labels.moveUp}
               </Menu.Item>
               <Menu.Item
                 icon={ArrowDown}
                 disabled={index === column.cards.length - 1}
                 onSelect={() => onMove(card.id, columnId, index + 1)}
               >
-                Move down
+                {labels.moveDown}
               </Menu.Item>
             </Menu.Content>
           </Menu>
@@ -349,7 +361,7 @@ type LaneProps = Omit<SortableCardProps, 'card' | 'index' | 'columnId'> & {
   onAddCard?: (columnId: string) => void;
 };
 
-const Lane = ({ column, columns, onMove, onOpen, renderCard, onAddCard }: LaneProps) => {
+const Lane = ({ column, columns, onMove, onOpen, renderCard, onAddCard, labels }: LaneProps) => {
   const headingId = useId();
   // The whole lane takes a drop, so an empty one, or the space under the last card, does too.
   // Its cards win where they overlap it.
@@ -383,7 +395,7 @@ const Lane = ({ column, columns, onMove, onOpen, renderCard, onAddCard }: LanePr
         </h3>
         <span className="text-2xs rounded-full bg-gray-200 px-1.5 py-px font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200">
           {column.cards.length}
-          <span className="sr-only"> {column.cards.length === 1 ? 'card' : 'cards'}</span>
+          <span className="sr-only"> {labels.cards(column.cards.length)}</span>
         </span>
       </div>
       {column.cards.length > 0 ? (
@@ -398,12 +410,13 @@ const Lane = ({ column, columns, onMove, onOpen, renderCard, onAddCard }: LanePr
               onMove={onMove}
               onOpen={onOpen}
               renderCard={renderCard}
+              labels={labels}
             />
           ))}
         </ul>
       ) : (
         <div className="rounded-xl border border-dashed border-gray-300 px-3 py-6 text-center text-sm text-gray-600 dark:border-gray-600 dark:text-gray-400">
-          {column.empty ?? 'No cards'}
+          {column.empty ?? labels.empty}
         </div>
       )}
       {onAddCard && (
@@ -413,10 +426,10 @@ const Lane = ({ column, columns, onMove, onOpen, renderCard, onAddCard }: LanePr
           className="focus-visible:focus-indicator py-row-8 flex w-full items-center gap-1.5 rounded-lg px-2.5 text-start text-sm font-medium text-gray-600 transition-colors hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/10"
         >
           <Plus className="size-3.5" aria-hidden />
-          Add card
+          {labels.addCard}
           <span className="sr-only">
             {' '}
-            to <bdi>{column.title}</bdi>
+            <bdi>{labels.addCardTo(column.title)}</bdi>
           </span>
         </button>
       )}
@@ -495,10 +508,13 @@ export const KanbanBoard = ({
   onAddCard,
   renderCard,
   loading = false,
-  ariaLabel = 'Kanban board',
+  ariaLabel: ownAriaLabel,
+  labels: ownLabels,
   className,
   ref,
 }: KanbanBoardProps) => {
+  const labels = useLabels('kanbanBoard', KANBAN_BOARD_LABELS, ownLabels);
+  const ariaLabel = ownAriaLabel ?? labels.board;
   const [columns, setColumns] = useControllableState<KanbanColumn[]>({
     value,
     defaultValue,
@@ -516,14 +532,15 @@ export const KanbanBoard = ({
   const pendingFocus = useRef<string | null>(null);
 
   // A holder that outlives the render, for what the drag library's callbacks read when they run.
-  const [latest] = useState(() => box<BoardState>({ columns, shown }));
+  const [latest] = useState(() => box<BoardState>({ columns, shown, labels }));
   useInsertionEffect(() => {
-    latest.set({ columns, shown });
+    latest.set({ columns, shown, labels });
   });
   const read = latest.get;
 
   const uid = useId();
-  const [plugins] = useState(() => dragPlugins(uid, read));
+  const instructions = labels.dragInstructions;
+  const plugins = useMemo(() => dragPlugins(uid, instructions, read), [uid, instructions, read]);
 
   const moveFromMenu = useCallback(
     (cardId: string, toColumnId: string, index: number) => {
@@ -532,7 +549,7 @@ export const KanbanBoard = ({
       const moved = describeMove(before, next, cardId);
       if (!moved) return;
       pendingFocus.current = cardId;
-      setNote(announceDrop(next, cardId) ?? '');
+      setNote(announceDrop(next, cardId, read().labels) ?? '');
       setColumns(next);
       onCardMove?.(moved);
     },
@@ -617,6 +634,7 @@ export const KanbanBoard = ({
               onOpen={onCardOpen}
               renderCard={renderCard}
               onAddCard={onAddCard}
+              labels={labels}
             />
           ))}
         </Scroller>

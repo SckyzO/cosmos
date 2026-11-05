@@ -18,3 +18,16 @@ export * from './RelativeTime';
 export * from './Clock';
 export * from './Countdown';
 export * from './AuditDiff';
+export type {
+  AuditDiffLabels,
+  BarListLabels,
+  CountdownLabels,
+  EventCalendarLabels,
+  IntegrationCardLabels,
+  KanbanBoardLabels,
+  KpiCardLabels,
+  MiniCalendarLabels,
+  PipelineStagesLabels,
+  PlanCardLabels,
+  TrendDeltaLabels,
+} from './labels';

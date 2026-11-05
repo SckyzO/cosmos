@@ -19,8 +19,10 @@ import {
   closedRotation,
   rotationOf,
 } from '../storybook-folds';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { CodeBlock } from '../ui/CodeBlock';
 import { ChatToolCall } from './ChatToolCall';
+import { FRENCH_CHAT } from './storybook-labels';
 
 const INPUT = `{
   "query": "debounce search input",
@@ -303,5 +305,36 @@ export const FollowsTheReadingDirection: Story = {
       );
       expect(getComputedStyle(open!).rotate, `${dir}: open`).toBe('90deg');
     }
+  },
+};
+
+/** The status, with its duration, and the captions of the input and output; the call's own labels win. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={FRENCH_CHAT}>
+      <ChatToolCall name="search_docs" status="running" />
+      <ChatToolCall name="search_docs" status="failed" />
+      <ChatToolCall name="search_docs" status="done" />
+      <ChatToolCall
+        name="search_docs"
+        status="done"
+        duration="1,2 s"
+        defaultOpen
+        input={<CodeBlock code={INPUT} />}
+        output={<CodeBlock code={OUTPUT} />}
+        labels={{ output: 'Résultat' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('En cours')).toBeVisible();
+    await expect(canvas.getByText('Échec')).toBeVisible();
+    await expect(canvas.getByText('Terminé')).toBeVisible();
+    await expect(canvas.getByText('Terminé en 1,2 s')).toBeVisible();
+    await expect(await canvas.findByText('Entrée')).toBeVisible();
+    // Its own `output` wins over the provider's.
+    await expect(canvas.getByText('Résultat')).toBeVisible();
+    await expect(canvas.queryByText('Sortie')).toBeNull();
   },
 };

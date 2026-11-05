@@ -1,7 +1,10 @@
 import { clsx } from 'clsx';
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { INTENT_STYLE, type Intent } from '../ui/intent';
+import { TREND_DELTA_LABELS, type TrendDeltaLabels } from './labels';
+import { useNumberFormat } from './useNumberFormat';
 
 export type TrendDeltaSize = 'sm' | 'md';
 
@@ -11,6 +14,11 @@ export type TrendDeltaProps = {
   /** Writes the value. Default: signed, one decimal, as a percent (`+12.4%`, `-3.1%`, `0.0%`). */
   format?: (value: number) => string;
   /**
+   * BCP 47 locale of the default digits (`'fr-FR'`: `+12,4%`). Default `LabelsProvider`'s `locale`,
+   * else `en-US`, so the figures read the same on every machine. `format` wins.
+   */
+  locale?: string;
+  /**
    * Which way is good news. `up` (default) turns a rise green and a drop red; `down` is for a
    * metric that should shrink (churn, latency, cost): a drop is green, with a downward arrow.
    */
@@ -18,17 +26,17 @@ export type TrendDeltaProps = {
   /** What the change is measured against, as muted text after the pill: "vs last month". */
   label?: ReactNode;
   size?: TrendDeltaSize;
+  /** The texts it writes, over `LabelsProvider`'s `trendDelta` and the English defaults. */
+  labels?: Partial<TrendDeltaLabels>;
   className?: string;
 };
 
-// A fixed locale keeps the default output the same on every machine.
-const PERCENT = new Intl.NumberFormat('en-US', {
+const PERCENT: Intl.NumberFormatOptions = {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
   // A + in front of a rise as well as a - in front of a drop, and nothing in front of zero.
   signDisplay: 'exceptZero',
-});
-const defaultFormat = (value: number) => `${PERCENT.format(value)}%`;
+};
 
 const SIZE_CLASS: Record<TrendDeltaSize, { pill: string; icon: string; label: string }> = {
   sm: { pill: 'gap-0.5 px-1.5 text-2xs', icon: 'size-3', label: 'text-xs' },
@@ -44,13 +52,18 @@ const SIZE_CLASS: Record<TrendDeltaSize, { pill: string; icon: string; label: st
  */
 export const TrendDelta = ({
   value,
-  format = defaultFormat,
+  format,
+  locale,
   goodDirection = 'up',
   label,
   size = 'md',
+  labels: ownLabels,
   className,
 }: TrendDeltaProps) => {
-  const direction = value > 0 ? 'increase' : value < 0 ? 'decrease' : 'no change';
+  const labels = useLabels('trendDelta', TREND_DELTA_LABELS, ownLabels);
+  const percent = useNumberFormat(locale, PERCENT);
+  const write = format ?? ((n: number) => `${percent.format(n)}%`);
+  const direction = value > 0 ? labels.increase : value < 0 ? labels.decrease : labels.noChange;
   const Icon = value > 0 ? TrendingUp : value < 0 ? TrendingDown : Minus;
   const intent: Intent =
     value === 0 ? 'neutral' : value > 0 === (goodDirection === 'up') ? 'success' : 'danger';
@@ -68,7 +81,7 @@ export const TrendDelta = ({
       >
         <Icon className={clsx('shrink-0', sizes.icon)} aria-hidden />
         <span className="sr-only">{direction} </span>
-        <bdi>{format(value)}</bdi>
+        <bdi>{write(value)}</bdi>
       </span>
       {label && (
         <span className={clsx('text-gray-500 dark:text-gray-400', sizes.label)}>

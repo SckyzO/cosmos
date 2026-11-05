@@ -1,5 +1,7 @@
 import { clsx } from 'clsx';
+import { useLabels } from '../labels/labelsContext';
 import { Tag } from '../ui/Tag';
+import { ACTIVE_FILTERS_BAR_LABELS, type ActiveFiltersBarLabels } from './labels';
 
 export type ActiveFilter = {
   key: string;
@@ -12,6 +14,8 @@ export type ActiveFiltersBarProps = {
   filters: ActiveFilter[];
   onClearOne: (key: string) => void;
   onClearAll: () => void;
+  /** The texts it writes, over `LabelsProvider`'s `activeFiltersBar` and the English defaults. */
+  labels?: Partial<ActiveFiltersBarLabels>;
   className?: string;
 };
 
@@ -23,8 +27,10 @@ export const ActiveFiltersBar = ({
   filters,
   onClearOne,
   onClearAll,
+  labels: ownLabels,
   className,
 }: ActiveFiltersBarProps) => {
+  const labels = useLabels('activeFiltersBar', ACTIVE_FILTERS_BAR_LABELS, ownLabels);
   if (filters.length === 0) return null;
   return (
     <div
@@ -33,14 +39,14 @@ export const ActiveFiltersBar = ({
         className
       )}
     >
-      <span className="text-xs text-gray-600 dark:text-gray-400">Active filters:</span>
+      <span className="text-xs text-gray-600 dark:text-gray-400">{labels.title}</span>
       {filters.map((f) => (
         <Tag
           key={f.key}
           intent="brand"
           size="md"
           onRemove={() => onClearOne(f.key)}
-          removeLabel={`Clear ${f.label} filter`}
+          removeLabel={labels.clearOne(f.label)}
         >
           <span className="font-semibold capitalize">
             <bdi>{f.label}</bdi>
@@ -58,7 +64,7 @@ export const ActiveFiltersBar = ({
         onClick={() => onClearAll()}
         className="focus-visible:focus-indicator ms-1 rounded-sm text-xs font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
       >
-        Clear all
+        {labels.clearAll}
       </button>
     </div>
   );

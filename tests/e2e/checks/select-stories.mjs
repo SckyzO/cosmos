@@ -14,7 +14,9 @@
 // within the folder only: nothing in a package imports from it.
 //
 // Barrels (index.ts) are skipped: each one names every file of its folder, so following them would
-// spread a change to the names they re-export from unrelated files. Only the packages of the
+// spread a change to the names they re-export from unrelated files. So is the labels registry
+// (`labels/cosmosLabels.ts`, `labels/englishLabels.ts`), which names the labels of every component:
+// through it and `useLabels`, a change to one group's labels would reach every component. Only the packages of the
 // changed files are searched: charts imports neither react nor theme. Paths are relative to the
 // repo root, the working directory.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -42,8 +44,9 @@ const exportsOf = (text) => {
   return names;
 };
 
-// Exported names are identifiers, so they need no escaping.
-const usesAny = (names) => new RegExp(`\\b(?:${[...names].join('|')})\\b`);
+// Exported names are identifiers, so they need no escaping. A name after a dot is a property
+// (`Intl.DateTimeFormat`), not a use of the export of the same name.
+const usesAny = (names) => new RegExp(`(?<![.\\w])(?:${[...names].join('|')})\\b`);
 
 const STORIES_DIR = 'apps/storybook/stories';
 const packages = new Set(
@@ -61,28 +64,39 @@ const files = dirs
       .map((f) => join(dir, f))
   );
 const isStory = (f) => f.endsWith('.stories.tsx');
+const REGISTRY = /\/labels\/(?:cosmosLabels|englishLabels)\.ts$/;
 const sources = files.filter(
-  (f) => !isStory(f) && !f.endsWith('.test.ts') && !f.endsWith('/index.ts')
+  (f) => !isStory(f) && !f.endsWith('.test.ts') && !f.endsWith('/index.ts') && !REGISTRY.test(f)
 );
 const text = new Map(files.map((f) => [f, readFileSync(f, 'utf8').replace(COMMENT, '')]));
 
+// The names of a package reach the package and the app; those of an app file, the app only.
+const inApp = (f) => f.startsWith(`${STORIES_DIR}/`);
 const names = new Set();
+const appNames = new Set();
 const seen = new Set();
-const todo = changed.filter((f) => sources.includes(f));
+// A changed registry is followed from, as any changed source: it is only skipped on the way.
+const todo = changed.filter((f) => sources.includes(f) || REGISTRY.test(f));
 while (todo.length > 0) {
   const file = todo.pop();
   if (seen.has(file)) continue;
   seen.add(file);
-  const fresh = [...exportsOf(text.get(file))].filter((name) => !names.has(name));
+  const own = inApp(file) ? appNames : names;
+  const fresh = [...exportsOf(text.get(file))].filter((name) => !own.has(name));
   if (fresh.length === 0) continue;
-  for (const name of fresh) names.add(name);
+  for (const name of fresh) own.add(name);
   const uses = usesAny(fresh);
-  todo.push(...sources.filter((f) => !seen.has(f) && uses.test(text.get(f))));
+  todo.push(
+    ...sources.filter((f) => !seen.has(f) && (!inApp(file) || inApp(f)) && uses.test(text.get(f)))
+  );
 }
 
 const picked = new Set(changed.filter(isStory));
-if (names.size > 0) {
-  const uses = usesAny(names);
-  for (const f of files) if (isStory(f) && uses.test(text.get(f))) picked.add(f);
+const usesPackage = names.size > 0 ? usesAny(names) : undefined;
+const usesApp = appNames.size > 0 ? usesAny(appNames) : undefined;
+for (const f of files) {
+  if (!isStory(f)) continue;
+  const source = text.get(f);
+  if (usesPackage?.test(source) || (inApp(f) && usesApp?.test(source))) picked.add(f);
 }
 for (const f of [...picked].sort()) console.log(f);
