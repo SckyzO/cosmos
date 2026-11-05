@@ -275,7 +275,7 @@ const KpiGrid = ({ view, state }: { view: View; state: ScreenState }) => (
           label={kpi.label}
           formatValue={kpi.formatSpark}
           height={48}
-          emptyMessage="No data yet"
+          labels={{ empty: 'No data yet' }}
           ariaLabel={`${kpi.label} over the period`}
         />
       );
@@ -382,7 +382,7 @@ const PlansCard = ({ view, state }: { view: View; state: ScreenState }) => {
     >
       <DonutChart
         series={plans.values}
-        labels={plans.labels}
+        names={plans.labels}
         colors={WITH_OTHER}
         centerLabel="Subscribers"
         centerValue={plans.centerValue}

@@ -530,7 +530,7 @@ const NodeStates = ({ cluster, stale }: { cluster: Cluster; stale?: boolean }) =
     >
       <DonutChart
         series={series}
-        labels={['OK', 'Warning', 'Critical', 'Unknown']}
+        names={['OK', 'Warning', 'Critical', 'Unknown']}
         colors={NODE_STATE_COLORS}
         centerLabel="nodes"
         formatValue={grouped}
@@ -788,7 +788,7 @@ const Jobs = ({
       <div className="flex flex-col gap-3">
         <DonutChart
           series={[jobs.Running, jobs.Pending, jobs.Stalled]}
-          labels={['Running', 'Pending', 'Stalled']}
+          names={['Running', 'Pending', 'Stalled']}
           colors={JOB_COLORS}
           centerLabel="jobs"
           formatValue={grouped}
@@ -1150,7 +1150,7 @@ const LoadingPage = () => (
           <SkeletonTable rows={8} cols={12} />
         </SectionCard>
         <SectionCard as="h2" size="md" title="Node states" className="min-w-0 flex-[1_1_15rem]">
-          <DonutChart series={[]} labels={[]} loading height={220} ariaLabel="Node states" />
+          <DonutChart series={[]} names={[]} loading height={220} ariaLabel="Node states" />
         </SectionCard>
       </div>
       <DataTable
