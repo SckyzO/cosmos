@@ -468,6 +468,10 @@ The wrappers of `packages/charts` draw with Recharts and are built on the intern
 - **Use the frame** (`frameProps`, `ChartEmpty`, `ChartTooltip`, `legendProps`, `useAxis`, `AXIS`,
   `ANIMATION`) instead of writing the same props again. A chart with its categories on the vertical
   axis takes `useCategoryKeys` for the arrow keys.
+- **Words are labels.** A text a chart writes itself (its empty message, its default name, a
+  tooltip row, a scale end) is a key of `core/labels.ts`, English by default, read with
+  `useChartLabels` and translated by `ChartLabelsProvider`: charts imports neither `cosmos-react` nor
+  the theme, so it has its own. Every wrapper takes `labels`, and no separate text prop is added.
 - **Public props** are `ChartProps` (`height`, `width`, `ariaLabel`, `children`) plus what the chart
   needs. `children` takes Recharts elements drawn inside the chart; `recharts` stays pinned to the
   version in `packages/charts/package.json`, and a consumer who adds it uses the same one.

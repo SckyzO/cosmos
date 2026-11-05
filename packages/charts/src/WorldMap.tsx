@@ -21,6 +21,8 @@ import {
   TEXT,
   TRACK,
 } from './core/colors';
+import { WORLD_MAP_LABELS, type CommonChartLabels, type WorldMapLabels } from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { useElementSize } from './core/useElementSize';
 import { VISUALLY_HIDDEN } from './core/visuallyHidden';
 import { NUMERIC_TO_ALPHA2 } from './world-map-codes';
@@ -114,7 +116,7 @@ export type WorldMapProps = Omit<ChartProps, 'children'> & {
   geography: Topology;
   /** Format the values, in the tooltip, the legend and the table. Default `String`. */
   formatValue?: (value: number) => string;
-  /** Names the value in the tooltip, such as `visitors`. Default `Value`. */
+  /** Names the value in the tooltip, such as `visitors`. Default `labels.value`, `Value`. */
   label?: string;
   /**
    * Clamp the values to this end before the color steps are cut: a value under
@@ -153,6 +155,8 @@ export type WorldMapProps = Omit<ChartProps, 'children'> & {
    * on the one the keyboard is on. Without it, the markers only show.
    */
   onMarkerSelect?: (marker: WorldMapMarker) => void;
+  /** The texts it writes, over `ChartLabelsProvider`'s `worldMap` and `chart` and the English defaults. */
+  labels?: Partial<CommonChartLabels & WorldMapLabels>;
 };
 
 // The map is drawn in a box this wide, as tall as the map needs (about 470), and
@@ -236,8 +240,6 @@ const shapesOf = (
   return { shapes, viewHeight: Math.ceil(bottom) + MARGIN, projection, path };
 };
 
-const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? '' : 's'}`;
-
 export const WorldMap = ({
   data,
   geography,
@@ -250,10 +252,12 @@ export const WorldMap = ({
   markers,
   routes,
   onMarkerSelect,
+  labels: ownLabels,
   ariaLabel,
   height,
   width,
 }: WorldMapProps) => {
+  const labels = useChartLabels('worldMap', WORLD_MAP_LABELS, ownLabels);
   const frame = useRef<HTMLDivElement>(null);
   const { shapes, viewHeight, projection, path } = useMemo(() => shapesOf(geography), [geography]);
   // The markers and the routes are in screen pixels: how many viewBox units one is.
@@ -309,7 +313,7 @@ export const WorldMap = ({
     dots.map((dot) => ({ ...dot, label: dot.marker.label, value: finiteValue(dot.marker.value) }))
   );
   const routeOrder = byValue(
-    lines.map((line) => ({ line, label: routeName(line), value: line.value }))
+    lines.map((line) => ({ line, label: routeName(line, labels.routeName), value: line.value }))
   ).map(({ line }) => line);
   const markerById = new Map(markerOrder.map((dot) => [dot.marker.id, dot]));
   const routeByKey = new Map(routeOrder.map((line) => [String(line.index), line]));
@@ -330,14 +334,18 @@ export const WorldMap = ({
   const name =
     ariaLabel ??
     [
-      'World map',
+      labels.name,
       ...(order.length > 0
         ? [
-            `${label ?? 'value'} by country, from ${formatValue(order[order.length - 1].value)} to ${formatValue(order[0].value)}`,
+            labels.byCountry(
+              label ?? labels.measure,
+              formatValue(order[order.length - 1].value),
+              formatValue(order[0].value)
+            ),
           ]
         : []),
-      ...(dots.length > 0 ? [plural(dots.length, 'marker')] : []),
-      ...(lines.length > 0 ? [plural(lines.length, 'route')] : []),
+      ...(dots.length > 0 ? [labels.markerCount(dots.length)] : []),
+      ...(lines.length > 0 ? [labels.routeCount(lines.length)] : []),
     ].join(', ');
 
   const tip = hover ?? focus;
@@ -347,11 +355,11 @@ export const WorldMap = ({
   const describe = (
     stop: Stop
   ): { title: ReactNode; announced: string; rows: TooltipRow[] } | undefined => {
-    const measure = label ?? 'Value';
+    const measure = label ?? labels.value;
     const row = (value: number | undefined, color: string): TooltipRow[] =>
       value === undefined ? [] : [{ name: measure, value: formatValue(value), color }];
     const said = (title: string, value: number | undefined) =>
-      value === undefined ? title : `${title}, ${measure}: ${formatValue(value)}`;
+      value === undefined ? title : labels.announce(title, measure, formatValue(value));
     if (stop.kind === 'country') {
       const country = byCode.get(stop.key);
       if (!country || country.value === undefined) return undefined;
@@ -377,7 +385,7 @@ export const WorldMap = ({
         // The arrow points from the start to the end whatever the direction of the page.
         <bdi dir="ltr">{`${line.fromName} → ${line.toName}`}</bdi>
       ),
-      announced: said(routeName(line), line.value),
+      announced: said(routeName(line, labels.routeName), line.value),
       rows: row(line.value, MARKER_COLOR),
     };
   };
@@ -487,7 +495,13 @@ export const WorldMap = ({
   }));
   const widths = routeValues(routeOrder);
   const legend = showLegend && (colorScale || sizes.length > 0 || widths.length > 0) && (
-    <Legends scale={colorScale} format={formatValue} sizes={sizes} widths={widths} />
+    <Legends
+      scale={colorScale}
+      format={formatValue}
+      sizes={sizes}
+      widths={widths}
+      labels={labels}
+    />
   );
 
   return (
@@ -671,8 +685,8 @@ export const WorldMap = ({
               <caption>{name}</caption>
               <thead>
                 <tr>
-                  <th scope="col">Country</th>
-                  <th scope="col">{label ?? 'Value'}</th>
+                  <th scope="col">{labels.countryColumn}</th>
+                  <th scope="col">{label ?? labels.value}</th>
                 </tr>
               </thead>
               <tbody>
@@ -688,9 +702,9 @@ export const WorldMap = ({
           {markerOrder.length > 0 && (
             <ReadingTable
               kind="markers"
-              caption="Markers"
-              first="Marker"
-              measure={label ?? 'Value'}
+              caption={labels.markersCaption}
+              first={labels.markerColumn}
+              measure={label ?? labels.value}
               rows={markerOrder.map((dot) => ({
                 key: dot.marker.id,
                 name: dot.marker.label,
@@ -701,12 +715,12 @@ export const WorldMap = ({
           {routeOrder.length > 0 && (
             <ReadingTable
               kind="routes"
-              caption="Routes"
-              first="Route"
-              measure={label ?? 'Value'}
+              caption={labels.routesCaption}
+              first={labels.routeColumn}
+              measure={label ?? labels.value}
               rows={routeOrder.map((line) => ({
                 key: String(line.index),
-                name: routeName(line),
+                name: routeName(line, labels.routeName),
                 value: line.value === undefined ? undefined : formatValue(line.value),
               }))}
             />
@@ -718,8 +732,9 @@ export const WorldMap = ({
   );
 };
 
-/** What names a route in plain text: the label it was given, or `Rotterdam to New York`. */
-const routeName = (line: ResolvedRoute) => line.label ?? `${line.fromName} to ${line.toName}`;
+/** What names a route in plain text: the label it was given, or `Rotterdam to New York` in English. */
+const routeName = (line: ResolvedRoute, name: WorldMapLabels['routeName']) =>
+  line.label ?? name(line.fromName, line.toName);
 
 /** The smallest and the largest value of the routes that have one: what the width key spans. */
 const routeValues = (lines: readonly { value?: number }[]): number[] => {
@@ -776,14 +791,16 @@ const Legends = ({
   format,
   sizes,
   widths,
+  labels,
 }: {
   scale?: Scale;
   format: (value: number) => string;
   sizes: { value: number; radius: number }[];
   /** The smallest and the largest value of the routes, or none. */
   widths: number[];
+  labels: Pick<WorldMapLabels, 'widthRange' | 'noData'>;
 }) => {
-  const steps = scale && <Legend scale={scale} format={format} />;
+  const steps = scale && <Legend scale={scale} format={format} noData={labels.noData} />;
   if (sizes.length === 0 && widths.length === 0) return steps || null;
   return (
     <div
@@ -873,7 +890,7 @@ const Legends = ({
           <span style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
             {widths[0] === widths[1]
               ? format(widths[0])
-              : `${format(widths[0])} to ${format(widths[1])}`}
+              : labels.widthRange(format(widths[0]), format(widths[1]))}
           </span>
         </div>
       )}
@@ -881,7 +898,15 @@ const Legends = ({
   );
 };
 
-const Legend = ({ scale, format }: { scale: Scale; format: (value: number) => string }) => (
+const Legend = ({
+  scale,
+  format,
+  noData,
+}: {
+  scale: Scale;
+  format: (value: number) => string;
+  noData: string;
+}) => (
   <ul
     data-world-legend=""
     style={{
@@ -922,7 +947,7 @@ const Legend = ({ scale, format }: { scale: Scale; format: (value: number) => st
           boxSizing: 'border-box',
         }}
       />
-      <span style={{ whiteSpace: 'nowrap' }}>No data</span>
+      <span style={{ whiteSpace: 'nowrap' }}>{noData}</span>
     </li>
   </ul>
 );

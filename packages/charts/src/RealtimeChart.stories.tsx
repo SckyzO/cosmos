@@ -20,6 +20,8 @@ import {
   tickTexts,
   tooltipCard,
 } from './storybook-recharts';
+import { ChartLabelsProvider } from './ChartLabelsProvider';
+import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
 
 // Recorded traces, replayed in a loop: the wrapper's default generator is
 // random, which would make every render different.
@@ -119,12 +121,12 @@ export const TimeAxis: Story = {
   render: (args) => <Replay {...args} trace={CPU} />,
 };
 
-/** `warnLabel` and `critLabel` rename the threshold labels; an empty string draws the line alone. */
+/** `labels.warn` and `labels.crit` rename the threshold labels; an empty string draws the line alone. */
 export const ThresholdLabels: Story = {
   render: (args) => (
     <div className="grid gap-4 md:grid-cols-2">
-      <Replay {...args} trace={DISK} warnLabel="Avertissement" critLabel="Critique" />
-      <Replay {...args} trace={DISK} warnLabel="" critLabel="Limit" />
+      <Replay {...args} trace={DISK} labels={{ warn: 'Avertissement', crit: 'Critique' }} />
+      <Replay {...args} trace={DISK} labels={{ warn: '', crit: 'Limit' }} />
     </div>
   ),
 };
@@ -423,8 +425,7 @@ export const HtmlInLabelsRendersAsText: Story = {
     showTimeAxis: true,
     xTitle: HOSTILE,
     yTitle: HOSTILE,
-    warnLabel: HOSTILE,
-    critLabel: '',
+    labels: { warn: HOSTILE, crit: '' },
     intervalMs: 60_000,
   },
   render: (args) => <Replay {...args} trace={CPU} />,
@@ -488,5 +489,32 @@ export const LowestLabelStaysInTheChart: Story = {
       const box = label.getBoundingClientRect();
       await expect(box.bottom, label.textContent ?? '').toBeLessThanOrEqual(svg.bottom);
     }
+  },
+};
+
+/** The provider writes the name, the thresholds and the tooltip row; the chart's own `labels` win over it. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  // No new sample during the test.
+  args: { labels: { crit: 'Critique !' }, intervalMs: 60_000 },
+  render: (args) => (
+    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+      <Replay {...args} trace={DISK} />
+    </ChartLabelsProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(surface(canvasElement)).toHaveAttribute(
+        'aria-label',
+        'Valeurs en direct, la plus récente à droite'
+      )
+    );
+    await waitFor(() => {
+      expect(thresholdLabel(canvasElement, 'ALERTE')).toBeDefined();
+      expect(thresholdLabel(canvasElement, 'Critique !')).toBeDefined();
+    });
+    await openTooltip(canvasElement);
+    await expect(tooltipCard(canvasElement)?.querySelector('li')).toHaveTextContent('valeur');
+    await closeTooltip(canvasElement);
   },
 };

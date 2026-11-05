@@ -24,14 +24,6 @@ export type WaterfallBar = {
   running: number;
 };
 
-/** The kind in words, for the tooltip and the name a screen reader hears. */
-export const KIND_WORDS: Record<WaterfallBarKind, string> = {
-  increase: 'Increase',
-  decrease: 'Decrease',
-  subtotal: 'Subtotal',
-  total: 'Total',
-};
-
 // A missing or non-finite value counts as 0.
 const clean = (value: number | undefined) =>
   value !== undefined && Number.isFinite(value) ? value : 0;

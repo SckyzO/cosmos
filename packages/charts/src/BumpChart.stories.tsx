@@ -19,6 +19,8 @@ import {
   tickTexts,
   tooltipCard,
 } from './storybook-recharts';
+import { ChartLabelsProvider } from './ChartLabelsProvider';
+import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
 
@@ -230,7 +232,7 @@ export const TooNarrowForDiscs: Story = {
   },
 };
 
-/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+/** With no data, the chart draws `labels.empty` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [] },
 };
@@ -241,9 +243,9 @@ export const EmptyChecks: Story = {
   play: expectEmptyMessage('No data'),
 };
 
-/** `emptyMessage` says why there is nothing to draw. */
+/** `labels.empty` says why there is nothing to draw. */
 export const EmptyWithMessage: Story = {
-  args: { series: [{ name: 'Aurora', data: [] }], emptyMessage: 'No ranking this quarter' },
+  args: { series: [{ name: 'Aurora', data: [] }], labels: { empty: 'No ranking this quarter' } },
 };
 
 export const EmptyWithMessageChecks: Story = {
@@ -803,5 +805,48 @@ export const PointerTooltipThenLeave: Story = {
     await expect(tooltipCard(canvasElement)?.querySelectorAll('li')).toHaveLength(5);
     await closeTooltip(canvasElement);
     await expect(strokeWidths(canvasElement)).toEqual([3, 3, 3, 3, 3]);
+  },
+};
+
+/** The provider writes the name and the change in the tooltip; the chart's own `labels` win over it. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: WITH_ENTRIES, labels: { newEntry: 'nouveau' } },
+  render: (args) => (
+    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+      <Box {...args} width={880} />
+    </ChartLabelsProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    await drawn(canvasElement, 6);
+    await expect(surface(canvasElement)).toHaveAttribute(
+      'aria-label',
+      'Classement : Aurora, Basalt, Cobalt, Dune, Ember, Fjord'
+    );
+    await userEvent.tab();
+    const card = () => tooltipCard(canvasElement) as HTMLElement;
+    const rows = () => [...card().querySelectorAll('li')].map((li) => li.textContent);
+    await waitFor(() => expect(card().querySelectorAll('li')).toHaveLength(5));
+    // February: a rank that did not move, one that went up and one that went down.
+    await userEvent.keyboard('{ArrowRight}');
+    await waitFor(() => expect(card().querySelector('p')).toHaveTextContent('Feb'));
+    await expect(rows()).toEqual(
+      expect.arrayContaining([
+        'Aurora#1inchangé par rapport à Jan',
+        'Cobalt#2en hausse de 1 par rapport à Jan',
+        'Basalt#3en baisse de 1 par rapport à Jan',
+      ])
+    );
+    // May: Fjord enters, in the word the chart's own labels give.
+    for (let i = 0; i < 3; i++) await userEvent.keyboard('{ArrowRight}');
+    await waitFor(() => expect(card().querySelector('p')).toHaveTextContent('May'));
+    await expect(rows()).toContain('Fjord#6nouveau');
+    // Focus on Fjord, then back to a period it is not in.
+    for (let i = 0; i < 6; i++) await userEvent.keyboard('{ArrowDown}');
+    for (let i = 0; i < 2; i++) await userEvent.keyboard('{ArrowLeft}');
+    await waitFor(() => expect(card().querySelector('p')).toHaveTextContent('Mar'));
+    await expect(card().querySelector('li')).toHaveTextContent('Fjordnon classé');
+    await userEvent.tab();
+    await closeTooltip(canvasElement);
   },
 };

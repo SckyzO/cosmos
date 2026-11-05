@@ -44,3 +44,8 @@ const fr: LabelsInput = {
 
 The provider holds one language. To switch languages, pass it the dictionary of the language on
 show, from your own i18n library or a plain object per locale.
+
+The charts have a provider of their own. `@sckyzo/cosmos-charts` imports neither this package nor
+the theme, so it cannot read `LabelsProvider`: mount `ChartLabelsProvider` next to it, with the
+charts' dictionary (the empty message, the names screen readers hear, the words of a tooltip). It
+works the same way, key by key; see [Charts: Translating](charts.md#translating).

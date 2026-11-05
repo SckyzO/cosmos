@@ -225,8 +225,10 @@ charts ───────────── storybook      (charts imports ne
     that skips the hues looking like it), so the fallbacks are a safety net. A colour a chart reads
     goes there first. Status thresholds come from `--color-status-warn/crit`.
   - **Text** is `var(--text-xs, 0.75rem)` (ticks, titles, legend, tooltip); the font is inherited.
+    **Words are labels**, with a provider of charts' own (`core/labels.ts`, `useChartLabels`, `ChartLabelsProvider`:
+    an entry sharing one context chunk with the wrappers); `repo-policy.spec.ts` refuses English in place.
   - **The frame lives in `core/`**: `frameProps` (responsive size from `height` / `width`, `ariaLabel`,
-    `accessibilityLayer`, `maxWidth: 100%`) and `ChartEmpty` (`emptyMessage`), `ChartTooltip` /
+    `accessibilityLayer`, `maxWidth: 100%`) and `ChartEmpty` (`labels.empty`), `ChartTooltip` /
     `TooltipCard` (React, `role="status"`, `formatValue`), `ChartLegend` via `legendProps` (buttons that
     hide a series, `legendPosition`, series order kept with `itemSorter={null}`), `AXIS` / `GRID_PROPS` /
     `xAxisTitle` / `yAxisTitle`, `ANIMATION` (500 ms, `'auto'` off for reduced motion). A wrapper with a
@@ -238,7 +240,7 @@ charts ───────────── storybook      (charts imports ne
   - **`children`** (`ChartProps`): Recharts elements rendered inside the chart (reference line, brush,
     extra axis), except on `HeatmapChart`, `CalendarChart`, `FunnelChart`, `SunburstChart` and
     `WorldMap`, drawn in HTML and SVG of their own. Tooltip and legend are React text, so nothing is escaped by hand. Every
-    wrapper takes `ariaLabel`; the series charts add `emptyMessage`, the ones with a legend
+    wrapper takes `ariaLabel` and `labels`; the series charts add an empty state, the ones with a legend
     `legendPosition` (`src/types.ts`).
   - **Stories**: one `<Name>.stories.tsx` per wrapper, helpers in `src/storybook-recharts.tsx` (the
     Recharts DOM, `HOSTILE`, theme and colour checks). Each wrapper keeps an `HtmlInLabelsRendersAsText`

@@ -17,11 +17,16 @@ import { trimLabel } from './core/categoryAxis';
 import { TooltipCard } from './core/ChartTooltip';
 import { BORDER, ERROR, MUTED, SERIES, SUCCESS, TEXT } from './core/colors';
 import { ChartEmpty, ChartSkeleton, frameProps } from './core/frame';
+import {
+  WATERFALL_CHART_LABELS,
+  type WaterfallChartLabels,
+  type CommonChartLabels,
+} from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { useElementWidth } from './core/useElementWidth';
-import type { ChartAxisTitleProps, ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
+import type { ChartAxisTitleProps, ChartLoadingProps, ChartProps } from './types';
 import {
   barText,
-  KIND_WORDS,
   signed,
   waterfallBars,
   type WaterfallBar,
@@ -31,7 +36,6 @@ import {
 export type { WaterfallDatum } from './waterfall';
 
 export type WaterfallChartProps = ChartProps &
-  ChartEmptyProps &
   ChartLoadingProps &
   ChartAxisTitleProps & {
     /**
@@ -52,6 +56,8 @@ export type WaterfallChartProps = ChartProps &
     showConnectors?: boolean;
     /** Override the colors: increases, decreases, totals and subtotals. Defaults: the theme's success, error and accent. */
     colors?: { positive?: string; negative?: string; total?: string };
+    /** The texts it writes, over `ChartLabelsProvider`'s `waterfallChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & WaterfallChartLabels>;
   };
 
 // Below this width the value labels go and the category names tilt.
@@ -78,7 +84,7 @@ const fillOf = (kind: WaterfallBar['kind'], palette: Palette) =>
 // The bar is the span between the running total before and after the step; the
 // label above it is drawn here too, so it moves with the bar while it grows.
 const waterfallShape =
-  (palette: Palette, labels: boolean, format: (value: number) => string) =>
+  (palette: Palette, valued: boolean, format: (value: number) => string) =>
   (props: BarShapeProps) => {
     const row = props.payload as Row;
     const left = Math.min(props.x, props.x + props.width);
@@ -98,7 +104,7 @@ const waterfallShape =
           fill={fillOf(row.kind, palette)}
           fillOpacity={row.kind === 'subtotal' ? SUBTOTAL_OPACITY : 1}
         />
-        {labels && (
+        {valued && (
           <text
             x={left + width / 2}
             y={top - 6}
@@ -166,13 +172,14 @@ export const WaterfallChart = ({
   colors,
   xTitle,
   yTitle,
-  emptyMessage = 'No data',
+  labels: ownLabels,
   loading,
   ariaLabel,
   children,
   height = 320,
   width,
 }: WaterfallChartProps) => {
+  const labels = useChartLabels('waterfallChart', WATERFALL_CHART_LABELS, ownLabels);
   const axis = useAxis();
   const { ref, width: measured } = useElementWidth();
   const bars = useMemo(() => waterfallBars(data), [data]);
@@ -180,10 +187,11 @@ export const WaterfallChart = ({
     () => bars.map((bar, i) => ({ ...bar, key: String(i), range: [bar.low, bar.high] })),
     [bars]
   );
-  const name = ariaLabel ?? `Waterfall chart: ${data.map((d) => d.label).join(', ')}`;
-  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
+  const name = ariaLabel ?? labels.name(data.map((d) => d.label).join(', '));
+  if (loading)
+    return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   if (data.length === 0) {
-    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
 
   const palette: Palette = {
@@ -192,7 +200,7 @@ export const WaterfallChart = ({
     total: colors?.total ?? SERIES[0],
   };
   const narrow = measured !== undefined && measured < NARROW;
-  const labels = showLabels ?? (rows.length <= MAX_LABELED_BARS && !narrow);
+  const valued = showLabels ?? (rows.length <= MAX_LABELED_BARS && !narrow);
   // Names tilt when the chart is narrow, or when they would not fit side by side.
   const longest = Math.min(MAX_CHARS, Math.max(...rows.map((row) => row.label.length)));
   const band = measured === undefined ? Infinity : (measured - 56) / rows.length;
@@ -219,12 +227,12 @@ export const WaterfallChart = ({
         title={row.label}
         rows={[
           {
-            name: KIND_WORDS[row.kind],
+            name: labels[row.kind],
             value: step ? signed(row.value, formatValue) : formatValue(row.running),
             color,
           },
           ...(step
-            ? [{ name: 'Running total', value: formatValue(row.running), color: 'transparent' }]
+            ? [{ name: labels.runningTotal, value: formatValue(row.running), color: 'transparent' }]
             : []),
         ]}
       />
@@ -236,7 +244,7 @@ export const WaterfallChart = ({
       <BarChart
         {...frameProps({ height, width: '100%', ariaLabel: name })}
         data={rows}
-        margin={{ top: labels ? 24 : 4, right: 8, bottom: 0, left: 0 }}
+        margin={{ top: valued ? 24 : 4, right: 8, bottom: 0, left: 0 }}
         barCategoryGap={`${GAP * 100}%`}
       >
         <CartesianGrid {...GRID_PROPS} />
@@ -248,10 +256,10 @@ export const WaterfallChart = ({
           animationDuration={150}
         />
         <Bar
-          name="Waterfall"
+          name={labels.series}
           dataKey="range"
           maxBarSize={MAX_BAR}
-          shape={waterfallShape(palette, labels, formatValue)}
+          shape={waterfallShape(palette, valued, formatValue)}
           {...ANIMATION}
         />
         {showConnectors && <Connectors bars={bars} />}

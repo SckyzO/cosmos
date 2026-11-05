@@ -10,6 +10,8 @@ import {
   switchTheme,
   themeColor,
 } from './storybook-recharts';
+import { ChartLabelsProvider } from './ChartLabelsProvider';
+import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
 
 const CHECKOUT = [
   { label: 'Visits', value: 48210 },
@@ -105,7 +107,7 @@ export const CustomColors: Story = {
   },
 };
 
-/** With no stage, or only stages at 0, the chart draws `emptyMessage` (default "No data"). */
+/** With no stage, or only stages at 0, the chart draws `labels.empty` (default "No data"). */
 export const Empty: Story = {
   args: { stages: [] },
 };
@@ -388,7 +390,7 @@ export const GrowingAndEmptyStages: Story = {
   },
 };
 
-/** `emptyMessage` replaces the default, and stages that are all at 0 are as empty as none. */
+/** `labels.empty` replaces the default, and stages that are all at 0 are as empty as none. */
 export const AllZeroShowsTheEmptyMessage: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
@@ -396,7 +398,7 @@ export const AllZeroShowsTheEmptyMessage: Story = {
       { label: 'a', value: 0 },
       { label: 'b', value: 0 },
     ],
-    emptyMessage: 'Nothing yet',
+    labels: { empty: 'Nothing yet' },
   },
   play: expectEmptyMessage('Nothing yet'),
 };
@@ -672,6 +674,48 @@ export const NamedAndKeyboardReachable: Story = {
     await userEvent.tab({ shift: true });
     await expect(stagesOf(canvasElement)[0]).toHaveFocus();
     await userEvent.tab();
+    await waitFor(() => expect(tooltipOf(canvasElement)).toBeNull());
+  },
+};
+
+/** The provider writes the names, the rates and the tooltip rows; the chart's own `labels` win over it. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    stages: [
+      { label: 'Visites', value: 1000 },
+      { label: 'Inscriptions', value: 400 },
+      { label: 'Achats', value: 100 },
+    ],
+    labels: { ofPrevious: 'Depuis la précédente' },
+  },
+  render: (args) => (
+    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+      <FunnelChart {...args} />
+    </ChartLabelsProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() => expect(stagesOf(canvasElement)).toHaveLength(3));
+    await expect(canvasElement.querySelector('[role="list"]')).toHaveAttribute(
+      'aria-label',
+      'Entonnoir : Visites, Inscriptions, Achats'
+    );
+    await expect(stagesOf(canvasElement)[0]).toHaveAccessibleName('Visites : 1000');
+    await expect(stagesOf(canvasElement)[1]).toHaveAccessibleName(
+      "Inscriptions : 400, 40.0% de l'étape précédente, 40.0% de Visites"
+    );
+    await expect(noteOf(canvasElement, 1)).toHaveTextContent('40.0% de Visites');
+    await userEvent.hover(stagesOf(canvasElement)[2]);
+    await waitFor(() => {
+      const card = tooltipOf(canvasElement) as HTMLElement;
+      expect(card.querySelector('p')?.textContent).toBe('Achats');
+      expect([...card.querySelectorAll('li')].map((li) => li.textContent)).toEqual([
+        'Valeur100',
+        'Depuis la précédente25.0%',
+        'De Visites10.0%',
+      ]);
+    });
+    await userEvent.unhover(stagesOf(canvasElement)[2]);
     await waitFor(() => expect(tooltipOf(canvasElement)).toBeNull());
   },
 };

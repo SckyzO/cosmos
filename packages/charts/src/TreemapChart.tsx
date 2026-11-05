@@ -5,13 +5,18 @@ import { TooltipCard } from './core/ChartTooltip';
 import { MUTED, PANEL, TEXT, TRACK, seriesColor } from './core/colors';
 import { hasNoData } from './core/data';
 import { ChartEmpty, ChartSkeleton } from './core/frame';
+import {
+  TREEMAP_CHART_LABELS,
+  type TreemapChartLabels,
+  type CommonChartLabels,
+} from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { textOn } from './core/readable';
-import type { ChartEmptyProps, ChartLoadingProps, ChartProps } from './types';
+import type { ChartLoadingProps, ChartProps } from './types';
 
 export type TreemapDatum = { x: string; y: number };
 
 export type TreemapChartProps = ChartProps &
-  ChartEmptyProps &
   ChartLoadingProps & {
     series: { name?: string; data: TreemapDatum[] }[];
     /**
@@ -26,6 +31,8 @@ export type TreemapChartProps = ChartProps &
      * value in the tooltip.
      */
     showValues?: boolean;
+    /** The texts it writes, over `ChartLabelsProvider`'s `treemapChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & TreemapChartLabels>;
   };
 
 /** What a tile carries from the data to the content that draws it. */
@@ -66,6 +73,8 @@ type TileViewProps = {
   ring: boolean;
   showValues: boolean;
   format: (value: number) => string;
+  /** What names the tile for a screen reader. */
+  tileName: TreemapChartLabels['tile'];
   onFocusTile: (event: FocusEvent<SVGGElement>, tile: number) => void;
   onBlurTile: (event: FocusEvent<SVGGElement>) => void;
 };
@@ -85,6 +94,7 @@ const TileView = ({
   ring,
   showValues,
   format,
+  tileName,
   onFocusTile,
   onBlurTile,
 }: TileViewProps) => {
@@ -92,12 +102,11 @@ const TileView = ({
   // A group draws nothing of its own: its tiles are drawn over it.
   if (!tile) return <g />;
   const { x, y, width, height } = node;
-  const label = tile.group ? `${tile.group}, ${tile.name}` : tile.name;
   return (
     <g
       data-tile={tile.tile}
       role="img"
-      aria-label={`${label}: ${format(tile.value)}`}
+      aria-label={tileName(tile.name, format(tile.value), tile.group)}
       tabIndex={tabbable ? 0 : -1}
       onFocus={(event) => onFocusTile(event, tile.tile)}
       onBlur={onBlurTile}
@@ -214,22 +223,24 @@ export const TreemapChart = ({
   colors,
   formatValue = String,
   showValues = false,
-  emptyMessage = 'No data',
+  labels: ownLabels,
   loading,
   ariaLabel,
   children,
   height = 320,
   width = '100%',
 }: TreemapChartProps) => {
+  const labels = useChartLabels('treemapChart', TREEMAP_CHART_LABELS, ownLabels);
   const frame = useRef<HTMLDivElement>(null);
   const [roving, setRoving] = useState(0);
   const [ringed, setRinged] = useState<number>();
-  const name = ariaLabel ?? `Treemap: ${series.flatMap((s) => s.data.map((d) => d.x)).join(', ')}`;
-  if (loading) return <ChartSkeleton ariaLabel={name} height={height} width={width} />;
+  const name = ariaLabel ?? labels.name(series.flatMap((s) => s.data.map((d) => d.x)).join(', '));
+  if (loading)
+    return <ChartSkeleton ariaLabel={labels.loading(name)} height={height} width={width} />;
   // A tile with no area cannot be seen, hovered or focused.
   const drawn = series.map((s) => ({ ...s, data: s.data.filter((d) => d.y > 0) }));
   if (hasNoData(drawn)) {
-    return <ChartEmpty message={emptyMessage} ariaLabel={name} height={height} width={width} />;
+    return <ChartEmpty message={labels.empty} ariaLabel={name} height={height} width={width} />;
   }
   // One color per name, so a name has the same color in every group.
   const colorByName = new Map<string, string>();
@@ -252,7 +263,7 @@ export const TreemapChart = ({
   const grouped = drawn.length > 1;
   const groups = grouped
     ? drawn.map((s, i) => {
-        const group = s.name ?? `Series ${i + 1}`;
+        const group = s.name ?? labels.series(i + 1);
         return { name: group, children: s.data.map(toTile(group)) };
       })
     : [];
@@ -313,6 +324,7 @@ export const TreemapChart = ({
               ring={tileNode.tile === ringed}
               showValues={showValues}
               format={formatValue}
+              tileName={labels.tile}
               onFocusTile={onFocusTile}
               onBlurTile={onBlurTile}
             />

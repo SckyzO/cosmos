@@ -18,6 +18,8 @@ import {
   switchTheme,
   themeColor,
 } from './storybook-recharts';
+import { ChartLabelsProvider } from './ChartLabelsProvider';
+import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
 
 const celsius = (v: number) => `${v} °C`;
 const watts = (v: number) => `${v} W`;
@@ -54,7 +56,7 @@ export const Overview: Story = {
   render: () => (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card title="RadialBarChart">
-        <RadialBarChart series={[78, 62, 88, 41]} labels={['CPU', 'Mem', 'Disk', 'Net']} />
+        <RadialBarChart series={[78, 62, 88, 41]} names={['CPU', 'Mem', 'Disk', 'Net']} />
       </Card>
       <Card title="GradientRadial">
         <GradientRadial value={84} label="Health" />
@@ -1556,5 +1558,52 @@ export const GaugesAreNamedImages: Story = {
       await expect(surface(gauge)).toHaveAttribute('role', 'img');
       await expect(gauge.querySelector('[tabindex]:not([tabindex="-1"])')).toBeNull();
     }
+  },
+};
+
+/** The provider writes the names of the gauges and `GradientRadial`'s label; the gauge's own `labels` win over it. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+      <div data-testid="gradient">
+        <GradientRadial value={84} height={160} />
+      </div>
+      <div data-testid="own">
+        <GradientRadial value={84} height={160} labels={{ label: 'Santé' }} />
+      </div>
+      <div data-testid="label">
+        <GradientRadial value={84} height={160} label="CPU" labels={{ label: 'Santé' }} />
+      </div>
+      <div data-testid="stroked">
+        <StrokedGauge value={92} height={160} />
+      </div>
+      <div data-testid="semi">
+        <SemiCircleGauge
+          value={67}
+          target={80}
+          warnAt={70}
+          critAt={90}
+          showZones
+          labels={{ target: (value) => `cible ${value}` }}
+        />
+      </div>
+    </ChartLabelsProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    const name = (id: string) =>
+      surface(canvasElement.querySelector(`[data-testid="${id}"]`) as HTMLElement)?.getAttribute(
+        'aria-label'
+      );
+    await waitFor(() => {
+      expect(name('gradient')).toBe('Note : 84%');
+      expect(name('own')).toBe('Santé : 84%');
+      // The `label` the app passes in wins over both.
+      expect(name('label')).toBe('CPU : 84%');
+      expect(name('stroked')).toBe('Jauge : 92%');
+      expect(name('semi')).toBe(
+        'Jauge : 67%, cible 80%, alerte à partir de 70%, critique à partir de 90%'
+      );
+    });
   },
 };

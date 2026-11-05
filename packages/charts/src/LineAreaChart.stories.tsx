@@ -182,7 +182,7 @@ export const TextFollowsTheTextSize: Story = {
   play: ({ canvasElement }) => expectTextFollowsTextSize(canvasElement),
 };
 
-/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+/** With no data, the chart draws `labels.empty` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], categories: [] },
 };
@@ -203,12 +203,12 @@ export const EmptyDrawsNoAxisTitles: Story = {
   },
 };
 
-/** `emptyMessage` says why there is nothing to draw. */
+/** `labels.empty` says why there is nothing to draw. */
 export const EmptyWithMessage: Story = {
   args: {
     series: [{ name: 'CPU', data: [] }],
     categories: [],
-    emptyMessage: 'No samples in the last hour',
+    labels: { empty: 'No samples in the last hour' },
   },
 };
 

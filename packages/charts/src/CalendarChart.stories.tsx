@@ -9,6 +9,8 @@ import {
   switchTheme,
   themeColor,
 } from './storybook-recharts';
+import { ChartLabelsProvider } from './ChartLabelsProvider';
+import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
 
 const DAY_MS = 86_400_000;
 
@@ -144,19 +146,18 @@ export const WeekStartsOnSunday: Story = {
   args: { data: YEAR, weekStart: 0, formatValue: unit, ariaLabel: 'Deploys per day in 2026' },
 };
 
-/** `locale` names the months, the weekdays and the dates; `lessLabel` and `moreLabel` the ends of the scale. */
+/** `locale` names the months, the weekdays and the dates; `labels.less` and `labels.more` the ends of the scale. */
 export const French: Story = {
   args: {
     data: YEAR,
     locale: 'fr-FR',
-    lessLabel: 'Moins',
-    moreLabel: 'Plus',
+    labels: { less: 'Moins', more: 'Plus' },
     formatValue: unit,
     ariaLabel: 'Déploiements par jour en 2026',
   },
 };
 
-/** With no data, the chart draws `emptyMessage` (default "No data") in place of the grid. */
+/** With no data, the chart draws `labels.empty` (default "No data") in place of the grid. */
 export const Empty: Story = {
   args: { data: [] },
 };
@@ -223,7 +224,7 @@ export const HtmlInLabelsRendersAsText: Story = {
     layout: 'range',
     formatValue: () => HOSTILE,
     ariaLabel: HOSTILE,
-    emptyMessage: HOSTILE,
+    labels: { empty: HOSTILE },
   },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(gridOf(canvasElement)).toHaveAttribute('aria-label', HOSTILE));
@@ -243,7 +244,7 @@ export const HtmlInLabelsRendersAsText: Story = {
 /** The message of the empty state is text too. */
 export const HtmlInEmptyMessageRendersAsText: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { data: [], emptyMessage: HOSTILE },
+  args: { data: [], labels: { empty: HOSTILE } },
   play: async ({ canvasElement }) => {
     await expectEmptyMessage(HOSTILE)({ canvasElement });
     await expectNoInjectedImage(canvasElement);
@@ -742,5 +743,40 @@ export const NarrowBoxFadesTheEnd: Story = {
     scroller.scrollLeft = scroller.scrollWidth;
     scroller.dispatchEvent(new Event('scroll'));
     await waitFor(() => expect(getComputedStyle(scroller).maskImage).toBe('none'));
+  },
+};
+
+/**
+ * The provider writes the name, the names of the years and of the cells, and the ends of the
+ * scale; the chart's own `labels` win over it.
+ */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: {
+    data: [
+      { day: '2025-12-30', value: 2 },
+      { day: '2026-01-02', value: 5 },
+    ],
+    labels: { more: 'Beaucoup' },
+  },
+  render: (args) => (
+    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+      <CalendarChart {...args} />
+    </ChartLabelsProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(
+        [...canvasElement.querySelectorAll('[role="grid"]')].map((el) =>
+          el.getAttribute('aria-label')
+        )
+      ).toEqual(['Calendrier, année 2025', 'Calendrier, année 2026'])
+    );
+    await expect(canvasElement.querySelector('[data-calendar-legend]')).toHaveTextContent(
+      'MoinsBeaucoup'
+    );
+    await expect(
+      canvasElement.querySelector('[role="gridcell"][aria-label$=" : 5"]')
+    ).toHaveAttribute('aria-label', 'Friday, January 2, 2026 : 5');
   },
 };

@@ -28,6 +28,8 @@ import {
   tickTexts,
   tooltipCard,
 } from './storybook-recharts';
+import { ChartLabelsProvider } from './ChartLabelsProvider';
+import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
 
 // Deterministic noise in (-1, 1): the same points on every run and screenshot.
 const noise = (i: number) => (Math.sin(i * 12.9898) * 43758.5453) % 1;
@@ -146,7 +148,7 @@ export const StatusColors: Story = {
 
 /**
  * `BubbleChart` adds a third measure, `z`, drawn as the bubble size: here the
- * requests each node serves. `sizeTitle` and `formatSize` label it in the
+ * requests each node serves. `labels.size` and `formatSize` label it in the
  * tooltip.
  */
 export const Bubble: BubbleStory = {
@@ -157,7 +159,7 @@ export const Bubble: BubbleStory = {
     ],
     xTitle: 'CPU load',
     yTitle: 'p95 latency',
-    sizeTitle: 'Requests',
+    labels: { size: 'Requests' },
     formatX: percent,
     formatY: ms,
     formatSize: (v) => `${(v / 1000).toFixed(1)}k req/s`,
@@ -165,7 +167,7 @@ export const Bubble: BubbleStory = {
   render: (args) => <BubbleChart {...args} />,
 };
 
-/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+/** With no data, the chart draws `labels.empty` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [] },
 };
@@ -320,7 +322,7 @@ export const HtmlInLabelsRendersAsText: Story = {
   },
 };
 
-/** Same for the bubble chart, whose tooltip adds the size row, titled by sizeTitle. */
+/** Same for the bubble chart, whose tooltip adds the size row, titled by `labels.size`. */
 export const BubbleHtmlInLabelsRendersAsText: BubbleStory = {
   tags: ['!dev', '!autodocs'],
   args: {
@@ -328,7 +330,7 @@ export const BubbleHtmlInLabelsRendersAsText: BubbleStory = {
       { name: HOSTILE, data: [{ x: 50, y: 50, z: 10, label: HOSTILE }] },
       { name: 'Normal', data: [{ x: 20, y: 80, z: 20 }] },
     ],
-    sizeTitle: HOSTILE,
+    labels: { size: HOSTILE },
   },
   render: (args) => <BubbleChart {...args} />,
   play: async ({ canvasElement }) => {
@@ -586,4 +588,42 @@ export const NamedAndKeyboardReachable: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ...LatencyVsLoad.args, ariaLabel: 'Latency against CPU load' },
   play: expectAccessibleChart({ keyboard: true }),
+};
+
+/** The provider writes the names and the tooltip rows; the chart's own `labels` win over it. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: [{ name: 'DC1', data: [{ x: 40, y: 12, label: 'node-1' }] }] },
+  render: (args) => (
+    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+      <div data-testid="scatter">
+        <ScatterChart {...args} labels={{ y: 'latence' }} />
+      </div>
+      <div data-testid="bubble">
+        <BubbleChart
+          series={[{ name: 'DC1', data: [{ x: 40, y: 12, z: 7, label: 'node-1' }] }]}
+          labels={{ size: 'Volume' }}
+        />
+      </div>
+    </ChartLabelsProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    const chart = (id: string) =>
+      canvasElement.querySelector(`[data-testid="${id}"]`) as HTMLElement;
+    await waitFor(() => {
+      expect(surface(chart('scatter'))).toHaveAttribute('aria-label', 'Nuage de points : DC1');
+      expect(surface(chart('bubble'))).toHaveAttribute('aria-label', 'Graphique à bulles : DC1');
+    });
+    await hoverFirstPoint(chart('scatter'));
+    await expect(tooltipRows(chart('scatter'))).toEqual(['DC1', 'abscisse40', 'latence12']);
+    await leaveFirstPoint(chart('scatter'));
+    await hoverFirstPoint(chart('bubble'));
+    await expect(tooltipRows(chart('bubble'))).toEqual([
+      'DC1',
+      'abscisse40',
+      'ordonnée12',
+      'Volume7',
+    ]);
+    await leaveFirstPoint(chart('bubble'));
+  },
 };

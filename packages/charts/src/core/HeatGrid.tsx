@@ -9,6 +9,7 @@ import {
 import { TEXT_SIZE } from './axes';
 import { TooltipCard } from './ChartTooltip';
 import { MUTED, PANEL, TEXT } from './colors';
+import type { CommonChartLabels } from './labels';
 import { textOn } from './readable';
 import { useEndFade } from './useEndFade';
 
@@ -42,6 +43,8 @@ type HeatGridProps = {
   cellHeight?: number;
   /** Names the grid for screen readers. */
   ariaLabel: string;
+  /** Names a cell for screen readers: its row label, its title and its value (`labels.cellName`). */
+  cellName: CommonChartLabels['cellName'];
   /** Title under the columns. Drawn as plain text. */
   xTitle?: string;
   /** Title beside the rows. Drawn as plain text. */
@@ -129,8 +132,8 @@ type Tip = {
  * Keyboard: the grid is one tab stop (a roving tabindex), and the arrow keys
  * move between cells, skipping empty slots; Home and End go to the ends of the
  * row, Ctrl+Home and Ctrl+End to the first and last cell. The cell under the
- * pointer or the keyboard shows its tooltip. Each cell is named
- * `label, title: value`, so a screen reader reads what the tooltip says.
+ * pointer or the keyboard shows its tooltip. Each cell is named by `cellName`
+ * (`label, title: value` in English), so a screen reader reads what the tooltip says.
  */
 export const HeatGrid = ({
   rows,
@@ -138,6 +141,7 @@ export const HeatGrid = ({
   cells,
   cellHeight,
   ariaLabel,
+  cellName,
   xTitle,
   yTitle,
   gap = GAP,
@@ -316,7 +320,7 @@ export const HeatGrid = ({
                 data-row={cell.row}
                 data-column={cell.column}
                 tabIndex={position === tabbable ? 0 : -1}
-                aria-label={`${cell.label ? `${cell.label}, ` : ''}${cell.title}: ${cell.value}`}
+                aria-label={cellName(cell.label, cell.title, cell.value)}
                 onFocus={(event) => focusIn(cell, event)}
                 onMouseEnter={(event) => setHover(tipFor(cell, event.currentTarget))}
                 onMouseLeave={() => setHover(undefined)}

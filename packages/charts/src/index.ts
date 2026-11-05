@@ -1,5 +1,6 @@
 export * from './theme';
 export * from './types';
+export * from './ChartLabelsProvider';
 export * from './LineAreaChart';
 export * from './RealtimeChart';
 export * from './RadialBarChart';

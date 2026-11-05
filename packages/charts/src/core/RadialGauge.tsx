@@ -4,7 +4,8 @@ import type { SectorProps } from 'recharts';
 import { ANIMATION } from './animation';
 import { TRACK } from './colors';
 import { frameProps } from './frame';
-import { clampTo, gaugeName } from './gauge';
+import { clampTo } from './gauge';
+import type { CommonChartLabels } from './labels';
 import { CenterText } from './radial';
 import type { ChartSize } from '../types';
 
@@ -16,6 +17,8 @@ type RadialGaugeProps = ChartSize & {
   /** The value, formatted: the text in the middle and the end of the name. */
   text: string;
   ariaLabel?: string;
+  /** The texts of the gauge, resolved: the name it falls back to and how it is joined to the value. */
+  labels: Pick<CommonChartLabels, 'gauge' | 'gaugeName'>;
   /** The share of the radius the ring leaves empty in the middle. */
   hollow: string;
   /** The fill of the arc: a color, or a `url(#…)` to what `defs` defines. */
@@ -39,6 +42,7 @@ export const RadialGauge = ({
   max,
   text,
   ariaLabel,
+  labels,
   hollow,
   fill,
   shape,
@@ -51,7 +55,7 @@ export const RadialGauge = ({
     {...frameProps({
       height,
       width,
-      ariaLabel: gaugeName(ariaLabel ?? (label || 'Gauge'), text),
+      ariaLabel: labels.gaugeName(ariaLabel ?? (label || labels.gauge), text),
       keyboard: false,
     })}
     data={[{ name: label, value: clampTo(value, min, max) }]}

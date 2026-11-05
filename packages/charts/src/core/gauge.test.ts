@@ -8,7 +8,6 @@ import {
   DIAL_HUB,
   dialFace,
   dialTip,
-  gaugeName,
   needleOf,
   percent,
   rangeShare,
@@ -30,12 +29,6 @@ describe('clampTo', () => {
     expect(clampTo(50, 0, 100)).toBe(50);
     expect(clampTo(2600, 0, 2000)).toBe(2000);
     expect(clampTo(120, 500, 2000)).toBe(500);
-  });
-});
-
-describe('gaugeName', () => {
-  it('ends the name with the formatted value', () => {
-    expect(gaugeName('Cluster load', '67%')).toBe('Cluster load: 67%');
   });
 });
 

@@ -7,9 +7,6 @@ export const percent = (value: number) => `${value}%`;
 export const clampTo = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
-/** The name a gauge is read by: `name` (the host's `ariaLabel`, else the label) and the formatted value. */
-export const gaugeName = (name: string, formatted: string) => `${name}: ${formatted}`;
-
 /**
  * The arc color of a status gauge: success, then warning from `warnAt` and
  * critical from `critAt`. A threshold left out is never reached.

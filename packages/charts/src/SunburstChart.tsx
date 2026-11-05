@@ -12,6 +12,12 @@ import { TooltipCard } from './core/ChartTooltip';
 import { MUTED, PANEL, TEXT, seriesColor } from './core/colors';
 import { seriesKey } from './core/data';
 import { ChartEmpty, ChartSkeleton } from './core/frame';
+import {
+  SUNBURST_CHART_LABELS,
+  type SunburstChartLabels,
+  type CommonChartLabels,
+} from './core/labels';
+import { useChartLabels } from './core/labelsContext';
 import { textOn } from './core/readable';
 import { shares } from './core/shares';
 import { useControllableState } from './core/useControllableState';
@@ -35,12 +41,11 @@ import {
   type Move,
   type SunburstNode,
 } from './sunburst';
-import type { ChartEmptyProps, ChartLegendProps, ChartLoadingProps, ChartProps } from './types';
+import type { ChartLegendProps, ChartLoadingProps, ChartProps } from './types';
 
 export type { SunburstNode } from './sunburst';
 
 export type SunburstChartProps = Omit<ChartProps, 'children'> &
-  ChartEmptyProps &
   ChartLoadingProps &
   ChartLegendProps & {
     /**
@@ -86,6 +91,8 @@ export type SunburstChartProps = Omit<ChartProps, 'children'> &
     selected?: string[];
     /** The sector selected at first, while the chart holds its own selection. */
     defaultSelected?: string[];
+    /** The texts it writes, over `ChartLabelsProvider`'s `sunburstChart` and `chart` and the English defaults. */
+    labels?: Partial<CommonChartLabels & SunburstChartLabels>;
   };
 
 // The height of the message and of the skeleton, which have no circle to take one from.
@@ -119,10 +126,12 @@ const Outline = ({
   byParent,
   parent,
   format,
+  item,
 }: {
   byParent: Map<string | undefined, Arc[]>;
   parent?: string;
   format: (value: number) => string;
+  item: SunburstChartLabels['outlineItem'];
 }) => {
   const items = byParent.get(parent);
   if (!items) return null;
@@ -130,8 +139,8 @@ const Outline = ({
     <ul>
       {items.map((arc) => (
         <li key={arc.id}>
-          {`${arc.name}: ${format(arc.value)}`}
-          <Outline byParent={byParent} parent={arc.id} format={format} />
+          {item(arc.name, format(arc.value))}
+          <Outline byParent={byParent} parent={arc.id} format={format} item={item} />
         </li>
       ))}
     </ul>
@@ -149,12 +158,13 @@ export const SunburstChart = ({
   onSelect,
   selected,
   defaultSelected,
-  emptyMessage = 'No data',
+  labels: ownLabels,
   loading,
   ariaLabel,
   height,
   width,
 }: SunburstChartProps) => {
+  const labels = useChartLabels('sunburstChart', SUNBURST_CHART_LABELS, ownLabels);
   const frame = useRef<HTMLDivElement>(null);
   const hidden = useHiddenSeries();
   const { ref: measure, width: boxWidth, height: boxHeight } = useElementSize();
@@ -201,14 +211,20 @@ export const SunburstChart = ({
       })),
     [legendItems, colors]
   );
-  const name = ariaLabel ?? `Sunburst chart: ${legendItems.map((item) => item.name).join(', ')}`;
+  const name = ariaLabel ?? labels.name(legendItems.map((item) => item.name).join(', '));
   if (loading) {
-    return <ChartSkeleton ariaLabel={name} height={height ?? PLACEHOLDER_HEIGHT} width={width} />;
+    return (
+      <ChartSkeleton
+        ariaLabel={labels.loading(name)}
+        height={height ?? PLACEHOLDER_HEIGHT}
+        width={width}
+      />
+    );
   }
   if (legendItems.length === 0) {
     return (
       <ChartEmpty
-        message={emptyMessage}
+        message={labels.empty}
         ariaLabel={name}
         height={height ?? PLACEHOLDER_HEIGHT}
         width={width}
@@ -228,15 +244,18 @@ export const SunburstChart = ({
     arc.depth === 0
       ? hueOf(arc)
       : `color-mix(in oklab, ${hueOf(arc)} ${shadeOf(arc.depth)}%, ${PANEL})`;
-  const shareName = (arc: Arc) =>
-    arc.parent === undefined ? 'total' : (byId.get(arc.parent)?.name ?? 'total');
   const shareOf = (arc: Arc) =>
     percentLabel(
       arc.value,
       arc.parent === undefined ? total : (byId.get(arc.parent)?.value ?? total)
     );
+  // A sector's share of its parent, or of the total for a sector of the first ring.
+  const shareLabel = (arc: Arc) => {
+    const parent = arc.parent === undefined ? undefined : byId.get(arc.parent);
+    return parent ? labels.ofParent(shareOf(arc), parent.name) : labels.ofTotal(shareOf(arc));
+  };
   const nameOf = (arc: Arc) =>
-    `${arc.path.join(', ')}: ${formatValue(arc.value)}, ${shareOf(arc)} of ${shareName(arc)}`;
+    labels.arcName(arc.path.join(', '), formatValue(arc.value), shareLabel(arc));
 
   const pick = (arc: Arc) => setPath(selectedArc?.id === arc.id ? [] : arc.path);
 
@@ -408,11 +427,11 @@ export const SunburstChart = ({
               {active ? formatValue(active.value) : (centerValue ?? formatValue(total))}
             </div>
             <div style={{ ...ellipsis, color: MUTED, fontSize: 'var(--text-xs, 0.75rem)' }}>
-              {active ? active.name : (centerLabel ?? 'Total')}
+              {active ? active.name : (centerLabel ?? labels.total)}
             </div>
             {active && hole >= SMALL_HOLE && (
               <div style={{ ...ellipsis, color: MUTED, fontSize: 'var(--text-2xs, 0.6875rem)' }}>
-                {percentLabel(active.value, total)} of total
+                {labels.ofTotal(percentLabel(active.value, total))}
               </div>
             )}
           </div>
@@ -433,7 +452,7 @@ export const SunburstChart = ({
                 rows={[
                   { name: tipArc.name, value: formatValue(tipArc.value), color: fillOf(tipArc) },
                   {
-                    name: 'Share of total',
+                    name: labels.shareOfTotal,
                     value: percentLabel(tipArc.value, total),
                     color: 'transparent',
                   },
@@ -508,7 +527,7 @@ export const SunburstChart = ({
       </div>
       {!legendFirst && legend}
       <div style={VISUALLY_HIDDEN}>
-        <Outline byParent={byParent} format={formatValue} />
+        <Outline byParent={byParent} format={formatValue} item={labels.outlineItem} />
       </div>
     </div>
   );

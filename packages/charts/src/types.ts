@@ -7,22 +7,12 @@ export type ChartSize = {
   width?: number | string;
 };
 
-/** Props of the charts that can have no data to draw. */
-export type ChartEmptyProps = {
-  /**
-   * Text drawn in place of the plot when the chart has no series, or only
-   * empty ones. Default `No data`; an empty string draws nothing. It is drawn
-   * as plain text: markup in it shows as written.
-   */
-  emptyMessage?: string;
-};
-
 /** Props of the charts that wait for their data. */
 export type ChartLoadingProps = {
   /**
    * Draws a skeleton of the chart's height in place of the chart, while the data
    * is on its way: a busy group named by `ariaLabel` and the word "loading",
-   * still under `prefers-reduced-motion`. It wins over `emptyMessage` and over any
+   * still under `prefers-reduced-motion`. It wins over the empty message and over any
    * data given. Default off.
    */
   loading?: boolean;

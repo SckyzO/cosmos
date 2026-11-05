@@ -522,7 +522,7 @@ export const BorderRadius: Story = {
   },
 };
 
-/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+/** With no data, the chart draws `labels.empty` (default "No data") in place of the plot. */
 export const Empty: Story = {
   args: { series: [], categories: [] },
 };
@@ -533,9 +533,13 @@ export const EmptyChecks: Story = {
   play: expectEmptyMessage('No data'),
 };
 
-/** `emptyMessage` says why there is nothing to draw. */
+/** `labels.empty` says why there is nothing to draw. */
 export const EmptyWithMessage: Story = {
-  args: { series: [{ name: 'Incidents', data: [] }], categories: [], emptyMessage: 'No incidents' },
+  args: {
+    series: [{ name: 'Incidents', data: [] }],
+    categories: [],
+    labels: { empty: 'No incidents' },
+  },
 };
 
 export const EmptyWithMessageChecks: Story = {

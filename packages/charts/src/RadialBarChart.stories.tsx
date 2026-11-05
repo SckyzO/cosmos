@@ -13,7 +13,10 @@ import {
   ringSectors,
   themeColor,
   tooltipCard,
+  surface,
 } from './storybook-recharts';
+import { ChartLabelsProvider } from './ChartLabelsProvider';
+import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
 
 const RING_COLORS = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 const points = (v: number) => `${v} pts`;
@@ -34,7 +37,7 @@ const meta = {
   tags: ['autodocs'],
   // Storybook 10 requires `args` when `component` is set and the props have
   // required fields.
-  args: { series: [78, 62, 88, 41], labels: ['CPU', 'Mem', 'Disk', 'Net'] },
+  args: { series: [78, 62, 88, 41], names: ['CPU', 'Mem', 'Disk', 'Net'] },
 } satisfies Meta<typeof RadialBarChart>;
 
 export default meta;
@@ -68,7 +71,7 @@ export const CustomColors: Story = {
 export const FormattedValues: Story = {
   args: {
     series: [92, 78, 64, 85],
-    labels: ['Security', 'Reliability', 'Performance', 'Cost'],
+    names: ['Security', 'Reliability', 'Performance', 'Cost'],
     formatValue: points,
   },
   render: (args) => (
@@ -78,9 +81,9 @@ export const FormattedValues: Story = {
   ),
 };
 
-/** With no data, the chart draws `emptyMessage` (default "No data") in place of the plot. */
+/** With no data, the chart draws `labels.empty` (default "No data") in place of the plot. */
 export const Empty: Story = {
-  args: { series: [], labels: [] },
+  args: { series: [], names: [] },
   render: (args) => (
     <Card title="RadialBarChart">
       <RadialBarChart {...args} />
@@ -116,7 +119,7 @@ export const FirstSeriesIsTheOuterRing: Story = {
 /** A value beyond the scale stops its arc at the end; the center and the tooltip give the value. */
 export const RingsClampButShowTheValue: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { series: [120, 40], labels: ['Over', 'Half'] },
+  args: { series: [120, 40], names: ['Over', 'Half'] },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(rings(canvasElement)).toHaveLength(2));
     await hoverRing(canvasElement, 0, ['Over', 'Half']);
@@ -131,7 +134,7 @@ export const RingsClampButShowTheValue: Story = {
 /** The rings are React text in the tooltip: a label with markup shows as written. */
 export const HtmlInLabelsRendersAsText: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { series: [60, 40], labels: [HOSTILE, 'Normal'] },
+  args: { series: [60, 40], names: [HOSTILE, 'Normal'] },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(rings(canvasElement)).toHaveLength(2));
     await hoverRing(canvasElement, 0, [HOSTILE, 'Normal']);
@@ -205,7 +208,7 @@ export const PaletteFromTheme: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
     series: [92, 78, 64, 85, 40],
-    labels: ['CPU', 'RAM', 'Disk', 'Net', 'GPU'],
+    names: ['CPU', 'RAM', 'Disk', 'Net', 'GPU'],
   },
   play: async ({ canvasElement }) => {
     const tokens = [
@@ -227,4 +230,29 @@ export const NamedAndKeyboardReachable: Story = {
   tags: ['!dev', '!autodocs'],
   args: { ariaLabel: 'Node usage' },
   play: expectKeyboardWalk({ announcesOnFocus: false }),
+};
+
+/** The provider writes the name and the center label; the chart's own `labels` win over it. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { series: [60, 40], names: ['CPU', 'Mém'] },
+  render: (args) => (
+    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+      <div data-testid="provider">
+        <RadialBarChart {...args} />
+      </div>
+      <div data-testid="own">
+        <RadialBarChart {...args} labels={{ average: 'Moyenne' }} />
+      </div>
+    </ChartLabelsProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    const chart = (id: string) =>
+      canvasElement.querySelector(`[data-testid="${id}"]`) as HTMLElement;
+    await waitFor(() =>
+      expect(surface(chart('provider'))).toHaveAttribute('aria-label', 'Barres radiales : CPU, Mém')
+    );
+    await expect(centerText(chart('provider'))?.label).toBe('Moy.');
+    await expect(centerText(chart('own'))?.label).toBe('Moyenne');
+  },
 };
