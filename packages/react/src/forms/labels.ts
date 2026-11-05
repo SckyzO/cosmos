@@ -282,6 +282,8 @@ export type PasswordStrengthLabels = {
   name: string;
   /** The level for each score, 0 to 4, from the weakest. Default `Very weak`, `Weak`, `Fair`, `Good`, `Strong`. */
   levels: PasswordStrengthLevels;
+  /** What goes between the words and the level, in the text and the announcement. Default `: `. */
+  separator: string;
 };
 
 export type PhoneInputLabels = {
@@ -562,6 +564,7 @@ export const PASSWORD_POLICY_LABELS: PasswordPolicyLabels = {
 export const PASSWORD_STRENGTH_LABELS: PasswordStrengthLabels = {
   name: 'Password strength',
   levels: ['Very weak', 'Weak', 'Fair', 'Good', 'Strong'],
+  separator: ': ',
 };
 
 export const PHONE_INPUT_LABELS: PhoneInputLabels = {

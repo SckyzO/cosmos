@@ -59,7 +59,7 @@ export const PasswordStrengthMeter = ({
   const labels = useLabels('passwordStrengthMeter', PASSWORD_STRENGTH_LABELS, ownLabels);
   const generatedId = useId();
   const level = toLevel(score);
-  const { name } = labels;
+  const { name, separator } = labels;
   const levelName = labels.levels[level];
 
   // The status region exists from the first render and starts empty: a live region only announces
@@ -69,7 +69,7 @@ export const PasswordStrengthMeter = ({
   // What the timer says when it fires: the latest words, without restarting it on a new `labels`.
   const text = useRef('');
   useEffect(() => {
-    text.current = `${name}: ${levelName}`;
+    text.current = `${name}${separator}${levelName}`;
   });
   useEffect(() => {
     if (level === announced.current) return;
@@ -83,7 +83,9 @@ export const PasswordStrengthMeter = ({
   return (
     <div className={className}>
       <p id={id ?? generatedId} className="mb-2 text-xs text-[var(--color-text-muted)]">
-        {name}: <span className="font-medium text-[var(--color-text-primary)]">{levelName}</span>
+        {name}
+        {separator}
+        <span className="font-medium text-[var(--color-text-primary)]">{levelName}</span>
       </p>
       {/* The bar repeats the text: a screen reader skips it. */}
       <div aria-hidden className="grid grid-cols-4 gap-0.5">
