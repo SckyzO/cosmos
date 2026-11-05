@@ -38,6 +38,7 @@ import {
   UPLOAD_QUEUE_LABELS,
   ZOOM_BAR_LABELS,
 } from '../forms/labels';
+import { FILE_TILE_LABELS, STACKED_LIST_LABELS } from '../lists/labels';
 import { BREADCRUMB_LABELS } from '../navigation/labels';
 import {
   NEW_PASSWORD_FORM_LABELS,
@@ -83,6 +84,7 @@ export const englishLabels: CosmosLabels = {
   errorSummary: ERROR_SUMMARY_LABELS,
   eventCalendar: EVENT_CALENDAR_LABELS,
   fileInput: FILE_INPUT_LABELS,
+  fileTile: FILE_TILE_LABELS,
   formFooter: FORM_FOOTER_LABELS,
   integrationCard: INTEGRATION_CARD_LABELS,
   kanbanBoard: KANBAN_BOARD_LABELS,
@@ -107,6 +109,7 @@ export const englishLabels: CosmosLabels = {
   signUpForm: SIGN_UP_FORM_LABELS,
   slider: SLIDER_LABELS,
   socialAuthButtons: SOCIAL_AUTH_BUTTONS_LABELS,
+  stackedList: STACKED_LIST_LABELS,
   tagInput: TAG_INPUT_LABELS,
   trendDelta: TREND_DELTA_LABELS,
   twoStepVerificationForm: TWO_STEP_VERIFICATION_FORM_LABELS,

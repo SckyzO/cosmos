@@ -38,6 +38,7 @@ import type {
   UploadQueueLabels,
   ZoomBarLabels,
 } from '../forms/labels';
+import type { FileTileLabels, StackedListLabels } from '../lists/labels';
 import type { BreadcrumbLabels } from '../navigation/labels';
 import type {
   NewPasswordFormLabels,
@@ -84,6 +85,7 @@ export type CosmosLabels = {
   errorSummary: ErrorSummaryLabels;
   eventCalendar: EventCalendarLabels;
   fileInput: FileInputLabels;
+  fileTile: FileTileLabels;
   formFooter: FormFooterLabels;
   integrationCard: IntegrationCardLabels;
   kanbanBoard: KanbanBoardLabels;
@@ -108,6 +110,7 @@ export type CosmosLabels = {
   signUpForm: SignUpFormLabels;
   slider: SliderLabels;
   socialAuthButtons: SocialAuthButtonsLabels;
+  stackedList: StackedListLabels;
   tagInput: TagInputLabels;
   trendDelta: TrendDeltaLabels;
   twoStepVerificationForm: TwoStepVerificationLabels;

@@ -14,9 +14,11 @@ import {
 import { Checkbox } from '../forms/Checkbox';
 import { useControllableState } from '../hooks/useControllableState';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import { useLabels } from '../labels/labelsContext';
 import { AppLink } from '../ui/AppLink';
 import { IconButton, iconButtonClass } from '../ui/IconButton';
 import { Menu, type MenuItemIntent } from '../ui/Menu';
+import { STACKED_LIST_LABELS, type StackedListLabels } from './labels';
 
 // The `card` mode of the list reaches its items without a prop on each of them.
 const CardContext = createContext(false);
@@ -125,6 +127,8 @@ export type StackedListHeaderProps = Omit<ComponentPropsWithRef<'li'>, 'children
    * icon-only on a phone: the bar does not wrap.
    */
   actions?: ReactNode;
+  /** The texts it writes, over `LabelsProvider`'s `stackedList` and the English defaults. */
+  labels?: Partial<StackedListLabels>;
 };
 
 /**
@@ -139,11 +143,13 @@ function StackedListHeader({
   indeterminate = false,
   onCheckedChange,
   actions,
+  labels: ownLabels,
   className,
   children,
   ref,
   ...rest
 }: StackedListHeaderProps) {
+  const labels = useLabels('stackedList', STACKED_LIST_LABELS, ownLabels);
   const inCard = useContext(CardContext);
   const selectable = checked !== undefined || onCheckedChange !== undefined;
   const bar = selectable || Boolean(actions);
@@ -164,7 +170,7 @@ function StackedListHeader({
     >
       {selectable && (
         <Checkbox
-          aria-label="Select all"
+          aria-label={labels.selectAll}
           checked={checked ?? false}
           indeterminate={indeterminate}
           onChange={(next) => onCheckedChange?.(next)}
@@ -272,7 +278,8 @@ export type StackedListItemProps = Omit<ComponentPropsWithRef<'li'>, 'title' | '
   onCheckedChange?: (checked: boolean) => void;
   /**
    * The word the row's checkbox is named with, before the title: "Select Ana Ruiz". Default
-   * `Select`. When the box does something else than pick the row, say it ("Mark done:" for a task).
+   * `labels.select`, `Select`. When the box does something else than pick the row, say it ("Mark
+   * done:" for a task).
    */
   selectLabel?: string;
   /** Controlled state of the star. Setting it, `defaultStarred` or `onStarredChange` adds the star toggle. */
@@ -286,6 +293,8 @@ export type StackedListItemProps = Omit<ComponentPropsWithRef<'li'>, 'title' | '
    * "More actions" menu. Anything else goes in `trailing`.
    */
   actions?: StackedListAction[];
+  /** The texts it writes, over `LabelsProvider`'s `stackedList` and the English defaults. */
+  labels?: Partial<StackedListLabels>;
 };
 
 // Below `sm`, and on a screen with no hover to reveal anything, the actions are one menu.
@@ -314,15 +323,17 @@ function StackedListItem({
   checked: checkedProp,
   defaultChecked,
   onCheckedChange,
-  selectLabel = 'Select',
+  selectLabel,
   starred: starredProp,
   defaultStarred,
   onStarredChange,
   actions,
+  labels: ownLabels,
   className,
   ref,
   ...rest
 }: StackedListItemProps) {
+  const labels = useLabels('stackedList', STACKED_LIST_LABELS, ownLabels);
   const id = useId();
   const titleId = `${id}-title`;
   // The full-row overlay needs the <li> to be `relative`.
@@ -363,7 +374,7 @@ function StackedListItem({
       : unread === false
         ? 'font-medium text-gray-700 dark:text-gray-300'
         : 'font-semibold text-gray-900 dark:text-white';
-  const unreadLabel = unread === true && <span className="sr-only">Unread: </span>;
+  const unreadLabel = unread === true && <span className="sr-only">{labels.unread} </span>;
   const titleText = <bdi id={titleId}>{title}</bdi>;
   // The title of a clickable row is its one link or button; the overlay stretches it over the row.
   const overlay = <span className="absolute inset-x-0 -top-px bottom-0" aria-hidden />;
@@ -434,7 +445,7 @@ function StackedListItem({
       }
     >
       <span id={`${id}-star`} className="sr-only">
-        Star
+        {labels.star}
       </span>
       {/* warning-600, as on `Rating`: it holds 3:1 on a sand page, where amber-600 does not. */}
       <Star
@@ -474,7 +485,7 @@ function StackedListItem({
         className={iconButtonClass({ size: 'sm' })}
       >
         <span id={`${id}-more`} className="sr-only">
-          More actions
+          {labels.moreActions}
         </span>
         <Ellipsis className="size-4" aria-hidden />
       </Menu.Trigger>
@@ -563,7 +574,7 @@ function StackedListItem({
           // the box where a 18px one would sit, level with the first line of the title.
           <div className="relative z-[1] -mx-1 -mt-px -mb-1 flex self-start">
             <span id={`${id}-select`} hidden>
-              {selectLabel}
+              {selectLabel ?? labels.select}
             </span>
             <Checkbox
               {...labelled('select')}

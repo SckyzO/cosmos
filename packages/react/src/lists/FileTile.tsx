@@ -2,11 +2,13 @@ import { clsx } from 'clsx';
 import { Star } from 'lucide-react';
 import { useState, type ReactNode, type Ref } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import { AppLink } from '../ui/AppLink';
 import { Badge } from '../ui/Badge';
 import { IconButton } from '../ui/IconButton';
 import { INTENT_STYLE } from '../ui/intent';
 import { FILE_KIND_VISUAL, type FileKind } from './fileKind';
+import { FILE_TILE_LABELS, type FileTileLabels } from './labels';
 
 export type { FileKind } from './fileKind';
 
@@ -41,6 +43,8 @@ export type FileTileProps = {
    * sibling of the name, never nested in it.
    */
   actions?: ReactNode;
+  /** The texts it writes, over `LabelsProvider`'s `fileTile` and the English defaults. */
+  labels?: Partial<FileTileLabels>;
   className?: string;
   /** Ref to the `<li>`. */
   ref?: Ref<HTMLLIElement>;
@@ -68,9 +72,11 @@ export const FileTile = ({
   onOpen,
   href,
   actions,
+  labels: ownLabels,
   className,
   ref,
 }: FileTileProps) => {
+  const labels = useLabels('fileTile', FILE_TILE_LABELS, ownLabels);
   const [starred, setStarred] = useControllableState({
     value: starredProp,
     defaultValue: defaultStarred ?? false,
@@ -120,7 +126,7 @@ export const FileTile = ({
       {meta !== undefined && <bdi>{meta}</bdi>}
       {shared && !isTile && (
         <Badge size="sm" intent="neutral">
-          Shared
+          {labels.shared}
         </Badge>
       )}
     </div>
@@ -128,7 +134,7 @@ export const FileTile = ({
 
   const starNode = showStar && (
     <IconButton
-      aria-label={`Star ${name}`}
+      aria-label={labels.star(name)}
       aria-pressed={starred}
       onClick={() => setStarred(!starred)}
       // Over the preview the star sits on a panel-coloured square, so it reads over a photo.
@@ -213,7 +219,7 @@ export const FileTile = ({
       {shared && (
         <span className="inset-s-2 absolute top-2 rounded-full bg-[var(--color-bg-panel)]">
           <Badge size="sm" intent="neutral">
-            Shared
+            {labels.shared}
           </Badge>
         </span>
       )}

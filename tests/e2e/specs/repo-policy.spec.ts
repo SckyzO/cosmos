@@ -482,9 +482,6 @@ const TEXT_DEFERRED: string[] = [
   'packages/react/src/layout/Sidebar.tsx',
   'packages/react/src/layout/SiteFooter.tsx',
   'packages/react/src/layout/Topbar.tsx',
-  'packages/react/src/lists/FileTile.tsx',
-  'packages/react/src/lists/GridList.tsx',
-  'packages/react/src/lists/StackedList.tsx',
   'packages/react/src/logs/JobLogToolbar.tsx',
   'packages/react/src/logs/JobLog.tsx',
   'packages/react/src/logs/LogEntryDetail.tsx',
@@ -549,6 +546,11 @@ const TEXT_ALLOWED: { file: string; text: string; reason: string }[] = [
     file: 'packages/react/src/table/DataTable.tsx',
     text: 'export.csv',
     reason: "the default name of the downloaded file, an identifier of the host's, not text shown",
+  },
+  {
+    file: 'packages/react/src/lists/GridList.tsx',
+    text: 'gap-6',
+    reason: 'the default of gapClassName, a Tailwind class, not text',
   },
 ];
 
