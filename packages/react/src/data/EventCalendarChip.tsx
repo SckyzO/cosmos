@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import type { CSSProperties, ReactNode } from 'react';
 import { Popover } from '../ui/Popover';
 import type { CalendarEvent, EventCalendarIntent } from './EventCalendar';
+import type { EventCalendarLabels } from './labels';
 
 // What the month grid and the hour grid share: an event's colors, its chip, and the "+N" list.
 // Internal: not re-exported from the package.
@@ -137,6 +138,7 @@ export const DayEventsPopover = ({
   open,
   onOpenChange,
   label,
+  labels,
   hidden,
   events,
   timeOn,
@@ -148,6 +150,7 @@ export const DayEventsPopover = ({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   label: string;
+  labels: EventCalendarLabels;
   hidden: number;
   events: CalendarEvent[];
   /** The start time to show on an event's chip, or none. */
@@ -159,14 +162,14 @@ export const DayEventsPopover = ({
 }) => (
   <Popover open={open} onOpenChange={onOpenChange}>
     <Popover.Trigger
-      aria-label={`+${hidden} more on ${label}`}
+      aria-label={labels.hiddenEvents(hidden, label)}
       data-calendar-hit
       style={triggerStyle}
       className={triggerClassName}
     >
       {children}
     </Popover.Trigger>
-    <Popover.Content aria-label={`Events on ${label}`} width="w-60">
+    <Popover.Content aria-label={labels.eventsOn(label)} width="w-60">
       <p className="mb-2 text-xs font-semibold text-[var(--color-text-primary)]">{label}</p>
       <ul className="space-y-1">
         {events.map((event) => (

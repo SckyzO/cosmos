@@ -9,11 +9,13 @@ import {
 } from 'react';
 import { Sk } from '../feedback/Skeleton';
 import { useAfterSkeleton, type AfterSkeleton } from '../feedback/useAfterSkeleton';
+import { useLabels } from '../labels/labelsContext';
 import { AppLink } from '../ui/AppLink';
 import { CARD_LIFT } from '../ui/cardLift';
 import { INTENT_STYLE, type Intent } from '../ui/intent';
 import { SOLID, SOLID_TILE } from '../ui/solidIntent';
 import { Tooltip } from '../ui/Tooltip';
+import { KPI_CARD_LABELS, type KpiCardLabels } from './labels';
 
 /** The meaning of the metric: the plain one, the accent, a state, or a metric that needs a look. */
 export type KpiCardIntent = Intent;
@@ -88,6 +90,8 @@ export type KpiCardProps = {
   onClick?: MouseEventHandler<HTMLElement>;
   /** Ref to the card's root: an `<a>` with `href`, a `<button>` with `onClick`, a `<div>` otherwise. */
   ref?: Ref<HTMLAnchorElement | HTMLButtonElement | HTMLDivElement>;
+  /** The texts it writes, over `LabelsProvider`'s `kpiCard` and the English defaults. */
+  labels?: Partial<KpiCardLabels>;
   className?: string;
 };
 
@@ -148,9 +152,11 @@ export const KpiCard = ({
   loading = false,
   href,
   onClick,
+  labels: ownLabels,
   ref,
   className,
 }: KpiCardProps) => {
+  const labels = useLabels('kpiCard', KPI_CARD_LABELS, ownLabels);
   const chipIntent = iconIntent ?? (intent === 'neutral' ? 'brand' : intent);
   const chip = INTENT_STYLE[chipIntent];
   const tinted = variant === 'tinted';
@@ -225,7 +231,7 @@ export const KpiCard = ({
                 content={
                   <span>
                     <span className="block tabular-nums">{exactValue}</span>
-                    <span className="text-2xs block opacity-70">Exact value</span>
+                    <span className="text-2xs block opacity-70">{labels.exactValue}</span>
                   </span>
                 }
               >
@@ -237,7 +243,7 @@ export const KpiCard = ({
                 </span>
               </Tooltip>
               <span className="sr-only">
-                , exact value <bdi>{exactValue}</bdi>
+                {labels.exactValueHint} <bdi>{exactValue}</bdi>
               </span>
             </>
           ) : (

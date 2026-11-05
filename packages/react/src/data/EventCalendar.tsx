@@ -5,7 +5,7 @@ import { SegmentedControl } from '../forms/SegmentedControl';
 import { useControllableState } from '../hooks/useControllableState';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useTicker } from '../hooks/useTicker';
-import { useLocale } from '../labels/labelsContext';
+import { useLabels, useLocale } from '../labels/labelsContext';
 import { Button } from '../ui/Button';
 import type { Intent } from '../ui/intent';
 import { SectionLabel } from '../ui/SectionLabel';
@@ -32,6 +32,7 @@ import {
 import { DayEventsPopover, EventChip } from './EventCalendarChip';
 import { EventCalendarStrip } from './EventCalendarStrip';
 import { EventCalendarTimeGrid } from './EventCalendarTimeGrid';
+import { EVENT_CALENDAR_LABELS, type EventCalendarLabels } from './labels';
 import { clockTick, nextClockDelay } from './time';
 
 export type { CalendarView } from './calendar-grid';
@@ -109,15 +110,20 @@ export type EventCalendarProps = {
    * BCP 47 language tag (`'fr-FR'`) for the weekday names, the titles, the times and the
    * date in the accessible name of each day and of its "+N more" list. Defaults to
    * `LabelsProvider`'s `locale`, else the browser's. The grid itself stays Gregorian, weeks starting on
-   * Monday, whatever the locale. The button labels (Today, Previous month, Next
-   * month, "+N more") stay English. An invalid tag throws a `RangeError`.
+   * Monday, whatever the locale. The button names (Today, Previous month, Next
+   * month, "+N more") are `labels`. An invalid tag throws a `RangeError`.
    */
   locale?: string;
   /**
-   * Shown under the grid when no event falls in the period shown. Default `No events this month`,
-   * `No events this week` or `No events this day`.
+   * Shown under the grid when no event falls in the period shown. Default `labels.empty`: `No
+   * events this month`, `No events this week` or `No events this day`.
    */
   emptyMessage?: ReactNode;
+  /**
+   * The texts it writes (the view switch, the buttons, the names of the days and lists, the empty
+   * lines…), over `LabelsProvider`'s `eventCalendar` and the English defaults.
+   */
+  labels?: Partial<EventCalendarLabels>;
   /**
    * Classes of the card. The week and day views are as tall as the card is: give it a height
    * (`h-[640px]`) and the hour grid scrolls inside it; without one the grid is 36rem tall.
@@ -127,13 +133,6 @@ export type EventCalendarProps = {
 
 // Chips beyond this go behind the "+N more" button.
 const MAX_CHIPS = 3;
-
-const UNIT: Record<CalendarView, string> = { month: 'month', week: 'week', day: 'day' };
-const VIEWS = [
-  { label: 'Month', value: 'month' },
-  { label: 'Week', value: 'week' },
-  { label: 'Day', value: 'day' },
-] satisfies { label: string; value: CalendarView }[];
 
 // The moment the calendar reads as now, to the minute: Date.now() once a minute, on the boundary.
 const readMinute = (ms: number) => clockTick(ms, false);
@@ -216,8 +215,10 @@ export const EventCalendar = ({
   onSlotClick,
   locale: ownLocale,
   emptyMessage,
+  labels: ownLabels,
   className,
 }: EventCalendarProps) => {
+  const labels = useLabels('eventCalendar', EVENT_CALENDAR_LABELS, ownLabels);
   const now = useNow(today);
   const [view, setView] = useControllableState({
     value: viewProp,
@@ -269,7 +270,11 @@ export const EventCalendar = ({
   const timeOn = (event: CalendarEvent, day: Date) =>
     !isAllDay(event) && sameDay(event.start, day) ? fmt.time(event.start) : undefined;
 
-  const unit = UNIT[view];
+  const viewOptions = [
+    { label: labels.month, value: 'month' },
+    { label: labels.week, value: 'week' },
+    { label: labels.day, value: 'day' },
+  ] satisfies { label: string; value: CalendarView }[];
   const title =
     view === 'month'
       ? fmt.monthYear(shown)
@@ -319,11 +324,7 @@ export const EventCalendar = ({
             {/* A disabled Today reads as dead: the tooltip says why. It wraps the button in both
                 states, so the button is the same element when the period changes. */}
             <Tooltip
-              content={
-                isCurrentPeriod
-                  ? `Already showing the current ${unit}`
-                  : `Back to the current ${unit}`
-              }
+              content={isCurrentPeriod ? labels.alreadyShowing(view) : labels.backToCurrent(view)}
               position="bottom"
             >
               <Button
@@ -333,13 +334,13 @@ export const EventCalendar = ({
                 disabled={isCurrentPeriod}
                 className="me-1"
               >
-                Today
+                {labels.today}
               </Button>
             </Tooltip>
             <button
               type="button"
               onClick={() => goTo(stepPeriod(shown, view, -1))}
-              aria-label={`Previous ${unit}`}
+              aria-label={labels.previous(view)}
               className={NAV_BUTTON}
             >
               <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
@@ -347,16 +348,16 @@ export const EventCalendar = ({
             <button
               type="button"
               onClick={() => goTo(stepPeriod(shown, view, 1))}
-              aria-label={`Next ${unit}`}
+              aria-label={labels.next(view)}
               className={NAV_BUTTON}
             >
               <ChevronRight className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
             </button>
           </div>
           <SegmentedControl
-            aria-label="Calendar view"
+            aria-label={labels.viewSwitch}
             size="sm"
-            options={VIEWS}
+            options={viewOptions}
             value={view}
             onChange={changeView}
             fullWidth={narrow}
@@ -459,6 +460,7 @@ export const EventCalendar = ({
                       open={openDay === key}
                       onOpenChange={(open) => setOpenDay(open ? key : null)}
                       label={label}
+                      labels={labels}
                       hidden={hidden}
                       events={dayEvents}
                       timeOn={(event) => timeOn(event, day)}
@@ -467,7 +469,7 @@ export const EventCalendar = ({
                     >
                       <bdi>
                         +{hidden}
-                        <span className="max-sm:sr-only"> more</span>
+                        <span className="max-sm:sr-only"> {labels.more}</span>
                       </bdi>
                     </DayEventsPopover>
                   )}
@@ -485,6 +487,7 @@ export const EventCalendar = ({
               now={now}
               byDay={byDay}
               fmt={fmt}
+              labels={labels}
               onPick={(day) => {
                 setPickedKey(isoDate(day));
                 onDayClick?.(day);
@@ -496,7 +499,8 @@ export const EventCalendar = ({
             events={events}
             now={now}
             fmt={fmt}
-            label={`Schedule for ${title}`}
+            labels={labels}
+            label={labels.schedule(title)}
             periodDays={view === 'week' ? 7 : 1}
             header={!stripped}
             onEventClick={onEventClick}
@@ -512,12 +516,12 @@ export const EventCalendar = ({
           role="status"
           className="border-t border-gray-200 px-4 py-3 text-center text-sm text-[var(--color-text-muted)] dark:border-gray-800"
         >
-          {emptyMessage ?? `No events this ${unit}`}
+          {emptyMessage ?? labels.empty(view)}
         </p>
       )}
 
       {view === 'month' && narrow && !isEmptyPeriod && (
-        <section aria-label={`Events on ${fmt.fullDate(pickedDay)}`} className="px-4 py-3">
+        <section aria-label={labels.eventsOn(fmt.fullDate(pickedDay))} className="px-4 py-3">
           <p className="mb-2 text-xs font-semibold text-[var(--color-text-primary)]">
             {fmt.fullDate(pickedDay)}
           </p>
@@ -530,7 +534,7 @@ export const EventCalendar = ({
               ))}
             </ul>
           ) : (
-            <p className="text-xs text-[var(--color-text-muted)]">No events</p>
+            <p className="text-xs text-[var(--color-text-muted)]">{labels.noEventsOnDay}</p>
           )}
         </section>
       )}

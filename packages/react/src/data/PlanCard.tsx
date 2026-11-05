@@ -1,10 +1,12 @@
 import { clsx } from 'clsx';
 import { Check, Minus } from 'lucide-react';
 import { useId, type ComponentPropsWithRef, type ElementType, type ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Ribbon } from '../ui/Ribbon';
 import { Amount } from './Amount';
+import { PLAN_CARD_LABELS, type PlanCardLabels } from './labels';
 
 export type PlanFeature = {
   /** What the plan gives, or does not give. */
@@ -56,7 +58,7 @@ export type PlanCardProps = Omit<ComponentPropsWithRef<'article'>, 'children'> &
    * place of `action`.
    */
   current?: boolean;
-  /** Text of that button, for translations. Default `Current plan`. */
+  /** Text of that button. Default `labels.current`, `Current plan`. */
   currentLabel?: string;
   /**
    * The action: a `Button` of `size="lg"`, set right under the price and as wide as the card. The
@@ -69,10 +71,12 @@ export type PlanCardProps = Omit<ComponentPropsWithRef<'article'>, 'children'> &
   children?: ReactNode;
   /** Level of the name's heading. Default `3`. */
   headingLevel?: PlanCardHeadingLevel;
-  /** Read before an included feature by a screen reader, for translations. Default `Included:`. */
+  /** Read before an included feature by a screen reader. Default `labels.included`, `Included:`. */
   includedLabel?: string;
-  /** Read before a missing feature by a screen reader. Default `Not included:`. */
+  /** Read before a missing feature by a screen reader. Default `labels.notIncluded`. */
   notIncludedLabel?: string;
+  /** The texts it writes, over `LabelsProvider`'s `planCard` and the English defaults. */
+  labels?: Partial<PlanCardLabels>;
 };
 
 // A slot with something to draw: `undefined`, `null`, `false` and `''` draw nothing.
@@ -107,17 +111,19 @@ export const PlanCard = ({
   highlighted = false,
   highlightLabel,
   current = false,
-  currentLabel = 'Current plan',
+  currentLabel,
   action,
   features = [],
   children,
   headingLevel = 3,
-  includedLabel = 'Included:',
-  notIncludedLabel = 'Not included:',
+  includedLabel,
+  notIncludedLabel,
+  labels: ownLabels,
   className,
   ref,
   ...rest
 }: PlanCardProps) => {
+  const labels = useLabels('planCard', PLAN_CARD_LABELS, ownLabels);
   const headingId = useId();
   const Heading: ElementType = `h${headingLevel}`;
   const labelled = highlighted && has(highlightLabel);
@@ -174,7 +180,7 @@ export const PlanCard = ({
           <div className="min-h-ctrl-44 mt-4 flex flex-col">
             {current ? (
               <Button variant="secondary" size="lg" disabled>
-                {currentLabel}
+                {currentLabel ?? labels.current}
               </Button>
             ) : (
               action
@@ -208,7 +214,9 @@ export const PlanCard = ({
                     )}
                     <span className="min-w-0 break-words">
                       <span className="sr-only">
-                        {included ? includedLabel : notIncludedLabel}{' '}
+                        {included
+                          ? (includedLabel ?? labels.included)
+                          : (notIncludedLabel ?? labels.notIncluded)}{' '}
                       </span>
                       {label}
                     </span>

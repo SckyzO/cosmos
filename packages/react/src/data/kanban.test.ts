@@ -14,6 +14,7 @@ import {
   toGroups,
   type KanbanColumn,
 } from './kanban';
+import { KANBAN_BOARD_LABELS } from './labels';
 
 const board = (): KanbanColumn[] => [
   {
@@ -157,22 +158,22 @@ describe('toGroups and applyGroups', () => {
 
 describe('announcements', () => {
   it('says where the card is', () => {
-    expect(announcePickUp(board(), 'b')).toBe(
+    expect(announcePickUp(board(), 'b', KANBAN_BOARD_LABELS)).toBe(
       'Picked up Rate-limit export. Column To do, position 2 of 3.'
     );
-    expect(announceMove(moveCard(board(), 'b', 'doing', 0), 'b')).toBe(
+    expect(announceMove(moveCard(board(), 'b', 'doing', 0), 'b', KANBAN_BOARD_LABELS)).toBe(
       'Column In progress, position 1 of 2.'
     );
-    expect(announceDrop(moveCard(board(), 'b', 'doing', 0), 'b')).toBe(
+    expect(announceDrop(moveCard(board(), 'b', 'doing', 0), 'b', KANBAN_BOARD_LABELS)).toBe(
       'Rate-limit export dropped in In progress, position 1 of 2.'
     );
-    expect(announceCancel(board(), 'b')).toBe(
+    expect(announceCancel(board(), 'b', KANBAN_BOARD_LABELS)).toBe(
       'Move cancelled. Rate-limit export is back in To do, position 2 of 3.'
     );
   });
 
   it('says nothing for a card that is not on the board', () => {
-    expect(announcePickUp(board(), 'nope')).toBeUndefined();
-    expect(announceDrop(board(), 'nope')).toBeUndefined();
+    expect(announcePickUp(board(), 'nope', KANBAN_BOARD_LABELS)).toBeUndefined();
+    expect(announceDrop(board(), 'nope', KANBAN_BOARD_LABELS)).toBeUndefined();
   });
 });

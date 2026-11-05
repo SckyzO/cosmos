@@ -3,8 +3,9 @@ import { ArrowDown, ArrowRight } from 'lucide-react';
 import type { ReactNode, Ref } from 'react';
 import { onRadioGroupKeyDown, radioTabIndex } from '../forms/radioGroupA11y';
 import { useControllableState } from '../hooks/useControllableState';
-import { useLocale } from '../labels/labelsContext';
+import { useLabels, useLocale } from '../labels/labelsContext';
 import type { Intent } from '../ui/intent';
+import { PIPELINE_STAGES_LABELS, type PipelineStagesLabels } from './labels';
 import { conversionRate, formatRate } from './pipeline-stages';
 import { useNumberFormat } from './useNumberFormat';
 
@@ -49,6 +50,8 @@ export type PipelineStagesProps = {
   onSelectedChange?: (id: string) => void;
   /** Names the list, or the group of stages when they can be picked. */
   'aria-label'?: string;
+  /** The texts it writes, over `LabelsProvider`'s `pipelineStages` and the English defaults. */
+  labels?: Partial<PipelineStagesLabels>;
   className?: string;
   /** Ref to the root: an `ol`, or a `div` when the stages can be picked. */
   ref?: Ref<HTMLElement>;
@@ -80,6 +83,7 @@ export const PipelineStages = ({
   showConversion = true,
   formatCount,
   locale: ownLocale,
+  labels: ownLabels,
   selectedId: selectedIdProp,
   defaultSelectedId,
   onSelectedChange,
@@ -87,6 +91,7 @@ export const PipelineStages = ({
   className,
   ref,
 }: PipelineStagesProps) => {
+  const labels = useLabels('pipelineStages', PIPELINE_STAGES_LABELS, ownLabels);
   const locale = useLocale(ownLocale);
   const grouped = useNumberFormat(locale);
   const format = formatCount ?? ((count: number) => grouped.format(count));
@@ -110,7 +115,7 @@ export const PipelineStages = ({
     const previous = index > 0 ? stages[index - 1] : undefined;
     const rate = previous ? conversionRate(previous.count, stage.count) : null;
     const rateText = showConversion && rate !== null ? formatRate(rate, locale) : null;
-    const from = typeof previous?.label === 'string' ? previous.label : 'the previous stage';
+    const from = typeof previous?.label === 'string' ? previous.label : labels.previousStage;
     const checked = stage.id === selectedId;
 
     const content = (
@@ -145,7 +150,7 @@ export const PipelineStages = ({
             </span>
           )}
         </span>
-        {rateText && <span className="sr-only">{`${rateText} from ${from}`}</span>}
+        {rateText && <span className="sr-only">{labels.conversion(rateText, from)}</span>}
       </>
     );
 

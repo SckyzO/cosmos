@@ -2,7 +2,9 @@ import { clsx } from 'clsx';
 import { useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { useIsClient } from '../hooks/useIsClient';
 import { useTicker } from '../hooks/useTicker';
+import { useLabels } from '../labels/labelsContext';
 import { INTENT_STYLE, type Intent } from '../ui/intent';
+import { COUNTDOWN_LABELS, type CountdownLabels } from './labels';
 import {
   countdownParts,
   formatCountdownClock,
@@ -51,18 +53,22 @@ export type CountdownProps = {
    * when `target` is already past. A new `target` in the future arms it again.
    */
   onComplete?: () => void;
-  /** The captions of the `tiles`, for another language. Default `Days`, `Hours`, `Minutes`, `Seconds`. */
-  labels?: Partial<Record<CountdownUnit, string>>;
-  /** The suffixes of `inline`, `compact`, `card` and `display`, for another language. Default `d`, `h`, `m`, `s`. */
+  /**
+   * The texts it writes (the captions of the `tiles`, the suffixes of the one-line forms, the
+   * default `label` and `completedLabel`), over `LabelsProvider`'s `countdown` and the English
+   * defaults.
+   */
+  labels?: Partial<CountdownLabels>;
+  /** The suffixes of `inline`, `compact`, `card` and `display`. Default `labels.shortDays`… */
   shortLabels?: Partial<Record<CountdownUnit, string>>;
   /**
    * `inline`, `card` and `display`: the text before the count (above it, in `card` and `display`).
-   * Default `Ends in`; `null` for none.
+   * Default `labels.ends`, `Ends in`; `null` for none.
    */
   label?: ReactNode;
   /**
    * `inline`, `card` and `display`: the text once the count has reached zero, in place of `label`.
-   * Default `Ended`.
+   * Default `labels.completed`, `Ended`.
    */
   completedLabel?: ReactNode;
   /** Names the timer. `compact`, `card` and `display` default to the full count ("2 days 4 hours…"), read from `labels`. */
@@ -76,20 +82,6 @@ export type CountdownProps = {
 };
 
 const UNITS: CountdownUnit[] = ['days', 'hours', 'minutes', 'seconds'];
-
-const LABELS: Record<CountdownUnit, string> = {
-  days: 'Days',
-  hours: 'Hours',
-  minutes: 'Minutes',
-  seconds: 'Seconds',
-};
-
-const SHORT_LABELS: Record<CountdownUnit, string> = {
-  days: 'd',
-  hours: 'h',
-  minutes: 'm',
-  seconds: 's',
-};
 
 const two = (n: number) => String(n).padStart(2, '0');
 
@@ -137,14 +129,18 @@ export const Countdown = ({
   intent = 'neutral',
   urgentBelow,
   onComplete,
-  labels,
+  labels: ownLabels,
   shortLabels,
-  label = 'Ends in',
-  completedLabel = 'Ended',
+  label: ownLabel,
+  completedLabel: ownCompletedLabel,
   'aria-label': ariaLabel,
   now,
   className,
 }: CountdownProps) => {
+  const labels = useLabels('countdown', COUNTDOWN_LABELS, ownLabels);
+  // `null` is a label too: no text before the count.
+  const label = ownLabel === undefined ? labels.ends : ownLabel;
+  const completedLabel = ownCompletedLabel === undefined ? labels.completed : ownCompletedLabel;
   const isClient = useIsClient();
   const targetMs = toTimestamp(target);
   const read = useCallback((at: number) => remainingSeconds(targetMs, at), [targetMs]);
@@ -168,8 +164,18 @@ export const Countdown = ({
     onCompleteRef.current?.();
   }, [done, targetMs]);
 
-  const long = { ...LABELS, ...labels };
-  const short = { ...SHORT_LABELS, ...shortLabels };
+  const long: Record<CountdownUnit, string> = {
+    days: labels.days,
+    hours: labels.hours,
+    minutes: labels.minutes,
+    seconds: labels.seconds,
+  };
+  const short: Record<CountdownUnit, string> = {
+    days: shortLabels?.days ?? labels.shortDays,
+    hours: shortLabels?.hours ?? labels.shortHours,
+    minutes: shortLabels?.minutes ?? labels.shortMinutes,
+    seconds: shortLabels?.seconds ?? labels.shortSeconds,
+  };
   // Dashes in the same layout until the browser is there, and for a target that is no date.
   const blank = !isClient || !Number.isFinite(targetMs);
   // The tiles, the card and the display show `units`; the one-line forms always read the four.

@@ -2,9 +2,11 @@ import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 import { Sk } from '../feedback/Skeleton';
 import { useAfterSkeleton } from '../feedback/useAfterSkeleton';
+import { useLabels } from '../labels/labelsContext';
 import { AppLink } from '../ui/AppLink';
 import type { Intent } from '../ui/intent';
 import { barPercent, largestValue } from './bar-list';
+import { BAR_LIST_LABELS, type BarListLabels } from './labels';
 import { useNumberFormat } from './useNumberFormat';
 
 export type BarListIntent = Extract<Intent, 'brand' | 'success' | 'warning' | 'danger' | 'info'>;
@@ -54,8 +56,10 @@ export type BarListProps = {
    * height; five when there are none yet.
    */
   loading?: boolean;
-  /** Shown in place of the list when `items` is empty. Default `No data`. */
+  /** Shown in place of the list when `items` is empty. Default `labels.empty`, `No data`. */
   emptyMessage?: ReactNode;
+  /** The texts it writes, over `LabelsProvider`'s `barList` and the English defaults. */
+  labels?: Partial<BarListLabels>;
   /** Names the list for assistive technology ("Top pages"). */
   'aria-label'?: string;
   className?: string;
@@ -99,10 +103,12 @@ export const BarList = ({
   intent = 'brand',
   onItemClick,
   loading = false,
-  emptyMessage = 'No data',
+  emptyMessage,
+  labels: ownLabels,
   'aria-label': ariaLabel,
   className,
 }: BarListProps) => {
+  const labels = useLabels('barList', BAR_LIST_LABELS, ownLabels);
   const List = showRank ? 'ol' : 'ul';
   const grouped = useNumberFormat(locale);
   const format = formatValue ?? ((value: number) => grouped.format(value));
@@ -136,7 +142,7 @@ export const BarList = ({
         className={clsx('text-sm text-[var(--color-text-muted)]', arrival.className, className)}
         onAnimationEnd={arrival.onAnimationEnd}
       >
-        {emptyMessage}
+        {emptyMessage ?? labels.empty}
       </p>
     );
 

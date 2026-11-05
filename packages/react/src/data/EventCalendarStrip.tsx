@@ -3,6 +3,7 @@ import { SectionLabel } from '../ui/SectionLabel';
 import { isoDate, sameDay, type CalendarFormats } from './calendar-dates';
 import type { CalendarEvent } from './EventCalendar';
 import { INTENT_DOT } from './EventCalendarChip';
+import type { EventCalendarLabels } from './labels';
 
 // Chips beyond this are left out of the dots under a day.
 const MAX_DOTS = 3;
@@ -17,6 +18,7 @@ export const EventCalendarStrip = ({
   now,
   byDay,
   fmt,
+  labels,
   onPick,
 }: {
   days: Date[];
@@ -24,11 +26,12 @@ export const EventCalendarStrip = ({
   now: Date;
   byDay: Map<string, CalendarEvent[]>;
   fmt: CalendarFormats;
+  labels: EventCalendarLabels;
   onPick: (day: Date) => void;
 }) => (
   <div
     role="group"
-    aria-label="Days of the week"
+    aria-label={labels.weekDays}
     className="border-t border-gray-200 dark:border-gray-800"
   >
     {/* The weekday letters are not in the buttons: a button's name is its date, and a letter in

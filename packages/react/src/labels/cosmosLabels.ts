@@ -1,3 +1,16 @@
+import type {
+  AuditDiffLabels,
+  BarListLabels,
+  CountdownLabels,
+  EventCalendarLabels,
+  IntegrationCardLabels,
+  KanbanBoardLabels,
+  KpiCardLabels,
+  MiniCalendarLabels,
+  PipelineStagesLabels,
+  PlanCardLabels,
+  TrendDeltaLabels,
+} from '../data/labels';
 import type { EmptyStateLabels, ErrorStateLabels, LoadingStateLabels } from '../feedback/labels';
 import type {
   AvatarUploaderLabels,
@@ -51,7 +64,9 @@ import type {
  */
 export type CosmosLabels = {
   activeFiltersBar: ActiveFiltersBarLabels;
+  auditDiff: AuditDiffLabels;
   avatarUploader: AvatarUploaderLabels;
+  barList: BarListLabels;
   breadcrumb: BreadcrumbLabels;
   calendar: CalendarLabels;
   cardExpiryInput: CardExpiryInputLabels;
@@ -60,16 +75,22 @@ export type CosmosLabels = {
   columnFilterDropdown: ColumnFilterDropdownLabels;
   columnHeader: ColumnHeaderLabels;
   combobox: ComboboxLabels;
+  countdown: CountdownLabels;
   dataTable: DataTableLabels;
   datePicker: DatePickerLabels;
   dropzone: DropzoneLabels;
   emptyState: EmptyStateLabels;
   errorState: ErrorStateLabels;
   errorSummary: ErrorSummaryLabels;
+  eventCalendar: EventCalendarLabels;
   fileInput: FileInputLabels;
   formFooter: FormFooterLabels;
+  integrationCard: IntegrationCardLabels;
+  kanbanBoard: KanbanBoardLabels;
+  kpiCard: KpiCardLabels;
   lineItemsEditor: LineItemsLabels;
   loadingState: LoadingStateLabels;
+  miniCalendar: MiniCalendarLabels;
   multiSelect: MultiSelectLabels;
   newPasswordForm: NewPasswordFormLabels;
   numberInput: NumberInputLabels;
@@ -78,6 +99,8 @@ export type CosmosLabels = {
   passwordPolicyChecker: PasswordPolicyLabels;
   passwordStrengthMeter: PasswordStrengthLabels;
   phoneInput: PhoneInputLabels;
+  pipelineStages: PipelineStagesLabels;
+  planCard: PlanCardLabels;
   resetPasswordForm: ResetPasswordFormLabels;
   rowActionsMenu: RowActionsMenuLabels;
   searchInput: SearchInputLabels;
@@ -86,6 +109,7 @@ export type CosmosLabels = {
   slider: SliderLabels;
   socialAuthButtons: SocialAuthButtonsLabels;
   tagInput: TagInputLabels;
+  trendDelta: TrendDeltaLabels;
   twoStepVerificationForm: TwoStepVerificationLabels;
   uploadQueue: UploadQueueLabels;
   zoomBar: ZoomBarLabels;

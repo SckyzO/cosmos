@@ -1,7 +1,9 @@
 import { clsx } from 'clsx';
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { INTENT_STYLE, type Intent } from '../ui/intent';
+import { TREND_DELTA_LABELS, type TrendDeltaLabels } from './labels';
 import { useNumberFormat } from './useNumberFormat';
 
 export type TrendDeltaSize = 'sm' | 'md';
@@ -24,6 +26,8 @@ export type TrendDeltaProps = {
   /** What the change is measured against, as muted text after the pill: "vs last month". */
   label?: ReactNode;
   size?: TrendDeltaSize;
+  /** The texts it writes, over `LabelsProvider`'s `trendDelta` and the English defaults. */
+  labels?: Partial<TrendDeltaLabels>;
   className?: string;
 };
 
@@ -53,11 +57,13 @@ export const TrendDelta = ({
   goodDirection = 'up',
   label,
   size = 'md',
+  labels: ownLabels,
   className,
 }: TrendDeltaProps) => {
+  const labels = useLabels('trendDelta', TREND_DELTA_LABELS, ownLabels);
   const percent = useNumberFormat(locale, PERCENT);
   const write = format ?? ((n: number) => `${percent.format(n)}%`);
-  const direction = value > 0 ? 'increase' : value < 0 ? 'decrease' : 'no change';
+  const direction = value > 0 ? labels.increase : value < 0 ? labels.decrease : labels.noChange;
   const Icon = value > 0 ? TrendingUp : value < 0 ? TrendingDown : Minus;
   const intent: Intent =
     value === 0 ? 'neutral' : value > 0 === (goodDirection === 'up') ? 'success' : 'danger';
