@@ -464,9 +464,6 @@ test('the package uses logical utilities only', () => {
 // JSX text, a string given to a prop that is shown or read out, a string default of a prop that holds
 // text, and a string after `??` for one. It sees words (two letters or more), not their language.
 
-/** The files that still write English in place, translated a group at a time: the list only shrinks. */
-const TEXT_DEFERRED: string[] = [];
-
 /**
  * Words the check takes for text and that are not: `file`, the exact `text` it reports and why,
  * so each exception is a decision and not a leftover. An entry that no longer matches fails too.
@@ -659,28 +656,19 @@ const chartsSources = () =>
     .map((path) => `packages/charts/src/${path}`)
     .sort();
 
-test('the components write no English in place, outside the files still to translate', () => {
+test('the components write no English in place', () => {
   const files = [...packageSources(), ...chartsSources()];
   const found = new Map(files.map((file) => [file, englishInPlace(file, read(file))]));
   const allowed = (file: string, hit: string) =>
     TEXT_ALLOWED.some((entry) => entry.file === file && hit.endsWith(`: ${entry.text}`));
-  const written = [...found]
-    .filter(([file]) => !TEXT_DEFERRED.includes(file))
-    .flatMap(([file, hits]) =>
-      hits.filter((hit) => !allowed(file, hit)).map((hit) => `${file}: ${hit}`)
-    );
+  const written = [...found].flatMap(([file, hits]) =>
+    hits.filter((hit) => !allowed(file, hit)).map((hit) => `${file}: ${hit}`)
+  );
   expect(
     written,
     "English written in place: give it a key in the group's labels.ts and read it with useLabels, or add a TEXT_ALLOWED entry with the reason"
   ).toEqual([]);
 
-  for (const file of TEXT_DEFERRED) {
-    expect(found.has(file), `TEXT_DEFERRED names a file that is gone: ${file}`).toBe(true);
-    expect(
-      (found.get(file) ?? []).filter((hit) => !allowed(file, hit)).length,
-      `${file} writes no English in place any more: take it off TEXT_DEFERRED`
-    ).toBeGreaterThan(0);
-  }
   for (const { file, text, reason } of TEXT_ALLOWED) {
     expect(reason, `${file}: ${text}`).not.toBe('');
     expect(
