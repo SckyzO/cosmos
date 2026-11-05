@@ -25,8 +25,8 @@ list are the host's to keep (URL or state).
 - Links when `previousHref` / `nextHref` are given (through `LinkProvider`), buttons with
   `onPrevious` / `onNext` otherwise. A side with nowhere to go, or at the first or last record, is a
   disabled button, never a link.
-- `noun` builds the labels ("Previous order"); `labels` (`previous`, `next`, `back`, `count`)
-  replaces any of them, for another language. `count` receives the position and the total as nodes,
+- `noun` builds the labels ("Previous order"); `labels` (`previous` and `next`, functions of the
+  noun, `back`, `count`, `landmark`, `noun`) replaces any of them, for another language. `count` receives the position and the total as nodes,
   already set apart in medium weight as in "12 of 340", so a translation keeps them that way:
   `count: (position, total) => <>{position} sur {total}</>`.
 - `variant="compact"` draws icon buttons (still named) and the count, for a `PageHeader`'s `actions`.
