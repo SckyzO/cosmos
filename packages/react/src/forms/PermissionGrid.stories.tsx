@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import {
   bothDirections,
@@ -819,5 +820,20 @@ export const FirstColumnSticksAtTheStart: Story = {
     expectMirrored(canvasElement, (direction) =>
       within(direction).getByRole('rowheader', { name: /Edit invoices/ })
     );
+  },
+};
+
+/** The provider's `permissionGrid` translates the grid, and the grid's own `labels` win over it. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <LabelsProvider labels={{ permissionGrid: FRENCH }}>
+      <PermissionGrid {...args} labels={{ rowHeader: 'Droit' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const grid = canvas.getByRole('grid');
+    await expect(within(grid).getByText('Droit')).toBeVisible();
+    await expect(within(grid).getByRole('checkbox', { name: 'Tout sélectionner' })).toBeVisible();
   },
 };

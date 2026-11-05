@@ -255,8 +255,9 @@ is resolved by the consumer's CSS bundler, not by module resolution.
 key of its labels, never English in place: types and English defaults in the group's `labels.ts`,
 registered in `labels/cosmosLabels.ts` and `labels/englishLabels.ts`, read with `useLabels(key,
 DEFAULTS, labels)` (defaults, then the app's `LabelsProvider`, then the `labels` prop). Text props
-such as `closeLabel` fold into `labels`. `repo-policy.spec.ts` refuses English written in place
-outside `TEXT_DEFERRED` (#502, translated a group at a time; the list only shrinks).
+such as `closeLabel` fold into `labels`. `repo-policy.spec.ts` refuses English written in place in
+both packages (#502); `charts` has its own `ChartLabelsProvider` (`core/labels.ts`). The defaults
+of `/map` and `/editor` live in those entries, not in `englishLabels`.
 
 ### Consuming the theme — `@source` is mandatory
 

@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_LABELS,
   cellKey,
   focusMoveOf,
   gridCells,
   gridRowLengths,
   inScope,
   moveFocus,
-  resolveLabels,
   tallyGrid,
   toggleCell,
   toggleScope,
@@ -15,6 +13,7 @@ import {
   type PermissionGridColumn,
   type PermissionGridGroup,
 } from './permissionGridModel';
+import { PERMISSION_GRID_LABELS } from './labels';
 
 // Two areas of two permissions, three roles. "Admin" is built in: read-only. The archive can be
 // read and deleted, never edited: `columns` lists the roles a row applies to.
@@ -249,36 +248,25 @@ describe('inScope', () => {
 
 describe('labels', () => {
   it('names a cell by its row and its column', () => {
-    expect(DEFAULT_LABELS.cell('Edit invoices', 'Admin')).toBe('Edit invoices, Admin');
+    expect(PERMISSION_GRID_LABELS.cell('Edit invoices', 'Admin')).toBe('Edit invoices, Admin');
   });
 
   it('says how many permissions are granted, in the singular for one', () => {
-    expect(DEFAULT_LABELS.summary(8, 26)).toBe('8 of 26 permissions granted');
-    expect(DEFAULT_LABELS.summary(0, 26)).toBe('0 of 26 permissions granted');
-    expect(DEFAULT_LABELS.summary(1, 1)).toBe('1 of 1 permission granted');
+    expect(PERMISSION_GRID_LABELS.summary(8, 26)).toBe('8 of 26 permissions granted');
+    expect(PERMISSION_GRID_LABELS.summary(0, 26)).toBe('0 of 26 permissions granted');
+    expect(PERMISSION_GRID_LABELS.summary(1, 1)).toBe('1 of 1 permission granted');
   });
 
   it('writes a read-only or not applicable cell in words', () => {
-    expect(DEFAULT_LABELS.readOnlyCell('Edit invoices, Admin', true)).toBe(
+    expect(PERMISSION_GRID_LABELS.readOnlyCell('Edit invoices, Admin', true)).toBe(
       'Edit invoices, Admin: granted, read-only'
     );
-    expect(DEFAULT_LABELS.readOnlyCell('Edit invoices, Admin', false)).toBe(
+    expect(PERMISSION_GRID_LABELS.readOnlyCell('Edit invoices, Admin', false)).toBe(
       'Edit invoices, Admin: not granted, read-only'
     );
-    expect(DEFAULT_LABELS.notApplicable('Delete archive, Viewer')).toBe(
+    expect(PERMISSION_GRID_LABELS.notApplicable('Delete archive, Viewer')).toBe(
       'Delete archive, Viewer: not applicable'
     );
-  });
-
-  it('merges the given labels over the English ones', () => {
-    const labels = resolveLabels({ selectAll: 'Tout sélectionner' });
-    expect(labels.selectAll).toBe('Tout sélectionner');
-    expect(labels.rowHeader).toBe(DEFAULT_LABELS.rowHeader);
-    expect(resolveLabels()).toEqual(DEFAULT_LABELS);
-  });
-
-  it('ignores a label given as undefined', () => {
-    expect(resolveLabels({ selectAll: undefined }).selectAll).toBe(DEFAULT_LABELS.selectAll);
   });
 });
 

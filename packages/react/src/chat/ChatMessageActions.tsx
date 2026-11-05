@@ -69,8 +69,7 @@ export const ChatMessageActions = ({
         <Clipboard
           plain
           value={text}
-          copyLabel={labels.copy}
-          copiedLabel={labels.copied}
+          labels={{ copy: labels.copy, copied: labels.copied }}
           duration={2000}
         />
       )}

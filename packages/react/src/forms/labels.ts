@@ -282,6 +282,8 @@ export type PasswordStrengthLabels = {
   name: string;
   /** The level for each score, 0 to 4, from the weakest. Default `Very weak`, `Weak`, `Fair`, `Good`, `Strong`. */
   levels: PasswordStrengthLevels;
+  /** What goes between the words and the level, in the text and the announcement. Default `: `. */
+  separator: string;
 };
 
 export type PhoneInputLabels = {
@@ -562,6 +564,7 @@ export const PASSWORD_POLICY_LABELS: PasswordPolicyLabels = {
 export const PASSWORD_STRENGTH_LABELS: PasswordStrengthLabels = {
   name: 'Password strength',
   levels: ['Very weak', 'Weak', 'Fair', 'Good', 'Strong'],
+  separator: ': ',
 };
 
 export const PHONE_INPUT_LABELS: PhoneInputLabels = {
@@ -624,4 +627,36 @@ export const ZOOM_BAR_LABELS: ZoomBarLabels = {
   zoomIn: 'Zoom in',
   fit: 'Fit to canvas',
   reset: 'Reset to 100%',
+};
+
+/** Every text the grid writes itself, to translate or reword. */
+export type PermissionGridLabels = {
+  /** The header over the first column. Default `Permission`. */
+  rowHeader: string;
+  /** Name of the box in the corner, which selects every cell. Default `Select all`. */
+  selectAll: string;
+  /** Name of the box of a row, a column or a group. Default `Select all for <label>`. */
+  selectAllFor: (label: string) => string;
+  /** Name of the box of one cell. Default `<row>, <column>`, e.g. `Edit invoices, Admin`. */
+  cell: (row: string, column: string) => string;
+  /** What a read-only cell says, in place of a box. Default `<cell>: granted, read-only`. */
+  readOnlyCell: (cell: string, granted: boolean) => string;
+  /** What an empty cell, a column the row does not apply to, says. Default `<cell>: not applicable`. */
+  notApplicable: (cell: string) => string;
+  /** Read after the name of a read-only column. Default `Read-only`. */
+  readOnlyColumn: string;
+  /** Announced after a box that selects several cells. Default `8 of 26 permissions granted`. */
+  summary: (granted: number, total: number) => string;
+};
+
+export const PERMISSION_GRID_LABELS: PermissionGridLabels = {
+  rowHeader: 'Permission',
+  selectAll: 'Select all',
+  selectAllFor: (label) => `Select all for ${label}`,
+  cell: (row, column) => `${row}, ${column}`,
+  readOnlyCell: (cell, granted) => `${cell}: ${granted ? 'granted' : 'not granted'}, read-only`,
+  notApplicable: (cell) => `${cell}: not applicable`,
+  readOnlyColumn: 'Read-only',
+  summary: (granted, total) =>
+    `${granted} of ${total} ${total === 1 ? 'permission' : 'permissions'} granted`,
 };

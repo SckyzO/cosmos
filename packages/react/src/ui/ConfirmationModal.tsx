@@ -21,12 +21,6 @@ export type ConfirmationModalProps = {
   onDiscard?: () => void;
   onSave?: () => void;
   saving?: boolean;
-  /** @deprecated Write `labels={{ stay: … }}`. */
-  stayLabel?: string;
-  /** @deprecated Write `labels={{ discard: … }}`. */
-  discardLabel?: string;
-  /** @deprecated Write `labels={{ save: … }}`. */
-  saveLabel?: string;
   /** Icon of the confirm button: a lucide-react component, or `null` for none. Default `Save`. */
   icon?: ElementType | null;
   /** Hide the Save button — for simple confirm/cancel flows. */
@@ -90,9 +84,6 @@ const ConfirmationContent = ({
   onDiscard,
   onSave,
   saving = false,
-  stayLabel,
-  discardLabel,
-  saveLabel,
   icon = Save,
   hideSave = false,
   intent = 'warning',
@@ -163,7 +154,7 @@ const ConfirmationContent = ({
 
       <div className="flex flex-nowrap items-center justify-end gap-2 border-t border-gray-100 px-6 py-4 dark:border-gray-800">
         <Button variant="secondary" onClick={() => onClose()} className="shrink-0">
-          {stayLabel ?? labels.stay}
+          {labels.stay}
         </Button>
         {onDiscard && (
           <Button
@@ -173,7 +164,7 @@ const ConfirmationContent = ({
             onClick={() => onDiscard()}
             className="shrink-0"
           >
-            {discardLabel ?? labels.discard}
+            {labels.discard}
           </Button>
         )}
         {!hideSave && onSave && (
@@ -183,7 +174,7 @@ const ConfirmationContent = ({
             onClick={() => onSave()}
             className="shrink-0"
           >
-            {saveLabel ?? labels.save}
+            {labels.save}
           </Button>
         )}
       </div>

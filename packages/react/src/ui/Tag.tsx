@@ -27,11 +27,6 @@ export type TagProps = {
   disabled?: boolean;
   /** Shows a remove button; it is called when the button is pressed. */
   onRemove?: () => void;
-  /**
-   * Accessible name of the remove button. Default `labels.remove`, `Remove {text}`, with the text
-   * read from `children`; set it when `children` holds no text or the action has a better name.
-   */
-  removeLabel?: string;
   /** The texts it writes (the remove button's name), over `LabelsProvider`'s `tag` and the English defaults. */
   labels?: Partial<TagLabels>;
   /** Makes the tag a link. Wins over `onClick`, which still runs on click. */
@@ -119,7 +114,6 @@ export const Tag = ({
   inField = false,
   disabled = false,
   onRemove,
-  removeLabel,
   labels: ownLabels,
   href,
   onClick,
@@ -203,7 +197,7 @@ export const Tag = ({
           type="button"
           disabled={disabled}
           onClick={() => onRemove()}
-          aria-label={removeLabel ?? labels.remove(name)}
+          aria-label={labels.remove(name)}
           className={clsx(
             'focus-visible:focus-indicator relative inline-flex shrink-0 items-center justify-center rounded-sm before:absolute before:content-[""]',
             'enabled:cursor-pointer enabled:hover:bg-black/10 enabled:dark:hover:bg-white/15',

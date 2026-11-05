@@ -725,8 +725,7 @@ const BillingPageDemo = ({ pendingId }: { pendingId?: string }) => {
           message={`Your plan changes today. From your next renewal on 15 January 2027 you pay ${money(
             (target.monthly ?? 0) * (1 - YEARLY_DISCOUNT) * 12
           )} a year.`}
-          stayLabel={`Keep ${current.name}`}
-          saveLabel={`Switch to ${target.name}`}
+          labels={{ stay: `Keep ${current.name}`, save: `Switch to ${target.name}` }}
           icon={ArrowRightLeft}
           onClose={() => setOpen(false)}
           onSave={() => {
