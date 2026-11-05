@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { DataTableLabels } from './labels';
 import type { ColumnDef, SortDirection } from './types';
 
 // The pure part of DataTable's `mobileLayout="cards"`: which column heads a card, which ones
@@ -41,12 +42,15 @@ export const parseMobileSort = (value: string): { key: string | null; dir: SortD
 };
 
 /** "Default order", then both directions of every sortable shown column. */
-export const mobileSortOptions = <T>(columns: ColumnDef<T>[]): MobileSortOption[] => [
-  { value: '', label: 'Default order' },
+export const mobileSortOptions = <T>(
+  columns: ColumnDef<T>[],
+  labels: Pick<DataTableLabels, 'defaultOrder' | 'sortAscending' | 'sortDescending'>
+): MobileSortOption[] => [
+  { value: '', label: labels.defaultOrder },
   ...columns
     .filter((c) => c.sortable)
     .flatMap((c) => [
-      { value: mobileSortValue(c.key, 'asc'), label: `${columnText(c)}, ascending` },
-      { value: mobileSortValue(c.key, 'desc'), label: `${columnText(c)}, descending` },
+      { value: mobileSortValue(c.key, 'asc'), label: labels.sortAscending(columnText(c)) },
+      { value: mobileSortValue(c.key, 'desc'), label: labels.sortDescending(columnText(c)) },
     ]),
 ];

@@ -20,6 +20,7 @@ import {
   parseMobileSort,
   splitMobileColumns,
 } from './mobileCards';
+import type { DataTableLabels } from './labels';
 import type { ColumnDef, SortDirection } from './types';
 
 // DataTable's `mobileLayout="cards"` below `sm`: the rows as a list of blocks, and the "Sort by"
@@ -62,6 +63,7 @@ type DataTableMobileCardsProps<T> = {
   emptyAction?: ReactNode;
   'aria-label'?: string;
   'aria-labelledby'?: string;
+  labels: DataTableLabels;
 };
 
 const ROW_DIVIDER = 'divide-y divide-gray-200 dark:divide-gray-800';
@@ -90,6 +92,7 @@ export const DataTableMobileCards = <T,>({
   emptyAction,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
+  labels,
 }: DataTableMobileCardsProps<T>) => {
   const { title, pairs } = splitMobileColumns(columns);
   const arrive = useAfterSkeleton(loading);
@@ -98,7 +101,7 @@ export const DataTableMobileCards = <T,>({
     return (
       <div className="sm:hidden">
         <span role="status" className="sr-only">
-          Loading…
+          {labels.loading}
         </span>
         <ul aria-hidden className={ROW_DIVIDER}>
           {Array.from({ length: loadingRows }, (_, i) => (
@@ -196,7 +199,7 @@ export const DataTableMobileCards = <T,>({
                   icon={RowChevron}
                   aria-expanded={open}
                   aria-controls={open ? detailId : undefined}
-                  aria-label={`${open ? 'Hide' : 'Show'} details for ${key}`}
+                  aria-label={open ? labels.hideDetails(key) : labels.showDetails(key)}
                   onClick={() => onToggleExpanded(key)}
                   className={clsx('-my-2.5 -ms-3 -me-2 shrink-0', href && 'relative z-[1]')}
                 />
@@ -204,7 +207,7 @@ export const DataTableMobileCards = <T,>({
               {selectable && (
                 <div className={clsx('flex shrink-0 items-center', href && 'relative z-[1]')}>
                   <Checkbox
-                    aria-label={`Select row ${key}`}
+                    aria-label={labels.selectRow(key)}
                     checked={selected}
                     onChange={() => onToggleRow(key)}
                   />
@@ -269,6 +272,7 @@ type DataTableMobileSortProps<T> = {
   sortKey: string | null;
   sortDir: SortDirection;
   onSortChange: (key: string | null, dir: SortDirection) => void;
+  labels: DataTableLabels;
 };
 
 /** The "Sort by" select of the toolbar's second line: one option per sortable column and direction. */
@@ -277,11 +281,12 @@ export const DataTableMobileSort = <T,>({
   sortKey,
   sortDir,
   onSortChange,
+  labels,
 }: DataTableMobileSortProps<T>) => (
   <div className="min-w-0 flex-1">
     <Select
-      aria-label="Sort by"
-      options={mobileSortOptions(columns)}
+      aria-label={labels.sortBy}
+      options={mobileSortOptions(columns, labels)}
       value={mobileSortValue(sortKey, sortDir)}
       onChange={(e) => {
         const next = parseMobileSort(e.target.value);

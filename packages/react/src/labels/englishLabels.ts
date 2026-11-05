@@ -34,6 +34,13 @@ import {
   SOCIAL_AUTH_BUTTONS_LABELS,
   TWO_STEP_VERIFICATION_FORM_LABELS,
 } from '../pages/labels';
+import {
+  ACTIVE_FILTERS_BAR_LABELS,
+  COLUMN_FILTER_DROPDOWN_LABELS,
+  COLUMN_HEADER_LABELS,
+  DATA_TABLE_LABELS,
+  ROW_ACTIONS_MENU_LABELS,
+} from '../table/labels';
 import type { CosmosLabels } from './cosmosLabels';
 
 /**
@@ -42,13 +49,17 @@ import type { CosmosLabels } from './cosmosLabels';
  * that never imports this object ships none of the others.
  */
 export const englishLabels: CosmosLabels = {
+  activeFiltersBar: ACTIVE_FILTERS_BAR_LABELS,
   avatarUploader: AVATAR_UPLOADER_LABELS,
   breadcrumb: BREADCRUMB_LABELS,
   calendar: CALENDAR_LABELS,
   cardExpiryInput: CARD_EXPIRY_INPUT_LABELS,
   cardFields: CARD_FIELDS_LABELS,
   colorInput: COLOR_INPUT_LABELS,
+  columnFilterDropdown: COLUMN_FILTER_DROPDOWN_LABELS,
+  columnHeader: COLUMN_HEADER_LABELS,
   combobox: COMBOBOX_LABELS,
+  dataTable: DATA_TABLE_LABELS,
   datePicker: DATE_PICKER_LABELS,
   dropzone: DROPZONE_LABELS,
   emptyState: EMPTY_STATE_LABELS,
@@ -67,6 +78,7 @@ export const englishLabels: CosmosLabels = {
   passwordStrengthMeter: PASSWORD_STRENGTH_LABELS,
   phoneInput: PHONE_INPUT_LABELS,
   resetPasswordForm: RESET_PASSWORD_FORM_LABELS,
+  rowActionsMenu: ROW_ACTIONS_MENU_LABELS,
   searchInput: SEARCH_INPUT_LABELS,
   signInForm: SIGN_IN_FORM_LABELS,
   signUpForm: SIGN_UP_FORM_LABELS,

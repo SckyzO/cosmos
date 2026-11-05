@@ -23,11 +23,11 @@ export const rowInitials = <T>(columns: ColumnDef<T>[], row: T): Record<string, 
   return initials;
 };
 
-/** The text of a rejected save: the `Error`'s message, a string as it is, else a plain line. */
-export const saveErrorMessage = (reason: unknown): string => {
+/** The text of a rejected save: the `Error`'s message, a string as it is, else `fallback`. */
+export const saveErrorMessage = (reason: unknown, fallback: string): string => {
   if (reason instanceof Error && reason.message) return reason.message;
   if (typeof reason === 'string' && reason) return reason;
-  return 'Not saved';
+  return fallback;
 };
 
 /** Whether what `onCellEdit` / `onRowEdit` returned is a promise to wait for. */

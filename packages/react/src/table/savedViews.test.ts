@@ -78,10 +78,10 @@ describe('recordToFilters', () => {
 describe('viewNameError', () => {
   const views = [view({ id: 'a', name: 'Engineers' }), view({ id: 'b', name: 'Ops' })];
   it('refuses an empty name', () => {
-    expect(viewNameError('   ', views)).toMatch(/name/i);
+    expect(viewNameError('   ', views)).toBe('empty');
   });
   it('refuses a name another view has, ignoring case and spaces', () => {
-    expect(viewNameError(' engineers ', views)).toMatch(/already/i);
+    expect(viewNameError(' engineers ', views)).toBe('taken');
   });
   it('accepts the name of the view being renamed', () => {
     expect(viewNameError('Engineers', views, 'a')).toBeNull();

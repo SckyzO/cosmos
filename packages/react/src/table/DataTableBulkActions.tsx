@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Menu } from '../ui/Menu';
+import type { DataTableLabels } from './labels';
 import type { DataTableBulkAction } from './types';
 
 // The `bulkActionItems` of a DataTable, in the selection bar. Internal: not re-exported.
@@ -17,6 +18,7 @@ type DataTableBulkActionsProps<T> = {
   selectedRows: T[];
   /** Cards mode: below `sm` the actions are icon buttons. */
   phoneIcons: boolean;
+  labels: DataTableLabels;
 };
 
 const MENU_TRIGGER =
@@ -26,6 +28,7 @@ export const DataTableBulkActions = <T,>({
   items,
   selectedRows,
   phoneIcons,
+  labels,
 }: DataTableBulkActionsProps<T>) => {
   if (items.length === 0) return null;
   const [first, ...rest] = items;
@@ -56,10 +59,10 @@ export const DataTableBulkActions = <T,>({
             <div className="@min-[1152px]:hidden">
               <Menu align="start">
                 <Menu.Trigger className={MENU_TRIGGER}>
-                  Actions
+                  {labels.bulkActions}
                   <ChevronDown aria-hidden className="h-4 w-4 text-gray-400" />
                 </Menu.Trigger>
-                <Menu.Content aria-label="Actions" width="w-48">
+                <Menu.Content aria-label={labels.bulkActions} width="w-48">
                   {rest.map((item) => (
                     <Menu.Item
                       key={item.key}

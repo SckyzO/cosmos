@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { ConfirmationModal } from '../ui/ConfirmationModal';
 import { Menu } from '../ui/Menu';
 import { Modal } from '../ui/Modal';
+import type { DataTableLabels } from './labels';
 import { viewMatches, viewNameError, type ViewState } from './savedViews';
 import { TOOLBAR_BUTTON } from './toolbarButton';
 import type { ColumnDef, DataTableView } from './types';
@@ -24,6 +25,7 @@ type DataTableViewsProps<T> = {
   onSave: (name: string) => void;
   onRename: (name: string) => void;
   onDelete: () => void;
+  labels: DataTableLabels;
 };
 
 type Dialog = 'save' | 'rename' | 'delete' | null;
@@ -37,11 +39,12 @@ export const DataTableViews = <T,>({
   onSave,
   onRename,
   onDelete,
+  labels,
 }: DataTableViewsProps<T>) => {
   const [dialog, setDialog] = useState<Dialog>(null);
   const active = views.find((v) => v.id === activeId) ?? null;
   const modified = active !== null && !viewMatches(active, current, columns);
-  const label = active ? `${active.name}${modified ? ' (modified)' : ''}` : 'Views';
+  const label = active ? (modified ? labels.viewModified(active.name) : active.name) : labels.views;
   const close = () => setDialog(null);
 
   return (
@@ -58,11 +61,11 @@ export const DataTableViews = <T,>({
             className="h-4 w-4 text-gray-400 max-sm:hidden"
           />
         </Menu.Trigger>
-        <Menu.Content aria-label="Views" width="w-64">
-          <Menu.Group label="Views">
+        <Menu.Content aria-label={labels.views} width="w-64">
+          <Menu.Group label={labels.views}>
             {views.length === 0 && (
               <div role="presentation" className="px-4 py-2 text-sm text-gray-500">
-                No saved views
+                {labels.noViews}
               </div>
             )}
             {views.map((view) => (
@@ -77,10 +80,10 @@ export const DataTableViews = <T,>({
           </Menu.Group>
           <Menu.Separator />
           <Menu.Item icon={BookmarkPlus} onSelect={() => setDialog('save')}>
-            Save as…
+            {labels.saveViewAs}
           </Menu.Item>
           <Menu.Item icon={Pencil} disabled={!active} onSelect={() => setDialog('rename')}>
-            Rename…
+            {labels.renameView}
           </Menu.Item>
           <Menu.Item
             icon={Trash2}
@@ -88,15 +91,16 @@ export const DataTableViews = <T,>({
             disabled={!active}
             onSelect={() => setDialog('delete')}
           >
-            Delete
+            {labels.deleteView}
           </Menu.Item>
         </Menu.Content>
       </Menu>
 
       <Modal open={dialog === 'save'} onClose={close} size="sm">
         <NameForm
-          title="Save view as"
-          submitLabel="Save"
+          title={labels.saveViewTitle}
+          submitLabel={labels.save}
+          labels={labels}
           initialName=""
           views={views}
           onSubmit={(name) => {
@@ -108,8 +112,9 @@ export const DataTableViews = <T,>({
       </Modal>
       <Modal open={dialog === 'rename' && active !== null} onClose={close} size="sm">
         <NameForm
-          title="Rename view"
-          submitLabel="Rename"
+          title={labels.renameViewTitle}
+          submitLabel={labels.rename}
+          labels={labels}
           initialName={active?.name ?? ''}
           exceptId={active?.id}
           views={views}
@@ -124,10 +129,10 @@ export const DataTableViews = <T,>({
         open={dialog === 'delete' && active !== null}
         onClose={close}
         intent="danger"
-        title={`Delete "${active?.name ?? ''}"?`}
-        message="The view is removed. The table keeps what it shows now."
-        stayLabel="Cancel"
-        discardLabel="Delete"
+        title={labels.deleteViewTitle(active?.name ?? '')}
+        message={labels.deleteViewMessage}
+        stayLabel={labels.cancel}
+        discardLabel={labels.deleteView}
         hideSave
         onDiscard={() => {
           onDelete();
@@ -148,6 +153,7 @@ const NameForm = ({
   views,
   onSubmit,
   onCancel,
+  labels,
 }: {
   title: string;
   submitLabel: string;
@@ -156,13 +162,14 @@ const NameForm = ({
   views: DataTableView[];
   onSubmit: (name: string) => void;
   onCancel: () => void;
+  labels: DataTableLabels;
 }) => {
   const [name, setName] = useState(initialName);
   const [error, setError] = useState<string | undefined>();
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const problem = viewNameError(name, views, exceptId);
-    if (problem) setError(problem);
+    if (problem) setError(problem === 'empty' ? labels.viewNameEmpty : labels.viewNameTaken);
     else onSubmit(name.trim());
   };
   return (
@@ -171,7 +178,7 @@ const NameForm = ({
       <form onSubmit={submit} noValidate>
         <Modal.Body>
           <Input
-            label="View name"
+            label={labels.viewName}
             value={name}
             error={error}
             autoComplete="off"
@@ -183,7 +190,7 @@ const NameForm = ({
         </Modal.Body>
         <Modal.Footer>
           <Button type="button" variant="secondary" onClick={() => onCancel()}>
-            Cancel
+            {labels.cancel}
           </Button>
           <Button type="submit">{submitLabel}</Button>
         </Modal.Footer>

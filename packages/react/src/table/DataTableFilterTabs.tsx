@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 import { Tabs } from '../ui/Tabs';
+import type { DataTableLabels } from './labels';
 
 export type DataTableFilterTabOption = {
   /** The column value the tab filters on. */
@@ -14,7 +15,7 @@ export type DataTableFilterTabsConfig = {
   /** `key` of the column the tabs filter. */
   columnKey: string;
   options: DataTableFilterTabOption[];
-  /** Label of the tab that clears the column's filter. Default "All". */
+  /** Label of the tab that clears the column's filter. Default `labels.filterAll`, "All". */
   allLabel?: ReactNode;
   /** Count of the "All" tab. */
   allCount?: number;
@@ -46,14 +47,16 @@ export const DataTableFilterTabsStrip = ({
   tabs,
   selected,
   onSelect,
+  labels,
 }: {
   tabs: DataTableFilterTabsConfig;
   /** The values filtered on `tabs.columnKey` right now. */
   selected: ReadonlySet<string> | undefined;
   /** `undefined` clears the column's filter. */
   onSelect: (value: string | undefined) => void;
+  labels: DataTableLabels;
 }) => {
-  const { options, allLabel = 'All', allCount } = tabs;
+  const { options, allLabel, allCount } = tabs;
   let active = '';
   if (!selected || selected.size === 0) active = ALL;
   else if (selected.size === 1) {
@@ -68,7 +71,7 @@ export const DataTableFilterTabsStrip = ({
     >
       <Tabs.List className="px-[var(--cosmos-table-inset,1rem)]">
         <Tabs.Trigger value={ALL}>
-          {allLabel}
+          {allLabel ?? labels.filterAll}
           {allCount !== undefined && <Count active={active === ALL}>{allCount}</Count>}
         </Tabs.Trigger>
         {options.map((o) => (

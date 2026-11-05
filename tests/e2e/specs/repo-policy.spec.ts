@@ -516,18 +516,6 @@ const TEXT_DEFERRED: string[] = [
   'packages/react/src/status/HealthSummary.tsx',
   'packages/react/src/status/NodeGrid.tsx',
   'packages/react/src/status/StaleBadge.tsx',
-  'packages/react/src/table/ActiveFiltersBar.tsx',
-  'packages/react/src/table/ColumnFilterDropdown.tsx',
-  'packages/react/src/table/ColumnHeader.tsx',
-  'packages/react/src/table/DataTableBulkActions.tsx',
-  'packages/react/src/table/DataTableColumnsMenu.tsx',
-  'packages/react/src/table/DataTableFilterTabs.tsx',
-  'packages/react/src/table/DataTableMobileCards.tsx',
-  'packages/react/src/table/DataTableMobileFilters.tsx',
-  'packages/react/src/table/DataTable.tsx',
-  'packages/react/src/table/DataTableViews.tsx',
-  'packages/react/src/table/InlineEdit.tsx',
-  'packages/react/src/table/PageSizeSelect.tsx',
   'packages/react/src/templates/SectionCard.tsx',
   'packages/react/src/ui/AlertBanner.tsx',
   'packages/react/src/ui/AnnouncementBar.tsx',
@@ -566,7 +554,13 @@ const TEXT_DEFERRED: string[] = [
  * Words the check takes for text and that are not: `file`, the exact `text` it reports and why,
  * so each exception is a decision and not a leftover. An entry that no longer matches fails too.
  */
-const TEXT_ALLOWED: { file: string; text: string; reason: string }[] = [];
+const TEXT_ALLOWED: { file: string; text: string; reason: string }[] = [
+  {
+    file: 'packages/react/src/table/DataTable.tsx',
+    text: 'export.csv',
+    reason: "the default name of the downloaded file, an identifier of the host's, not text shown",
+  },
+];
 
 // The props a browser shows or a screen reader reads out, as JSX attributes.
 const TEXT_PROPS = new Set([

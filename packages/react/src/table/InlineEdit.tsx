@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { Check, CircleAlert, LoaderCircle, Pencil, X } from 'lucide-react';
 import { useId, useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { Button } from '../ui/Button';
+import type { DataTableLabels } from './labels';
 import { columnText } from './mobileCards';
 import type { CellEditor, ColumnDef } from './types';
 
@@ -18,14 +19,10 @@ const SHOWN_ON_ROW =
 // Fields draw no error of their own here: `aria-invalid` is what turns the border red.
 const INVALID = 'aria-invalid:border-red-500 dark:aria-invalid:border-red-400';
 
-/** The accessible name of an editable cell's field and trigger: "Rack for node-a02". */
-export const editLabel = <T,>(col: ColumnDef<T>, key: string | number) =>
-  `${columnText(col)} for ${key}`;
-
-const Spinner = () => (
+const Spinner = ({ label }: { label: string }) => (
   <LoaderCircle
     role="img"
-    aria-label="Saving"
+    aria-label={label}
     className="text-brand-600 dark:text-brand-400 h-4 w-4 shrink-0 animate-spin"
   />
 );
@@ -41,6 +38,7 @@ type TriggerProps<T> = {
   locked: boolean;
   open: () => void;
   register: (el: HTMLElement | null) => void;
+  labels: DataTableLabels;
 };
 
 /**
@@ -57,6 +55,7 @@ export const CellTrigger = <T,>({
   locked,
   open,
   register,
+  labels,
 }: TriggerProps<T>) => {
   const guarded = () => {
     if (!locked && !saving) open();
@@ -82,10 +81,10 @@ export const CellTrigger = <T,>({
         )}
       >
         {content}
-        <span className="sr-only">, edit {columnText(col)}</span>
+        <span className="sr-only">{labels.editCellHint(columnText(col))}</span>
         {saving && (
           <span className="ms-2 inline-block align-middle">
-            <Spinner />
+            <Spinner label={labels.saving} />
           </span>
         )}
       </button>
@@ -100,7 +99,7 @@ export const CellTrigger = <T,>({
     >
       <div className="min-w-0">{content}</div>
       {saving ? (
-        <Spinner />
+        <Spinner label={labels.saving} />
       ) : (
         <Button
           ref={register}
@@ -108,7 +107,7 @@ export const CellTrigger = <T,>({
           size="sm"
           shape="square"
           icon={Pencil}
-          aria-label={`Edit ${editLabel(col, rowKey)}`}
+          aria-label={labels.editCell(columnText(col), rowKey)}
           aria-disabled={locked || undefined}
           onClick={guarded}
           className={SHOWN_ON_ROW}
@@ -136,6 +135,7 @@ type EditorProps<T> = {
   errorId?: string;
   /** The field takes the focus when it opens. */
   focusField: boolean;
+  labels: DataTableLabels;
 };
 
 const FOCUSABLE = 'input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -157,6 +157,7 @@ export const CellEditorBox = <T,>({
   error,
   errorId,
   focusField,
+  labels,
 }: EditorProps<T>) => {
   const boxRef = useRef<HTMLDivElement>(null);
   const ownErrorId = useId();
@@ -181,7 +182,7 @@ export const CellEditorBox = <T,>({
     cancel,
     saving,
     fieldProps: {
-      'aria-label': editLabel(col, rowKey),
+      'aria-label': labels.editField(columnText(col), rowKey),
       'aria-describedby': describedBy,
       'aria-invalid': error ? true : undefined,
       disabled: saving || undefined,
@@ -222,7 +223,7 @@ export const CellEditorBox = <T,>({
             size="sm"
             shape="square"
             icon={Check}
-            aria-label="Save"
+            aria-label={labels.save}
             onClick={() => commit(true)}
           />
           <Button
@@ -230,7 +231,7 @@ export const CellEditorBox = <T,>({
             size="sm"
             shape="square"
             icon={X}
-            aria-label="Cancel"
+            aria-label={labels.cancel}
             onClick={() => cancel()}
           />
         </div>
@@ -249,7 +250,7 @@ export const CellEditorBox = <T,>({
           </p>
         ) : mode === 'cell' ? (
           <p id={hintId} className="mt-2 text-xs text-[var(--color-text-muted)]">
-            Enter saves · Esc cancels
+            {labels.editKeys}
           </p>
         ) : null)}
     </div>
@@ -290,6 +291,7 @@ type RowActionsProps = {
   cancel: () => void;
   registerEdit: (el: HTMLElement | null) => void;
   registerSave: (el: HTMLElement | null) => void;
+  labels: DataTableLabels;
   /** The row's own actions (`renderRowAction`), after the Edit button. */
   children?: ReactNode;
 };
@@ -305,15 +307,16 @@ export const RowEditActions = ({
   cancel,
   registerEdit,
   registerSave,
+  labels,
   children,
 }: RowActionsProps) =>
   editing ? (
     <div className="flex items-center justify-end gap-1.5">
       <Button variant="secondary" size="sm" disabled={saving} onClick={() => cancel()}>
-        Cancel
+        {labels.cancel}
       </Button>
       <Button ref={registerSave} size="sm" loading={saving} onClick={() => save()}>
-        Save
+        {labels.save}
       </Button>
     </div>
   ) : (
@@ -323,13 +326,13 @@ export const RowEditActions = ({
         variant="ghost"
         size="sm"
         icon={Pencil}
-        aria-label={`Edit ${rowKey}`}
+        aria-label={labels.editRow(rowKey)}
         aria-disabled={locked || undefined}
         onClick={() => {
           if (!locked) open();
         }}
       >
-        Edit
+        {labels.edit}
       </Button>
       {children}
     </div>

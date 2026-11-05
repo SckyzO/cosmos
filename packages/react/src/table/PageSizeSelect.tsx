@@ -1,23 +1,25 @@
 import { useId } from 'react';
 import { Select } from '../forms/Select';
+import type { DataTableLabels } from './labels';
 
 export type PageSizeSelectProps = {
   /** The page size in force. Listed even when `options` leaves it out, so the select never shows another one. */
   value: number;
   options: number[];
   onChange: (size: number) => void;
+  labels: DataTableLabels;
 };
 
 /**
  * The "Rows per page" control of a DataTable footer: a native select named by a visible label.
  */
-export const PageSizeSelect = ({ value, options, onChange }: PageSizeSelectProps) => {
+export const PageSizeSelect = ({ value, options, onChange, labels }: PageSizeSelectProps) => {
   const id = useId();
   const sizes = options.includes(value) ? options : [...options, value].sort((a, b) => a - b);
   return (
     <div className="flex items-center gap-2">
       <label htmlFor={id} className="text-xs whitespace-nowrap text-gray-500 dark:text-gray-400">
-        Rows per page
+        {labels.rowsPerPage}
       </label>
       <Select
         id={id}

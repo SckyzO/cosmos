@@ -2,6 +2,7 @@ import { SlidersHorizontal } from 'lucide-react';
 import { Checkbox } from '../forms/Checkbox';
 import { Button } from '../ui/Button';
 import { Drawer } from '../ui/Drawer';
+import type { DataTableLabels } from './labels';
 import type { ColumnDef } from './types';
 
 // DataTable's `mobileLayout="cards"` has no column headers below `sm`, so no column filters: a
@@ -13,9 +14,10 @@ type FiltersButtonProps = {
   count: number;
   open: boolean;
   onClick: () => void;
+  labels: DataTableLabels;
 };
 
-export const DataTableFiltersButton = ({ count, open, onClick }: FiltersButtonProps) => (
+export const DataTableFiltersButton = ({ count, open, onClick, labels }: FiltersButtonProps) => (
   <Button
     variant="secondary"
     size="md"
@@ -25,7 +27,7 @@ export const DataTableFiltersButton = ({ count, open, onClick }: FiltersButtonPr
     onClick={() => onClick()}
     className="shrink-0"
   >
-    Filters
+    {labels.filters}
     {count > 0 && (
       <span className="bg-brand-50 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300 text-2xs rounded-full px-1.5 py-0.5 font-semibold">
         {count}
@@ -48,6 +50,7 @@ type FiltersSheetProps<T> = {
   rowCount: number;
   /** How many values are filtered, over every column. */
   count: number;
+  labels: DataTableLabels;
 };
 
 export const DataTableFiltersSheet = <T,>({
@@ -60,9 +63,10 @@ export const DataTableFiltersSheet = <T,>({
   onClearAll,
   rowCount,
   count,
+  labels,
 }: FiltersSheetProps<T>) => (
   <Drawer open={open} onClose={onClose} side="bottom" swipeToClose>
-    <Drawer.Header title="Filters" onClose={onClose} />
+    <Drawer.Header title={labels.filters} onClose={onClose} />
     <Drawer.Body className="flex flex-col gap-5">
       {columns.map((col) => (
         <fieldset key={col.key}>
@@ -84,11 +88,9 @@ export const DataTableFiltersSheet = <T,>({
     </Drawer.Body>
     <Drawer.Footer className="justify-between">
       <Button variant="secondary" disabled={count === 0} onClick={() => onClearAll()}>
-        Clear all
+        {labels.clearAll}
       </Button>
-      <Button
-        onClick={() => onClose()}
-      >{`Show ${rowCount} ${rowCount === 1 ? 'row' : 'rows'}`}</Button>
+      <Button onClick={() => onClose()}>{labels.showRows(rowCount)}</Button>
     </Drawer.Footer>
   </Drawer>
 );

@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { Download, Search, X } from 'lucide-react';
 import { Fragment, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { ColumnHeader } from './ColumnHeader';
 import { DataTableColumnsMenu } from './DataTableColumnsMenu';
 import { DataTableViews } from './DataTableViews';
@@ -48,6 +49,7 @@ import { isRowClick, RAISE_CONTROLS, ROW_LINK } from './rowInteraction';
 import { pinEdges, pinnedCell, pinOffsets, pinStyle } from './pinned';
 import { usePinnedWidths } from './usePinnedWidths';
 import { DataTableSelectionBar } from './DataTableSelectionBar';
+import { DATA_TABLE_LABELS, type DataTableLabels } from './labels';
 import { DetailRow } from './ExpandedDetail';
 import { RowChevron } from './RowChevron';
 import { useScrollEdges } from '../hooks/useScrollEdges';
@@ -98,6 +100,7 @@ export type DataTableProps<T> = {
   loadingRows?: number;
   error?: string | null;
   onRetry?: () => void;
+  /** Title of the empty state. Default `labels.emptyTitle`, `'No results'`. */
   emptyTitle?: string;
   emptyDescription?: string;
   /**
@@ -204,6 +207,7 @@ export type DataTableProps<T> = {
   searchValue?: string;
   defaultSearchValue?: string;
   onSearchChange?: (value: string) => void;
+  /** Placeholder of the search field. Default `labels.searchPlaceholder`, `'Search…'`. */
   searchPlaceholder?: string;
 
   /**
@@ -215,6 +219,12 @@ export type DataTableProps<T> = {
   /** Id of the element that names the table, in place of `aria-label`. */
   'aria-labelledby'?: string;
 
+  /**
+   * The texts the table writes (the search field, the selection bar, the export, columns and views
+   * menus, the row expanders and checkboxes, the pager's name, inline editing, the cards on a
+   * phone…), over `LabelsProvider`'s `dataTable` and the English defaults.
+   */
+  labels?: Partial<DataTableLabels>;
   className?: string;
 
   // ── Column filters ─────────────────────────────────────────────────────────
@@ -419,7 +429,7 @@ export const DataTable = <T,>({
   loadingRows = 5,
   error = null,
   onRetry,
-  emptyTitle = 'No results',
+  emptyTitle,
   emptyDescription,
   emptyAction,
   density: densityProp,
@@ -441,9 +451,10 @@ export const DataTable = <T,>({
   searchValue: searchValueProp,
   defaultSearchValue,
   onSearchChange,
-  searchPlaceholder = 'Search…',
+  searchPlaceholder,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
+  labels: ownLabels,
   className,
   filters: filtersProp,
   defaultFilters,
@@ -473,6 +484,8 @@ export const DataTable = <T,>({
   onColumnVisibilityChange,
   mobileLayout = 'scroll',
 }: DataTableProps<T>) => {
+  const labels = useLabels('dataTable', DATA_TABLE_LABELS, ownLabels);
+  const emptyHeading = emptyTitle ?? labels.emptyTitle;
   const mobileCards = mobileLayout === 'cards';
   const [density, setDensity] = useControllableState<
     DataTableDensity,
@@ -502,6 +515,7 @@ export const DataTable = <T,>({
       columns={allColumns}
       shown={shown}
       onToggle={(key, visible) => setColumnVisibility({ ...shown, [key]: visible })}
+      labels={labels}
     />
   ) : null;
 
@@ -560,7 +574,7 @@ export const DataTable = <T,>({
   const anyEditable = !virtualize && columns.some((c) => c.edit);
   const rowEditing = anyEditable && editTrigger === 'row' && Boolean(onRowEdit);
   const cellEditing = anyEditable && editTrigger !== 'row' && Boolean(onCellEdit);
-  const edit = useInlineEdit<T>({ onCellEdit, onRowEdit });
+  const edit = useInlineEdit<T>({ notSaved: labels.notSaved, onCellEdit, onRowEdit });
   const actionColumn = Boolean(renderRowAction) || rowEditing;
 
   const [selection, updateSelection] = useControllableState<Set<string | number>>({
@@ -835,7 +849,7 @@ export const DataTable = <T,>({
   const emptyActionNode =
     narrowed && (manual || rows.length > 0) ? (
       <Button variant="secondary" size="sm" onClick={clearNarrowing}>
-        Clear filters
+        {labels.clearFilters}
       </Button>
     ) : (
       emptyAction
@@ -892,7 +906,7 @@ export const DataTable = <T,>({
   // The toolbar's Export follows the selection: the selected rows when there are any, else the
   // filtered ones. A selected row the filters hide is still exported, in the table's sort order.
   const exportCount = selectable ? selectedRows.length : 0;
-  const exportLabel = exportCount > 0 ? `Export ${exportCount}` : 'Export';
+  const exportLabel = labels.export(exportCount);
   const handleExport = () => {
     if (onExport) {
       onExport({
@@ -927,6 +941,7 @@ export const DataTable = <T,>({
             onSave={saveView}
             onRename={renameActiveView}
             onDelete={deleteActiveView}
+            labels={labels}
           />
         )}
         {exportable && (
@@ -959,15 +974,15 @@ export const DataTable = <T,>({
         dir="auto"
         value={searchValue}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder={searchPlaceholder}
-        aria-label="Search rows"
+        placeholder={searchPlaceholder ?? labels.searchPlaceholder}
+        aria-label={labels.search}
         className="focus:field-focus h-full w-full rounded-lg border border-gray-200 bg-white ps-9 pe-9 text-sm transition-colors placeholder:text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
       />
       {searchValue && (
         <button
           type="button"
           onClick={() => setSearch('')}
-          aria-label="Clear search"
+          aria-label={labels.clearSearch}
           className="focus-visible:focus-indicator inset-e-2 absolute top-1/2 -translate-y-1/2 rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700"
         >
           <X className="h-3.5 w-3.5" />
@@ -1071,7 +1086,7 @@ export const DataTable = <T,>({
                 aria-expanded={isOpen}
                 // Only while the detail row exists: an id that is not there names nothing.
                 aria-controls={isOpen ? detailId : undefined}
-                aria-label={`${isOpen ? 'Hide' : 'Show'} details for ${key}`}
+                aria-label={isOpen ? labels.hideDetails(key) : labels.showDetails(key)}
                 onClick={() => updateExpanded(toggleKey(expanded, key))}
                 className="-my-1.5"
               />
@@ -1093,7 +1108,7 @@ export const DataTable = <T,>({
               text baseline and moved with the font metrics. */}
               <div className="flex items-center" style={cellBox}>
                 <Checkbox
-                  aria-label={`Select row ${key}`}
+                  aria-label={labels.selectRow(key)}
                   checked={isSelected}
                   onChange={() => toggleRow(key)}
                 />
@@ -1115,6 +1130,7 @@ export const DataTable = <T,>({
                   row={row}
                   rowKey={key}
                   mode="row"
+                  labels={labels}
                   draft={rowInEdit.drafts[col.key] ?? ''}
                   setDraft={(v) => edit.setDraft(col.key, v)}
                   commit={() => edit.saveRow(row)}
@@ -1130,6 +1146,7 @@ export const DataTable = <T,>({
                   row={row}
                   rowKey={key}
                   mode={editTrigger === 'button' ? 'button' : 'cell'}
+                  labels={labels}
                   draft={cellInEdit.draft}
                   setDraft={(v) => edit.setDraft(col.key, v)}
                   commit={(refocus) => edit.commitCell(row, refocus)}
@@ -1144,6 +1161,7 @@ export const DataTable = <T,>({
                   row={row}
                   rowKey={key}
                   mode={editTrigger === 'button' ? 'button' : 'cell'}
+                  labels={labels}
                   saving={savingHere}
                   locked={Boolean(state?.saving)}
                   open={() => edit.openCell(key, col.key, col.edit!.initialValue(row))}
@@ -1210,6 +1228,7 @@ export const DataTable = <T,>({
                     cancel={edit.cancel}
                     registerEdit={edit.registerTrigger(edit.rowButtonId(key))}
                     registerSave={edit.registerTrigger(edit.rowSaveId(key))}
+                    labels={labels}
                   >
                     {renderRowAction?.(row)}
                   </RowEditActions>
@@ -1252,6 +1271,7 @@ export const DataTable = <T,>({
             tabs={filterTabs}
             selected={filters[filterTabs.columnKey]}
             onSelect={selectFilterTab}
+            labels={labels}
           />
         </div>
       )}
@@ -1272,14 +1292,14 @@ export const DataTable = <T,>({
                   )}
                 >
                   <span className="text-brand-700 dark:text-brand-300 text-sm font-medium whitespace-nowrap">
-                    <bdi>{selection.size} selected</bdi>
+                    <bdi>{labels.selected(selection.size)}</bdi>
                   </span>
                   <button
                     type="button"
                     onClick={clearSelection}
                     className="focus-visible:focus-indicator rounded-sm text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
                   >
-                    Clear
+                    {labels.clearSelection}
                   </button>
                   {(bulkActionItems || bulkActions) && (
                     <div className="flex min-w-0 flex-auto flex-wrap items-center gap-2 ps-1">
@@ -1288,6 +1308,7 @@ export const DataTable = <T,>({
                           items={bulkActionItems}
                           selectedRows={selectedRows}
                           phoneIcons={mobileCards}
+                          labels={labels}
                         />
                       )}
                       {bulkActions?.(selectedRows)}
@@ -1349,6 +1370,7 @@ export const DataTable = <T,>({
               count={activeFilterCount}
               open={filtersOpen && !tableShown}
               onClick={() => setFiltersOpen(true)}
+              labels={labels}
             />
           )}
           {mobileSortable && (
@@ -1357,6 +1379,7 @@ export const DataTable = <T,>({
               sortKey={sortKey}
               sortDir={sortDir}
               onSortChange={(key, direction) => setSort(key === null ? null : { key, direction })}
+              labels={labels}
             />
           )}
           {toolbarControls()}
@@ -1389,11 +1412,12 @@ export const DataTable = <T,>({
           loadingRows={loadingRows}
           error={error}
           onRetry={onRetry}
-          emptyTitle={emptyTitle}
+          emptyTitle={emptyHeading}
           emptyDescription={emptyDescription}
           emptyAction={emptyActionNode}
           aria-label={ariaLabel}
           aria-labelledby={ariaLabelledBy}
+          labels={labels}
         />
       )}
 
@@ -1420,7 +1444,7 @@ export const DataTable = <T,>({
         >
           {loading && (
             <span role="status" className="sr-only">
-              Loading…
+              {labels.loading}
             </span>
           )}
           <table
@@ -1471,7 +1495,7 @@ export const DataTable = <T,>({
                       pinOf(0).className
                     )}
                   >
-                    <span className="sr-only">Details</span>
+                    <span className="sr-only">{labels.detailsHeader}</span>
                   </th>
                 )}
                 {selectable && (
@@ -1486,7 +1510,7 @@ export const DataTable = <T,>({
                   >
                     <div className="flex items-center">
                       <Checkbox
-                        aria-label="Select all rows"
+                        aria-label={labels.selectAll}
                         checked={allVisibleSelected}
                         indeterminate={someVisibleSelected}
                         onChange={toggleAllVisible}
@@ -1521,7 +1545,7 @@ export const DataTable = <T,>({
                       pinOf(leadCount + columns.length).className
                     )}
                   >
-                    Action
+                    {labels.actionHeader}
                   </th>
                 )}
               </tr>
@@ -1578,7 +1602,7 @@ export const DataTable = <T,>({
                         <ErrorState message={error} onRetry={onRetry} />
                       ) : (
                         <EmptyState
-                          title={emptyTitle}
+                          title={emptyHeading}
                           description={emptyDescription}
                           action={emptyActionNode}
                         />
@@ -1609,7 +1633,7 @@ export const DataTable = <T,>({
         <Pagination
           page={safePage}
           totalPages={totalPages}
-          aria-label={ariaLabel ? `${ariaLabel} pagination` : undefined}
+          aria-label={ariaLabel ? labels.pagination(ariaLabel) : undefined}
           showInfo
           total={totalRows}
           pageSize={pageSize}
@@ -1618,7 +1642,12 @@ export const DataTable = <T,>({
           onShowAllChange={manual ? undefined : setShowAll}
           controls={
             pageSizeOptions && pageSizeOptions.length > 0 ? (
-              <PageSizeSelect value={pageSize} options={pageSizeOptions} onChange={setPageSize} />
+              <PageSizeSelect
+                value={pageSize}
+                options={pageSizeOptions}
+                onChange={setPageSize}
+                labels={labels}
+              />
             ) : undefined
           }
           className="shrink-0 border-t border-gray-100 px-[var(--cosmos-table-inset,1rem)] py-3 dark:border-gray-800 print:hidden"
@@ -1636,6 +1665,7 @@ export const DataTable = <T,>({
           onClearAll={clearAllFilters}
           rowCount={totalRows}
           count={activeFilterCount}
+          labels={labels}
         />
       )}
     </div>

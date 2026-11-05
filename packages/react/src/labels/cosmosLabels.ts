@@ -34,6 +34,13 @@ import type {
   SocialAuthButtonsLabels,
   TwoStepVerificationLabels,
 } from '../pages/labels';
+import type {
+  ActiveFiltersBarLabels,
+  ColumnFilterDropdownLabels,
+  ColumnHeaderLabels,
+  DataTableLabels,
+  RowActionsMenuLabels,
+} from '../table/labels';
 
 /**
  * Every text the components write themselves, one key per component, so an app translates them
@@ -43,13 +50,17 @@ import type {
  * `englishLabels` holds the defaults, a starting point for a translation.
  */
 export type CosmosLabels = {
+  activeFiltersBar: ActiveFiltersBarLabels;
   avatarUploader: AvatarUploaderLabels;
   breadcrumb: BreadcrumbLabels;
   calendar: CalendarLabels;
   cardExpiryInput: CardExpiryInputLabels;
   cardFields: CardFieldsLabels;
   colorInput: ColorInputLabels;
+  columnFilterDropdown: ColumnFilterDropdownLabels;
+  columnHeader: ColumnHeaderLabels;
   combobox: ComboboxLabels;
+  dataTable: DataTableLabels;
   datePicker: DatePickerLabels;
   dropzone: DropzoneLabels;
   emptyState: EmptyStateLabels;
@@ -68,6 +79,7 @@ export type CosmosLabels = {
   passwordStrengthMeter: PasswordStrengthLabels;
   phoneInput: PhoneInputLabels;
   resetPasswordForm: ResetPasswordFormLabels;
+  rowActionsMenu: RowActionsMenuLabels;
   searchInput: SearchInputLabels;
   signInForm: SignInFormLabels;
   signUpForm: SignUpFormLabels;

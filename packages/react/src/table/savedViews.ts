@@ -50,18 +50,19 @@ export const viewMatches = <T>(
 };
 
 /**
- * Why `name` cannot be a view's name, or `null` when it can: it is empty, or another view has it
- * (ignoring case and surrounding spaces). `exceptId` is the view being renamed.
+ * Why `name` cannot be a view's name, or `null` when it can: it is `empty`, or another view has it
+ * (`taken`, ignoring case and surrounding spaces). `exceptId` is the view being renamed. The
+ * component words the reason.
  */
 export const viewNameError = (
   name: string,
   views: DataTableView[],
   exceptId?: string
-): string | null => {
+): 'empty' | 'taken' | null => {
   const wanted = name.trim().toLowerCase();
-  if (wanted === '') return 'Enter a name.';
+  if (wanted === '') return 'empty';
   if (views.some((v) => v.id !== exceptId && v.name.trim().toLowerCase() === wanted)) {
-    return 'A view with this name already exists.';
+    return 'taken';
   }
   return null;
 };
