@@ -240,7 +240,9 @@ const SettingsScreen = ({
       <>
         <UnsavedIndicator
           visible={edited > 0}
-          label={`Unsaved changes · ${edited} ${edited === 1 ? 'field' : 'fields'} edited`}
+          labels={{
+            unsaved: `Unsaved changes · ${edited} ${edited === 1 ? 'field' : 'fields'} edited`,
+          }}
         />
         {requiredLeft > 0 && (
           <span>
@@ -667,7 +669,7 @@ const SettingsScreen = ({
           title={`Delete ${scenario.saved.name || 'this organisation'}?`}
           message="This deletes the organisation, its gyms, its staff accounts and every upcoming booking. It cannot be undone."
           requireText={scenario.saved.name || 'this organisation'}
-          discardLabel="Delete organisation"
+          labels={{ discard: 'Delete organisation' }}
           hideSave
           onClose={() => setDeleteOpen(false)}
           // The app deletes the organisation here.

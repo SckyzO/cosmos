@@ -248,7 +248,7 @@ const Frame = ({
               // is an icon, and sits at the end of the free space, next to the actions.
               <div className="flex max-w-lg max-sm:max-w-none max-sm:justify-end sm:mx-auto">
                 <CommandPaletteTrigger
-                  placeholder="Search nodes, alerts, jobs"
+                  labels={{ placeholder: 'Search nodes, alerts, jobs' }}
                   onClick={() => setPaletteOpen(true)}
                 />
               </div>
