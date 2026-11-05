@@ -77,6 +77,12 @@ import {
   TWO_STEP_VERIFICATION_FORM_LABELS,
 } from '../pages/labels';
 import {
+  APPEARANCE_LABELS,
+  APPEARANCE_MENU_LABELS,
+  APPEARANCE_SETTINGS_LABELS,
+  CUSTOMIZER_LABELS,
+} from '../settings/labels';
+import {
   ACTIVE_FILTERS_BAR_LABELS,
   COLUMN_FILTER_DROPDOWN_LABELS,
   COLUMN_HEADER_LABELS,
@@ -132,6 +138,9 @@ export const englishLabels: EnglishLabels = {
   activeFiltersBar: ACTIVE_FILTERS_BAR_LABELS,
   alertBanner: ALERT_BANNER_LABELS,
   announcementBar: ANNOUNCEMENT_BAR_LABELS,
+  appearance: APPEARANCE_LABELS,
+  appearanceMenu: APPEARANCE_MENU_LABELS,
+  appearanceSettings: APPEARANCE_SETTINGS_LABELS,
   auditDiff: AUDIT_DIFF_LABELS,
   avatarGroup: AVATAR_GROUP_LABELS,
   avatarUploader: AVATAR_UPLOADER_LABELS,
@@ -166,6 +175,7 @@ export const englishLabels: EnglishLabels = {
   confirmationModal: CONFIRMATION_MODAL_LABELS,
   cookieBanner: COOKIE_BANNER_LABELS,
   countdown: COUNTDOWN_LABELS,
+  customizer: CUSTOMIZER_LABELS,
   dataTable: DATA_TABLE_LABELS,
   datePicker: DATE_PICKER_LABELS,
   drawer: DRAWER_LABELS,

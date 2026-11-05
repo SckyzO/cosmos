@@ -8,3 +8,9 @@ export * from './appearance';
 export * from './AppearanceSettings';
 export * from './AppearanceMenu';
 export * from './Customizer';
+export type {
+  AppearanceLabels,
+  AppearanceMenuLabels,
+  AppearanceSettingsLabels,
+  CustomizerLabels,
+} from './labels';

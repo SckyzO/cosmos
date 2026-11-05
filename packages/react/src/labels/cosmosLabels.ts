@@ -77,6 +77,12 @@ import type {
   TwoStepVerificationLabels,
 } from '../pages/labels';
 import type {
+  AppearanceLabels,
+  AppearanceMenuLabels,
+  AppearanceSettingsLabels,
+  CustomizerLabels,
+} from '../settings/labels';
+import type {
   ActiveFiltersBarLabels,
   ColumnFilterDropdownLabels,
   ColumnHeaderLabels,
@@ -131,6 +137,9 @@ export type CosmosLabels = {
   activeFiltersBar: ActiveFiltersBarLabels;
   alertBanner: AlertBannerLabels;
   announcementBar: AnnouncementBarLabels;
+  appearance: AppearanceLabels;
+  appearanceMenu: AppearanceMenuLabels;
+  appearanceSettings: AppearanceSettingsLabels;
   auditDiff: AuditDiffLabels;
   avatarGroup: AvatarGroupLabels;
   avatarUploader: AvatarUploaderLabels;
@@ -165,6 +174,7 @@ export type CosmosLabels = {
   confirmationModal: ConfirmationModalLabels;
   cookieBanner: CookieBannerLabels;
   countdown: CountdownLabels;
+  customizer: CustomizerLabels;
   dataTable: DataTableLabels;
   datePicker: DatePickerLabels;
   drawer: DrawerLabels;
