@@ -120,16 +120,17 @@ const groups: NodeGridGroup[] = [
 - `show` is `all` (default) or `alerting`. `alerting` draws the nodes that are not OK (warning,
   critical, unknown and info) and leaves out a group with none; the header still counts every node,
   the OK ones included. When nothing is drawn the card says "All nodes healthy" (`emptyMessage`
-  changes it; a grid with no node at all says "No nodes").
+  changes it, or `labels.allHealthy`; a grid with no node at all says "No nodes", `labels.noNodes`).
 - `marks` is the shape of each status: `square`, `diamond` or `circle`. Every status is a **square**
   until you list it, so a grid is read by colors and names alone unless you pick shapes that tell
   the statuses apart. Each node sits in a 16px box with 4px between two; the marks take the colors of
   the status palette, which the themes and accents repaint.
 - The header holds `title` and, at the end edge, the counts (`showCounts`, on by default). Critical,
-  warning, unknown and info appear only above 0, OK always, worst first. `labels` rewrites the words
-  for another language: `labels.counts` is what follows each count (`CRIT`, `WARN`, `OK`, `UNKNOWN`,
-  `INFO`), `labels.statuses` the status in full (`Critical`, `Warning`, `OK`, `Unknown`, `Info`),
-  used in a node's name, its tooltip and the legend.
+  warning, unknown and info appear only above 0, OK always, worst first. The words are labels, for
+  another language: the one that follows each count is the `statusBadge` label of the status
+  (`CRIT`, `WARN`, `OK`, `UNKNOWN`, `INFO`), the status in full the `healthStatus` one
+  (`Critical`, `Warning`, `OK`, `Unknown`, `Info`), used in a node's name, its tooltip and the
+  legend. `labels` of the grid holds its own texts (`grid`, `legend`, `allHealthy`, `noNodes`).
 - `legend` adds one entry per status that is drawn, each with its mark, under the groups.
 - Hovering or focusing a node shows a tooltip with its label (its `id` when it has none), its
   status and its `detail`, which is plain text since the tooltip is not interactive. Escape hides it.
@@ -343,7 +344,8 @@ a word, not only a color. Each level color holds 4.5:1 on both tones in the four
   lines do not stay put when new ones arrive.
 - Without `wrap` a long line scrolls sideways: the scroll width is that of the widest row drawn,
   and the log fades its edges on the side that has more, as `Table` does.
-- The labels ("Jump to latest", "Filters"…) are English.
+- The labels ("Jump to latest", "Filters"…) are English by default: `labels`, or `LabelsProvider`'s
+  `logViewer`, translates them.
 - Not here: the log volume chart (stacked `BarChart` of `@sckyzo/cosmos-charts`, as the lines per
   level over time) and a structured logs table. The output of a job is `JobLog`: see [Job logs](#job-logs).
 
@@ -432,4 +434,5 @@ and the lines of an open step a named group. A line number is a link named "Line
   at the edge that has more.
 - A search compiles the plain text of every line of every step: for logs of hundreds of thousands
   of lines, filter on the host.
-- The labels ("Jump to latest", "More options"…) are English.
+- The labels ("Jump to latest", "More options"…) are English by default: `labels`, or
+  `LabelsProvider`'s `jobLog`, translates them.

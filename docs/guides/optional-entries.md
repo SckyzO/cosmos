@@ -80,7 +80,8 @@ import { RichTextEditor } from '@sckyzo/cosmos-react/editor';
 buttons on top; `toolbar={['bold', 'italic', 'link']}` picks them), `bubble` (a small toolbar over
 the selection; Alt+F10 moves the focus into it, Escape gives it back) or `minimal` (no toolbar, the
 shortcuts and Markdown-like input rules only: `##` and a space, `-` and a space, `**bold**`).
-`labels` replaces every text the editor draws, tooltips included. `readOnly`, `disabled`, `rows`,
+`labels` replaces every text the editor draws, tooltips included; `LabelsProvider`'s
+`richTextEditor` does it for the whole app (its English is `RICH_TEXT_EDITOR_LABELS`). `readOnly`, `disabled`, `rows`,
 `autoFocus` and `name` (a hidden input, for a native form) work as on a Textarea, and so do `label`,
 `description`, `error` and `required`: the label and the error are linked to the editable text.
 `maxLength` counts the text characters and stops typing and pasting at the limit.
@@ -204,7 +205,7 @@ export const Stores = () => {
 - `cluster` (default on) groups close pins; a click on a group zooms in to split it. `fit` frames
   the markers on the first draw and when the set of markers changes; otherwise `initialCenter` and
   `initialZoom` give the view. `onViewChange` reports each pan or zoom.
-- A browser without WebGL shows `unavailableMessage` in place of the map. The main entry never
+- A browser without WebGL shows `labels.unavailable` in place of the map. The main entry never
   imports MapLibre: an app that does not use `/map` ships none of it. Without `maplibre-gl`
   installed, Next.js stops the build on the missing module; Vite builds the app, and a map throws
   an error that names the package.

@@ -192,7 +192,7 @@ error.
   errorDescription="The request timed out."
   onRetry={() => query.refetch()}
   empty={query.data?.length === 0}
-  emptyMessage="No revenue yet"
+  labels={{ empty: "No revenue yet" }}
   emptyAction={<Button size="sm">Connect your store</Button>}
 >
   <LineAreaChart ... />
@@ -204,7 +204,7 @@ error.
   never loaded does not fade.
 - `error` shows an `ErrorState` (announced as an alert); `onRetry` adds the "Try again" button.
   `errorMessage` defaults to "Something went wrong.", and `errorDescription` adds a line under it.
-- `empty` shows an `EmptyState` titled `emptyMessage` (default "No data"), with `emptyAction`
+- `empty` shows an `EmptyState` titled `labels.empty` (default "No data"), with `emptyAction`
   under it. For a richer one (an icon, a description), leave `empty` off and pass your own
   `EmptyState` as `children`.
 - The action stays visible in every state. A "View all" link that means nothing on an empty card
