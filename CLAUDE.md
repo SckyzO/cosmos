@@ -328,7 +328,9 @@ so helpers count too).
 
 A story's viewport is one of the presets in `preview.tsx` (`mobile`, `tablet`, `laptop`, `desktop`;
 `viewport-presets.spec.ts` refuses any other): to check an exact width such as 375px, render the
-component in a box of that width. A docs page stays at the top while its stories render
+component in a box of that width. A phone or tablet width is pinned on a hidden story only, for the
+checks the test runner makes at that width: to look at a story on a phone, use the toolbar's Viewport
+menu (`repo-policy.spec.ts` refuses a story in the sidebar that pins one). A docs page stays at the top while its stories render
 (`docs-examples.spec.ts`): a component that focuses something on mount does it without scrolling
 (`preventScroll`), or waits for a user action, as `TwoStepVerificationForm`'s backup field does.
 

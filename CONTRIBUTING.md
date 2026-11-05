@@ -434,9 +434,12 @@ by kind. None of them may widen the page.
   under the main one (`Shell`'s `secondary`, vertical `Tabs`).
 
 Prefer a responsive class (`sm:`, `max-sm:`) to JavaScript, and use `useMediaQuery` only when the
-markup itself changes. Every component with such a behavior has a story at the `mobile` viewport
-(`globals: mobileViewport` from `storybook-helpers.ts`, which the story tests honor), and a hidden
-twin of it whose play function calls `expectNoHorizontalOverflow`.
+markup itself changes. Every component with such a behavior has a hidden story at the `mobile`
+viewport (`globals: mobileViewport` from `storybook-helpers.ts`, which the story tests honor, and
+`tags: ['!dev', '!autodocs']`) whose play function calls `expectNoHorizontalOverflow`. Not a visible
+one: the toolbar's Viewport menu shows any story at a phone or tablet width, a story that pins one
+cannot be widened from it, and the docs page draws the story at the page's width anyway.
+`repo-policy.spec.ts` refuses a story in the sidebar that pins a phone or tablet width.
 
 ## Charts
 
