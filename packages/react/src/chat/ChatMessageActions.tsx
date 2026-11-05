@@ -1,7 +1,9 @@
 import { clsx } from 'clsx';
 import { RefreshCw, ThumbsDown, ThumbsUp, type LucideIcon } from 'lucide-react';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import { Clipboard } from '../ui/Clipboard';
+import { CHAT_MESSAGE_ACTIONS_LABELS, type ChatMessageActionsLabels } from './labels';
 
 export type ChatFeedback = 'up' | 'down';
 
@@ -19,6 +21,8 @@ export type ChatMessageActionsProps = {
   defaultFeedback?: ChatFeedback | null;
   /** Called with the feedback to move to; pressing the pressed button again gives `null`. */
   onFeedbackChange?: (feedback: ChatFeedback | null) => void;
+  /** The texts it writes, over `LabelsProvider`'s `chatMessageActions` and the English defaults. */
+  labels?: Partial<ChatMessageActionsLabels>;
   className?: string;
 };
 
@@ -28,10 +32,11 @@ const IDLE =
   'text-[var(--color-text-muted)] hover:bg-gray-100 hover:text-[var(--color-text-primary)] dark:hover:bg-gray-800';
 const PRESSED = 'bg-brand-500/10 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400';
 
-const FEEDBACK: { value: ChatFeedback; label: string; icon: LucideIcon }[] = [
-  { value: 'up', label: 'Good response', icon: ThumbsUp },
-  { value: 'down', label: 'Bad response', icon: ThumbsDown },
-];
+const FEEDBACK: { value: ChatFeedback; label: 'goodResponse' | 'badResponse'; icon: LucideIcon }[] =
+  [
+    { value: 'up', label: 'goodResponse', icon: ThumbsUp },
+    { value: 'down', label: 'badResponse', icon: ThumbsDown },
+  ];
 
 /**
  * The row of actions under an assistant reply: copy it, regenerate it, rate it. Pass it as the
@@ -45,8 +50,10 @@ export const ChatMessageActions = ({
   feedback: feedbackProp,
   defaultFeedback,
   onFeedbackChange,
+  labels: ownLabels,
   className,
 }: ChatMessageActionsProps) => {
+  const labels = useLabels('chatMessageActions', CHAT_MESSAGE_ACTIONS_LABELS, ownLabels);
   const [feedback, setFeedback] = useControllableState<ChatFeedback | null>({
     value: feedbackProp,
     defaultValue: defaultFeedback ?? null,
@@ -57,14 +64,20 @@ export const ChatMessageActions = ({
     feedbackProp !== undefined || defaultFeedback !== undefined || onFeedbackChange !== undefined;
 
   return (
-    <div role="group" aria-label="Reply actions" className={clsx('flex items-center', className)}>
+    <div role="group" aria-label={labels.actions} className={clsx('flex items-center', className)}>
       {text !== undefined && (
-        <Clipboard plain value={text} copyLabel="Copy reply" copiedLabel="Copied" duration={2000} />
+        <Clipboard
+          plain
+          value={text}
+          copyLabel={labels.copy}
+          copiedLabel={labels.copied}
+          duration={2000}
+        />
       )}
       {onRegenerate && (
         <button
           type="button"
-          aria-label="Regenerate"
+          aria-label={labels.regenerate}
           onClick={() => onRegenerate()}
           className={clsx(BUTTON, IDLE)}
         >
@@ -78,7 +91,7 @@ export const ChatMessageActions = ({
             <button
               key={value}
               type="button"
-              aria-label={label}
+              aria-label={labels[label]}
               aria-pressed={pressed}
               onClick={() => setFeedback(pressed ? null : value)}
               className={clsx(BUTTON, pressed ? PRESSED : IDLE)}

@@ -1,6 +1,8 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { Avatar } from '../ui/Avatar';
+import { CHAT_CONVERSATION_LIST_LABELS, type ChatConversationListLabels } from './labels';
 
 export type ChatPresence = 'online' | 'away' | 'offline';
 
@@ -31,8 +33,10 @@ export type ChatConversationListProps = {
   /** Id of the open conversation. */
   selectedId?: string;
   onSelect: (id: string) => void;
-  /** Accessible name of the list. Default `Conversations`. */
+  /** Accessible name of the list. Default `labels.label`, `Conversations`. */
   label?: string;
+  /** The texts it writes, over `LabelsProvider`'s `chatConversationList` and the English defaults. */
+  labels?: Partial<ChatConversationListLabels>;
   className?: string;
 };
 
@@ -56,86 +60,90 @@ export const ChatConversationList = ({
   conversations,
   selectedId,
   onSelect,
-  label = 'Conversations',
+  label,
+  labels: ownLabels,
   className,
-}: ChatConversationListProps) => (
-  <nav aria-label={label} className={clsx('overflow-y-auto', className)}>
-    <ul className="divide-y divide-[var(--color-border)]">
-      {conversations.map((c) => {
-        const selected = c.id === selectedId;
-        const unread = c.unread ?? 0;
-        return (
-          <li key={c.id}>
-            <button
-              type="button"
-              aria-current={selected || undefined}
-              onClick={() => onSelect(c.id)}
-              className={clsx(
-                'focus-visible:focus-indicator py-row-12 flex w-full items-center gap-3 px-4 text-start transition-colors focus-visible:bg-gray-100 focus-visible:ring-inset dark:focus-visible:bg-gray-800',
-                selected ? 'bg-brand-500/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'
-              )}
-            >
-              <span className="relative shrink-0">
-                {c.avatar ? (
-                  <span aria-hidden className="flex h-10 min-w-10 items-center justify-center">
-                    {c.avatar}
-                  </span>
-                ) : (
-                  <Avatar name={c.name} src={c.avatarSrc} size="md" />
+}: ChatConversationListProps) => {
+  const labels = useLabels('chatConversationList', CHAT_CONVERSATION_LIST_LABELS, ownLabels);
+  return (
+    <nav aria-label={label ?? labels.label} className={clsx('overflow-y-auto', className)}>
+      <ul className="divide-y divide-[var(--color-border)]">
+        {conversations.map((c) => {
+          const selected = c.id === selectedId;
+          const unread = c.unread ?? 0;
+          return (
+            <li key={c.id}>
+              <button
+                type="button"
+                aria-current={selected || undefined}
+                onClick={() => onSelect(c.id)}
+                className={clsx(
+                  'focus-visible:focus-indicator py-row-12 flex w-full items-center gap-3 px-4 text-start transition-colors focus-visible:bg-gray-100 focus-visible:ring-inset dark:focus-visible:bg-gray-800',
+                  selected ? 'bg-brand-500/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'
                 )}
-                {c.presence && (
-                  <span
-                    aria-hidden
-                    className={clsx(
-                      'inset-e-0 absolute bottom-0 h-3 w-3 rounded-full ring-2 ring-[var(--color-bg-panel)]',
-                      PRESENCE_CLASS[c.presence]
-                    )}
-                  />
-                )}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex items-baseline justify-between gap-2">
-                  <span
-                    className={clsx(
-                      'truncate text-sm text-[var(--color-text-primary)]',
-                      unread > 0 ? 'font-semibold' : 'font-medium'
-                    )}
-                  >
-                    <bdi>{c.name}</bdi>
-                    {c.presence && <span className="sr-only">, {c.presence}</span>}
-                  </span>
-                  {c.time && (
+              >
+                <span className="relative shrink-0">
+                  {c.avatar ? (
+                    <span aria-hidden className="flex h-10 min-w-10 items-center justify-center">
+                      {c.avatar}
+                    </span>
+                  ) : (
+                    <Avatar name={c.name} src={c.avatarSrc} size="md" />
+                  )}
+                  {c.presence && (
+                    <span
+                      aria-hidden
+                      className={clsx(
+                        'inset-e-0 absolute bottom-0 h-3 w-3 rounded-full ring-2 ring-[var(--color-bg-panel)]',
+                        PRESENCE_CLASS[c.presence]
+                      )}
+                    />
+                  )}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-baseline justify-between gap-2">
                     <span
                       className={clsx(
-                        'text-2xs shrink-0',
-                        selected ? ON_SELECTED : 'text-[var(--color-text-muted)]'
+                        'truncate text-sm text-[var(--color-text-primary)]',
+                        unread > 0 ? 'font-semibold' : 'font-medium'
                       )}
                     >
-                      <bdi>{c.time}</bdi>
+                      <bdi>{c.name}</bdi>
+                      {c.presence && <span className="sr-only">, {labels[c.presence]}</span>}
                     </span>
-                  )}
-                </span>
-                <span className="mt-0.5 flex items-center justify-between gap-2">
-                  <span
-                    className={clsx(
-                      'truncate text-xs',
-                      selected ? ON_SELECTED : 'text-[var(--color-text-secondary)]'
+                    {c.time && (
+                      <span
+                        className={clsx(
+                          'text-2xs shrink-0',
+                          selected ? ON_SELECTED : 'text-[var(--color-text-muted)]'
+                        )}
+                      >
+                        <bdi>{c.time}</bdi>
+                      </span>
                     )}
-                  >
-                    <bdi>{c.lastMessage}</bdi>
                   </span>
-                  {unread > 0 && (
-                    <span className="bg-brand-500 text-2xs min-w-5 shrink-0 rounded-full px-1.5 text-center leading-5 font-semibold text-white">
-                      <bdi>{unread}</bdi>
-                      <span className="sr-only"> unread</span>
+                  <span className="mt-0.5 flex items-center justify-between gap-2">
+                    <span
+                      className={clsx(
+                        'truncate text-xs',
+                        selected ? ON_SELECTED : 'text-[var(--color-text-secondary)]'
+                      )}
+                    >
+                      <bdi>{c.lastMessage}</bdi>
                     </span>
-                  )}
+                    {unread > 0 && (
+                      <span className="bg-brand-500 text-2xs min-w-5 shrink-0 rounded-full px-1.5 text-center leading-5 font-semibold text-white">
+                        <bdi>{unread}</bdi>
+                        <span className="sr-only"> {labels.unread}</span>
+                      </span>
+                    )}
+                  </span>
                 </span>
-              </span>
-            </button>
-          </li>
-        );
-      })}
-    </ul>
-  </nav>
-);
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+};

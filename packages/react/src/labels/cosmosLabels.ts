@@ -1,3 +1,15 @@
+import type {
+  ChatbotLabels,
+  ChatComposerLabels,
+  ChatConversationListLabels,
+  ChatMessageActionsLabels,
+  ChatMessageLabels,
+  ChatSourcesLabels,
+  ChatSuggestionsLabels,
+  ChatThreadLabels,
+  ChatToolCallLabels,
+  ChatTypingIndicatorLabels,
+} from '../chat/labels';
 import type { CommentComposerLabels, CommentLabels, CommentThreadLabels } from '../comments/labels';
 import type {
   AuditDiffLabels,
@@ -73,6 +85,16 @@ export type CosmosLabels = {
   calendar: CalendarLabels;
   cardExpiryInput: CardExpiryInputLabels;
   cardFields: CardFieldsLabels;
+  chatComposer: ChatComposerLabels;
+  chatConversationList: ChatConversationListLabels;
+  chatMessage: ChatMessageLabels;
+  chatMessageActions: ChatMessageActionsLabels;
+  chatSources: ChatSourcesLabels;
+  chatSuggestions: ChatSuggestionsLabels;
+  chatThread: ChatThreadLabels;
+  chatToolCall: ChatToolCallLabels;
+  chatTypingIndicator: ChatTypingIndicatorLabels;
+  chatbot: ChatbotLabels;
   colorInput: ColorInputLabels;
   columnFilterDropdown: ColumnFilterDropdownLabels;
   columnHeader: ColumnHeaderLabels;

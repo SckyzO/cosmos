@@ -2,15 +2,18 @@ import { clsx } from 'clsx';
 import { SendHorizontal, Square } from 'lucide-react';
 import { useLayoutEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { useAutoGrow } from '../hooks/useAutoGrow';
+import { useLabels } from '../labels/labelsContext';
 import { mergeRefs } from '../ui/mergeRefs';
+import { CHAT_COMPOSER_LABELS, type ChatComposerLabels } from './labels';
 
 export type ChatComposerProps = {
   /** Called with the trimmed text when the user sends a non-empty message. */
   onSend: (text: string) => void;
-  /** Accessible label of the textarea. Default `Message`. */
+  /** Accessible label of the textarea. Default `labels.field`, `Message`. */
   label?: string;
+  /** Default `labels.placeholder`, `Write a message…`. */
   placeholder?: string;
-  /** Accessible name of the send button. Default `Send message`. */
+  /** Accessible name of the send button. Default `labels.send`, `Send message`. */
   sendLabel?: string;
   disabled?: boolean;
   /** Slot before the textarea, e.g. an attach-file button. */
@@ -29,8 +32,10 @@ export type ChatComposerProps = {
   generating?: boolean;
   /** Called when the Stop button is pressed. */
   onStop?: () => void;
-  /** Accessible name of the Stop button. Default `Stop generating`. */
+  /** Accessible name of the Stop button. Default `labels.stop`, `Stop generating`. */
   stopLabel?: string;
+  /** The texts it writes, over `LabelsProvider`'s `chatComposer` and the English defaults. */
+  labels?: Partial<ChatComposerLabels>;
   /** Height in px the textarea grows to before it scrolls. Default `160`. */
   maxHeight?: number;
   className?: string;
@@ -45,19 +50,21 @@ export type ChatComposerProps = {
  */
 export function ChatComposer({
   onSend,
-  label = 'Message',
-  placeholder = 'Write a message…',
-  sendLabel = 'Send message',
+  label,
+  placeholder,
+  sendLabel,
   disabled = false,
   attachment,
   footer,
   generating = false,
   onStop,
-  stopLabel = 'Stop generating',
+  stopLabel,
+  labels: ownLabels,
   maxHeight = 160,
   className,
   ref,
 }: ChatComposerProps) {
+  const labels = useLabels('chatComposer', CHAT_COMPOSER_LABELS, ownLabels);
   const [value, setValue] = useState('');
   const inner = useRef<HTMLTextAreaElement | null>(null);
   const action = useRef<HTMLButtonElement>(null);
@@ -89,10 +96,10 @@ export function ChatComposer({
       <textarea
         ref={mergeRefs(inner, ref)}
         rows={1}
-        aria-label={label}
+        aria-label={label ?? labels.field}
         // What is typed reads in its own direction.
         dir="auto"
-        placeholder={placeholder}
+        placeholder={placeholder ?? labels.placeholder}
         disabled={disabled}
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -108,7 +115,7 @@ export function ChatComposer({
       <button
         ref={action}
         type="button"
-        aria-label={generating ? stopLabel : sendLabel}
+        aria-label={generating ? (stopLabel ?? labels.stop) : (sendLabel ?? labels.send)}
         disabled={generating ? false : !canSend}
         onClick={generating ? () => onStop?.() : send}
         onFocus={() => {

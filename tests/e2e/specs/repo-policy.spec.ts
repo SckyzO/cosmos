@@ -465,14 +465,6 @@ test('the package uses logical utilities only', () => {
 
 /** The files that still write English in place, translated a group at a time: the list only shrinks. */
 const TEXT_DEFERRED: string[] = [
-  'packages/react/src/chat/Chatbot.tsx',
-  'packages/react/src/chat/ChatComposer.tsx',
-  'packages/react/src/chat/ChatConversationList.tsx',
-  'packages/react/src/chat/ChatMessageActions.tsx',
-  'packages/react/src/chat/ChatSources.tsx',
-  'packages/react/src/chat/ChatSuggestions.tsx',
-  'packages/react/src/chat/ChatThread.tsx',
-  'packages/react/src/chat/ChatToolCall.tsx',
   'packages/react/src/editor/ImageForm.tsx',
   'packages/react/src/editor/LinkForm.tsx',
   'packages/react/src/layout/Divider.tsx',

@@ -1,7 +1,9 @@
 import { clsx } from 'clsx';
 import { useId } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { SectionLabel } from '../ui/SectionLabel';
 import { hostOf, isHttpUrl } from './httpUrl';
+import { CHAT_SOURCES_LABELS, type ChatSourcesLabels } from './labels';
 
 export type ChatSource = {
   /** Title of the page, shown on one line (the full title is its tooltip). */
@@ -17,8 +19,10 @@ export type ChatSource = {
 
 export type ChatSourcesProps = {
   sources: ChatSource[];
-  /** Visible caption of the list, and its accessible name. Default `Sources`. */
+  /** Visible caption of the list, and its accessible name. Default `labels.label`, `Sources`. */
   label?: string;
+  /** The texts it writes, over `LabelsProvider`'s `chatSources` and the English defaults. */
+  labels?: Partial<ChatSourcesLabels>;
   className?: string;
 };
 
@@ -33,13 +37,14 @@ const CHIP =
  * the links in `MessageText`; any other `href` is shown as a chip with a dashed border, not as a
  * link.
  */
-export const ChatSources = ({ sources, label = 'Sources', className }: ChatSourcesProps) => {
+export const ChatSources = ({ sources, label, labels: ownLabels, className }: ChatSourcesProps) => {
+  const labels = useLabels('chatSources', CHAT_SOURCES_LABELS, ownLabels);
   const captionId = useId();
   if (sources.length === 0) return null;
   return (
     <div className={className}>
       <SectionLabel id={captionId} className="mb-1.5">
-        {label}
+        {label ?? labels.label}
       </SectionLabel>
       <ol aria-labelledby={captionId} className="flex flex-wrap gap-1.5">
         {sources.map(({ title, href, domain }, i) => {
@@ -79,7 +84,7 @@ export const ChatSources = ({ sources, label = 'Sources', className }: ChatSourc
                   )}
                 >
                   {inner}
-                  <span className="sr-only">(opens in a new tab)</span>
+                  <span className="sr-only">{labels.newTab}</span>
                 </a>
               ) : (
                 <span className={clsx(CHIP, 'border-dashed border-[var(--color-border)]')}>

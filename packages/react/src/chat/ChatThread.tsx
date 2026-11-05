@@ -1,11 +1,20 @@
 import { clsx } from 'clsx';
 import { useEffect, useRef, type ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
+import {
+  CHAT_THREAD_LABELS,
+  CHAT_TYPING_INDICATOR_LABELS,
+  type ChatThreadLabels,
+  type ChatTypingIndicatorLabels,
+} from './labels';
 
 export type ChatThreadProps = {
   /** `ChatMessage`, `ChatDaySeparator` and `ChatTypingIndicator` elements. */
   children: ReactNode;
-  /** Accessible name of the message log. Default `Conversation`. */
+  /** Accessible name of the message log. Default `labels.label`, `Conversation`. */
   label?: string;
+  /** The texts it writes, over `LabelsProvider`'s `chatThread` and the English defaults. */
+  labels?: Partial<ChatThreadLabels>;
   className?: string;
 };
 
@@ -19,7 +28,8 @@ const STICK_THRESHOLD = 32;
  *
  * It is a `role="log"` live region, so screen readers announce new messages.
  */
-export const ChatThread = ({ children, label = 'Conversation', className }: ChatThreadProps) => {
+export const ChatThread = ({ children, label, labels: ownLabels, className }: ChatThreadProps) => {
+  const labels = useLabels('chatThread', CHAT_THREAD_LABELS, ownLabels);
   const ref = useRef<HTMLDivElement>(null);
   const stuck = useRef(true);
 
@@ -40,7 +50,7 @@ export const ChatThread = ({ children, label = 'Conversation', className }: Chat
       ref={ref}
       role="log"
       aria-live="polite"
-      aria-label={label}
+      aria-label={label ?? labels.label}
       tabIndex={0}
       onScroll={(e) => {
         const el = e.currentTarget;
@@ -75,21 +85,26 @@ export const ChatDaySeparator = ({ children }: ChatDaySeparatorProps) => (
 export type ChatTypingIndicatorProps = {
   /** Who is typing, read by screen readers. */
   name: string;
+  /** The texts it writes, over `LabelsProvider`'s `chatTypingIndicator` and the English defaults. */
+  labels?: Partial<ChatTypingIndicatorLabels>;
 };
 
 /** Three animated dots in an incoming bubble: `name` is typing. */
-export const ChatTypingIndicator = ({ name }: ChatTypingIndicatorProps) => (
-  <div className="mt-2 flex">
-    <span className="flex items-center gap-1 rounded-2xl rounded-es-md bg-gray-100 px-4 py-3 dark:bg-gray-800">
-      <span className="sr-only">{name} is typing</span>
-      {[0, 150, 300].map((delay) => (
-        <span
-          key={delay}
-          aria-hidden
-          style={{ animationDelay: `${delay}ms` }}
-          className="h-1.5 w-1.5 rounded-full bg-gray-400 motion-safe:animate-bounce dark:bg-gray-500"
-        />
-      ))}
-    </span>
-  </div>
-);
+export const ChatTypingIndicator = ({ name, labels: ownLabels }: ChatTypingIndicatorProps) => {
+  const labels = useLabels('chatTypingIndicator', CHAT_TYPING_INDICATOR_LABELS, ownLabels);
+  return (
+    <div className="mt-2 flex">
+      <span className="flex items-center gap-1 rounded-2xl rounded-es-md bg-gray-100 px-4 py-3 dark:bg-gray-800">
+        <span className="sr-only">{labels.typing(name)}</span>
+        {[0, 150, 300].map((delay) => (
+          <span
+            key={delay}
+            aria-hidden
+            style={{ animationDelay: `${delay}ms` }}
+            className="h-1.5 w-1.5 rounded-full bg-gray-400 motion-safe:animate-bounce dark:bg-gray-500"
+          />
+        ))}
+      </span>
+    </div>
+  );
+};
