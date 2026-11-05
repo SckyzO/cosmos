@@ -12,7 +12,7 @@ import { expectOwnTypesPerFormat, expectSubpathOwnTypes } from './package-export
 const pkgDir = fileURLToPath(new URL('../../../packages/react/', import.meta.url));
 const cjs = `${pkgDir}dist/index.cjs`;
 const esm = `${pkgDir}dist/index.js`;
-const SUBPATHS = ['code', 'editor', 'map', 'qr'];
+const SUBPATHS = ['code', 'editor', 'map', 'qr', 'locales/fr'];
 const read = (file: string) => readFileSync(file, 'utf8');
 const distFiles = () =>
   readdirSync(`${pkgDir}dist`, { recursive: true, encoding: 'utf8' }).filter((name) =>
@@ -195,12 +195,14 @@ test('Shiki is an optional peer dependency, and a dev dependency of the repo onl
 });
 
 test('the root entry carries no Shiki, MapLibre nor qr and does not import a sub-path entry', () => {
-  for (const name of distFiles().filter((file) => !/^(?:code|editor|map|qr)\//.test(file))) {
+  for (const name of distFiles().filter(
+    (file) => !/^(?:code|editor|map|qr|locales)\//.test(file)
+  )) {
     const code = read(`${pkgDir}dist/${name}`);
     expect(code, name).not.toMatch(/shiki/i);
     expect(code, name).not.toMatch(/maplibre/i);
     expect(code, name).not.toMatch(/(?:from |require\(|import\()['"]qr['"]/);
-    expect(code, name).not.toMatch(/['"]\.{1,2}\/(?:code|editor|map|qr)\//);
+    expect(code, name).not.toMatch(/['"](?:\.{1,2}\/)+(?:code|editor|map|qr|locales)\//);
     expect(code, name).not.toContain('@sckyzo/cosmos-react');
   }
 });
@@ -518,4 +520,54 @@ test('the qr entry loads in Node as ESM and as CJS, and draws a code from the ES
   };
   expect(JSON.parse(esmOut)).toEqual(expected);
   expect(JSON.parse(cjsOut)).toEqual(expected);
+});
+
+// ── `@sckyzo/cosmos-react/locales/fr`: the French dictionary, loaded when an app shows French ───
+// An entry of its own, so `import()` makes it a file of the app that only a French page downloads.
+
+const frEsm = `${pkgDir}dist/locales/fr/index.js`;
+const frCjs = `${pkgDir}dist/locales/fr/index.cjs`;
+
+test('the French entry resolves for import and require, each with its own types', () => {
+  expectSubpathOwnTypes(pkgDir, 'locales/fr');
+});
+
+test('the French entry loads in Node as ESM and as CJS, with a key for every component', () => {
+  const script = (load: string) => `
+    ${load}
+    console.log(JSON.stringify({
+      names: Object.keys(fr).sort(),
+      keys: Object.keys(fr.frenchLabels).sort(),
+      english: Object.keys(cosmos.englishLabels),
+      retry: fr.frenchLabels.errorState.retry,
+    }));
+  `;
+  const esmOut = execFileSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      script(`const cosmos = await import(${JSON.stringify(esm)});
+        const fr = await import(${JSON.stringify(frEsm)});`),
+    ],
+    { encoding: 'utf8', cwd: pkgDir }
+  );
+  const cjsOut = execFileSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      script(`import { createRequire } from 'node:module';
+        const require = createRequire(import.meta.url);
+        const cosmos = require(${JSON.stringify(cjs)});
+        const fr = require(${JSON.stringify(frCjs)});`),
+    ],
+    { encoding: 'utf8', cwd: pkgDir }
+  );
+  const out = JSON.parse(esmOut);
+  expect(out.names).toEqual(['frenchLabels']);
+  // `englishLabels` leaves out the keys of the map and editor entries, whose English lives there.
+  expect(out.keys).toEqual([...out.english, 'mapMarkerList', 'mapView', 'richTextEditor'].sort());
+  expect(out.retry).toBe('Réessayer');
+  expect(JSON.parse(cjsOut)).toEqual(out);
 });

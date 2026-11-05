@@ -1,0 +1,1 @@
+export { frenchLabels } from './frenchLabels';
