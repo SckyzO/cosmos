@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, screen, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   expectFocusBorder,
   expectNoHorizontalOverflow,
@@ -495,5 +496,54 @@ export const FieldIsLeftToRightInRightToLeft: Story = {
       0
     );
     await userEvent.keyboard('{Escape}');
+  },
+};
+
+/** The provider's French names the country button, the list and the error; `labels` wins. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        phoneInput: {
+          country: (name) => `Pays : ${name},`,
+          searchCountries: 'Rechercher un pays',
+          search: 'Rechercher',
+          countries: 'Pays',
+          noMatches: 'Aucun résultat.',
+          invalid: 'Saisissez un numéro de 4 à 15 chiffres.',
+        },
+      }}
+    >
+      <div className="space-y-6">
+        <div role="group" aria-label="Fournisseur">
+          <PhoneInput label="Téléphone" defaultCountry="FR" />
+        </div>
+        <div role="group" aria-label="Propre">
+          <PhoneInput label="Mobile" defaultCountry="FR" labels={{ invalid: 'Numéro invalide.' }} />
+        </div>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const provided = within(canvas.getByRole('group', { name: 'Fournisseur' }));
+    await userEvent.click(provided.getByRole('button', { name: /^Pays : France,/ }));
+    const search = await screen.findByRole('combobox', { name: 'Rechercher un pays' });
+    await expect(search).toHaveAttribute('placeholder', 'Rechercher');
+    await expect(screen.getByRole('listbox', { name: 'Pays' })).toBeInTheDocument();
+    await userEvent.type(search, 'zzzz');
+    await expect(await screen.findByText('Aucun résultat.')).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+    await userEvent.type(provided.getByRole('textbox', { name: 'Téléphone' }), '12');
+    await userEvent.tab();
+    await expect(
+      await provided.findByText('Saisissez un numéro de 4 à 15 chiffres.')
+    ).toBeVisible();
+
+    // Its own `invalid` wins over the provider's.
+    const own = within(canvas.getByRole('group', { name: 'Propre' }));
+    await userEvent.type(own.getByRole('textbox', { name: 'Mobile' }), '12');
+    await userEvent.tab();
+    await expect(await own.findByText('Numéro invalide.')).toBeVisible();
   },
 };

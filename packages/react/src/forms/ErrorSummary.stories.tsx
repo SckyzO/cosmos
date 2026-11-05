@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Fragment, useState } from 'react';
 import { expect, spyOn, userEvent, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 import { Input } from './Input';
 import { Select } from './Select';
@@ -231,5 +232,37 @@ export const OnMobileChecks: Story = {
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+/** The provider's French words the title and the sentence; the banner's own `labels` win. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        errorSummary: {
+          title: 'Un problème est survenu',
+          message: (count, links) => (
+            <>
+              Corrigez {count} {count === 1 ? 'champ' : 'champs'} : {links}.
+            </>
+          ),
+        },
+      }}
+    >
+      <div className="space-y-4">
+        <ErrorSummary errors={ERRORS} />
+        <ErrorSummary errors={ERRORS.slice(0, 1)} labels={{ title: 'Erreur de saisie' }} />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const [first, second] = canvas.getAllByRole('alert');
+    await expect(within(first!).getByText('Un problème est survenu')).toBeVisible();
+    await expect(first).toHaveTextContent('Corrigez 3 champs :');
+    await expect(within(first!).getByRole('link', { name: 'Booking URL' })).toBeVisible();
+    await expect(within(second!).getByText('Erreur de saisie')).toBeVisible();
+    await expect(second).toHaveTextContent('Corrigez 1 champ :');
   },
 };

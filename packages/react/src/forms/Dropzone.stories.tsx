@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ImageIcon } from 'lucide-react';
 import { createRef, useState } from 'react';
 import { expect, fireEvent, fn, userEvent, waitFor } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { Dropzone, type DropzoneRejection } from './Dropzone';
 import { expectReadsLeftToRight, expectRefFocuses, expectTextContrast } from '../storybook-helpers';
 
@@ -382,5 +383,58 @@ export const FileNamesAreIsolatedInRightToLeft: Story = {
     await expect(getComputedStyle(name).direction).toBe('ltr');
     await expect(getComputedStyle(name).unicodeBidi).toBe('isolate');
     expectReadsLeftToRight(canvas.getByText('1 B'));
+  },
+};
+
+/** The provider's French reaches the prompt, the errors and the file list; `labels` wins. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        dropzone: {
+          upload: 'Cliquez pour téléverser',
+          orDrop: 'ou glissez-déposez',
+          notAllowed: (name, accept) => `« ${name} » : type non autorisé (${accept}).`,
+          tooLarge: (name, size) => `« ${name} » dépasse ${size}.`,
+          tooMany: (max) => `Trop de fichiers (max ${max}).`,
+          remove: (name) => `Retirer ${name}`,
+          fileSize: (bytes) => `${bytes} octets`,
+        },
+      }}
+    >
+      <div className="space-y-6">
+        <Dropzone label="Images" accept="image/*" />
+        <Dropzone label="Petit" maxSize={4} />
+        <Dropzone label="Trop" multiple maxFiles={1} />
+        <Dropzone label="Pièces" multiple labels={{ remove: (name) => `Supprimer ${name}` }} />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByText('Cliquez pour téléverser')).toHaveLength(4);
+    await expect(canvas.getAllByText(/ou glissez-déposez/)).toHaveLength(4);
+    const files = (name: string) => canvas.getByLabelText(name, { selector: 'input' });
+
+    const wrong = new File(['x'], 'note.txt', { type: 'text/plain' });
+    fireEvent.change(files('Images'), { target: { files: [wrong] } });
+    await expect(
+      await canvas.findByText('« note.txt » : type non autorisé (image/*).')
+    ).toBeVisible();
+
+    const big = new File(['too big'], 'big.txt', { type: 'text/plain' });
+    fireEvent.change(files('Petit'), { target: { files: [big] } });
+    await expect(await canvas.findByText('« big.txt » dépasse 4 octets.')).toBeVisible();
+
+    const a = new File(['a'], 'a.txt', { type: 'text/plain' });
+    const b = new File(['b'], 'b.txt', { type: 'text/plain' });
+    fireEvent.change(files('Trop'), { target: { files: [a, b] } });
+    await expect(await canvas.findByText('Trop de fichiers (max 1).')).toBeVisible();
+
+    // The file list: the size through `fileSize`, and the app's own name for the remove button.
+    fireEvent.change(files('Pièces'), { target: { files: [a] } });
+    await expect(await canvas.findByText('1 octets')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Supprimer a.txt' })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'Retirer a.txt' })).toBeNull();
   },
 };

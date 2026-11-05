@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
-import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, screen, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   bothDirections,
   directionBox,
@@ -895,5 +896,62 @@ export const MonthChangesAtOnceInThePickerWhenReduced: Story = {
     await expect(within(calendar).getByRole('grid', { name: 'June 2026' })).toBeVisible();
     for (const { duration } of monthAnimations(root)) await expect(duration).toBe(0);
     await waitFor(() => expect(root.querySelectorAll('[data-animated-month]')).toHaveLength(1));
+  },
+};
+
+/** The provider's French reaches the triggers, the footers and the panel's names; `labels` wins. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        datePicker: {
+          placeholder: 'Choisir une date',
+          fromPlaceholder: 'Début',
+          toPlaceholder: 'Fin',
+          to: 'à',
+          today: "Aujourd'hui",
+          clear: 'Effacer',
+          done: 'Terminé',
+          presets: 'Périodes prédéfinies',
+          calendar: 'Calendrier',
+          calendarOf: (label) => `Calendrier : ${label}`,
+          required: '(obligatoire)',
+        },
+        calendar: { previousMonth: 'Mois précédent' },
+      }}
+    >
+      <div className="space-y-6">
+        <DatePicker label="Échéance" required />
+        <DatePicker
+          mode="range"
+          labels={{ done: 'OK' }}
+          presets={[
+            { label: '7 jours', range: { from: new Date(2026, 4, 1), to: new Date(2026, 4, 7) } },
+          ]}
+        />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const single = canvas.getByRole('button', { name: 'Échéance (obligatoire)' });
+    await expect(single).toHaveTextContent('Choisir une date');
+    await userEvent.click(single);
+    const dialog = await screen.findByRole('dialog', { name: 'Calendrier : Échéance' });
+    await expect(within(dialog).getByRole('button', { name: "Aujourd'hui" })).toBeVisible();
+    // The calendar inside reads the provider's `calendar` too.
+    await expect(within(dialog).getByRole('button', { name: 'Mois précédent' })).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+
+    await expect(canvas.getByText('à')).toBeVisible();
+    const from = canvas.getByRole('button', { name: 'Début' });
+    await expect(canvas.getByRole('button', { name: 'Fin' })).toBeVisible();
+    await userEvent.click(from);
+    const range = await screen.findByRole('dialog', { name: 'Calendrier' });
+    await expect(within(range).getByRole('button', { name: 'Effacer' })).toBeVisible();
+    // Its own label wins over the provider's `done`.
+    await expect(within(range).getByRole('button', { name: 'OK' })).toBeVisible();
+    await expect(within(range).queryByRole('button', { name: 'Terminé' })).toBeNull();
+    await expect(within(range).getByRole('group', { name: 'Périodes prédéfinies' })).toBeVisible();
   },
 };

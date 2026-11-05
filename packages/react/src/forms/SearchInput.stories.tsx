@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   bothDirections,
   expectFocusBorder,
@@ -120,5 +121,33 @@ export const IconSitsOnTheStartEdgeInRightToLeft: Story = {
     for (const input of canvasElement.querySelectorAll('input')) {
       expect(getComputedStyle(input).unicodeBidi).toBe('plaintext');
     }
+  },
+};
+
+/** The provider's French is the placeholder; the app's `placeholder` and `labels` win over it. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ searchInput: { placeholder: 'Rechercher…' } }}>
+      <div className="space-y-4">
+        <SearchInput aria-label="Recherche" />
+        <SearchInput aria-label="Hôtes" placeholder="Nom d'hôte…" />
+        <SearchInput aria-label="Autre" labels={{ placeholder: 'Chercher…' }} />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('textbox', { name: 'Recherche' })).toHaveAttribute(
+      'placeholder',
+      'Rechercher…'
+    );
+    await expect(canvas.getByRole('textbox', { name: 'Hôtes' })).toHaveAttribute(
+      'placeholder',
+      "Nom d'hôte…"
+    );
+    await expect(canvas.getByRole('textbox', { name: 'Autre' })).toHaveAttribute(
+      'placeholder',
+      'Chercher…'
+    );
   },
 };

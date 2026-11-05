@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { clsx } from 'clsx';
 import { useState, type ReactNode } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { Totals } from '../data/Totals';
 import {
   bothDirections,
@@ -1012,5 +1013,43 @@ export const HoursInEurosChecks: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Ajouter une ligne' }));
     await expect(canvas.getByRole('status')).toHaveTextContent('Ligne 3 ajoutée. 3 lignes.');
     await expect(canvas.getByRole('spinbutton', { name: 'Heures, ligne 3' })).toHaveValue(1);
+  },
+};
+
+/** The provider's French reaches the headings, the fields' names and the buttons; `labels` wins. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        lineItemsEditor: {
+          item: 'Article',
+          quantity: 'Quantité',
+          rate: 'Taux',
+          amount: 'Montant',
+          describeItem: "Décrire l'article",
+          add: 'Ajouter une ligne',
+          subtotal: 'Sous-total',
+          fieldName: (column, n) => `${column}, ligne ${n}`,
+          remove: (n) => `Supprimer la ligne ${n}`,
+        },
+      }}
+    >
+      <Editor
+        initial={[{ id: 'blank', item: '', quantity: 1, rate: 0 }]}
+        currency="EUR"
+        locale="fr-FR"
+        labels={{ add: 'Nouvelle ligne' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('textbox', { name: 'Article, ligne 1' })).toBeVisible();
+    await expect(canvas.getByPlaceholderText("Décrire l'article")).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Supprimer la ligne 1' })).toBeVisible();
+    await expect(canvas.getByText('Sous-total')).toBeVisible();
+    // Its own `add` wins over the provider's, and the keys it leaves out stay the provider's.
+    await expect(canvas.getByRole('button', { name: 'Nouvelle ligne' })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'Ajouter une ligne' })).toBeNull();
   },
 };

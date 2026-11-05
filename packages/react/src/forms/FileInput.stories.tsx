@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fireEvent, fn, spyOn, userEvent } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   bothDirections,
   expectFocusBorder,
@@ -184,5 +185,39 @@ export const ButtonAtTheStartInRightToLeft: Story = {
     for (const island of canvasElement.querySelectorAll('bdi')) {
       expect(getComputedStyle(island).unicodeBidi).toBe('isolate');
     }
+  },
+};
+
+/** The provider's French reaches the button, the empty line and the summary; `labels` wins. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        fileInput: {
+          browse: 'Parcourir',
+          placeholder: 'Aucun fichier choisi',
+          file: (name, size) => (size === undefined ? name : `${name} — ${size}`),
+          files: (count) => `${count} fichiers`,
+          fileSize: (bytes) => `${bytes} octets`,
+        },
+      }}
+    >
+      <div className="space-y-6">
+        <FileInput label="Rapport" />
+        <FileInput label="Autre" labels={{ browse: 'Choisir' }} multiple />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Parcourir' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Choisir' })).toBeVisible();
+    await expect(canvas.getAllByText('Aucun fichier choisi')).toHaveLength(2);
+
+    const note = new File(['hello'], 'note.txt', { type: 'text/plain' });
+    fireEvent.change(canvas.getByLabelText('Rapport'), { target: { files: [note] } });
+    await expect(await canvas.findByText('note.txt — 5 octets')).toBeVisible();
+    fireEvent.change(canvas.getByLabelText('Autre'), { target: { files: [note, note] } });
+    await expect(await canvas.findByText('2 fichiers')).toBeVisible();
   },
 };

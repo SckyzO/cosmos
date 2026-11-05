@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   expectFocusBorder,
   expectGraphicContrast,
@@ -686,5 +687,67 @@ export const TypedTextFollowsItsOwnDirectionInRightToLeft: Story = {
     const input = canvas.getByRole('textbox');
     expect(getComputedStyle(input).unicodeBidi).toBe('plaintext');
     expect(getComputedStyle(input).direction).toBe('rtl');
+  },
+};
+
+/** The provider's French words the helper line, the errors, the counts and the announcements. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        tagInput: {
+          suggestions: 'Propositions',
+          helper: (keys) => `Appuyez sur ${keys.join(' ou ')} pour ajouter une étiquette.`,
+          comma: 'virgule',
+          invalid: (tag) => `« ${tag} » n’est pas une étiquette valide.`,
+          count: (count, max) => `${count} sur ${max}`,
+          limit: 'Limite atteinte',
+          tagCount: (count) => `${count} étiquette${count === 1 ? '' : 's'}`,
+          tagCountOfMax: (count, max) => `${count} sur ${max} étiquettes`,
+          added: (tags, count) => `${tags.join(', ')} ajouté, ${count} étiquettes`,
+          removed: (tag, count) => `${tag} retiré, ${count} étiquettes`,
+          alreadyAdded: (tag) => `${tag} est déjà ajouté`,
+          maxReached: (max) => `Maximum de ${max} étiquettes atteint`,
+        },
+      }}
+    >
+      <div className="space-y-6">
+        <TagInput
+          label="Étiquettes"
+          suggestions={SUGGESTIONS}
+          maxTags={2}
+          validate={(t) => t !== 'bad'}
+        />
+        <TagInput label="Autres" maxTags={1} defaultValue={['a']} labels={{ limit: 'Plein' }} />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('combobox', { name: 'Étiquettes' });
+    await expect(input).toHaveAccessibleDescription(
+      /Appuyez sur Enter ou virgule pour ajouter une étiquette\./
+    );
+    await userEvent.click(input);
+    await expect(await page.findByRole('listbox', { name: 'Propositions' })).toBeVisible();
+    await userEvent.type(input, 'one{Enter}');
+    await expect(canvas.getAllByRole('status')[0]).toHaveTextContent('one ajouté, 1 étiquettes');
+    await expect(canvas.getByText('1 sur 2')).toBeVisible();
+    await userEvent.type(input, 'one{Enter}');
+    await expect(canvas.getAllByRole('status')[0]).toHaveTextContent('one est déjà ajouté');
+    await userEvent.type(input, 'bad{Enter}');
+    await expect(
+      await canvas.findAllByText('« bad » n’est pas une étiquette valide.')
+    ).toHaveLength(2);
+    await userEvent.clear(input);
+    await userEvent.type(input, 'two{Enter}');
+    await expect(canvas.getByText('Limite atteinte')).toBeVisible();
+    await userEvent.type(input, 'three{Enter}');
+    await expect(canvas.getAllByRole('status')[0]).toHaveTextContent(
+      'Maximum de 2 étiquettes atteint'
+    );
+
+    // Its own `limit` wins over the provider's.
+    await expect(canvas.getByText('Plein')).toBeVisible();
   },
 };

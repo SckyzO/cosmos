@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { bothDirections, expectMirrored } from '../storybook-helpers';
 import { PasswordInput } from './PasswordInput';
 
@@ -121,5 +122,35 @@ export const HiddenValueKeepsThePageDirection: Story = {
     await expect(getComputedStyle(input).unicodeBidi).not.toBe('plaintext');
     await userEvent.click(canvas.getByRole('button', { name: 'Show password' }));
     await expect(getComputedStyle(input).unicodeBidi).toBe('plaintext');
+  },
+};
+
+/** The provider's French names the visibility toggle; the field's own `labels` win. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        passwordInput: {
+          show: 'Afficher le mot de passe',
+          hide: 'Masquer le mot de passe',
+        },
+      }}
+    >
+      <div className="space-y-4">
+        <PasswordInput label="Mot de passe" />
+        <PasswordInput label="Confirmation" labels={{ show: 'Voir' }} />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Afficher le mot de passe' }));
+    await expect(canvas.getByRole('button', { name: 'Masquer le mot de passe' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Voir' })).toBeVisible();
+    await userEvent.click(canvas.getByRole('button', { name: 'Voir' }));
+    // The key it did not set stays the provider's.
+    await expect(canvas.getAllByRole('button', { name: 'Masquer le mot de passe' })).toHaveLength(
+      2
+    );
   },
 };

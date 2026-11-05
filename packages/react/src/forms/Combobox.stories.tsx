@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   bothDirections,
   expectBelow,
@@ -743,5 +744,52 @@ export const ToggleSitsOnTheEndEdgeInRightToLeft: Story = {
     for (const input of canvasElement.querySelectorAll('input')) {
       expect(getComputedStyle(input).unicodeBidi).toBe('plaintext');
     }
+  },
+};
+
+/** The provider's French reaches the list's lines and the toggle; its own `labels` win. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        combobox: {
+          empty: 'Aucun résultat',
+          emptyCustom: 'Appuyez sur Entrée pour utiliser ce texte.',
+          toggle: 'Basculer les options',
+        },
+      }}
+    >
+      <div className="space-y-6">
+        <div role="group" aria-label="Fournisseur">
+          <Combobox label="Personne" options={PEOPLE} />
+        </div>
+        <div role="group" aria-label="Propre">
+          <Combobox
+            label="Autre personne"
+            options={PEOPLE}
+            labels={{ toggle: 'Ouvrir la liste' }}
+          />
+        </div>
+        <div role="group" aria-label="Texte libre">
+          <Combobox label="Texte" options={PEOPLE} allowCustomValue />
+        </div>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const provided = within(canvas.getByRole('group', { name: 'Fournisseur' }));
+    await expect(provided.getByRole('button', { name: 'Basculer les options' })).toBeVisible();
+    await userEvent.type(provided.getByRole('combobox', { name: 'Personne' }), 'zzz');
+    await expect(await page.findByText('Aucun résultat')).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+
+    const own = within(canvas.getByRole('group', { name: 'Propre' }));
+    await expect(own.getByRole('button', { name: 'Ouvrir la liste' })).toBeVisible();
+
+    // With `allowCustomValue` the list stays closed unless the app wrote a line for it.
+    const custom = within(canvas.getByRole('group', { name: 'Texte libre' }));
+    await userEvent.type(custom.getByRole('combobox', { name: 'Texte' }), 'zzz');
+    await expect(await page.findByText('Appuyez sur Entrée pour utiliser ce texte.')).toBeVisible();
   },
 };

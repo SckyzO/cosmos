@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useMemo, useState } from 'react';
 import { expect, userEvent } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { expectTextContrast } from '../storybook-helpers';
 import { PasswordInput } from './PasswordInput';
 import {
@@ -135,5 +136,45 @@ export const EachRuleSaysIfItIsMet: Story = {
     for (const item of items) {
       await expect(item.querySelector('.sr-only')).not.toBeNull();
     }
+  },
+};
+
+/** The provider's French words the title, the empty line and the rules' state; `labels` wins. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        passwordPolicyChecker: {
+          title: 'Exigences du mot de passe',
+          empty: 'Aucune exigence définie.',
+          met: 'respectée',
+          notMet: 'non respectée',
+        },
+      }}
+    >
+      <div className="space-y-4">
+        <PasswordPolicyChecker
+          rules={[
+            { label: '12 caractères', ok: true },
+            { label: 'Un chiffre', ok: false },
+          ]}
+        />
+        <PasswordPolicyChecker rules={[]} />
+        <PasswordPolicyChecker
+          rules={[{ label: 'Un symbole', ok: true }]}
+          labels={{ title: 'Règles' }}
+        />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Exigences du mot de passe')).toBeVisible();
+    const [first, second, third] = canvas.getAllByRole('listitem');
+    await expect(first).toHaveTextContent('12 caractères, respectée');
+    await expect(second).toHaveTextContent('Un chiffre, non respectée');
+    await expect(canvas.getByText('Aucune exigence définie.')).toBeVisible();
+    await expect(canvas.getByText('Règles')).toBeVisible();
+    await expect(third).toHaveTextContent('Un symbole, respectée');
   },
 };

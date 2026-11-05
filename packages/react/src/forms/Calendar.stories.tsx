@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { DateRange, Matcher } from 'react-day-picker';
 import { fr, ja } from 'react-day-picker/locale';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { bothDirections, directionBox, expectMirrored, keyToEnd } from '../storybook-helpers';
 import { monthAnimations, monthSlideNames, tokenMs } from '../storybook-motion';
 import { Calendar } from './Calendar';
@@ -643,5 +644,79 @@ export const OnlyOneMonthIsLeftAtRest: Story = {
     await waitFor(() => expect(root.querySelectorAll('[data-animated-month]')).toHaveLength(1));
     await expect(root.querySelectorAll('[inert]')).toHaveLength(0);
     await expect(monthAnimations(root)).toEqual([]);
+  },
+};
+
+const FRENCH_CALENDAR = {
+  navigation: 'Navigation du mois',
+  previousMonth: 'Mois précédent',
+  nextMonth: 'Mois suivant',
+  monthDropdown: 'Choisir le mois',
+  yearDropdown: "Choisir l'année",
+  day: (date: string, { today, selected }: { today: boolean; selected: boolean }) =>
+    `${today ? "Aujourd'hui, " : ''}${date}${selected ? ', sélectionné' : ''}`,
+  weekNumber: (week: number) => `Semaine ${week}`,
+  weekNumberHeader: 'Numéro de semaine',
+};
+
+/**
+ * The provider's French reaches react-day-picker as its `labels`, the calendar's own `labels` win,
+ * and a calendar the app translated nothing for keeps the names its `locale` brings.
+ */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <div className="space-y-4">
+      <LabelsProvider labels={{ calendar: FRENCH_CALENDAR }}>
+        <div role="group" aria-label="Fournisseur">
+          <Calendar
+            mode="single"
+            selected={TODAY}
+            defaultMonth={MAY}
+            today={TODAY}
+            captionLayout="dropdown"
+            startMonth={new Date(2026, 0)}
+            endMonth={new Date(2026, 11)}
+            showWeekNumber
+          />
+        </div>
+        <div role="group" aria-label="Propre">
+          <Calendar
+            mode="single"
+            defaultMonth={MAY}
+            today={TODAY}
+            labels={{ nextMonth: 'Plus tard', navigation: 'Navigation propre' }}
+          />
+        </div>
+      </LabelsProvider>
+      <div role="group" aria-label="Locale seule">
+        <Calendar mode="single" locale={fr} defaultMonth={MAY} today={TODAY} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const provided = within(canvas.getByRole('group', { name: 'Fournisseur' }));
+    await expect(provided.getByRole('navigation', { name: 'Navigation du mois' })).toBeVisible();
+    await expect(provided.getByRole('button', { name: 'Mois précédent' })).toBeVisible();
+    await expect(provided.getByRole('button', { name: 'Mois suivant' })).toBeVisible();
+    await expect(provided.getByRole('combobox', { name: 'Choisir le mois' })).toBeVisible();
+    await expect(provided.getByRole('combobox', { name: "Choisir l'année" })).toBeVisible();
+    await expect(
+      provided.getByRole('button', { name: /^7, Aujourd'hui, .*May 7th, 2026, sélectionné$/ })
+    ).toBeVisible();
+    await expect(provided.getAllByLabelText(/^Semaine \d+$/).length).toBeGreaterThan(0);
+
+    // The calendar's own labels win over the provider's, key by key.
+    const own = within(canvas.getByRole('group', { name: 'Propre' }));
+    await expect(own.getByRole('navigation', { name: 'Navigation propre' })).toBeVisible();
+    await expect(own.getByRole('button', { name: 'Plus tard' })).toBeVisible();
+    await expect(own.getByRole('button', { name: 'Mois précédent' })).toBeVisible();
+
+    // Nothing from the app: react-day-picker's own, in the language of the locale.
+    const locale = within(canvas.getByRole('group', { name: 'Locale seule' }));
+    await expect(locale.getByRole('button', { name: 'Aller au mois suivant' })).toBeVisible();
+    await expect(
+      locale.getByRole('button', { name: "Aujourd'hui, jeudi 7 mai 2026" })
+    ).toBeVisible();
   },
 };

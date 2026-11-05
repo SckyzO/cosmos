@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   bothDirections,
   endOffset,
@@ -690,5 +691,31 @@ export const ControlsMirrorInRightToLeft: Story = {
     expectMirrored(canvasElement, (box) =>
       within(control(box, 'Sides') as HTMLElement).getByRole('button', { name: 'Decrease' })
     );
+  },
+};
+
+/** The provider's French names the step buttons; the field's own `labels` win, key by key. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ numberInput: { increase: 'Augmenter', decrease: 'Diminuer' } }}>
+      <div className="space-y-4">
+        <div role="group" aria-label="Fournisseur">
+          <NumberInput aria-label="Quantité" />
+        </div>
+        <div role="group" aria-label="Propre">
+          <NumberInput aria-label="Durée" controls="stacked" labels={{ increase: 'Plus' }} />
+        </div>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const provided = within(canvas.getByRole('group', { name: 'Fournisseur' }));
+    await expect(provided.getByRole('button', { name: 'Augmenter' })).toBeVisible();
+    await expect(provided.getByRole('button', { name: 'Diminuer' })).toBeVisible();
+    const own = within(canvas.getByRole('group', { name: 'Propre' }));
+    await expect(own.getByRole('button', { name: 'Plus' })).toBeVisible();
+    await expect(own.getByRole('button', { name: 'Diminuer' })).toBeVisible();
+    await expect(own.queryByRole('button', { name: 'Augmenter' })).toBeNull();
   },
 };

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState, type ReactNode } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   expectFocusBorder,
   expectNoHorizontalOverflow,
@@ -708,5 +709,40 @@ export const NumbersStayLeftToRightInRightToLeft: Story = {
       initialSelectionEnd: 19,
     });
     await expect(numberField(canvas)).toHaveValue('4539 1441 8529 630');
+  },
+};
+
+/** The provider's French reaches the three fields and the expiry's placeholder; `labels` wins. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        cardFields: {
+          number: 'Numéro de carte',
+          expiry: "Date d'expiration",
+          cvc: 'Cryptogramme',
+        },
+        cardExpiryInput: { placeholder: 'MM / AA' },
+      }}
+    >
+      <div className="space-y-6">
+        <CardFields legend="Carte de paiement" />
+        <CardFields legend="Autre carte" labels={{ cvc: 'CVC' }} />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const first = within(canvas.getByRole('group', { name: 'Carte de paiement' }));
+    await expect(first.getByLabelText('Numéro de carte')).toBeVisible();
+    await expect(first.getByLabelText("Date d'expiration")).toHaveAttribute(
+      'placeholder',
+      'MM / AA'
+    );
+    await expect(first.getByLabelText('Cryptogramme')).toBeVisible();
+
+    const second = within(canvas.getByRole('group', { name: 'Autre carte' }));
+    await expect(second.getByLabelText('CVC')).toBeVisible();
+    await expect(second.getByLabelText('Numéro de carte')).toBeVisible();
   },
 };

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   bothDirections,
   directionBox,
@@ -209,5 +210,31 @@ export const EndAlignMirrorsInRightToLeft: Story = {
       expect(endOffset(submit, box), `${dir}: submit`).toBeLessThan(startOffset(submit, box));
       expect(startOffset(extra, box), `${dir}: extra`).toBeLessThan(endOffset(extra, box));
     }
+  },
+};
+
+/** The provider's French words both buttons; the footer's own `labels` win, key by key. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ formFooter: { cancel: 'Annuler', submit: 'Enregistrer' } }}>
+      <div className="space-y-4">
+        <div role="group" aria-label="Fournisseur">
+          <FormFooter onCancel={fn()} />
+        </div>
+        <div role="group" aria-label="Propre">
+          <FormFooter onCancel={fn()} labels={{ submit: 'Valider' }} />
+        </div>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const provided = within(canvas.getByRole('group', { name: 'Fournisseur' }));
+    await expect(provided.getByRole('button', { name: 'Annuler' })).toBeVisible();
+    await expect(provided.getByRole('button', { name: 'Enregistrer' })).toBeVisible();
+    const own = within(canvas.getByRole('group', { name: 'Propre' }));
+    await expect(own.getByRole('button', { name: 'Annuler' })).toBeVisible();
+    await expect(own.getByRole('button', { name: 'Valider' })).toBeVisible();
+    await expect(own.queryByRole('button', { name: 'Enregistrer' })).toBeNull();
   },
 };

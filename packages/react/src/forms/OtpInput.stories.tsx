@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   expectBorderToken,
   expectFocusBorder,
@@ -354,5 +355,38 @@ export const EightDigitsFitANarrowBox: Story = {
     for (const cell of canvas.getAllByRole('textbox')) {
       await expect(cell.getBoundingClientRect().width).toBeGreaterThanOrEqual(24);
     }
+  },
+};
+
+/** The provider's French names the group and each cell; the app's `ariaLabel` and `labels` win. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        otpInput: {
+          code: 'Code de vérification',
+          digit: (name, n) => `${name}, chiffre ${n}`,
+        },
+      }}
+    >
+      <div className="space-y-4">
+        <OtpInput />
+        <OtpInput
+          ariaLabel="Code SMS"
+          length={4}
+          labels={{ digit: (name, n) => `${name} n°${n}` }}
+        />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('group', { name: 'Code de vérification' })).toBeVisible();
+    await expect(
+      canvas.getByRole('textbox', { name: 'Code de vérification, chiffre 6' })
+    ).toBeVisible();
+    // The `ariaLabel` of the app is the name of the group; its own `digit` words the cells.
+    await expect(canvas.getByRole('group', { name: 'Code SMS' })).toBeVisible();
+    await expect(canvas.getByRole('textbox', { name: 'Code SMS n°4' })).toBeVisible();
   },
 };
