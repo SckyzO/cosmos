@@ -112,6 +112,23 @@ test('every wrapper and chunk starts with the "use client" directive, the entry 
   ).toEqual([]);
 });
 
+test('the labels context is one file, which the provider and every wrapper import', () => {
+  // `ChartLabelsProvider` and the wrappers read one React context. A copy of it in two files (the
+  // provider's own, or one per wrapper) would leave the provider talking to nobody, with the
+  // charts still drawing in English and nothing failing.
+  for (const format of ['js', 'cjs']) {
+    const files = readdirSync(dist).filter((name) => name.endsWith(`.${format}`));
+    const defining = files.filter((name) =>
+      /\bChartLabelsContext = (?:react\.)?createContext\(/.test(read(`${dist}${name}`))
+    );
+    expect(defining, format).toHaveLength(1);
+    expect(defining[0], format).toMatch(/^chunk-/);
+    for (const name of modules.filter((module) => module !== 'theme')) {
+      expect(read(`${dist}${name}.${format}`), `${name}.${format}`).toContain(`./${defining[0]}`);
+    }
+  }
+});
+
 test('import and require each resolve their own type declarations', () => {
   expectOwnTypesPerFormat(pkgDir);
 });
