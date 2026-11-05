@@ -64,8 +64,8 @@ export type KpiCardProps = {
   /**
    * The surface. `outline` (default) is the plain card. `tinted` is for the one figure a dashboard
    * leads with: the tinted surface of its meaning (the accent for `neutral`). `solid` fills the card
-   * with the intent's color and writes in white on it (a neutral card is the dark ink of the theme,
-   * light in a dark one): a status that has to stand out from across the room. The label, the value
+   * with the intent's color and writes in white on it (in dark ink on the warning orange; a neutral
+   * card is the dark ink of the theme, light in a dark one): a status that has to stand out from across the room. The label, the value
    * and the sub line keep 4.5:1 on every surface, in every theme. A `solid` card is for a figure
    * and its words: a colored `delta` or `chart` would not hold on its fill.
    */

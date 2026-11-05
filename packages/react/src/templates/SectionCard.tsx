@@ -158,20 +158,21 @@ const SOLID_RULE: Record<Intent, string> = {
   brand: 'border-white/30',
   info: 'border-white/30',
   success: 'border-white/30',
-  warning: 'border-white/30',
+  warning: 'border-gray-900/20',
   danger: 'border-white/30',
 };
 
 // The fold toggle on a `solid` card: it keeps the card's ink, with a veil on hover and a focus ring
-// that shows on the fill (white on a colored one; on a neutral one the brand ring, which is the
-// one that shows once the fill turns light in a dark theme).
+// that shows on the fill (white on a colored one, the dark ink on the warning orange; on a neutral
+// one the brand ring, which is the one that shows once the fill turns light in a dark theme).
 const SOLID_TOGGLE: Record<Intent, string> = {
   neutral:
     'hover:bg-white/10 focus-visible:focus-indicator-on-accent dark:hover:bg-gray-900/10 dark:focus-visible:focus-indicator',
   brand: 'hover:bg-black/15 focus-visible:focus-indicator-on-accent',
   info: 'hover:bg-black/15 focus-visible:focus-indicator-on-accent',
   success: 'hover:bg-black/15 focus-visible:focus-indicator-on-accent',
-  warning: 'hover:bg-black/15 focus-visible:focus-indicator-on-accent',
+  warning:
+    'hover:bg-black/10 focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:outline-hidden',
   danger: 'hover:bg-black/15 focus-visible:focus-indicator-on-accent',
 };
 
@@ -302,10 +303,10 @@ export type SectionCardProps = {
   /**
    * The surface. `outline` (default) is the plain card, its border in the color of the `intent`.
    * `tinted` takes a tint of the `intent` as its background. `solid` fills the card with the
-   * `intent` and writes in white (a neutral one is dark in a light theme and light in a dark
-   * one): meant for simple content, a figure and a sentence. A `Table`, a chart or a form keeps
-   * its own colors and does not read on a fill; the icon tile of a `solid` card is drawn in the
-   * card's ink and ignores `iconTone`.
+   * `intent` and writes in white (in dark ink on the warning orange; a neutral one is dark in a
+   * light theme and light in a dark one): meant for simple content, a figure and a sentence. A
+   * `Table`, a chart or a form keeps its own colors and does not read on a fill; the icon tile of
+   * a `solid` card is drawn in the card's ink and ignores `iconTone`.
    */
   variant?: SectionCardVariant;
   /**
