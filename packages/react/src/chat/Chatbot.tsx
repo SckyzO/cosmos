@@ -53,8 +53,6 @@ export type ChatbotProps = {
   onRetry?: () => void;
   /** Unread messages, shown as a badge on the launcher while the panel is closed. */
   unreadCount?: number;
-  /** Accessible name of the launcher. Default `labels.launcher`, `Open chat`. */
-  launcherLabel?: string;
   /**
    * The texts the panel writes itself (the launcher, the close and retry buttons, the name of the
    * log), over `LabelsProvider`'s `chatbot` and the English defaults. The composer, the suggestions
@@ -88,13 +86,11 @@ export const Chatbot = ({
   error,
   onRetry,
   unreadCount = 0,
-  launcherLabel: ownLauncherLabel,
   labels: ownLabels,
 }: ChatbotProps) => {
   const labels = useLabels('chatbot', CHATBOT_LABELS, ownLabels);
   const title = ownTitle ?? labels.title;
   const userName = ownUserName ?? labels.you;
-  const launcherLabel = ownLauncherLabel ?? labels.launcher;
   const [open, setOpen] = useControllableState({
     value: openProp,
     defaultValue: defaultOpen,
@@ -213,7 +209,7 @@ export const Chatbot = ({
       <button
         ref={launcherRef}
         type="button"
-        aria-label={unread ? labels.launcherUnread(launcherLabel, unreadCount) : launcherLabel}
+        aria-label={unread ? labels.launcherUnread(labels.launcher, unreadCount) : labels.launcher}
         aria-expanded={open}
         onClick={() => setOpen(!open)}
         className={clsx(

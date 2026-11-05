@@ -11,10 +11,6 @@ export type ChatComposerProps = {
   onSend: (text: string) => void;
   /** Accessible label of the textarea. Default `labels.field`, `Message`. */
   label?: string;
-  /** Default `labels.placeholder`, `Write a message…`. */
-  placeholder?: string;
-  /** Accessible name of the send button. Default `labels.send`, `Send message`. */
-  sendLabel?: string;
   disabled?: boolean;
   /** Slot before the textarea, e.g. an attach-file button. */
   attachment?: ReactNode;
@@ -32,8 +28,6 @@ export type ChatComposerProps = {
   generating?: boolean;
   /** Called when the Stop button is pressed. */
   onStop?: () => void;
-  /** Accessible name of the Stop button. Default `labels.stop`, `Stop generating`. */
-  stopLabel?: string;
   /** The texts it writes, over `LabelsProvider`'s `chatComposer` and the English defaults. */
   labels?: Partial<ChatComposerLabels>;
   /** Height in px the textarea grows to before it scrolls. Default `160`. */
@@ -51,14 +45,11 @@ export type ChatComposerProps = {
 export function ChatComposer({
   onSend,
   label,
-  placeholder,
-  sendLabel,
   disabled = false,
   attachment,
   footer,
   generating = false,
   onStop,
-  stopLabel,
   labels: ownLabels,
   maxHeight = 160,
   className,
@@ -99,7 +90,7 @@ export function ChatComposer({
         aria-label={label ?? labels.field}
         // What is typed reads in its own direction.
         dir="auto"
-        placeholder={placeholder ?? labels.placeholder}
+        placeholder={labels.placeholder}
         disabled={disabled}
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -115,7 +106,7 @@ export function ChatComposer({
       <button
         ref={action}
         type="button"
-        aria-label={generating ? (stopLabel ?? labels.stop) : (sendLabel ?? labels.send)}
+        aria-label={generating ? labels.stop : labels.send}
         disabled={generating ? false : !canSend}
         onClick={generating ? () => onStop?.() : send}
         onFocus={() => {
