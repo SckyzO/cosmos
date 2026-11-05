@@ -3,7 +3,7 @@ import { useState, type MouseEvent } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Calendar, FileText, Folder, Home, MessageSquare, Users } from 'lucide-react';
 import { VerticalNavigation } from './VerticalNavigation';
-import { bothDirections, directionBox, expectMirrored } from '../storybook-helpers';
+import { bothDirections, directionBox, expectMirrored, startOffset } from '../storybook-helpers';
 import { indicatorGap, indicatorOf, isSliding, tokenMs, transitionMs } from '../storybook-motion';
 
 const meta = {
@@ -145,6 +145,56 @@ export const WithSecondarySection: Story = {
       </VerticalNavigation>
     </div>
   ),
+};
+
+/**
+ * The icons of the items, the heading of the section and the items of the section start on one
+ * edge: the edge of the item icons. A team item with no icon starts its label there, one with an
+ * icon starts the icon there.
+ */
+export const SectionLinesUpWithItems: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    // Two navigations on the page: each needs a name of its own.
+    let count = 0;
+    return bothDirections(() => (
+      <div className="max-w-xs bg-white p-4 dark:bg-gray-900">
+        <VerticalNavigation aria-label={`Sidebar ${++count}`}>
+          <VerticalNavigation.Item active href="#" icon={Home}>
+            Dashboard
+          </VerticalNavigation.Item>
+          <VerticalNavigation.Item href="#" icon={Users}>
+            Team
+          </VerticalNavigation.Item>
+          <VerticalNavigation.Section label="Your teams">
+            <VerticalNavigation.Item href="#">Heroicons</VerticalNavigation.Item>
+            <VerticalNavigation.Item href="#" icon={Folder}>
+              Tailwind Labs
+            </VerticalNavigation.Item>
+          </VerticalNavigation.Section>
+        </VerticalNavigation>
+      </div>
+    ));
+  },
+  play: async ({ canvasElement }) => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const box = directionBox(canvasElement, dir);
+      const nav = within(box).getByRole('navigation');
+      // Where the content of an element starts: past its own padding.
+      const contentStart = (element: Element) =>
+        startOffset(element, nav) + parseFloat(getComputedStyle(element).paddingInlineStart);
+      const icon = startOffset(nav.querySelector('a svg')!, nav);
+      const heading = contentStart(within(nav).getByText('Your teams'));
+      const label = startOffset(within(nav).getByText('Heroicons').closest('span')!, nav);
+      const withIcon = startOffset(
+        within(nav).getByText('Tailwind Labs').closest('a')!.querySelector('svg')!,
+        nav
+      );
+      await expect(heading, `${dir}: the heading`).toBeCloseTo(icon, 0);
+      await expect(label, `${dir}: a team item without icon`).toBeCloseTo(icon, 0);
+      await expect(withIcon, `${dir}: a team item with an icon`).toBeCloseTo(icon, 0);
+    }
+  },
 };
 
 // ── Interaction tests ────────────────────────────────────────────────────────
