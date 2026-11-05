@@ -202,6 +202,36 @@ export const scrollAlong = (scroller: HTMLElement, distance: number) => {
 };
 
 /**
+ * Play-function assertion for an element that scrolls sideways and fades its edges
+ * (`useScrollFade`, as `Table` does): at its start only the end fades, scrolled into the middle
+ * both do, and at the end only the start. With `pinnedStart` (a pinned first column) the start
+ * never fades, and there is no fade left at the end. The gradient runs from the start edge:
+ * `to right` in left to right, `to left` in right to left.
+ */
+export const expectEdgeFade = async (scroller: HTMLElement, { pinnedStart = false } = {}) => {
+  expect(scroller.scrollWidth, 'it scrolls sideways').toBeGreaterThan(scroller.clientWidth);
+  const toward = getComputedStyle(scroller).direction === 'rtl' ? 'left' : 'right';
+  const mask = () => getComputedStyle(scroller).maskImage;
+  const endOnly = new RegExp(
+    `^linear-gradient\\(to ${toward}, rgb\\(0, 0, 0\\), rgb\\(0, 0, 0\\) 24px.*rgba\\(0, 0, 0, 0\\)\\)$`
+  );
+  const both = new RegExp(
+    `^linear-gradient\\(to ${toward}, rgba\\(0, 0, 0, 0\\).*rgba\\(0, 0, 0, 0\\)\\)$`
+  );
+  const startOnly = new RegExp(
+    `^linear-gradient\\(to ${toward}, rgba\\(0, 0, 0, 0\\).*rgb\\(0, 0, 0\\)\\)$`
+  );
+  await waitFor(() => expect(mask(), 'at the start, only the end fades').toMatch(endOnly));
+  scrollAlong(scroller, (scroller.scrollWidth - scroller.clientWidth) / 2);
+  await waitFor(() => expect(mask(), 'in the middle').toMatch(pinnedStart ? endOnly : both));
+  scrollAlong(scroller, scroller.scrollWidth);
+  await waitFor(() => {
+    if (pinnedStart) expect(mask(), 'at the end, nothing is left to fade').toBe('none');
+    else expect(mask(), 'at the end, only the start fades').toMatch(startOnly);
+  });
+};
+
+/**
  * Play-function assertion: `element` sits past the end edge of `anchor`, on the right of it where
  * the page reads left to right and on the left of it where it reads right to left. For a tooltip
  * or a flyout that opens toward the end of a sidebar, by `slack` px at most overlapping.

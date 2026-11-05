@@ -6,6 +6,7 @@ import { Card } from '../ui/Card';
 import {
   bothDirections,
   directionBox,
+  expectEdgeFade,
   expectNoHorizontalOverflow,
   expectReadsLeftToRight,
   mobileViewport,
@@ -325,6 +326,15 @@ export const MobileChecks: Story = {
   ...mobile,
   tags: ['!dev', '!autodocs'],
   play: () => expectNoHorizontalOverflow(),
+};
+
+/** The lines scroll sideways in the log, and its edges fade where there is more: the log reads left to right. */
+export const MobileScrollsWithAnEdgeFadeChecks: Story = {
+  ...mobile,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expectEdgeFade(canvas.getByRole('log'));
+  },
 };
 
 // ── Tests ────────────────────────────────────────────────────────────────────

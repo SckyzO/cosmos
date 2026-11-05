@@ -6,6 +6,7 @@ import {
   directionBox,
   endOffset,
   expectMirrored,
+  expectEdgeFade,
   expectNoHorizontalOverflow,
   expectTextContrastOnTint,
   inDirection,
@@ -213,6 +214,17 @@ export const MobileChecks: Story = {
     expectNoHorizontalOverflow();
     const box = canvasElement.querySelector('table')!.parentElement!;
     expect(box.scrollWidth).toBeGreaterThan(box.clientWidth);
+  },
+};
+
+/** At 375px the grid fades on its end edge, where there is more to scroll to; its pinned first column never fades. */
+export const MobileScrollsWithAnEdgeFadeChecks: Story = {
+  ...mobile,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    await expectEdgeFade(canvasElement.querySelector('table')!.parentElement!, {
+      pinnedStart: true,
+    });
   },
 };
 
