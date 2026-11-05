@@ -162,8 +162,10 @@ Storybook: [Section Card](https://sckyzo.github.io/cosmos/?path=/docs/layout-sec
 Its root is a `<section>` named by the title, so a screen reader lists the cards of a page as
 regions. Give each card of a page its own title: two regions with one name fail axe's
 `landmark-unique`, and so does a table whose caption repeats the title of its card. `as` picks the
-heading (`h3` by default, `h2` under a page whose `PageHeader` is the `h1`). `className` goes on
-the root, for a grid span (`lg:col-span-2`) or a margin.
+heading (`h3` by default, `h2` under a page whose `PageHeader` is the `h1`). `titleRef` is a ref to
+that heading, for a page that moves the focus to the card (a link or a filter that leads to it):
+with it the heading takes `tabIndex={-1}`, so `focus()` reaches it and Tab never stops on it.
+`className` goes on the root, for a grid span (`lg:col-span-2`) or a margin.
 
 `action` puts a button, a menu or a link at the end of the header. Below `sm` it goes under the
 title, in every card, so the cards of a grid stay aligned.
@@ -265,8 +267,9 @@ them is the card it was.
   in every state, like `action`.
 - `flush` runs the body edge to edge under the header, with a line above it and no padding, down
   to the bottom edge of the card or to its footer: for a `Table` or a list. A `Table` or
-  `DataTable` put directly in it gives up its own border and corners, the card draws them. In
-  `loading`, `error` and `empty` the state is padded as usual.
+  `DataTable` put directly in it gives up its own border and corners, the card draws them, and its
+  first and last columns line up with the card's padding; so do a `DataTable`'s tabs, toolbar and
+  pager. In `loading`, `error` and `empty` the state is padded as usual.
 - `size` is the padding of the card: `sm` (16px), `md` (20px) or `lg` (24px, default). The gap
   between the header and the body goes from 16px to 12px with `sm` and `md`.
 - `collapsible` adds a toggle at the end of the header that folds the body, and the footer with

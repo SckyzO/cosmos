@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import {
   Activity,
@@ -24,7 +24,9 @@ import {
   LoadToggle,
 } from '../storybook-arrival';
 import { StatusBadge } from '../status/StatusBadge';
+import { DataTable } from '../table/DataTable';
 import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '../table/Table';
+import type { ColumnDef } from '../table/types';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import type { Intent } from '../ui/intent';
@@ -1447,6 +1449,161 @@ export const FlushChecks: Story = {
       startOffset(loading.querySelector('.animate-pulse')!, surfaceOf(loading))
     ).toBeCloseTo(21, 0);
     await expect(getComputedStyle(surfaceOf(loading)).paddingBottom).toBe('20px');
+  },
+};
+
+type TableAlert = { id: string; severity: 'Critical' | 'Warning'; name: string; target: string };
+
+const TABLE_ALERTS: TableAlert[] = [
+  { id: 'a1', severity: 'Critical', name: 'LustreOSTOffline', target: 'oss-c01-03' },
+  { id: 'a2', severity: 'Critical', name: 'NodeDown', target: 'cn-a03-12' },
+  { id: 'a3', severity: 'Warning', name: 'ClusterMemoryHigh', target: 'atlas' },
+  { id: 'a4', severity: 'Warning', name: 'MemoryECCErrors', target: 'cn-a03-05' },
+  { id: 'a5', severity: 'Warning', name: 'InletTemperatureHigh', target: 'rack C01' },
+];
+
+const TABLE_ALERT_COLUMNS: ColumnDef<TableAlert>[] = [
+  {
+    key: 'severity',
+    label: 'Severity',
+    filterValue: (alert) => alert.severity,
+    render: (alert) => alert.severity,
+  },
+  { key: 'name', label: 'Alert', render: (alert) => alert.name },
+  { key: 'target', label: 'Target', render: (alert) => alert.target },
+];
+
+const AlertsCard = ({ size }: { size?: SectionCardProps['size'] }) => (
+  <SectionCard
+    as="h2"
+    title={size ? `Alerts, ${size}` : 'Alerts'}
+    desc="5 firing"
+    icon={Bell}
+    intent="danger"
+    halo
+    flush
+    size={size ?? 'md'}
+  >
+    <DataTable
+      rows={TABLE_ALERTS}
+      columns={TABLE_ALERT_COLUMNS}
+      rowKey={(alert) => alert.id}
+      pageSize={3}
+      aria-label={size ? `Alerts, ${size}` : 'Alerts'}
+      filterTabs={{
+        columnKey: 'severity',
+        allCount: TABLE_ALERTS.length,
+        options: [
+          { value: 'Critical', label: 'Critical', count: 2 },
+          { value: 'Warning', label: 'Warning', count: 3 },
+        ],
+      }}
+    />
+  </SectionCard>
+);
+
+/**
+ * A `DataTable` with its tabs and its pager in a `flush` card: the tabs, the toolbar and the pager
+ * take the card's padding too, so everything lines up with the title.
+ */
+export const FlushDataTable: Story = {
+  args: { title: '' },
+  render: () => (
+    <div className="max-w-2xl p-4">
+      <AlertsCard />
+    </div>
+  ),
+};
+
+export const FlushDataTableChecks: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { title: '' },
+  render: () => (
+    <div className="max-w-2xl space-y-6 p-4">
+      <AlertsCard />
+      <AlertsCard size="lg" />
+      <AlertsCard size="sm" />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const [name, inset] of [
+      ['Alerts', 21],
+      ['Alerts, lg', 25],
+      ['Alerts, sm', 17],
+    ] as const) {
+      const card = region(canvas, name);
+      const box = surfaceOf(card);
+      // The first tab, the first header cell and the pager start at the card's padding, as the
+      // header's icon does.
+      const textStart = (element: HTMLElement) =>
+        startOffset(element, box) + parseFloat(getComputedStyle(element).paddingInlineStart);
+      const tabs = within(card).getByRole('tablist');
+      await expect(textStart(tabs), name).toBeCloseTo(inset, 0);
+      await expect(
+        textStart(within(card).getByRole('columnheader', { name: /Severity/ })),
+        name
+      ).toBeCloseTo(inset, 0);
+      const pager = within(card).getByRole('navigation');
+      await expect(
+        startOffset(pager, box) + parseFloat(getComputedStyle(pager).paddingInlineStart),
+        name
+      ).toBeCloseTo(inset, 0);
+    }
+  },
+};
+
+/** Outside a card, a `DataTable` keeps its 16px. */
+export const DataTableInsetDefaultsTo16px: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { title: '' },
+  render: () => (
+    <div className="max-w-2xl p-4">
+      <DataTable
+        rows={TABLE_ALERTS}
+        columns={TABLE_ALERT_COLUMNS}
+        rowKey={(alert) => alert.id}
+        pageSize={3}
+        aria-label="Alerts"
+        filterTabs={{ columnKey: 'severity', allCount: TABLE_ALERTS.length, options: [] }}
+      />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    await expect(getComputedStyle(canvas.getByRole('tablist')).paddingInlineStart).toBe('16px');
+    await expect(getComputedStyle(canvas.getByRole('navigation')).paddingInlineStart).toBe('16px');
+  },
+};
+
+const FocusTheAlerts = () => {
+  const heading = useRef<HTMLHeadingElement>(null);
+  return (
+    <div className="max-w-xl space-y-4">
+      <Button onClick={() => heading.current?.focus()}>Show the alerts</Button>
+      <SectionCard as="h2" title="Alerts" titleRef={heading}>
+        <Words>4 critical alerts are firing.</Words>
+      </SectionCard>
+      <SectionCard as="h2" title="Services">
+        <Words>3 of 4 healthy.</Words>
+      </SectionCard>
+    </div>
+  );
+};
+
+/** `titleRef` reaches the heading, which can then take the focus, out of the tab order. */
+export const TitleRefTakesTheFocus: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { title: '' },
+  render: () => <FocusTheAlerts />,
+  play: async ({ canvas }) => {
+    const heading = canvas.getByRole('heading', { level: 2, name: 'Alerts' });
+    await expect(heading).toHaveAttribute('tabindex', '-1');
+    // Without the ref, a heading stays a heading only.
+    await expect(canvas.getByRole('heading', { name: 'Services' })).not.toHaveAttribute('tabindex');
+    await userEvent.click(canvas.getByRole('button', { name: 'Show the alerts' }));
+    await expect(heading).toHaveFocus();
+    // Tab leaves it for what follows, never back to it.
+    await userEvent.tab({ shift: true });
+    await expect(canvas.getByRole('button', { name: 'Show the alerts' })).toHaveFocus();
   },
 };
 
