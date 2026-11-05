@@ -53,6 +53,14 @@ the messages and answers `onSend`:
 
 A bot message with `streaming: true` shows a caret while its text grows.
 
+The words the chat components write (the placeholder and the buttons of the composer, the delivery
+states, the actions on a reply, "Retry", the typing line, the status of a tool call…) are their
+`labels`: `<ChatComposer labels={{ placeholder: 'Ask anything…' }} />` for one, or the component's key
+of `LabelsProvider` (`chatbot`, `chatComposer`, `chatMessage`…) for every one; see
+[Translating](../guides/translating.md). `Chatbot`'s own `labels` cover its panel and launcher; the
+composer, the suggestions and the thread inside it read their own keys. A `title`, `userName` or `label` you pass is
+yours and wins over the label that stands in for it.
+
 The panel opens like a dialog: it fades in, rises 16px and grows from 95% out of the corner by the
 launcher (the bottom left in right to left) over 200ms, and leaves over 120ms. While it leaves it
 is out of the way, `inert` and out of the focus order, with focus already back on the launcher.
@@ -70,7 +78,7 @@ Markdown itself.
   `defaultFeedback`). With a pointer they show on hover and focus; on touch they always show.
 - `ChatSuggestions` is the row of chips `Chatbot` uses (`suggestions`, `onSelect`).
 - `ChatComposer` takes `footer` (a line under the field: attach, a model `Select`, a hint) and
-  `generating` + `onStop`: the send button becomes Stop (`stopLabel`), and Enter does not send.
+  `generating` + `onStop`: the send button becomes Stop (`labels.stop`), and Enter does not send.
 - `ChatToolCall` (`name`, `status` of `running | done | failed`, `duration`, `input`, `output`)
   is a disclosure row for what the assistant did: its details unfold and fold back in 200 ms, the
   chevron turning with them, and are mounted the first time the row opens. `ChatSources`
