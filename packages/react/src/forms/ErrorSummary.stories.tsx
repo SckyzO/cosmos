@@ -91,25 +91,27 @@ export const WordingFollowsTheCount: Story = {
   },
 };
 
-/** `message` writes the sentence around the links, for another language or another wording. */
+/** `labels.message` writes the sentence around the links, for another language or another wording. */
 export const MessageRewordsTheSentence: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <ErrorSummary
       title="Il y a un problème"
       errors={ERRORS}
-      message={(count, links) => (
-        <>
-          Corrigez {count} {count === 1 ? 'champ' : 'champs'} :{' '}
-          {links.map((link, i) => (
-            <Fragment key={i}>
-              {i > 0 && (i === links.length - 1 ? ' et ' : ', ')}
-              {link}
-            </Fragment>
-          ))}
-          .
-        </>
-      )}
+      labels={{
+        message: (count, links) => (
+          <>
+            Corrigez {count} {count === 1 ? 'champ' : 'champs'} :{' '}
+            {links.map((link, i) => (
+              <Fragment key={i}>
+                {i > 0 && (i === links.length - 1 ? ' et ' : ', ')}
+                {link}
+              </Fragment>
+            ))}
+            .
+          </>
+        ),
+      }}
     />
   ),
   play: async ({ canvas }) => {

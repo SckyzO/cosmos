@@ -9,10 +9,6 @@ export type FormFooterAlign = 'end' | 'between';
 export type FormFooterProps = {
   /** Cancel button handler. Hidden when omitted. */
   onCancel?: () => void;
-  /** Text of the cancel button. Default `labels.cancel`. */
-  cancelLabel?: string;
-  /** Text of the submit button, a `<button type="submit">`. Default `labels.submit`. */
-  submitLabel?: string;
   /** When true, the submit button shows a spinner and is disabled. */
   submitting?: boolean;
   /** Disable the submit button (e.g. form invalid / not dirty). */
@@ -38,8 +34,6 @@ export type FormFooterProps = {
 
 export const FormFooter = ({
   onCancel,
-  cancelLabel,
-  submitLabel,
   submitting = false,
   submitDisabled = false,
   submitVariant = 'primary',
@@ -57,7 +51,7 @@ export const FormFooter = ({
     <>
       {onCancel && (
         <Button type="button" variant="secondary" onClick={() => onCancel()} disabled={submitting}>
-          {cancelLabel ?? labels.cancel}
+          {labels.cancel}
         </Button>
       )}
       <Button
@@ -68,7 +62,7 @@ export const FormFooter = ({
         disabled={submitDisabled || submitting}
         form={formId}
       >
-        {submitLabel ?? labels.submit}
+        {labels.submit}
       </Button>
     </>
   );

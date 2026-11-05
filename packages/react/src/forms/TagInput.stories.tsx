@@ -390,15 +390,14 @@ export const MaxTagsShowsTheCount: Story = {
   },
 };
 
-/** The count and the limit text are props, for another language. */
+/** The count and the limit text are labels, for another language. */
 export const CountAndLimitCanBeTranslated: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
     label: 'Étiquettes',
     maxTags: 2,
     defaultValue: ['un'],
-    countLabel: (count, max) => `${count} sur ${max}`,
-    limitLabel: 'Limite atteinte',
+    labels: { count: (count, max) => `${count} sur ${max}`, limit: 'Limite atteinte' },
     helperText: 'Entrée ou virgule pour ajouter.',
   },
   play: async ({ canvas }) => {

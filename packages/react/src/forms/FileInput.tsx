@@ -12,8 +12,6 @@ export type FileInputProps = Omit<ComponentPropsWithRef<'input'>, 'type' | 'onCh
   error?: string;
   /** Called with the array of selected files. */
   onChange?: (files: File[]) => void;
-  /** Browse button label. Default `labels.browse`, "Browse". */
-  buttonLabel?: string;
   /** Placeholder when no file is selected. Default `labels.placeholder`, "No file chosen". */
   placeholder?: string;
   /** Show file size next to the name. Default true. */
@@ -37,7 +35,6 @@ export function FileInput({
   description,
   error,
   onChange,
-  buttonLabel,
   placeholder,
   showSize = true,
   labels: ownLabels,
@@ -93,7 +90,7 @@ export function FileInput({
           className="flex shrink-0 items-center gap-2 border-e border-inherit bg-gray-50 px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none disabled:cursor-not-allowed dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
         >
           <Paperclip className="h-4 w-4" aria-hidden />
-          {buttonLabel ?? labels.browse}
+          {labels.browse}
         </button>
         <span
           className={clsx(

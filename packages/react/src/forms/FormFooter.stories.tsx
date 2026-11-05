@@ -32,7 +32,7 @@ export const SubmitOnly: Story = { args: {} };
 export const DangerSubmit: Story = {
   args: {
     onCancel: fn(),
-    submitLabel: 'Delete account',
+    labels: { submit: 'Delete account' },
     submitIntent: 'danger',
   },
 };
@@ -161,9 +161,9 @@ export const SubmitIntentColorsTheSubmit: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="space-y-4">
-      <FormFooter submitLabel="Delete account" submitIntent="danger" />
-      <FormFooter submitLabel="Delete soft" submitIntent="danger" submitVariant="soft" />
-      <FormFooter submitLabel="Save" />
+      <FormFooter labels={{ submit: 'Delete account' }} submitIntent="danger" />
+      <FormFooter labels={{ submit: 'Delete soft' }} submitIntent="danger" submitVariant="soft" />
+      <FormFooter labels={{ submit: 'Save' }} />
     </div>
   ),
   play: async ({ canvas }) => {

@@ -769,10 +769,10 @@ export const RangePresetsDropTheTimeOfToday: Story = {
   },
 };
 
-/** `presetsLabel` names the group of presets, for a page in another language. */
+/** `labels.presets` names the group of presets, for a page in another language. */
 export const RangePresetsGroupTakesItsLabel: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { ...presetArgs, presetsLabel: 'Périodes', defaultOpen: true },
+  args: { ...presetArgs, labels: { presets: 'Périodes' }, defaultOpen: true },
   play: async () => {
     const dialog = await dialogWithPresets();
     await expect(dialog.getByRole('group', { name: 'Périodes' })).toBeVisible();

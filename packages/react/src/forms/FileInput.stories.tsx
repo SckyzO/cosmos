@@ -42,7 +42,7 @@ export const WithoutSize: Story = {
 export const CustomLabels: Story = {
   args: {
     label: 'Resume',
-    buttonLabel: 'Upload PDF',
+    labels: { browse: 'Upload PDF' },
     placeholder: 'Drop your resume here…',
     accept: '.pdf',
   },

@@ -69,19 +69,13 @@ export type ComboboxProps = {
    * catalogue and lets the user write their own entry. The text is the value (`onChange` fires on
    * every keystroke) and stays in the field when focus leaves. Nothing is active until an arrow
    * key moves there, so Enter keeps the text and lets an enclosing form submit; the list closes
-   * when no option matches, unless `emptyMessage` is set. Keep the `value` of the options out of
+   * when no option matches, unless `labels.emptyCustom` is set. Keep the `value` of the options out of
    * what people type: a text equal to one names that option. Default `false`: the typed text is
    * only a filter, and the field goes back to the selected option when focus leaves.
    */
   allowCustomValue?: boolean;
   options: ComboboxOption[];
   placeholder?: string;
-  /**
-   * Show this when no option matches the typed query. Default `labels.empty`; none with
-   * `allowCustomValue`, where the text is accepted and the empty list stays closed (unless
-   * `labels.emptyCustom` is set).
-   */
-  emptyMessage?: string;
   /** The texts it writes, over `LabelsProvider`'s `combobox` and the English defaults. */
   labels?: Partial<ComboboxLabels>;
   /** Disable the input + dropdown. */
@@ -115,7 +109,6 @@ export const Combobox = ({
   allowCustomValue = false,
   options,
   placeholder,
-  emptyMessage,
   labels: ownLabels,
   disabled = false,
   helperText,
@@ -172,7 +165,7 @@ export const Combobox = ({
   const filtered = useFilteredOptions(options, query);
   // With typed text accepted, a list with nothing to suggest is no error: it opens only for a
   // message the host asked for.
-  const emptyText = emptyMessage ?? (allowCustomValue ? labels.emptyCustom : labels.empty);
+  const emptyText = allowCustomValue ? labels.emptyCustom : labels.empty;
   const listOpen = open && (filtered.length > 0 || emptyText !== undefined);
   const noMatch = filtered.length === 0;
 

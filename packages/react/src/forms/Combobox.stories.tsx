@@ -503,8 +503,8 @@ export const AllowCustomValueOnSelectTellsAPickFromTyping: Story = {
 };
 
 /**
- * With nothing to suggest, no panel opens (the text is accepted anyway), unless the host gave an
- * `emptyMessage`. Without the prop, the panel says "No matches found." as before.
+ * With nothing to suggest, no panel opens (the text is accepted anyway), unless the host gave a
+ * `labels.emptyCustom`. A field without `allowCustomValue` says `labels.empty`, "No matches found."
  */
 export const AllowCustomValueOpensNoEmptyPanel: Story = {
   tags: ['!dev', '!autodocs'],
@@ -515,7 +515,7 @@ export const AllowCustomValueOpensNoEmptyPanel: Story = {
         label="Message"
         allowCustomValue
         options={SERVICES}
-        emptyMessage="Press Enter to use this text."
+        labels={{ emptyCustom: 'Press Enter to use this text.' }}
       />
       <Combobox label="Strict" options={SERVICES} />
     </div>

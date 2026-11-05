@@ -8,17 +8,12 @@ import { PASSWORD_INPUT_LABELS, type PasswordInputLabels } from './labels';
 export type PasswordInputProps = Omit<InputProps, 'type' | 'icon' | 'endSlot' | 'labelTrailing'> & {
   /** Tooltip text shown next to the label (uses TooltipHelp). */
   helpText?: string;
-  /** Override the visibility-toggle button labels. Defaults `labels.show` and `labels.hide`. */
-  showLabel?: string;
-  hideLabel?: string;
   /** The texts it writes, over `LabelsProvider`'s `passwordInput` and the English defaults. */
   labels?: Partial<PasswordInputLabels>;
 };
 
 export function PasswordInput({
   helpText,
-  showLabel,
-  hideLabel,
   labels: ownLabels,
   autoComplete = 'current-password',
   disabled,
@@ -40,7 +35,7 @@ export function PasswordInput({
           type="button"
           onClick={() => setShow((s) => !s)}
           disabled={disabled}
-          aria-label={show ? (hideLabel ?? labels.hide) : (showLabel ?? labels.show)}
+          aria-label={show ? labels.hide : labels.show}
           aria-pressed={show}
           className="focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 pointer-events-auto -my-0.5 inline-flex items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700 dark:hover:text-gray-200"
         >

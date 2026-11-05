@@ -31,10 +31,6 @@ export type AvatarUploaderProps = {
   /** File picker accept attribute. Default `image/*`. */
   accept?: string;
   disabled?: boolean;
-  /** Override the upload button label. Default toggles `labels.change` / `labels.upload`. */
-  uploadLabel?: string;
-  /** Override the remove button label. Default `labels.remove`. */
-  removeLabel?: string;
   /** The texts it writes, over `LabelsProvider`'s `avatarUploader` and the English defaults. */
   labels?: Partial<AvatarUploaderLabels>;
   className?: string;
@@ -62,8 +58,6 @@ export const AvatarUploader = ({
   maxSizeMB = 5,
   accept = 'image/*',
   disabled = false,
-  uploadLabel,
-  removeLabel,
   labels: ownLabels,
   className,
 }: AvatarUploaderProps) => {
@@ -76,7 +70,6 @@ export const AvatarUploader = ({
   const error = errorProp ?? internalError;
   const hasAvatar = !!src;
   const isBusy = disabled || loading;
-  const defaultUploadLabel = hasAvatar ? labels.change : labels.upload;
 
   const handleFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -145,7 +138,7 @@ export const AvatarUploader = ({
             disabled={isBusy}
             onClick={() => inputRef.current?.click()}
           >
-            {uploadLabel ?? defaultUploadLabel}
+            {hasAvatar ? labels.change : labels.upload}
           </Button>
           {hasAvatar && onRemove && (
             <Button
@@ -157,7 +150,7 @@ export const AvatarUploader = ({
               disabled={isBusy}
               onClick={handleRemove}
             >
-              {removeLabel ?? labels.remove}
+              {labels.remove}
             </Button>
           )}
         </div>

@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { useLabels } from '../labels/labelsContext';
 import { AlertBanner } from '../ui/AlertBanner';
 import { Link } from '../ui/Link';
@@ -19,13 +18,6 @@ export type ErrorSummaryProps = {
   errors: ErrorSummaryItem[];
   /** Bold first line of the banner. Default `labels.title`, "There is a problem". */
   title?: string;
-  /**
-   * The sentence under the title, for another wording. It gets the number of fields and a link to
-   * each, in order, and returns what to draw around them: `(count, links) => <>Corrigez {count}
-   * champs : {links}.</>`. Default `labels.message`: "Fix 3 fields and try again: A, B and C need
-   * attention." ("Fix 1 field and try again: A needs attention.").
-   */
-  message?: (count: number, links: ReactNode[]) => ReactNode;
   /** The texts it writes, over `LabelsProvider`'s `errorSummary` and the English defaults. */
   labels?: Partial<ErrorSummaryLabels>;
   className?: string;
@@ -59,7 +51,6 @@ const focusField = (id: string): boolean => {
 export const ErrorSummary = ({
   errors,
   title,
-  message,
   labels: ownLabels,
   className,
 }: ErrorSummaryProps) => {
@@ -81,7 +72,7 @@ export const ErrorSummary = ({
   ));
   return (
     <AlertBanner intent="danger" title={title ?? labels.title} className={className}>
-      {(message ?? labels.message)(errors.length, links)}
+      {labels.message(errors.length, links)}
     </AlertBanner>
   );
 };
