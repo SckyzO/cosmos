@@ -24,6 +24,7 @@ import {
   transitionsEnd,
 } from '../storybook-helpers';
 import { scrimLook, themeColor } from '../storybook-motion';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Layout/Shell',
@@ -1098,4 +1099,32 @@ export const TallPageOnAPhoneScrollsOnlyInTheShell: Story = {
   ...TallPageScrollsOnlyInTheShell,
   tags: ['!dev', '!autodocs'],
   globals: mobileViewport,
+};
+
+/** The provider names the drawer, its close button and the toggles; the Shell's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        shell: { navigationMenu: 'Menu de navigation' },
+        sidebar: { landmark: 'Navigation principale', closeNavigation: 'Fermer la navigation' },
+        sidebarToggle: { open: 'Ouvrir la navigation', close: 'Fermer la navigation' },
+      }}
+    >
+      <MobileShell labels={{ navigationMenu: 'Menu' }} />
+    </LabelsProvider>
+  ),
+  play: async () => {
+    await userEvent.click(body().getByRole('button', { name: 'Ouvrir la navigation' }));
+    // The drawer's name is the Shell's own, the rest the provider's.
+    const dialog = await body().findByRole('dialog', { name: 'Menu' });
+    await expect(
+      within(dialog).getByRole('navigation', { name: 'Navigation principale' })
+    ).toBeInTheDocument();
+    await expect(
+      within(dialog).getByRole('button', { name: 'Fermer la navigation' })
+    ).toBeVisible();
+  },
 };

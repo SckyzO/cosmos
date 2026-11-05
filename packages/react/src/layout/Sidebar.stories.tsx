@@ -32,6 +32,7 @@ import { Shell } from './Shell';
 import { Sidebar, type SidebarExpandOnHover } from './Sidebar';
 import { SidebarToggle } from './SidebarToggle';
 import { Topbar } from './Topbar';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Layout/Sidebar',
@@ -2993,5 +2994,56 @@ export const MirrorsInRightToLeft: Story = {
     // The footer's toggle icon points toward the start edge, where the sidebar collapses.
     const toggle = canvas.getByRole('button', { name: 'Collapse sidebar' }).querySelector('svg')!;
     await expect(getComputedStyle(toggle).scale).toBe('-1 1');
+  },
+};
+
+/** The provider names the landmark, the sub-menu toggle, the edge strip and the toggles; own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        sidebar: {
+          landmark: 'Navigation principale',
+          expand: 'Déplier le menu',
+          collapse: 'Replier le menu',
+          subMenu: (label) => `Sous-menu ${label}`,
+        },
+        sidebarToggle: {
+          expand: 'Déplier la barre',
+          collapse: 'Replier la barre',
+          collapseText: 'Replier',
+        },
+      }}
+    >
+      <div className="flex h-96 gap-4">
+        <Sidebar edgeToggle>
+          <Sidebar.SubMenu icon={Layers} label="Bibliothèque" href="#bibliotheque" defaultOpen>
+            <Sidebar.Item label="Jetons" />
+          </Sidebar.SubMenu>
+        </Sidebar>
+        <Sidebar labels={{ landmark: 'Menu' }}>
+          <Sidebar.Item icon={Layers} label="Accueil" />
+        </Sidebar>
+        <SidebarToggle collapsed={false} onCollapsedChange={fn()} />
+        <SidebarToggle
+          variant="panel"
+          collapsed={false}
+          onCollapsedChange={fn()}
+          labels={{ collapse: 'Réduire la barre', collapseText: 'Réduire' }}
+        />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('navigation', { name: 'Navigation principale' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Sous-menu Bibliothèque' })).toBeVisible();
+    await expect(canvas.getByTitle('Replier le menu')).toBeInTheDocument();
+    await expect(canvas.getByRole('navigation', { name: 'Menu' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Replier la barre' })).toBeVisible();
+    // The toggle's own labels win over the provider's: the name holds the visible word.
+    await expect(canvas.getByRole('button', { name: 'Réduire la barre' })).toHaveTextContent(
+      'Réduire'
+    );
   },
 };
