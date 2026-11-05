@@ -9,10 +9,10 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
-import { useLabels } from '../labels/labelsContext';
+import { useLabels, useLocale } from '../labels/labelsContext';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { setRef } from '../ui/mergeRefs';
-import { Calendar } from './Calendar';
+import { Calendar, type CalendarProps } from './Calendar';
 import { useControllableState } from '../hooks/useControllableState';
 import { FIELD_ICON_SIZE, FIELD_PAD_X, fieldClass, type FieldSize } from './fieldRecipe';
 import { FieldMessage } from './FieldMessage';
@@ -98,8 +98,16 @@ type CommonProps = {
   captionLayout?: 'dropdown' | 'dropdown-months' | 'dropdown-years' | 'label';
   /** Single mode only — show a `labels.today` shortcut button below the calendar. Default `true`. */
   showTodayButton?: boolean;
-  /** Custom formatter for displayed dates. Default `DD MMM YYYY`. */
+  /**
+   * Custom formatter for displayed dates. Default `DD MMM YYYY` in `LabelsProvider`'s `locale`
+   * (the browser's without one).
+   */
   format?: (date: Date) => string;
+  /**
+   * The calendar's locale, a date-fns `Locale` (`import { fr } from 'react-day-picker/locale'`): the
+   * names of the months and weekdays, and the first day of the week. Default English.
+   */
+  calendarLocale?: CalendarProps['locale'];
   /** Single mode only — fully replace the default footer (Today button) with custom JSX. */
   calendarFooter?: ReactNode;
   /** The texts it writes, over `LabelsProvider`'s `datePicker` and the English defaults. */
@@ -125,8 +133,10 @@ type CommonProps = {
 
 export type DatePickerProps = (SingleProps | RangeProps) & CommonProps;
 
-const defaultFormat = (d: Date): string =>
-  d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+const formatIn =
+  (locale: string | undefined) =>
+  (d: Date): string =>
+    d.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
 
 const EMPTY_RANGE: DateRange = { from: undefined, to: undefined };
 
@@ -144,7 +154,8 @@ export const DatePicker = (props: DatePickerProps) => {
     toYear,
     captionLayout = 'dropdown',
     showTodayButton = true,
-    format = defaultFormat,
+    format: ownFormat,
+    calendarLocale,
     calendarFooter,
     labels: ownLabels,
     fullWidth = false,
@@ -155,6 +166,8 @@ export const DatePicker = (props: DatePickerProps) => {
     onOpenChange,
   } = props;
   const labels = useLabels('datePicker', DATE_PICKER_LABELS, ownLabels);
+  const appLocale = useLocale();
+  const format = ownFormat ?? formatIn(appLocale);
 
   const isRange = props.mode === 'range';
   const fieldId = useId();
@@ -315,6 +328,7 @@ export const DatePicker = (props: DatePickerProps) => {
   const rangeCalendar = (
     <Calendar
       mode="range"
+      locale={calendarLocale}
       resetOnSelect
       selected={selectedRange.from || selectedRange.to ? selectedRange : undefined}
       onSelect={(r) => commitRange({ from: r?.from, to: r?.to })}
@@ -477,6 +491,7 @@ export const DatePicker = (props: DatePickerProps) => {
         ) : (
           <Calendar
             mode="single"
+            locale={calendarLocale}
             selected={selectedSingle}
             onSelect={commitSingle}
             month={month}
