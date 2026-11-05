@@ -13,6 +13,7 @@ import {
   startOffset,
 } from '../storybook-helpers';
 import { Carousel } from './Carousel';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Media/Carousel',
@@ -554,5 +555,54 @@ export const SlidesRunFromTheStartOfTheLine: Story = {
       await waitFor(() => expect(startOffset(second, box)).toBeLessThan(24));
       expect(startOffset(first, box), `${dir}: first slide left toward the start`).toBeLessThan(0);
     }
+  },
+};
+
+/** The provider names the arrows, dots and thumbnails, and the carousel's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const carousel = (labels?: Parameters<typeof Carousel>[0]['labels']) => (
+      <Carousel labels={labels}>
+        <Carousel.Viewport>
+          <Carousel.Slide>Un</Carousel.Slide>
+          <Carousel.Slide>Deux</Carousel.Slide>
+        </Carousel.Viewport>
+        <Carousel.Controls position="outside" />
+        <Carousel.Indicators />
+        <Carousel.Thumbnails>
+          <img alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" />
+          <img alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" />
+        </Carousel.Thumbnails>
+      </Carousel>
+    );
+    return (
+      <LabelsProvider
+        labels={{
+          carousel: {
+            previous: 'Diapositive précédente',
+            next: 'Diapositive suivante',
+            goTo: (position) => `Aller à la diapositive ${position}`,
+            thumbnails: 'Miniatures',
+          },
+        }}
+      >
+        <div data-testid="provider">{carousel()}</div>
+        <div data-testid="own">{carousel({ next: 'Suivante', thumbnails: 'Vignettes' })}</div>
+      </LabelsProvider>
+    );
+  },
+  play: async ({ canvas }) => {
+    const provider = within(await canvas.findByTestId('provider'));
+    await waitFor(() =>
+      expect(provider.getAllByRole('button', { name: 'Aller à la diapositive 2' })).toHaveLength(2)
+    );
+    await expect(provider.getByRole('button', { name: 'Diapositive précédente' })).toBeVisible();
+    await expect(provider.getByRole('button', { name: 'Diapositive suivante' })).toBeVisible();
+    await expect(provider.getByRole('group', { name: 'Miniatures' })).toBeVisible();
+    const own = within(canvas.getByTestId('own'));
+    await expect(own.getByRole('button', { name: 'Suivante' })).toBeVisible();
+    await expect(own.getByRole('button', { name: 'Diapositive précédente' })).toBeVisible();
+    await expect(own.getByRole('group', { name: 'Vignettes' })).toBeVisible();
   },
 };

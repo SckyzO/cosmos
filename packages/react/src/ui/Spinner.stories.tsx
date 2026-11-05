@@ -4,6 +4,7 @@ import { expect } from 'storybook/test';
 import { inEachTheme, portalDocsParams } from '../storybook-helpers';
 import { Button } from './Button';
 import { Spinner, type SpinnerIntent, type SpinnerSize } from './Spinner';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Atoms/Spinner',
@@ -229,5 +230,20 @@ export const XsIsTheSizeOfAnXsButtonIcon: Story = {
     // The ring a loading `xs` Button draws for itself has the same box and border.
     await expect([ring.offsetWidth, ring.offsetHeight]).toEqual([12, 12]);
     await expect(getComputedStyle(ring).borderTopWidth).toBe('2px');
+  },
+};
+
+/** The provider names the spinner, and the spinner's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ spinner: { loading: 'Chargement' } }}>
+      <Spinner />
+      <Spinner labels={{ loading: 'Patientez' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('status', { name: 'Chargement' })).toBeVisible();
+    await expect(canvas.getByRole('status', { name: 'Patientez' })).toBeVisible();
   },
 };

@@ -29,6 +29,7 @@ import { Card } from './Card';
 import { IconButton } from './IconButton';
 import { NotificationRow, type NotificationRowIntent } from './NotificationRow';
 import { Tabs } from './Tabs';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Lists/Notification Row',
@@ -623,5 +624,34 @@ export const PageAt375px: Story = {
       .getByText(/A_title_with_no_break_point/)
       .closest<HTMLElement>('.truncate')!;
     await expect(long.scrollWidth).toBeGreaterThan(long.clientWidth);
+  },
+};
+
+/** The provider writes the unread hint and the badges, and the row's own `labels` and `badgeLabel` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        notificationRow: {
+          unread: 'Non lu :',
+          crit: 'CRITIQUE',
+          warn: 'ALERTE',
+          info: 'INFO',
+          ok: 'OK',
+        },
+      }}
+    >
+      <NotificationRow intent="danger" title="Disque plein" unread />
+      <NotificationRow intent="warning" title="Latence" labels={{ warn: 'ATTENTION' }} />
+      <NotificationRow intent="info" title="Mise à jour" badgeLabel="Perso" />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: /Non lu : Disque plein/ })).toHaveTextContent(
+      'CRITIQUE'
+    );
+    await expect(canvas.getByRole('button', { name: /Latence/ })).toHaveTextContent('ATTENTION');
+    await expect(canvas.getByRole('button', { name: /Mise à jour/ })).toHaveTextContent('Perso');
   },
 };

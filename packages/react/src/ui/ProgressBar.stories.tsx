@@ -20,6 +20,7 @@ import {
   type ProgressBarSegment,
   type ProgressBarSize,
 } from './ProgressBar';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Feedback/Progress Bar',
@@ -551,5 +552,35 @@ export const StripesMoveTowardTheEnd: Story = {
       const fill = trackOf(directionBox(canvasElement, dir)).firstElementChild!;
       expect(getComputedStyle(fill).animationName).toBe(names[dir]);
     }
+  },
+};
+
+/** The provider names what is left on a segmented bar, and the bar's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const segments = [{ value: 30, label: 'Documents', valueLabel: '30 Go' }];
+    return (
+      <LabelsProvider labels={{ progressBar: { free: 'Libre' } }}>
+        <ProgressBar segments={segments} aria-label="Stockage" />
+        <ProgressBar segments={segments} aria-label="Quota" labels={{ free: 'Disponible' }} />
+        <ProgressBar segments={segments} aria-label="Archive" free={{ label: 'Reste' }} />
+      </LabelsProvider>
+    );
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('progressbar', { name: 'Stockage' })).toHaveAttribute(
+      'aria-valuetext',
+      expect.stringContaining('Libre 70')
+    );
+    await expect(canvas.getByRole('progressbar', { name: 'Quota' })).toHaveAttribute(
+      'aria-valuetext',
+      expect.stringContaining('Disponible 70')
+    );
+    // The text the app passes in wins over the labels.
+    await expect(canvas.getByRole('progressbar', { name: 'Archive' })).toHaveAttribute(
+      'aria-valuetext',
+      expect.stringContaining('Reste 70')
+    );
   },
 };

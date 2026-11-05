@@ -9,6 +9,7 @@ import {
   startOffset,
 } from '../storybook-helpers';
 import { NotificationCard } from './NotificationCard';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Feedback/Notification Card',
@@ -238,5 +239,29 @@ export const CondensedActionsFollowTheDirection: Story = {
       expect(startOffset(undo, card)).toBeLessThan(startOffset(dismiss, card));
     }
     expectMirrored(canvasElement, (box) => within(box).getByRole('button', { name: 'Undo' }));
+  },
+};
+
+/** The provider names the close button of both variants, and the card's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ notificationCard: { dismiss: 'Ignorer la notification' } }}>
+      <div className="space-y-2">
+        <NotificationCard title="Enregistré" onDismiss={fn()} />
+        <NotificationCard.Condensed title="Archivé" onDismiss={fn()} />
+        <NotificationCard.Condensed
+          title="Supprimé"
+          onDismiss={fn()}
+          labels={{ dismiss: 'Fermer' }}
+        />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('button', { name: 'Ignorer la notification' })).toHaveLength(
+      2
+    );
+    await expect(canvas.getByRole('button', { name: 'Fermer' })).toBeVisible();
   },
 };

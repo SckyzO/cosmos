@@ -19,6 +19,7 @@ import { Carousel } from './Carousel';
 import { ImageGrid } from './ImageGrid';
 import { Lightbox, type LightboxItem, type LightboxProps } from './Lightbox';
 import { Modal } from './Modal';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Media/Lightbox',
@@ -653,23 +654,25 @@ export const CounterIsALiveRegion: Story = {
   },
 };
 
-/** Every text is a prop: the viewer, its controls, the counter, the strip and the failure. */
-export const TextsAreProps: Story = {
+/** Every text is a label: the viewer, its controls, the counter, the strip and the failure. */
+export const TextsAreLabels: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
     <Opener
       startOpen
       thumbnails
       items={[{ ...PHOTOS[0]!, src: BROKEN }, ...PHOTOS.slice(1, 4)]}
-      ariaLabel="Visionneuse"
-      prevLabel="Précédente"
-      nextLabel="Suivante"
-      closeLabel="Fermer"
-      counterLabel={(position, total) => `Photo ${position} sur ${total}`}
-      thumbnailsLabel="Miniatures"
-      thumbnailLabel={(position) => `Aller à la photo ${position}`}
-      errorLabel="Cette photo n’a pas pu être chargée."
-      retryLabel="Réessayer"
+      labels={{
+        viewer: 'Visionneuse',
+        previous: 'Précédente',
+        next: 'Suivante',
+        close: 'Fermer',
+        counter: (position, total) => `Photo ${position} sur ${total}`,
+        thumbnails: 'Miniatures',
+        thumbnail: (position) => `Aller à la photo ${position}`,
+        error: 'Cette photo n’a pas pu être chargée.',
+        retry: 'Réessayer',
+      }}
     />
   ),
   play: async () => {
@@ -1354,5 +1357,50 @@ export const LoadingPulseStopsUnderReducedMotion: Story = {
     const viewer = await findViewer();
     const pulse = viewer.querySelector<HTMLElement>('.animate-pulse')!;
     await expect(loopStops(pulse)).toMatchObject({ running: 'pulse', reduced: 'none' });
+  },
+};
+
+/** The provider names the viewer's controls, and the viewer's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        lightbox: {
+          viewer: 'Visionneuse',
+          previous: 'Image précédente',
+          next: 'Image suivante',
+          close: 'Fermer',
+          counter: (position, total) => `Image ${position} sur ${total}`,
+          thumbnails: 'Miniatures',
+          thumbnail: (position) => `Aller à l'image ${position}`,
+          error: "L'image n'a pas pu être chargée.",
+          retry: 'Réessayer',
+        },
+      }}
+    >
+      <Lightbox
+        open
+        onOpenChange={fn()}
+        thumbnails
+        labels={{ close: 'Quitter' }}
+        items={[
+          { src: 'data:image/gif;base64,R0lGODlhAQABAAAAACw=', alt: 'Première' },
+          { src: 'data:image/gif;base64,R0lGODlhAQABAAAAACw=', alt: 'Deuxième' },
+        ]}
+      />
+    </LabelsProvider>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog', { name: 'Visionneuse' });
+    const scope = within(dialog);
+    await expect(scope.getByRole('button', { name: 'Image précédente' })).toBeVisible();
+    await expect(scope.getByRole('button', { name: 'Image suivante' })).toBeVisible();
+    await expect(scope.getByRole('group', { name: 'Miniatures' })).toBeInTheDocument();
+    await expect(scope.getByRole('button', { name: "Aller à l'image 2" })).toBeInTheDocument();
+    await expect(dialog).toHaveTextContent('Image 1 sur 2');
+    // The viewer's own label wins over the provider's.
+    await expect(scope.getByRole('button', { name: 'Quitter' })).toBeVisible();
+    await expect(scope.queryByRole('button', { name: 'Fermer' })).toBeNull();
   },
 };

@@ -26,6 +26,7 @@ import { Input } from '../forms/Input';
 import { Select } from '../forms/Select';
 import { Textarea } from '../forms/Textarea';
 import { SectionCard } from '../templates/SectionCard';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Overlays/Drawer',
@@ -1674,5 +1675,42 @@ export const BackdropPropPicksTheScrim: Story = {
       colour: themeColor('--color-scrim-blur-dark'),
       filter: 'blur(8px)',
     });
+  },
+};
+
+/** The provider names the close buttons of the header and of the scrim. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ drawer: { close: 'Fermer le panneau' } }}>
+      <Drawer open onClose={fn()} closeOutside>
+        <Drawer.Header title="Filtres" onClose={fn()} />
+        <Drawer.Body>Contenu</Drawer.Body>
+      </Drawer>
+    </LabelsProvider>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog', { name: 'Filtres' });
+    await expect(within(dialog).getAllByRole('button', { name: 'Fermer le panneau' })).toHaveLength(
+      2
+    );
+  },
+};
+
+/** The drawer's own `labels` win over the provider's, in the header and on the scrim. */
+export const OwnLabelsWinOverTheProvider: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ drawer: { close: 'Fermer le panneau' } }}>
+      <Drawer open onClose={fn()} closeOutside labels={{ close: 'Quitter' }}>
+        <Drawer.Header title="Filtres" onClose={fn()} />
+        <Drawer.Body>Contenu</Drawer.Body>
+      </Drawer>
+    </LabelsProvider>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog', { name: 'Filtres' });
+    await expect(within(dialog).getAllByRole('button', { name: 'Quitter' })).toHaveLength(2);
+    await expect(within(dialog).queryByRole('button', { name: 'Fermer le panneau' })).toBeNull();
   },
 };

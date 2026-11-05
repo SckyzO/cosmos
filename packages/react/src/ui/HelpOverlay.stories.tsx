@@ -11,6 +11,7 @@ import {
 import { Button } from './Button';
 import { Drawer } from './Drawer';
 import { HelpOverlay } from './HelpOverlay';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Overlays/Help Overlay',
@@ -334,5 +335,39 @@ export const KeysKeepTheirOrderInRightToLeft: Story = {
         expectReadsLeftToRight(within(dialog).getByText('Press them (1-5).').closest('p')!);
       });
     }
+  },
+};
+
+/** The provider writes the overlay's texts, and the overlay's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        helpOverlay: {
+          title: 'Raccourcis clavier',
+          close: 'Fermer les raccourcis',
+          closeHintBefore: 'Appuyez sur',
+          closeHintAfter: 'pour fermer',
+          then: 'puis',
+        },
+      }}
+    >
+      <HelpOverlay open hotkey={null} onOpenChange={fn()} labels={{ then: 'ensuite' }}>
+        <HelpOverlay.Section title="Navigation">
+          <HelpOverlay.Shortcut keys={['g', 'h']} description="Aller à l'accueil" />
+        </HelpOverlay.Section>
+      </HelpOverlay>
+    </LabelsProvider>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog', { name: 'Raccourcis clavier' });
+    const scope = within(dialog);
+    await expect(scope.getByRole('button', { name: 'Fermer les raccourcis' })).toBeVisible();
+    await expect(dialog).toHaveTextContent('Appuyez sur');
+    await expect(dialog).toHaveTextContent('pour fermer');
+    // The overlay's own `then` wins over the provider's `puis`.
+    await expect(scope.getByText('ensuite')).toBeVisible();
+    await expect(scope.queryByText('puis')).toBeNull();
   },
 };

@@ -25,6 +25,7 @@ import {
 } from '../storybook-helpers';
 import { Dropdown, type DropdownItem } from './Dropdown';
 import { SectionCard } from '../templates/SectionCard';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Overlays/Dropdown',
@@ -490,5 +491,21 @@ export const MenuFollowsTheDirection: Story = {
       expect(endOffset(check, picked)).toBeLessThan(startOffset(check, picked));
       expect(getComputedStyle(picked).textAlign).toBe('start');
     }
+  },
+};
+
+/** The provider writes the placeholder, and the dropdown's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { options: [{ value: 'a', label: 'Option A' }] },
+  render: (args) => (
+    <LabelsProvider labels={{ dropdown: { placeholder: 'Choisir…' } }}>
+      <Dropdown {...args} />
+      <Dropdown {...args} labels={{ placeholder: 'Sélectionner…' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Choisir…' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Sélectionner…' })).toBeVisible();
   },
 };

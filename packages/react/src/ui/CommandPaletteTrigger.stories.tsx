@@ -8,6 +8,7 @@ import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '..
 import { CommandPalette } from './CommandPalette';
 import { CommandPaletteTrigger } from './CommandPaletteTrigger';
 import { isApplePlatform } from './hotkey';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Overlays/Command Palette Trigger',
@@ -51,7 +52,7 @@ const InTopbar = ({ shortcut }: { shortcut?: string | null }) => {
         center={
           <div className="mx-auto max-w-md">
             <CommandPaletteTrigger
-              placeholder="Search projects, tasks, docs"
+              labels={{ placeholder: 'Search projects, tasks, docs' }}
               shortcut={shortcut}
               onClick={() => setOpen(true)}
             />
@@ -190,5 +191,20 @@ export const ShortcutHintFollowsThePlatform: Story = {
     await expect(button.querySelector('kbd')).toHaveTextContent(apple ? '⌘K' : 'Ctrl K');
     await expect(button).toHaveAttribute('aria-keyshortcuts', apple ? 'Meta+K' : 'Control+K');
     await expect(button).toHaveAttribute('aria-haspopup', 'dialog');
+  },
+};
+
+/** The provider writes the placeholder, and the trigger's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ commandPaletteTrigger: { placeholder: 'Rechercher…' } }}>
+      <CommandPaletteTrigger />
+      <CommandPaletteTrigger labels={{ placeholder: 'Aller à…' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: /Rechercher…/ })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: /Aller à…/ })).toBeVisible();
   },
 };

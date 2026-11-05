@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { UnsavedIndicator } from './UnsavedIndicator';
+import { LabelsProvider } from '../labels/LabelsProvider';
+import { expect } from 'storybook/test';
 
 const meta = {
   title: 'Actions/Unsaved Indicator',
@@ -28,4 +30,21 @@ export const Hidden: Story = {
     </div>
   ),
 };
-export const CustomLabel: Story = { args: { visible: true, label: 'Form has changed' } };
+export const CustomLabel: Story = {
+  args: { visible: true, labels: { unsaved: 'Form has changed' } },
+};
+
+/** The provider writes the text, the indicator's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ unsavedIndicator: { unsaved: 'Modifications non enregistrées' } }}>
+      <UnsavedIndicator visible />
+      <UnsavedIndicator visible labels={{ unsaved: 'Brouillon' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Modifications non enregistrées')).toBeVisible();
+    await expect(canvas.getByText('Brouillon')).toBeVisible();
+  },
+};

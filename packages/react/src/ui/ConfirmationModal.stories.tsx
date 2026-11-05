@@ -10,6 +10,7 @@ import {
 } from '../storybook-helpers';
 import { ConfirmationModal } from './ConfirmationModal';
 import { Button } from './Button';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Overlays/Confirmation Modal',
@@ -340,7 +341,7 @@ export const TypeToConfirmKeepsTheDialogAccessible: Story = {
   tags: ['!dev', '!autodocs'],
   args: {
     ...ConfirmDangerTypeToConfirm.args,
-    requireTextLabel: 'Tapez « cosmos-prod » pour confirmer',
+    labels: { requireText: () => 'Tapez « cosmos-prod » pour confirmer' },
   },
   play: async () => {
     const body = within(document.body);
@@ -460,5 +461,50 @@ export const LayoutFollowsTheDirection: Story = {
         expect(startOffset(stay, dialog)).toBeLessThan(startOffset(save, dialog));
       });
     }
+  },
+};
+
+/** The provider writes the dialog's texts, and the modal's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        confirmationModal: {
+          title: 'Modifications non enregistrées',
+          message: 'Que voulez-vous faire ?',
+          stay: 'Rester',
+          discard: 'Abandonner',
+          save: 'Enregistrer et partir',
+          requireText: (text) => `Saisissez « ${text} » pour confirmer`,
+          close: 'Fermer',
+        },
+      }}
+    >
+      <ConfirmationModal
+        open
+        onClose={fn()}
+        onDiscard={fn()}
+        onSave={fn()}
+        requireText="projet"
+        labels={{ save: 'Sauvegarder' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('alertdialog', {
+      name: 'Modifications non enregistrées',
+    });
+    const scope = within(dialog);
+    await expect(scope.getByText('Que voulez-vous faire ?')).toBeVisible();
+    await expect(scope.getByRole('button', { name: 'Rester' })).toBeVisible();
+    await expect(scope.getByRole('button', { name: 'Abandonner' })).toBeVisible();
+    await expect(scope.getByRole('button', { name: 'Fermer' })).toBeVisible();
+    await expect(
+      scope.getByRole('textbox', { name: 'Saisissez « projet » pour confirmer' })
+    ).toBeVisible();
+    // The modal's own label wins over the provider's.
+    await expect(scope.getByRole('button', { name: 'Sauvegarder' })).toBeVisible();
+    await expect(scope.queryByRole('button', { name: 'Enregistrer et partir' })).toBeNull();
   },
 };

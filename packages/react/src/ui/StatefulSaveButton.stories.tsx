@@ -4,6 +4,7 @@ import { expect, fn, userEvent } from 'storybook/test';
 import { expectRefFocuses } from '../storybook-helpers';
 import { loopStops } from '../storybook-motion';
 import { StatefulSaveButton, type SaveState } from './StatefulSaveButton';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Actions/Stateful Save Button',
@@ -126,5 +127,32 @@ export const DirtyPulseStopsUnderReducedMotion: Story = {
   play: async ({ canvas }) => {
     const button = canvas.getByRole('button');
     await expect(loopStops(button)).toMatchObject({ running: 'pulse', reduced: 'none' });
+  },
+};
+
+/** The provider writes the text of each state, and the button's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        statefulSaveButton: {
+          save: 'Enregistrer',
+          saving: 'Enregistrement…',
+          saved: 'Enregistré',
+          retry: 'Réessayer',
+        },
+      }}
+    >
+      <StatefulSaveButton state="idle" onClick={fn()} />
+      <StatefulSaveButton state="saving" onClick={fn()} />
+      <StatefulSaveButton state="saved" onClick={fn()} />
+      <StatefulSaveButton state="error" onClick={fn()} />
+      <StatefulSaveButton state="dirty" onClick={fn()} labels={{ save: 'Sauvegarder' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    for (const name of ['Enregistrer', 'Enregistrement…', 'Enregistré', 'Réessayer', 'Sauvegarder'])
+      await expect(canvas.getByRole('button', { name })).toBeVisible();
   },
 };

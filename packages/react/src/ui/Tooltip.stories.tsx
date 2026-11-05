@@ -16,6 +16,7 @@ import { Tooltip, TooltipHelp, type TooltipProps } from './Tooltip';
 import { SectionCard } from '../templates/SectionCard';
 import { Button } from './Button';
 import { Modal } from './Modal';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Feedback/Tooltip',
@@ -898,5 +899,20 @@ export const TooltipSkipsMotionWhenReduced: Story = {
     await expect(getComputedStyle(tip).opacity).toBe('1');
     await userEvent.unhover(trigger);
     await expect(getComputedStyle(tip).opacity).toBe('0');
+  },
+};
+
+/** The provider names the button of `TooltipHelp`, and its own `labels` win over it. */
+export const HelpTranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ tooltipHelp: { label: 'Aide' } }}>
+      <TooltipHelp text="Une explication." />
+      <TooltipHelp text="Une autre." labels={{ label: "Plus d'infos" }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Aide' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: "Plus d'infos" })).toBeVisible();
   },
 };

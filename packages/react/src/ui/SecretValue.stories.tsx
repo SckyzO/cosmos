@@ -4,6 +4,7 @@ import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import { expectNoHorizontalOverflow, mobileViewport } from '../storybook-helpers';
 import { SectionCard } from '../templates/SectionCard';
 import { SecretValue } from './SecretValue';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const API_KEY = 'ck_live_9f3a1c7e52b84d06a1f2e3c4';
 const WEBHOOK = 'whsec_5f2c9e0b7d4a41c8b3e6f19a2d07c4e1';
@@ -258,5 +259,31 @@ export const ValueIsIsolatedInRightToLeft: Story = {
     await expect(suffix.getBoundingClientRect().left).toBeGreaterThanOrEqual(
       mask.getBoundingClientRect().right - 1
     );
+  },
+};
+
+/** The provider names the buttons, and the field's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        secretValue: {
+          show: (label) => `Afficher ${label}`,
+          hide: (label) => `Masquer ${label}`,
+          copy: (label) => `Copier ${label}`,
+          copied: 'Copié !',
+        },
+      }}
+    >
+      <SecretValue value="abcd1234" label="clé API" />
+      <SecretValue value="abcd1234" label="jeton" labels={{ show: () => 'Révéler' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Afficher clé API' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Copier clé API' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Révéler' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Copier jeton' })).toBeVisible();
   },
 };

@@ -13,6 +13,7 @@ import {
   expectTextContrast,
   inEachTheme,
 } from '../storybook-helpers';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Atoms/Tag',
@@ -460,5 +461,24 @@ export const LabelIsIsolated: Story = {
     const [latin, arabic] = [...canvasElement.querySelectorAll('bdi')];
     expect(getComputedStyle(latin!).direction).toBe('ltr');
     expect(getComputedStyle(arabic!).direction).toBe('rtl');
+  },
+};
+
+/** The provider names the remove button, and the tag's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ tag: { remove: (name) => (name ? `Retirer ${name}` : 'Retirer') } }}>
+      <Tag onRemove={fn()}>Paris</Tag>
+      <Tag onRemove={fn()}>{''}</Tag>
+      <Tag onRemove={fn()} labels={{ remove: (name) => `Supprimer ${name}` }}>
+        Lyon
+      </Tag>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Retirer Paris' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Retirer' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Supprimer Lyon' })).toBeVisible();
   },
 };
