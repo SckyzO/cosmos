@@ -428,7 +428,11 @@ test('the map entry loads in Node as ESM and as CJS, without importing MapLibre'
     ],
     { encoding: 'utf8', cwd: pkgDir }
   );
-  const expected = { view: 'function', list: 'function', names: ['MapMarkerList', 'MapView'] };
+  const expected = {
+    view: 'function',
+    list: 'function',
+    names: ['MAP_MARKER_LIST_LABELS', 'MAP_VIEW_LABELS', 'MapMarkerList', 'MapView'],
+  };
   expect(JSON.parse(esmOut)).toEqual(expected);
   expect(JSON.parse(cjsOut)).toEqual(expected);
 });
