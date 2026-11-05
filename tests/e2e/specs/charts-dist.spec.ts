@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
-import { expectOwnTypesPerFormat } from './package-exports';
+import { expectOwnTypesPerFormat, expectSubpathOwnTypes } from './package-exports';
 
 // @sckyzo/cosmos-charts ships each wrapper as a file of its own and declares no
 // side effects: a consumer's bundler leaves out the wrappers it doesn't import.
@@ -148,4 +148,35 @@ test('the CJS and ESM entries expose the same exports', () => {
   for (const name of ['useChartTheme', 'useDarkMode', 'escapeHtml', 'tooltipHtml']) {
     expect(esm).not.toContain(name);
   }
+});
+
+// `@sckyzo/cosmos-charts/locales/fr`: the French dictionary, an entry of its own, so `import()`
+// makes it a file of the app that only a French page downloads.
+
+test('the French entry has its own types, and no file of the root entry imports it', () => {
+  expectSubpathOwnTypes(pkgDir, 'locales/fr');
+  for (const name of readdirSync(dist).filter((file) => /\.c?js$/.test(file))) {
+    expect(read(`${dist}${name}`), name).not.toMatch(/['"]\.\/locales\//);
+  }
+});
+
+test('the French entry loads as ESM and as CJS, with a key for every chart', () => {
+  const script = `
+    const root = require(${JSON.stringify(`${dist}index.cjs`)});
+    const cjs = require(${JSON.stringify(`${dist}locales/fr/index.cjs`)});
+    import(${JSON.stringify(`${dist}locales/fr/index.js`)}).then((esm) => {
+      console.log(JSON.stringify({
+        names: Object.keys(esm).sort(),
+        esm: Object.keys(esm.frenchChartLabels).sort(),
+        cjs: Object.keys(cjs.frenchChartLabels).sort(),
+        english: Object.keys(root.englishChartLabels).sort(),
+        bar: esm.frenchChartLabels.barChart.name('CPU'),
+      }));
+    });
+  `;
+  const out = JSON.parse(execFileSync(process.execPath, ['-e', script], { encoding: 'utf8' }));
+  expect(out.names).toEqual(['frenchChartLabels']);
+  expect(out.esm).toEqual(out.english);
+  expect(out.cjs).toEqual(out.english);
+  expect(out.bar).toBe('Histogramme\u202f: CPU');
 });

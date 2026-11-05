@@ -1,0 +1,1 @@
+export { frenchChartLabels } from './frenchChartLabels';
