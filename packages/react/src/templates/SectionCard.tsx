@@ -1,4 +1,4 @@
-import { type ComponentType, type ReactNode, useId } from 'react';
+import { type ComponentType, type ReactNode, type Ref, useId } from 'react';
 import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
 import { useControllableState } from '../hooks/useControllableState';
@@ -257,6 +257,12 @@ export type SectionCardProps = {
    * (`as="h1"`), pass `h2` so the levels go up by one.
    */
   as?: 'h2' | 'h3';
+  /**
+   * A ref to the heading, for a page that moves the focus to the card: a link or a filter that
+   * leads to it, as the severity panels of a dashboard lead to its alerts. With it the heading
+   * takes `tabIndex={-1}`, so `focus()` reaches it, out of the tab order.
+   */
+  titleRef?: Ref<HTMLHeadingElement>;
   /** Optional description shown below title */
   desc?: string;
   /** Optional icon component (lucide-react or any React component accepting className) */
@@ -414,6 +420,7 @@ export type SectionCardProps = {
 export const SectionCard = ({
   title,
   as: Heading = 'h3',
+  titleRef,
   desc,
   icon: Icon,
   iconTone,
@@ -637,8 +644,11 @@ export const SectionCard = ({
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <Heading
                   id={titleId}
+                  ref={titleRef}
+                  tabIndex={titleRef ? -1 : undefined}
                   className={clsx(
-                    'text-base font-semibold',
+                    // A ring when a page moves the focus to it (`titleRef`).
+                    'focus-visible:focus-indicator rounded-sm text-base font-semibold',
                     solid ? 'text-inherit' : 'text-[var(--color-text-primary)]'
                   )}
                 >
