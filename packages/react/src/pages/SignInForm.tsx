@@ -3,9 +3,11 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { Checkbox } from '../forms/Checkbox';
 import { Input } from '../forms/Input';
 import { PasswordInput } from '../forms/PasswordInput';
+import { useLabels } from '../labels/labelsContext';
 import { AlertBanner } from '../ui/AlertBanner';
 import { Button } from '../ui/Button';
 import { Link } from '../ui/Link';
+import { SIGN_IN_FORM_LABELS, type SignInFormLabels } from './labels';
 
 export type SignInFormValues = {
   email: string;
@@ -18,14 +20,24 @@ export type SignInFormProps = {
   onForgotPassword?: () => void;
   /** Sign-up CTA target (router link href). Hidden if not provided. */
   signUpHref?: string;
+  /** The sign-up link. Default `labels.signUp`. */
   signUpLabel?: string;
+  /** The title. Default `labels.title`. */
   title?: string;
+  /** The line under the title. Default `labels.description`. */
   description?: string;
+  /** Label of the email field. Default `labels.email`. */
   emailLabel?: string;
+  /** Label of the password field. Default `labels.password`. */
   passwordLabel?: string;
+  /** Label of the checkbox. Default `labels.remember`. */
   rememberLabel?: string;
+  /** The submit button. Default `labels.submit`. */
   submitLabel?: string;
+  /** The link that asks for a new password. Default `labels.forgot`. */
   forgotLabel?: string;
+  /** The texts it writes, over `LabelsProvider`'s `signInForm` and the English defaults. */
+  labels?: Partial<SignInFormLabels>;
   loading?: boolean;
   error?: string;
   /** Slot rendered above the form (e.g. social provider buttons). */
@@ -37,19 +49,21 @@ export const SignInForm = ({
   onSubmit,
   onForgotPassword,
   signUpHref,
-  signUpLabel = 'Create one',
-  title = 'Sign in',
-  description = 'Welcome back — enter your credentials below.',
-  emailLabel = 'Email',
-  passwordLabel = 'Password',
-  rememberLabel = 'Keep me signed in',
-  submitLabel = 'Sign in',
-  forgotLabel = 'Forgot password?',
+  signUpLabel,
+  title,
+  description,
+  emailLabel,
+  passwordLabel,
+  rememberLabel,
+  submitLabel,
+  forgotLabel,
+  labels: ownLabels,
   loading = false,
   error,
   extraTop,
   className,
 }: SignInFormProps) => {
+  const labels = useLabels('signInForm', SIGN_IN_FORM_LABELS, ownLabels);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
@@ -63,9 +77,13 @@ export const SignInForm = ({
   return (
     <form onSubmit={handleSubmit} className={className}>
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h1>
-        {description && (
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+          {title ?? labels.title}
+        </h1>
+        {(description ?? labels.description) && (
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {description ?? labels.description}
+          </p>
         )}
       </div>
 
@@ -79,18 +97,18 @@ export const SignInForm = ({
 
       <div className="space-y-4">
         <Input
-          label={emailLabel}
+          label={emailLabel ?? labels.email}
           type="email"
           icon={Mail}
           autoComplete="email"
           required
-          placeholder="john@example.com"
+          placeholder={labels.emailPlaceholder}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={loading}
         />
         <PasswordInput
-          label={passwordLabel}
+          label={passwordLabel ?? labels.password}
           autoComplete="current-password"
           required
           value={password}
@@ -99,27 +117,27 @@ export const SignInForm = ({
         />
         <div className="flex items-center justify-between">
           <Checkbox
-            label={rememberLabel}
+            label={rememberLabel ?? labels.remember}
             checked={remember}
             onChange={(c) => setRemember(c)}
             disabled={loading}
           />
           {onForgotPassword && (
             <Button variant="link" size="sm" onClick={() => onForgotPassword()}>
-              {forgotLabel}
+              {forgotLabel ?? labels.forgot}
             </Button>
           )}
         </div>
         <Button type="submit" loading={loading} disabled={loading} className="w-full">
-          {submitLabel}
+          {submitLabel ?? labels.submit}
         </Button>
       </div>
 
       {signUpHref && (
         <p className="mt-5 text-center text-xs text-[var(--color-text-muted)]">
-          No account?{' '}
+          {labels.noAccount}{' '}
           <Link href={signUpHref} variant="colored">
-            {signUpLabel}
+            {signUpLabel ?? labels.signUp}
           </Link>
         </p>
       )}

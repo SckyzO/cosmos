@@ -25,6 +25,14 @@ import type {
   ZoomBarLabels,
 } from '../forms/labels';
 import type { BreadcrumbLabels } from '../navigation/labels';
+import type {
+  NewPasswordFormLabels,
+  ResetPasswordFormLabels,
+  SignInFormLabels,
+  SignUpFormLabels,
+  SocialAuthButtonsLabels,
+  TwoStepVerificationLabels,
+} from '../pages/labels';
 
 /**
  * Every text the components write themselves, one key per component, so an app translates them
@@ -51,14 +59,20 @@ export type CosmosLabels = {
   lineItemsEditor: LineItemsLabels;
   loadingState: LoadingStateLabels;
   multiSelect: MultiSelectLabels;
+  newPasswordForm: NewPasswordFormLabels;
   numberInput: NumberInputLabels;
   otpInput: OtpInputLabels;
   passwordInput: PasswordInputLabels;
   passwordPolicyChecker: PasswordPolicyLabels;
   phoneInput: PhoneInputLabels;
+  resetPasswordForm: ResetPasswordFormLabels;
   searchInput: SearchInputLabels;
+  signInForm: SignInFormLabels;
+  signUpForm: SignUpFormLabels;
   slider: SliderLabels;
+  socialAuthButtons: SocialAuthButtonsLabels;
   tagInput: TagInputLabels;
+  twoStepVerificationForm: TwoStepVerificationLabels;
   uploadQueue: UploadQueueLabels;
   zoomBar: ZoomBarLabels;
 };

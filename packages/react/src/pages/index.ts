@@ -2,7 +2,15 @@ export * from './AuthLayout';
 export * from './ErrorPage';
 export * from './NewPasswordForm';
 export * from './ResetPasswordForm';
-export type { ResendLabels } from './ResendButton';
+export type {
+  NewPasswordFormLabels,
+  ResendLabels,
+  ResetPasswordFormLabels,
+  SignInFormLabels,
+  SignUpFormLabels,
+  SocialAuthButtonsLabels,
+  TwoStepVerificationLabels,
+} from './labels';
 export * from './SignInForm';
 export * from './SignUpForm';
 export * from './SocialAuthButtons';

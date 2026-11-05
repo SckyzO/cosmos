@@ -25,6 +25,14 @@ import {
   ZOOM_BAR_LABELS,
 } from '../forms/labels';
 import { BREADCRUMB_LABELS } from '../navigation/labels';
+import {
+  NEW_PASSWORD_FORM_LABELS,
+  RESET_PASSWORD_FORM_LABELS,
+  SIGN_IN_FORM_LABELS,
+  SIGN_UP_FORM_LABELS,
+  SOCIAL_AUTH_BUTTONS_LABELS,
+  TWO_STEP_VERIFICATION_FORM_LABELS,
+} from '../pages/labels';
 import type { CosmosLabels } from './cosmosLabels';
 
 /**
@@ -50,14 +58,20 @@ export const englishLabels: CosmosLabels = {
   lineItemsEditor: LINE_ITEMS_LABELS,
   loadingState: LOADING_STATE_LABELS,
   multiSelect: MULTI_SELECT_LABELS,
+  newPasswordForm: NEW_PASSWORD_FORM_LABELS,
   numberInput: NUMBER_INPUT_LABELS,
   otpInput: OTP_INPUT_LABELS,
   passwordInput: PASSWORD_INPUT_LABELS,
   passwordPolicyChecker: PASSWORD_POLICY_LABELS,
   phoneInput: PHONE_INPUT_LABELS,
+  resetPasswordForm: RESET_PASSWORD_FORM_LABELS,
   searchInput: SEARCH_INPUT_LABELS,
+  signInForm: SIGN_IN_FORM_LABELS,
+  signUpForm: SIGN_UP_FORM_LABELS,
   slider: SLIDER_LABELS,
+  socialAuthButtons: SOCIAL_AUTH_BUTTONS_LABELS,
   tagInput: TAG_INPUT_LABELS,
+  twoStepVerificationForm: TWO_STEP_VERIFICATION_FORM_LABELS,
   uploadQueue: UPLOAD_QUEUE_LABELS,
   zoomBar: ZOOM_BAR_LABELS,
 };
