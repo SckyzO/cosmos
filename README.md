@@ -148,6 +148,7 @@ direction are all a class or an attribute on `<html>`.
     their peer dependencies.
   - [Right to left](docs/guides/right-to-left.md).
   - [Refs and routing](docs/guides/refs-and-routing.md): refs, and sending links through your router.
+  - [Translating](docs/guides/translating.md): the text the components write, in your language.
 - Components, by Storybook group: [Tables](docs/components/tables.md),
   [Data](docs/components/data.md), [Feedback](docs/components/feedback.md),
   [Monitoring](docs/components/monitoring.md), [Navigation](docs/components/navigation.md),

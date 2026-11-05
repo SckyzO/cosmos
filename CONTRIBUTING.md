@@ -371,6 +371,19 @@ The same prop means the same thing on every component.
   message, `chat/MessageText`) are written as a raw `<a>` with a comment that says why. `AppLink` is
   not exported from the package, which imports no router: the app's adapter is its own. The
   `Navigation/LinkProvider` stories show the behaviour with a fake router.
+- **Text a component writes is a label.** A word the component draws or names itself (a button's
+  name, a default title, a state's line, a screen-reader hint) is a key of that component's labels,
+  never English written in place. The keys and their English live in the group's `labels.ts`
+  (`navigation/labels.ts`: the `BreadcrumbLabels` type, its `BREADCRUMB_LABELS`), registered once
+  in `labels/cosmosLabels.ts` (the type) and `labels/englishLabels.ts` (the defaults). The
+  component takes `labels?: Partial<…Labels>` and reads `useLabels('breadcrumb', BREADCRUMB_LABELS,
+labels)`: the defaults, then the app's `LabelsProvider`, then the prop. A text that holds a value
+  is a function (`showHidden: (count) => …`), so plurals and word order stay with the app. A
+  separate text prop (`closeLabel`, `emptyMessage`) is not added: the key goes in `labels`. Text the
+  app passes in (`title`, `items`) stays a prop and wins over the label that stands in for it.
+  `repo-policy.spec.ts` refuses English written in place (JSX text, `aria-label`, `title`,
+  `placeholder`, the default of a text prop) outside `TEXT_DEFERRED`, the files still to translate,
+  which only shrinks; a word that is not text goes in `TEXT_ALLOWED` with the reason.
 - **One sidebar toggle: `SidebarToggle`** (`layout/SidebarToggle.tsx`). The Topbar renders it as a
   `hamburger`, the bottom of the Sidebar as a `panel` row, and a custom header, a Topbar's
   `startActions` or the Sidebar's `footer` can place one more. `Shell` owns the collapsed state and
