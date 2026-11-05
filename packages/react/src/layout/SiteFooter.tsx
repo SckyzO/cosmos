@@ -313,22 +313,13 @@ export type SiteFooterBottomLink = Omit<ComponentPropsWithRef<'a'>, 'children' |
 export type SiteFooterBottomProps = ComponentPropsWithRef<'div'> & {
   /** Legal links (terms, privacy, cookie settings), in a `nav` after the text. */
   links?: SiteFooterBottomLink[];
-  /** Name of the legal links' `nav`. Default `labels.legalLinks`, `Legal`. */
-  linksLabel?: string;
 };
 
 /**
  * The last row: the copyright as children, the legal links as `links`. In the `full` variant it
  * goes under everything, with a rule above it, whatever its place among the parts.
  */
-function SiteFooterBottom({
-  links,
-  linksLabel,
-  className,
-  children,
-  ref,
-  ...rest
-}: SiteFooterBottomProps) {
+function SiteFooterBottom({ links, className, children, ref, ...rest }: SiteFooterBottomProps) {
   const { variant, theme, labels: ownLabels } = useContext(SiteFooterContext);
   const labels = useLabels('siteFooter', SITE_FOOTER_LABELS, ownLabels);
   const full = variant === 'full';
@@ -349,7 +340,7 @@ function SiteFooterBottom({
     >
       {children}
       {links && links.length > 0 && (
-        <nav aria-label={linksLabel ?? labels.legalLinks}>
+        <nav aria-label={labels.legalLinks}>
           <ul className="flex flex-wrap gap-x-5 gap-y-1.5">
             {links.map(({ label, ...link }, index) => (
               <li key={`${index}-${link.href}`}>
