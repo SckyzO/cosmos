@@ -25,8 +25,8 @@ under the bar, with what is left on the track. `aria-valuetext` lists the parts
 />
 ```
 
-`ProgressRing` is the same meter as an SVG ring (no dependency): `value`, `max`,
-`intent`, `size` (`sm` 32px, `md` 56px, `lg` 96px, or a number of pixels), `thickness`,
+`ProgressRing` is the same meter as an SVG ring (no dependency), drawn in the same colors as the
+bar: `value`, `max`, `intent`, `size` (`sm` 32px, `md` 56px, `lg` 96px, or a number of pixels), `thickness`,
 and `children` for the center (a value, an icon). It is a `progressbar` too, so name it
 with `aria-label` or `aria-labelledby`; the center is not read a second time. `indeterminate`
 spins a quarter arc, except under reduced motion.
