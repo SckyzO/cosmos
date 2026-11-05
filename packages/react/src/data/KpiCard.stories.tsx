@@ -1,6 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef } from 'react';
-import { CreditCard, Server, ShieldAlert, Users } from 'lucide-react';
+import {
+  CircleAlert,
+  CircleQuestionMark,
+  CreditCard,
+  Info,
+  Server,
+  ShieldAlert,
+  TriangleAlert,
+  Users,
+} from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
   bothDirections,
@@ -643,7 +652,7 @@ export const ExactValueKeepsTheCardHeight: Story = {
   },
 };
 
-// ── Chart beside the value, featured card ────────────────────────────────────
+// ── Chart beside the value, tinted card ─────────────────────────────────────
 
 const GoalRing = () => <ProgressRing aria-label="Monthly goal reached" value={77} size="lg" />;
 
@@ -773,28 +782,28 @@ export const ChartPositionEndKeepsItsLayoutWhileLoading: Story = {
   },
 };
 
-/** `featured`: the tinted surface of the card's meaning, for the one figure a dashboard leads with. */
-export const Featured: Story = {
+/** `variant="tinted"`: the tinted surface of the card's meaning, for the one figure a dashboard leads with. */
+export const Tinted: Story = {
   args: {
     label: 'Monthly recurring revenue',
     value: '$128 490',
     sub: 'of $150 000 planned',
     icon: CreditCard,
-    featured: true,
+    variant: 'tinted',
     delta: <TrendDelta value={12.4} label="vs last month" />,
   },
 };
 
-export const FeaturedWithRing: Story = {
-  render: () => <div className="max-w-sm">{goalCard({ featured: true })}</div>,
+export const TintedWithRing: Story = {
+  render: () => <div className="max-w-sm">{goalCard({ variant: 'tinted' })}</div>,
 };
 
-/** One featured card leading a row of plain ones. */
-export const FeaturedLeadsTheGrid: Story = {
+/** One tinted card leading a row of plain ones. */
+export const TintedLeadsTheGrid: Story = {
   render: () => (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <KpiCard
-        featured
+        variant="tinted"
         className="lg:col-span-2"
         label="Monthly recurring revenue"
         value="$128 490"
@@ -808,12 +817,12 @@ export const FeaturedLeadsTheGrid: Story = {
   ),
 };
 
-/** A featured card takes the tint of its intent. */
-export const FeaturedIntents: Story = {
+/** A tinted card takes the tint of its intent. */
+export const TintedIntents: Story = {
   render: () => (
     <div className="grid gap-4 sm:grid-cols-3">
       <KpiCard
-        featured
+        variant="tinted"
         label="Revenue"
         value="$48 920"
         sub="this month"
@@ -821,7 +830,7 @@ export const FeaturedIntents: Story = {
         delta={<TrendDelta value={12.4} label="vs last month" />}
       />
       <KpiCard
-        featured
+        variant="tinted"
         intent="warning"
         label="Disk usage"
         value="82%"
@@ -830,7 +839,7 @@ export const FeaturedIntents: Story = {
         delta={<TrendDelta value={5.1} goodDirection="down" label="vs last week" />}
       />
       <KpiCard
-        featured
+        variant="tinted"
         intent="danger"
         label="CRIT alerts"
         value="3"
@@ -842,28 +851,29 @@ export const FeaturedIntents: Story = {
   ),
 };
 
-export const FeaturedOnMobile: Story = {
-  ...FeaturedIntents,
+export const TintedOnMobile: Story = {
+  ...TintedIntents,
   globals: mobileViewport,
 };
 
-export const FeaturedOnMobileChecks: Story = {
-  ...FeaturedOnMobile,
+export const TintedOnMobileChecks: Story = {
+  ...TintedOnMobile,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
   },
 };
 
-export const FeaturedTintsTheSurface: Story = {
-  ...FeaturedIntents,
+export const VariantsChangeTheSurface: Story = {
+  ...TintedIntents,
   tags: ['!dev', '!autodocs'],
   render: () => (
     <div className="grid gap-4 sm:grid-cols-4">
       <KpiCard label="Plain" value="1" />
-      <KpiCard featured label="Featured" value="2" />
-      <KpiCard featured intent="warning" label="Warning" value="3" />
-      <KpiCard featured intent="danger" label="Danger" value="4" />
+      <KpiCard variant="tinted" label="Tinted" value="2" />
+      <KpiCard variant="tinted" intent="warning" label="Warning" value="3" />
+      <KpiCard variant="tinted" intent="danger" label="Danger" value="4" />
+      <KpiCard variant="solid" intent="danger" label="Solid" value="5" />
     </div>
   ),
   play: async ({ canvas }) => {
@@ -873,16 +883,14 @@ export const FeaturedTintsTheSurface: Story = {
       const style = getComputedStyle(card(label));
       return [style.backgroundColor, style.borderTopColor].join(' ');
     };
-    const [plain, featured, warning, danger] = ['Plain', 'Featured', 'Warning', 'Danger'].map(
-      surface
-    );
-    await expect(new Set([plain, featured, warning, danger]).size).toBe(4);
+    const surfaces = ['Plain', 'Tinted', 'Warning', 'Danger', 'Solid'].map(surface);
+    await expect(new Set(surfaces).size).toBe(5);
   },
 };
 
-/** The label, value and sub line of a featured card keep 4.5:1 on its tint, in every theme and accent (the chip's icon is decorative). */
-export const FeaturedStaysReadableInEveryThemeAndAccent: Story = {
-  ...FeaturedIntents,
+/** The label, value and sub line of a tinted card keep 4.5:1 on its tint, in every theme and accent (the chip's icon is decorative). */
+export const TintedStaysReadableInEveryThemeAndAccent: Story = {
+  ...TintedIntents,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const root = document.documentElement;
@@ -910,6 +918,101 @@ export const FeaturedStaysReadableInEveryThemeAndAccent: Story = {
       if (saved === null) root.removeAttribute('data-accent');
       else root.setAttribute('data-accent', saved);
     }
+  },
+};
+
+// ── Solid ──────────────────────────────────────────────────────────────────
+
+const SolidSeverities = () => (
+  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <KpiCard
+      variant="solid"
+      intent="danger"
+      label="Critical"
+      value="4"
+      sub="+1 in the last hour"
+      icon={TriangleAlert}
+      href="#alerts"
+    />
+    <KpiCard
+      variant="solid"
+      intent="warning"
+      label="Warning"
+      value="6"
+      sub="2 acknowledged"
+      icon={CircleAlert}
+      href="#alerts"
+    />
+    <KpiCard
+      variant="solid"
+      intent="info"
+      label="Info"
+      value="4"
+      sub="Maintenance tomorrow 06:00"
+      icon={Info}
+    />
+    <KpiCard
+      variant="solid"
+      label="Unknown"
+      value="1"
+      sub="An exporter stopped answering"
+      icon={CircleQuestionMark}
+    />
+  </div>
+);
+
+/**
+ * `variant="solid"`: the card filled with its intent and written in white, for a status that has to
+ * stand out from across the room, as the alert counts of a monitoring screen. A neutral card is the
+ * dark ink of the theme, light in a dark one.
+ */
+export const Solid: Story = { render: () => <SolidSeverities /> };
+
+/** The label, value and sub line of a solid card keep 4.5:1 on its fill, in every theme and accent. */
+export const SolidStaysReadableInEveryThemeAndAccent: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <SolidSeverities />,
+  play: async ({ canvasElement }) => {
+    const root = document.documentElement;
+    const saved = root.getAttribute('data-accent');
+    try {
+      for (const { id } of COSMOS_ACCENTS) {
+        root.setAttribute('data-accent', id);
+        inEachTheme(() => {
+          try {
+            const cards = canvasElement.querySelectorAll<HTMLElement>('.rounded-2xl');
+            expect(cards).toHaveLength(4);
+            for (const card of cards) {
+              const spans = [
+                ...card.querySelectorAll<HTMLElement>(
+                  'span.uppercase, span.text-3xl, span.text-xs'
+                ),
+              ];
+              expect(spans.length).toBeGreaterThanOrEqual(3);
+              for (const text of spans) expectTextContrastOnTint(text);
+            }
+          } catch (error) {
+            throw new Error(`[${id}] ${(error as Error).message}`, { cause: error });
+          }
+        });
+      }
+    } finally {
+      if (saved === null) root.removeAttribute('data-accent');
+      else root.setAttribute('data-accent', saved);
+    }
+  },
+};
+
+/** A solid link card keeps the edge of its fill under the pointer: only the lift moves. */
+export const SolidKeepsItsEdgeUnderThePointer: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <SolidSeverities />,
+  play: async ({ canvas }) => {
+    const card = canvas.getByRole('link', { name: /Critical/ });
+    const edge = getComputedStyle(card).borderTopColor;
+    await expect(edge).toBe(getComputedStyle(card).backgroundColor);
+    await userEvent.hover(card);
+    await expect(getComputedStyle(card).borderTopColor).toBe(edge);
   },
 };
 

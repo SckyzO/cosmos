@@ -7,7 +7,9 @@ import {
   endOffset,
   expectMirrored,
   expectNoHorizontalOverflow,
+  expectTextContrastOnTint,
   inDirection,
+  inEachTheme,
   keyToEnd,
   keyToStart,
   mobileViewport,
@@ -71,6 +73,39 @@ export const EveryStatus: Story = {
 };
 
 export const EveryStatusPills: Story = { args: { ...EveryStatus.args, variant: 'pills' } };
+
+/**
+ * `marks="squares"`: every status a square, warning, critical, unknown and info with a sign in it
+ * (–, !, ?, i), so the grid still reads without its colours. The legend follows.
+ */
+export const Squares: Story = { args: { marks: 'squares', attentionStrip: true } };
+
+export const EveryStatusSquares: Story = { args: { ...EveryStatus.args, marks: 'squares' } };
+
+export const SquaresChecks: Story = {
+  ...EveryStatusSquares,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const grid = canvasElement.querySelector<HTMLElement>('[role="grid"]')!;
+    const marks = [...grid.querySelectorAll<HTMLElement>('[data-mark="square"]')];
+    // One per cell with a status: ok, warn, crit, unknown, info.
+    await expect(marks).toHaveLength(5);
+    for (const mark of marks) {
+      const box = mark.getBoundingClientRect();
+      await expect(box.width).toBe(14);
+      await expect(box.height).toBe(14);
+    }
+    // OK is a plain square; each other status carries its sign, 3:1 or more on its fill.
+    const [ok, ...others] = marks;
+    await expect(ok!.querySelector('svg')).toBeNull();
+    inEachTheme(() => {
+      for (const mark of others) expectTextContrastOnTint(mark.querySelector('svg')!, 3);
+    });
+    // The legend shows the same marks.
+    const legend = canvasElement.querySelectorAll('[data-mark="square"]').length - marks.length;
+    await expect(legend).toBe(5);
+  },
+};
 
 /** `maxHeight` makes the grid scroll vertically, the column headers staying in view. */
 export const StickyHeaders: Story = { args: { maxHeight: 180 } };

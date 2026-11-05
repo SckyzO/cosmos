@@ -63,7 +63,10 @@ nothing in it is `UNKNOWN`.
   focus returns to the cell. Each cell is named like "API on par-2b: Warning", and a column with no
   entry is an empty cell. `variant="dots"` is dense, and every dot has a shape as well as a color: OK a
   filled circle, warning a diamond, critical a square, unknown a hollow ring, info a triangle. The
-  legend above the grid shows the same shapes. `variant="pills"` writes the status in each cell. The
+  legend above the grid shows the same shapes. `marks="squares"` draws every status as a 14px square
+  instead: OK plain, warning, critical, unknown and info with a sign in it (–, !, ?, i, 3:1 or more
+  on the fill), so a status still reads without its color. `variant="pills"` writes the status in
+  each cell. The
   grid scrolls in its own box when it is wider than the screen; `maxHeight` also scrolls it
   vertically. `rowHeader` names the first header cell ("Service" by default; a cluster says "Rack").
   `attentionStrip` adds a "Needs attention" strip above the grid: one chip per row that holds a

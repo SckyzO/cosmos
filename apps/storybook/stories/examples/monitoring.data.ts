@@ -37,20 +37,21 @@ type RackSpec = {
 
 /** The eight racks of Atlas, twelve nodes each: 96 nodes. */
 const RACKS: RackSpec[] = [
-  { label: 'A01', prefix: 'cn-a01', pattern: 'oooooooooooo' },
+  { label: 'A01', prefix: 'cn-a01', pattern: 'oooooooowooo' },
   { label: 'A02', prefix: 'cn-a02', pattern: 'oooooowooooo' },
   { label: 'A03', prefix: 'cn-a03', pattern: 'oooowooooooc' },
   { label: 'A04', prefix: 'cn-a04', pattern: 'oooooooooouo' },
   { label: 'B01', prefix: 'gpu-b01', pattern: 'ooocoooooooo' },
   { label: 'B02', prefix: 'gpu-b02', pattern: 'owoooooooooo' },
   { label: 'C01', prefix: 'oss-c01', pattern: 'oocwoooooooo' },
-  { label: 'C02', prefix: 'mds-c02', pattern: 'oooooooowooo' },
+  { label: 'C02', prefix: 'mds-c02', pattern: 'cooooooowooo' },
 ];
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
 /** What a probe said about the nodes that are not fine. */
 const PROBLEMS: Record<string, { message: string; latency?: number }> = {
+  'cn-a01-09': { message: 'Memory 91% used, warning at 80%', latency: 290 },
   'cn-a02-07': { message: 'Load average 97 on 64 cores for 15 minutes', latency: 640 },
   'cn-a03-05': { message: 'Memory 93% used, swapping', latency: 410 },
   'cn-a03-12': { message: 'node_exporter did not answer: context deadline exceeded' },
@@ -59,6 +60,7 @@ const PROBLEMS: Record<string, { message: string; latency?: number }> = {
   'gpu-b02-02': { message: 'GPU 5 at 86 °C, above 83 °C', latency: 120 },
   'oss-c01-03': { message: 'Lustre OST0012 is not responding' },
   'oss-c01-04': { message: '14 clients evicted in the last 5 minutes', latency: 880 },
+  'mds-c02-01': { message: 'MDT0000 of /scratch is 93% full, critical at 90%', latency: 1200 },
   'mds-c02-09': { message: 'Metadata queue at 312 requests, limit 200', latency: 950 },
 };
 
@@ -437,14 +439,15 @@ const alertsOf = (specs: AlertSpec[]): Alert[] =>
     acknowledged: acknowledged === true,
   }));
 
-// The nodes are those of the matrix: the same names, the same problems.
+// One alert per node that is not fine, on the node of the matrix that has the problem: the counts
+// of the table, the panels, the matrix and the donut are the same.
 const NODE_ALERTS: AlertSpec[] = [
   ['Critical', 'LustreOSTOffline', 'OST0012 is offline, 14 jobs stalled', 'oss-c01-03', '09:41'],
   [
     'Critical',
     'LustreSpaceCritical',
     '/scratch is 93 % full, critical at 90 %',
-    'lustre · /scratch',
+    'mds-c02-01 · /scratch',
     '11:05',
   ],
   ['Critical', 'NodeDown', 'No heartbeat for 1 h 14 min', 'cn-a03-12', '13:18'],
@@ -466,13 +469,7 @@ const NODE_ALERTS: AlertSpec[] = [
     true,
   ],
   ['Warning', 'NTPClockSkew', 'Clock 410 ms off the reference', 'mds-c02-09', '14:10'],
-  [
-    'Warning',
-    'ClusterMemoryHigh',
-    '86 % of the memory in use, warning at 80 %',
-    'cluster · 96 nodes',
-    '14:15',
-  ],
+  ['Warning', 'NodeMemoryHigh', '91 % of the memory in use, warning at 80 %', 'cn-a01-09', '14:15'],
   ['Warning', 'MemoryECCErrors', '12 corrected errors in 10 minutes', 'cn-a03-05', '14:21'],
   ['Unknown', 'ExporterDown', 'node_exporter does not answer', 'cn-a04-11', '14:02'],
 ];
@@ -538,28 +535,37 @@ const NODE_RULE = {
   UNKNOWN: ['Unknown', 'ExporterDown', 'node_exporter does not answer'],
 } as const;
 
-// One alert per node that is not fine: 616 nodes, 616 alerts, 300 of them critical, plus the three
-// above and the four informational ones. They started in the last 8 hours, after the three above,
-// which are the oldest and so lead the table.
+// One alert per node that is not fine: 616 nodes, 616 alerts, 300 of them critical, the three above
+// standing for three of the critical nodes, plus the four informational ones. They started in the
+// last 8 hours, after the three above, which are the oldest and so lead the table.
 const extremeAlerts = (): Alert[] => {
   const random = seeded(2043);
   const nodes = EXTREME_CLUSTER.checks.filter(
     (check): check is typeof check & { status: keyof typeof NODE_RULE } =>
       check.status === 'CRIT' || check.status === 'WARN' || check.status === 'UNKNOWN'
   );
-  const perNode = nodes.map((check): Alert => {
-    const [severity, name, summary] = NODE_RULE[check.status];
-    const minutes = 5 + Math.floor(random() * 8 * 60);
-    return {
-      id: `${name}:${check.id}`,
-      severity,
-      name,
-      summary: severity === 'Critical' ? `${summary} for ${minutes} min` : summary,
-      target: check.id,
-      startedAt: NOW - minutes * 60_000,
-      acknowledged: random() < 0.15,
-    };
-  });
+  // The three alerts above are three of the critical nodes: the table counts as many as the matrix.
+  const standIns = new Set(
+    nodes
+      .filter((check) => check.status === 'CRIT')
+      .slice(0, EXTREME_SPECIAL_ALERTS.length)
+      .map((check) => check.id)
+  );
+  const perNode = nodes
+    .filter((check) => !standIns.has(check.id))
+    .map((check): Alert => {
+      const [severity, name, summary] = NODE_RULE[check.status];
+      const minutes = 5 + Math.floor(random() * 8 * 60);
+      return {
+        id: `${name}:${check.id}`,
+        severity,
+        name,
+        summary: severity === 'Critical' ? `${summary} for ${minutes} min` : summary,
+        target: check.id,
+        startedAt: NOW - minutes * 60_000,
+        acknowledged: random() < 0.15,
+      };
+    });
   return sortAlerts([...alertsOf([...EXTREME_SPECIAL_ALERTS, ...INFO_ALERTS]), ...perNode]);
 };
 

@@ -4,6 +4,7 @@ export { HealthSummary, type HealthSummaryProps } from './HealthSummary';
 export { HealthCheckList, type HealthCheckListProps } from './HealthCheckList';
 export {
   HealthMatrix,
+  type HealthMatrixMarks,
   type HealthMatrixProps,
   type HealthMatrixCell,
   type HealthMatrixColumn,

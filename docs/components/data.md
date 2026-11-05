@@ -337,8 +337,8 @@ stories, screenshots and tests.
 Storybook: [Kpi Card](https://sckyzo.github.io/cosmos/?path=/docs/data-kpi-card--docs).
 
 `KpiCard` is one key figure: a `label`, a `value`, and optionally an `icon`, a `delta`, a `sub` line
-and a `chart`. Two options change how the card is drawn, and both are off by default, so a card
-that sets neither looks as it always did.
+and a `chart`. `chartPosition` and `variant` change how the card is drawn; a card that sets
+neither is the plain card.
 
 `chartPosition="end"` sets the `chart` beside the figure (the value, the delta and the sub line)
 instead of under the delta. The chart keeps its own size and is centered on the figure, at the end of
@@ -352,15 +352,19 @@ rises 2px with a soft shadow under the pointer, and rises 2px on keyboard focus,
 focus the ring stands where the shadow would). While `loading`, the figures are skeletons; when they arrive
 they fade in over 200ms, unless the card had them from the first render.
 
-`featured` is for the one figure a dashboard leads with. The card takes the tinted surface of its
-meaning, the accent for a neutral card and the intent's color for `warning` and `danger`, and its
-label, value and sub line stay readable on it in the four themes and on every accent, and the muted
-gray text inside it (a `TrendDelta`'s comparison) takes a darker shade in the light themes. Give the
-card a wider column with `className` (`lg:col-span-2`) when it leads a grid:
+`intent` is the meaning of the figure (`neutral`, `brand`, `info`, `success`, `warning`,
+`danger`). On the plain card, `variant="outline"`, a non-neutral intent takes the border, the icon
+chip and the value to its color.
+
+`variant="tinted"` is for the one figure a dashboard leads with. The card takes the tinted surface
+of its meaning, the accent for a neutral card, and its label, value and sub line stay readable on it
+in the four themes and on every accent, and the muted gray text inside it (a `TrendDelta`'s
+comparison) takes a darker shade in the light themes. Give the card a wider column with `className`
+(`lg:col-span-2`) when it leads a grid:
 
 ```tsx
 <KpiCard
-  featured
+  variant="tinted"
   label="Monthly goal"
   value="77%"
   sub="of $50 000"
@@ -370,3 +374,16 @@ card a wider column with `className` (`lg:col-span-2`) when it leads a grid:
   chartPosition="end"
 />
 ```
+
+`variant="solid"` fills the card with its intent and writes in white on it, the 600 or 700 shade of
+the palette that keeps 4.5:1 in every theme: a status that has to stand out from across the room, as
+the alert counts of a monitoring screen. A neutral solid card is the dark ink of the theme, and turns
+light with dark ink in a dark theme. Under the pointer a solid link or button card keeps the edge of
+its fill and only rises. It is for a figure and its words: a colored `delta` or `chart` does not hold
+on the fill.
+
+```tsx
+<KpiCard variant="solid" intent="danger" label="Critical" value="4" sub="+1 in the last hour" />
+```
+
+`featured` became `variant="tinted"` in 0.9.0.
