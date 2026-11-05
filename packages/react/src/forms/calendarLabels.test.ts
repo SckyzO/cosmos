@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { dayButtonName } from './calendarLabels';
+import { dayButtonName, dayPickerLabels } from './calendarLabels';
+import { CALENDAR_LABELS, type CalendarLabels } from './labels';
 
 describe('dayButtonName', () => {
   it('puts the number in front of a date that writes it as an ordinal', () => {
@@ -39,5 +40,60 @@ describe('dayButtonName', () => {
 
   it('matches a number written in another script', () => {
     expect(dayButtonName('गुरुवार, १ अक्टूबर २०२६', '१')).toBe('गुरुवार, १ अक्टूबर २०२६');
+  });
+});
+
+describe('dayPickerLabels', () => {
+  const thursday = new Date(2026, 4, 7);
+  const state = (today: boolean, selected: boolean) => ({ today, selected }) as never;
+
+  it('hands over nothing when the app set no label, so the locale keeps its own', () => {
+    expect(dayPickerLabels(CALENDAR_LABELS, {})).toEqual({});
+  });
+
+  it('hands over only the keys the app set, written from the resolved labels', () => {
+    const labels: CalendarLabels = { ...CALENDAR_LABELS, previousMonth: 'Mois précédent' };
+    const handed = dayPickerLabels(labels, { previousMonth: 'Mois précédent' });
+    expect(Object.keys(handed)).toEqual(['labelPrevious']);
+    expect(handed.labelPrevious?.(undefined)).toBe('Mois précédent');
+  });
+
+  it('names the buttons, the dropdowns, the navigation and the week numbers', () => {
+    const given = {
+      navigation: 'Navigation du mois',
+      nextMonth: 'Mois suivant',
+      monthDropdown: 'Choisir le mois',
+      yearDropdown: "Choisir l'année",
+      weekNumber: (week: number) => `Semaine ${week}`,
+      weekNumberHeader: 'Numéro de semaine',
+    };
+    const handed = dayPickerLabels({ ...CALENDAR_LABELS, ...given }, given);
+    expect(handed.labelNav?.()).toBe('Navigation du mois');
+    expect(handed.labelNext?.(undefined)).toBe('Mois suivant');
+    expect(handed.labelMonthDropdown?.()).toBe('Choisir le mois');
+    expect(handed.labelYearDropdown?.()).toBe("Choisir l'année");
+    expect(handed.labelWeekNumber?.(19)).toBe('Semaine 19');
+    expect(handed.labelWeekNumberHeader?.()).toBe('Numéro de semaine');
+  });
+
+  it('writes a day from its full date, its today and selected parts, as the button and the cell', () => {
+    const day = (date: string, { today, selected }: { today: boolean; selected: boolean }) =>
+      `${today ? "Aujourd'hui, " : ''}${date}${selected ? ', sélectionné' : ''}`;
+    const handed = dayPickerLabels({ ...CALENDAR_LABELS, day }, { day });
+    expect(handed.labelDayButton?.(thursday, state(true, true))).toBe(
+      "Aujourd'hui, Thursday, May 7th, 2026, sélectionné"
+    );
+    expect(handed.labelDayButton?.(thursday, state(false, false))).toBe('Thursday, May 7th, 2026');
+    // A cell with no `mode` is never selected.
+    expect(handed.labelGridcell?.(thursday, state(true, true))).toBe(
+      "Aujourd'hui, Thursday, May 7th, 2026"
+    );
+  });
+
+  it("lets the app's own react-day-picker labels win, and drops the keys that are not its", () => {
+    const own = { labelNext: () => 'raw', nextMonth: 'x', day: () => 'y' };
+    const handed = dayPickerLabels(CALENDAR_LABELS, { nextMonth: 'Suivant' }, own);
+    expect(handed.labelNext?.(undefined)).toBe('raw');
+    expect(Object.keys(handed)).toEqual(['labelNext']);
   });
 });
