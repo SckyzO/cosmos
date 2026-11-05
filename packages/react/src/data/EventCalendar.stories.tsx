@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { EventCalendar, type CalendarEvent, type EventCalendarProps } from './EventCalendar';
+import type { EventCalendarLabels } from './labels';
 import {
   bothDirections,
   directionBox,
@@ -104,10 +106,10 @@ export const EmptyChecks: Story = {
   },
 };
 
-/** The message is a prop, and a month with events shows none. */
+/** The message is a label, and a month with events shows none. */
 export const EmptyMessageOnlyWhenEmpty: Story = {
   tags: ['!dev', '!autodocs'],
-  args: { events: [], emptyMessage: 'Nothing planned' },
+  args: { events: [], labels: { empty: () => 'Nothing planned' } },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('status')).toHaveTextContent('Nothing planned');
     // June 2026 has no event either; the greyed days of May do not count for it.
@@ -1351,5 +1353,86 @@ export const DayMobileChecks: Story = {
       const box = item.getBoundingClientRect();
       await expect(box.right).toBeLessThanOrEqual(group.getBoundingClientRect().right + 1);
     }
+  },
+};
+
+// The words of a view that change with it: the gender of "mois", "semaine" and "jour" is why a
+// label takes the view and not a unit to fill in.
+const FRENCH_UNIT = { month: 'le mois', week: 'la semaine', day: 'le jour' } as const;
+const FRENCH_CALENDAR: EventCalendarLabels = {
+  viewSwitch: 'Affichage du calendrier',
+  month: 'Mois',
+  week: 'Semaine',
+  day: 'Jour',
+  today: "Aujourd'hui",
+  alreadyShowing: (view) => `Affiche déjà ${FRENCH_UNIT[view]} en cours`,
+  backToCurrent: (view) => `Revenir à ${FRENCH_UNIT[view]} en cours`,
+  previous: (view) =>
+    ({ month: 'Mois précédent', week: 'Semaine précédente', day: 'Jour précédent' })[view],
+  next: (view) => ({ month: 'Mois suivant', week: 'Semaine suivante', day: 'Jour suivant' })[view],
+  empty: (view) => `Aucun événement pour ${FRENCH_UNIT[view]}`,
+  more: 'de plus',
+  hiddenEvents: (hidden, day) => `+${hidden} de plus le ${day}`,
+  eventsOn: (day) => `Événements du ${day}`,
+  noEventsOnDay: 'Aucun événement',
+  schedule: (period) => `Planning de ${period}`,
+  weekDays: 'Jours de la semaine',
+  allDayEvents: 'Événements de la journée',
+  allDay: 'journée',
+  continuedFrom: ', suite de la veille',
+  continuesOn: ', se poursuit le lendemain',
+  cursorOnDay: (day) => `${day}, journée. Appuyez sur Entrée pour choisir ce jour.`,
+  cursorOnSlot: (day, time) => `${day}, ${time}. Appuyez sur Entrée pour choisir cet horaire.`,
+};
+
+/**
+ * The provider's labels name the buttons, the lists and the views, and its locale writes the dates;
+ * the calendar's own labels win over them.
+ */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <LabelsProvider locale="fr-FR" labels={{ eventCalendar: FRENCH_CALENDAR }}>
+      <EventCalendar
+        {...args}
+        locale={undefined}
+        labels={{ today: 'Ce jour' }}
+        onSlotClick={() => {}}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Mois précédent' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Mois suivant' })).toBeVisible();
+    // Its own `today` wins; the provider's `viewSwitch` names the switch.
+    await expect(canvas.getByRole('button', { name: 'Ce jour' })).toBeDisabled();
+    await expect(canvas.queryByRole('button', { name: "Aujourd'hui" })).toBeNull();
+    await expect(canvas.getByRole('radiogroup', { name: 'Affichage du calendrier' })).toBeVisible();
+    // A busy day: its button says how many events it hides, and opens their list.
+    const more = canvas.getByRole('button', { name: '+2 de plus le jeudi 7 mai 2026' });
+    await expect(more).toHaveTextContent('+2 de plus');
+    await userEvent.click(more);
+    await expect(
+      await within(document.body).findByRole('dialog', { name: 'Événements du jeudi 7 mai 2026' })
+    ).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+    // The week: the hour grid and its row of all-day events.
+    await userEvent.click(canvas.getByRole('radio', { name: 'Semaine' }));
+    await expect(canvas.getByRole('button', { name: 'Semaine précédente' })).toBeVisible();
+    await expect(canvas.getByRole('group', { name: /^Planning de / })).toBeVisible();
+    await expect(canvas.getByRole('group', { name: 'Événements de la journée' })).toBeVisible();
+    await expect(canvas.getByText('journée')).toBeInTheDocument();
+  },
+};
+
+export const EmptyTranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <LabelsProvider locale="fr-FR" labels={{ eventCalendar: FRENCH_CALENDAR }}>
+      <EventCalendar {...args} events={[]} locale={undefined} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('status')).toHaveTextContent('Aucun événement pour le mois');
   },
 };

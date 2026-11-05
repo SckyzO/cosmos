@@ -14,6 +14,7 @@ import {
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { bothDirections, endOffset, expectMirrored, directionBox } from '../storybook-helpers';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { IntegrationCard } from './IntegrationCard';
 
 const meta = {
@@ -397,5 +398,28 @@ export const LogoStatusAndActionsMirrorInRightToLeft: Story = {
         within(box).getByText(name, { exact: false }).closest('span, button')!;
       expect(endOffset(find(rtl), rtl)).toBeCloseTo(endOffset(find(ltr), ltr), 0);
     }
+  },
+};
+
+/** The status badge is the provider's word for it; the card's own labels win over the provider's. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        integrationCard: { connected: 'Connecté', error: 'Erreur', pending: 'En attente' },
+      }}
+    >
+      <IntegrationCard logo={null} name="Slack" status="connected" />
+      <IntegrationCard logo={null} name="Teams" status="pending" labels={{ pending: 'Patience' }} />
+      <IntegrationCard logo={null} name="Jira" status="available" />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Connecté')).toBeVisible();
+    await expect(canvas.getByText('Patience')).toBeVisible();
+    await expect(canvas.queryByText('En attente')).toBeNull();
+    // A word the provider leaves out stays English.
+    await expect(canvas.getByText('Available')).toBeVisible();
   },
 };

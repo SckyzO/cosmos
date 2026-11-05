@@ -10,6 +10,7 @@ import {
   inEachTheme,
   mobileViewport,
 } from '../storybook-helpers';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import type { Intent } from '../ui/intent';
 import { Countdown } from './Countdown';
 
@@ -160,12 +161,20 @@ export const Display: Story = {
   args: { variant: 'display', label: 'Doors open in' },
 };
 
-/** `labels`, `shortLabels`, `label` and `completedLabel` put it in another language. */
+/** `labels`, `label` and `completedLabel` put it in another language. */
 export const French: Story = {
   render: (args) => {
     const fr = {
-      labels: { days: 'Jours', hours: 'Heures', minutes: 'Minutes', seconds: 'Secondes' },
-      shortLabels: { days: 'j', hours: 'h', minutes: 'min', seconds: 's' },
+      labels: {
+        days: 'Jours',
+        hours: 'Heures',
+        minutes: 'Minutes',
+        seconds: 'Secondes',
+        shortDays: 'j',
+        shortHours: 'h',
+        shortMinutes: 'min',
+        shortSeconds: 's',
+      },
     };
     return (
       <div className="space-y-4">
@@ -604,5 +613,61 @@ export const PartsReadLeftToRightInRightToLeft: Story = {
       for (const clock of within(box).getAllByText('2d 04:15:30')) expectReadsLeftToRight(clock);
       expectReadsLeftToRight(within(box).getByText('2d 4h'));
     }
+  },
+};
+
+/** The provider words the captions, the suffixes and the lines around the count. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        countdown: {
+          days: 'Jours',
+          hours: 'Heures',
+          minutes: 'Minutes',
+          seconds: 'Secondes',
+          shortDays: 'j',
+          shortHours: 'h',
+          shortMinutes: 'min',
+          shortSeconds: 's',
+          ends: 'Se termine dans',
+          completed: 'Terminé',
+        },
+      }}
+    >
+      <Countdown target={TARGET} now={NOW} variant="tiles" />
+      <p>
+        <Countdown target={TARGET} now={NOW} variant="inline" />
+      </p>
+      <p>
+        <Countdown target={NOW - SECOND} now={NOW} variant="inline" />
+      </p>
+      <p>
+        <Countdown target={TARGET} now={NOW} variant="compact" />
+      </p>
+      <p>
+        <Countdown
+          target={TARGET}
+          now={NOW}
+          variant="inline"
+          labels={{ ends: 'Fin dans', shortDays: 'jours' }}
+        />
+      </p>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Jours')).toBeVisible();
+    await expect(canvas.getByText('Heures')).toBeVisible();
+    await expect(canvas.getByText('Secondes')).toBeVisible();
+    const timers = canvas.getAllByRole('timer');
+    await expect(timers[1]).toHaveTextContent('Se termine dans 2j 4h');
+    await expect(timers[2]).toHaveTextContent('Terminé');
+    // The count read aloud takes the captions.
+    await expect(
+      canvas.getByRole('timer', { name: '2 jours 4 heures 15 minutes 30 secondes' })
+    ).toBeInTheDocument();
+    // Its own labels win over the provider's, the others stay the provider's.
+    await expect(timers[4]).toHaveTextContent('Fin dans 2jours 4h');
   },
 };
