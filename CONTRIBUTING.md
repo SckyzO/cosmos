@@ -382,8 +382,8 @@ labels)`: the defaults, then the app's `LabelsProvider`, then the prop. A text t
   separate text prop (`closeLabel`, `emptyMessage`) is not added: the key goes in `labels`. Text the
   app passes in (`title`, `items`) stays a prop and wins over the label that stands in for it.
   `repo-policy.spec.ts` refuses English written in place (JSX text, `aria-label`, `title`,
-  `placeholder`, the default of a text prop) outside `TEXT_DEFERRED`, the files still to translate,
-  which only shrinks; a word that is not text goes in `TEXT_ALLOWED` with the reason.
+  `placeholder`, the default of a text prop) in both packages; a word that is not text goes in
+  `TEXT_ALLOWED` with the reason. `charts` keeps the same rule with its own `ChartLabelsProvider`.
 - **One sidebar toggle: `SidebarToggle`** (`layout/SidebarToggle.tsx`). The Topbar renders it as a
   `hamburger`, the bottom of the Sidebar as a `panel` row, and a custom header, a Topbar's
   `startActions` or the Sidebar's `footer` can place one more. `Shell` owns the collapsed state and
