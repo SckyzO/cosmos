@@ -13,8 +13,13 @@ export type RecordPagerLabels = {
   next?: string;
   /** The "Back to list" link. Default `Back to list`. */
   back?: string;
-  /** The position, "12 of 340" by default. Receives the 1-indexed position and the total. */
-  count?: (position: number, total: number) => ReactNode;
+  /**
+   * The position, "12 of 340" by default. Receives the 1-indexed position and the total as nodes,
+   * already set apart (medium weight, primary color) as in the English default: put them in your
+   * own words, `(position, total) => <>{position} sur {total}</>`, and they keep that emphasis in
+   * any language.
+   */
+  count?: (position: ReactNode, total: ReactNode) => ReactNode;
 };
 
 export type RecordPagerHotkeys = {
@@ -76,6 +81,12 @@ const STEP_SIZE: Record<RecordPagerVariant, string> = {
   compact: 'size-ctrl-32',
 };
 
+const defaultCount = (position: ReactNode, total: ReactNode) => (
+  <>
+    {position} of {total}
+  </>
+);
+
 export const RecordPager = ({
   position,
   total,
@@ -94,6 +105,7 @@ export const RecordPager = ({
   const previousLabel = labels?.previous ?? `Previous ${noun}`;
   const nextLabel = labels?.next ?? `Next ${noun}`;
   const backLabel = labels?.back ?? 'Back to list';
+  const count = labels?.count ?? defaultCount;
   const name = ariaLabel ?? `${noun.charAt(0).toUpperCase()}${noun.slice(1)} navigation`;
 
   // A side with nowhere to go is a disabled button even in link mode: a disabled `<a>` would still
@@ -202,13 +214,9 @@ export const RecordPager = ({
           )}
         >
           <bdi>
-            {labels?.count ? (
-              labels.count(position, total)
-            ) : (
-              <>
-                <span className={strong}>{position}</span> of{' '}
-                <span className={strong}>{total}</span>
-              </>
+            {count(
+              <span className={strong}>{position}</span>,
+              <span className={strong}>{total}</span>
             )}
           </bdi>
         </span>
