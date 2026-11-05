@@ -160,20 +160,31 @@ const countOf = (alerts: readonly Alert[], severity: AlertSeverity) =>
 
 // ── Small pieces ─────────────────────────────────────────────────────────────
 
-// Below `sm` the matrix gets a height of its own, so the page keeps the panels, the gauges and
-// the alerts in reach instead of one long grid. The matrix scrolls in its own box either way.
-const PHONE = '(max-width: 639px)';
-const subscribePhone = (notify: () => void) => {
-  const query = window.matchMedia(PHONE);
-  query.addEventListener('change', notify);
-  return () => query.removeEventListener('change', notify);
-};
-const usePhone = () =>
+// Whether the window matches a media query, kept in step with it.
+const useMatches = (query: string) =>
   useSyncExternalStore(
-    subscribePhone,
-    () => window.matchMedia(PHONE).matches,
+    (notify) => {
+      const list = window.matchMedia(query);
+      list.addEventListener('change', notify);
+      return () => list.removeEventListener('change', notify);
+    },
+    () => window.matchMedia(query).matches,
     () => false
   );
+
+// Below `sm` the matrix gets a height of its own, so the page keeps the panels, the gauges and
+// the alerts in reach instead of one long grid. The matrix scrolls in its own box either way.
+const usePhone = () => useMatches('(max-width: 639px)');
+
+// The alerts table fits its columns from a 1280px window with the sidebar open; below it, the
+// start time goes, and the state and the action stay pinned at the end while the rest scrolls.
+const useNarrow = () => useMatches('(max-width: 1279px)');
+
+// A rule name is one word in camel case: it breaks between its words, never inside one.
+const ruleName = (name: string) =>
+  name
+    .split(/(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])/)
+    .flatMap((part, i) => (i === 0 ? [part] : [<wbr key={i} />, part]));
 
 // The line at the end of a card's header (`SectionCard`'s `action`): a scope, a count, a freshness.
 const Aside = ({ children }: { children: ReactNode }) => (
@@ -197,43 +208,35 @@ const PAGES = [
   { label: 'Settings', icon: Settings, group: 'Admin' },
 ] as const;
 
-// The three newest alerts, unread: what the bell counts.
-const NOTIFICATIONS = [
-  {
-    id: 'ecc',
-    intent: 'warning',
-    title: 'MemoryECCErrors on cn-a03-05',
-    subtitle: '12 corrected errors in 10 minutes',
-    time: '11 minutes ago',
-  },
-  {
-    id: 'memory',
-    intent: 'warning',
-    title: 'ClusterMemoryHigh',
-    subtitle: '86 % of the memory in use, warning at 80 %',
-    time: '17 minutes ago',
-  },
-  {
-    id: 'xid',
-    intent: 'danger',
-    title: 'GPUXidError on gpu-b01-04',
-    subtitle: 'Xid 79: GPU fell off the bus',
-    time: '27 minutes ago',
-  },
-] as const;
+// The critical alerts, newest first: what the bell counts, as the Critical panel and the badge of the
+// Alerts item do. Its panel lists the five newest.
+const notificationsOf = (alerts: readonly Alert[]) =>
+  alerts
+    .filter((alert) => alert.severity === 'Critical')
+    .sort((a, b) => b.startedAt - a.startedAt)
+    .map((alert) => ({
+      id: alert.id,
+      intent: 'danger' as const,
+      title: `${alert.name} on ${alert.target}`,
+      subtitle: alert.summary,
+      time: `${since(alert.startedAt)} ago`,
+    }));
+
+type Notification = ReturnType<typeof notificationsOf>[number];
 
 // The Topbar: the menu button and the page title, the search in the middle, the bell and the
-// profile at the end. Nothing is monitored yet when `unread` is 0 and there is no alert badge.
+// profile at the end. Nothing is monitored yet when there is no notification and no alert badge.
 const Frame = ({
-  unread,
+  notifications,
   alertBadge,
   children,
 }: {
-  unread: number;
+  notifications: readonly Notification[];
   alertBadge?: number;
   children: ReactNode;
 }) => {
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const unread = notifications.length;
   return (
     <>
       <Shell
@@ -264,7 +267,7 @@ const Frame = ({
                       />
                     ) : (
                       <NotificationsPanel.List>
-                        {NOTIFICATIONS.map((notification) => (
+                        {notifications.slice(0, 5).map((notification) => (
                           <NotificationsPanel.Item key={notification.id} unread {...notification} />
                         ))}
                       </NotificationsPanel.List>
@@ -353,13 +356,13 @@ const Frame = ({
 
 // ── The overview ─────────────────────────────────────────────────────────────
 
-// Each severity has its icon and its meaning: the panels of a severity that needs a look take
-// the border and the figure of their intent.
+// Each severity has its icon and its meaning: the panels are filled with it, so the counts of the
+// screen read from across the room.
 const SEVERITY_PANEL = {
   Critical: { icon: TriangleAlert, intent: 'danger' },
   Warning: { icon: CircleAlert, intent: 'warning' },
-  Info: { icon: Info, intent: 'neutral', iconIntent: 'info' },
-  Unknown: { icon: CircleQuestionMark, intent: 'neutral', iconIntent: 'neutral' },
+  Info: { icon: Info, intent: 'info' },
+  Unknown: { icon: CircleQuestionMark, intent: 'neutral' },
 } as const;
 
 // Four panels, one per severity, each a link to the alerts table filtered on it. Without
@@ -394,8 +397,8 @@ const SeverityPanels = ({
         sub={loading ? '\u00A0' : stale ? STALE_TEXT : notes?.[severity]}
         loading={loading}
         {...SEVERITY_PANEL[severity]}
-        // No border or figure in the color of a severity before there is a count to give it.
-        {...(loading ? { intent: 'neutral' as const } : {})}
+        // No fill in the color of a severity before there is a count to give it.
+        {...(loading ? { intent: 'neutral' as const } : { variant: 'solid' as const })}
         {...(onPick
           ? {
               href: `#${tableId}`,
@@ -487,6 +490,8 @@ const Nodes = ({
       rows={cluster.rows}
       // A rack is a row and a node a column: the first header says so.
       rowHeader="Rack"
+      // Squares, each status with its sign: the grid reads without its colors.
+      marks="squares"
       // The racks with a problem, worst first; picking one scrolls its row into view.
       attentionStrip
       maxHeight={extreme ? 480 : phone ? 320 : undefined}
@@ -590,7 +595,7 @@ const ALERT_COLUMNS: ColumnDef<Alert>[] = [
     render: (alert) => (
       <span className="block min-w-0">
         <span className="block font-mono text-xs font-semibold [overflow-wrap:anywhere] text-[var(--color-text-primary)]">
-          <bdi>{alert.name}</bdi>
+          <bdi>{ruleName(alert.name)}</bdi>
         </span>
         <span className="block text-xs text-[var(--color-text-secondary)]">
           <bdi>{alert.summary}</bdi>
@@ -661,51 +666,66 @@ const AlertsTable = ({
   titleId: string;
   ref: Ref<HTMLDivElement>;
   headingRef: Ref<HTMLHeadingElement>;
-}) => (
-  <div ref={ref} className="scroll-mt-6">
-    <h2
-      id={titleId}
-      ref={headingRef}
-      // Focused by the panels above, so the keyboard lands on the table they lead to.
-      tabIndex={-1}
-      className="focus-visible:focus-indicator m-0 mb-3 rounded-sm text-base font-semibold text-[var(--color-text-primary)]"
-    >
-      Alerts
-    </h2>
-    <DataTable
-      rows={alerts}
-      columns={ALERT_COLUMNS}
-      rowKey={(alert) => alert.id}
-      pageSize={11}
-      aria-labelledby={titleId}
-      filterTabs={{
-        columnKey: 'severity',
-        allCount: alerts.length,
-        options: ALERT_SEVERITIES.map((severity) => ({
-          value: severity,
-          label: severity,
-          count: countOf(alerts, severity),
-        })),
-      }}
-      filters={filters}
-      onFiltersChange={onFiltersChange}
-      renderRowAction={(alert) => {
-        const action = alert.acknowledged ? 'Unack' : 'Ack';
-        return (
-          <RowActionButton
-            hideChevron
-            // The name starts with the word on the button, and says which alert it is for.
-            aria-label={`${action} ${alert.name} on ${alert.target}`}
-            onClick={() => onToggleAcknowledged(alert.id)}
-          >
-            {action}
-          </RowActionButton>
-        );
-      }}
-      mobileLayout="cards"
-    />
-  </div>
-);
+}) => {
+  const narrow = useNarrow();
+  // Below 1280px the state, and the action column after it, stay pinned at the end: Ack stays in
+  // view while the rest scrolls sideways. Above, the table fits and pins nothing.
+  const columns = useMemo(
+    () =>
+      narrow
+        ? ALERT_COLUMNS.map((column) =>
+            column.key === 'state' ? { ...column, pin: 'end' as const } : column
+          )
+        : ALERT_COLUMNS,
+    [narrow]
+  );
+  return (
+    <div ref={ref} className="scroll-mt-6">
+      <h2
+        id={titleId}
+        ref={headingRef}
+        // Focused by the panels above, so the keyboard lands on the table they lead to.
+        tabIndex={-1}
+        className="focus-visible:focus-indicator m-0 mb-3 rounded-sm text-base font-semibold text-[var(--color-text-primary)]"
+      >
+        Alerts
+      </h2>
+      <DataTable
+        rows={alerts}
+        columns={columns}
+        rowKey={(alert) => alert.id}
+        pageSize={11}
+        aria-labelledby={titleId}
+        columnVisibility={{ started: !narrow }}
+        filterTabs={{
+          columnKey: 'severity',
+          allCount: alerts.length,
+          options: ALERT_SEVERITIES.map((severity) => ({
+            value: severity,
+            label: severity,
+            count: countOf(alerts, severity),
+          })),
+        }}
+        filters={filters}
+        onFiltersChange={onFiltersChange}
+        renderRowAction={(alert) => {
+          const action = alert.acknowledged ? 'Unack' : 'Ack';
+          return (
+            <RowActionButton
+              hideChevron
+              // The name starts with the word on the button, and says which alert it is for.
+              aria-label={`${action} ${alert.name} on ${alert.target}`}
+              onClick={() => onToggleAcknowledged(alert.id)}
+            >
+              {action}
+            </RowActionButton>
+          );
+        }}
+        mobileLayout="cards"
+      />
+    </div>
+  );
+};
 
 // ── Temperatures and jobs ────────────────────────────────────────────────────
 
@@ -1189,7 +1209,7 @@ const MonitoringScreen = ({ state = 'content', onRetry }: MonitoringScreenProps)
   const alerts = state === 'extreme' ? EXTREME_ALERTS : ALERTS;
   return (
     <Frame
-      unread={noData ? 0 : NOTIFICATIONS.length}
+      notifications={noData ? [] : notificationsOf(alerts)}
       alertBadge={noData ? undefined : countOf(alerts, 'Critical')}
     >
       {state === 'empty' ? (
@@ -1337,12 +1357,12 @@ export const ContentShowsTheScreen: Story = {
     const grid = canvas.getByRole('grid', { name: 'Nodes by rack' });
     await expect(within(grid).getAllByRole('rowheader')).toHaveLength(8);
     await expect(canvas.getByRole('columnheader', { name: 'Rack' })).toBeVisible();
-    // The strip lists the racks with a problem: six of the eight.
+    // The strip lists the racks with a problem: seven of the eight.
     await expect(
       within(canvas.getByRole('list', { name: 'Needs attention' })).getAllByRole('button')
-    ).toHaveLength(6);
+    ).toHaveLength(7);
     await expect(
-      canvas.getByLabelText('96 nodes: 87 OK, 5 warning, 3 critical, 1 unknown')
+      canvas.getByLabelText('96 nodes: 85 OK, 6 warning, 4 critical, 1 unknown')
     ).toBeVisible();
 
     // The alerts: eleven rows of the fifteen, the filter tabs with their counts.
@@ -1458,7 +1478,7 @@ export const TopbarHasSearchBellAndProfile: Story = {
     await expect(bar.getByText('Cluster overview')).toBeVisible();
     const search = bar.getByRole('button', { name: /^Search nodes, alerts, jobs/ });
     await expect(search).toHaveTextContent(/Ctrl K|⌘K/);
-    await expect(bar.getByRole('button', { name: 'Notifications, 3' })).toBeVisible();
+    await expect(bar.getByRole('button', { name: 'Notifications, 4' })).toBeVisible();
     await expect(bar.getByRole('button', { name: /Maya Kowalski/ })).toBeVisible();
     // The roll-up badge is gone from the bar.
     await expect(bar.queryByText(/Degraded|Major outage/)).toBeNull();
@@ -1475,10 +1495,16 @@ export const TopbarHasSearchBellAndProfile: Story = {
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(body().queryByRole('dialog')).toBeNull());
 
-    // The bell lists the three unread alerts.
-    await userEvent.click(bar.getByRole('button', { name: 'Notifications, 3' }));
-    await expect(await body().findByText('GPUXidError on gpu-b01-04')).toBeVisible();
-    await expect(body().getByText('MemoryECCErrors on cn-a03-05')).toBeVisible();
+    // The bell lists the four critical alerts, as many as the Critical panel counts.
+    await userEvent.click(bar.getByRole('button', { name: 'Notifications, 4' }));
+    await expect(await body().findByText('GPUXidError on gpu-b01-04 · GPU 3')).toBeVisible();
+    for (const title of [
+      'NodeDown on cn-a03-12',
+      'LustreSpaceCritical on mds-c02-01 · /scratch',
+      'LustreOSTOffline on oss-c01-03',
+    ]) {
+      await expect(body().getByText(title)).toBeVisible();
+    }
     await userEvent.keyboard('{Escape}');
   },
 };
@@ -1642,7 +1668,7 @@ export const ExtremeContentHoldsTogether: Story = {
   play: async ({ canvas }) => {
     // Four-digit counts in the panels, from the 616 alerts of the 2,048 nodes.
     const panels = canvas.getByRole('region', { name: 'Alerts by severity' });
-    await expect(within(panels).getByRole('link', { name: /^Critical\s*303/ })).toBeVisible();
+    await expect(within(panels).getByRole('link', { name: /^Critical\s*300/ })).toBeVisible();
     await expect(within(panels).getByRole('link', { name: /^Unknown\s*102/ })).toBeVisible();
     await expect(canvas.getByRole('tab', { name: /^All 6\d\d$/ })).toBeVisible();
 
