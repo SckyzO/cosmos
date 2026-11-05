@@ -22,6 +22,7 @@ import {
   type CosmosRadius,
   type CosmosTextSize,
 } from './appearance';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const base: CustomizerValue = { ...CUSTOMIZER_DEFAULT_VALUE };
 
@@ -575,5 +576,43 @@ export const ScrimIsDimByDefault: Story = {
       colour: themeColor('--color-scrim-dim'),
       filter: 'none',
     });
+  },
+};
+
+/** The provider writes the panel's texts and the names of the options, and the customizer's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <LabelsProvider
+      labels={{
+        customizer: {
+          title: 'Personnaliser',
+          subtitle: "Les changements s'appliquent aussitôt.",
+          reset: 'Réinitialiser',
+          copyConfig: 'Copier la configuration',
+          theme: 'Thème',
+          layoutVertical: 'Verticale',
+          layoutHorizontal: 'Horizontale',
+          directionLtr: 'De gauche à droite',
+          directionRtl: 'De droite à gauche',
+        },
+        appearance: { themeLight: 'Clair', radiusLarge: 'Grand' },
+      }}
+    >
+      <Customizer {...args} labels={{ reset: 'Remettre' }} />
+    </LabelsProvider>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog', { name: 'Personnaliser' });
+    const scope = within(dialog);
+    await expect(scope.getByText("Les changements s'appliquent aussitôt.")).toBeVisible();
+    await expect(scope.getByText('Thème')).toBeVisible();
+    await expect(scope.getByText('Clair')).toBeVisible();
+    await expect(scope.getByText('Verticale')).toBeVisible();
+    await expect(scope.getByText('De gauche à droite')).toBeVisible();
+    await expect(scope.getByRole('button', { name: 'Copier la configuration' })).toBeVisible();
+    // The customizer's own label wins over the provider's.
+    await expect(scope.getByRole('button', { name: 'Remettre' })).toBeVisible();
+    await expect(scope.queryByRole('button', { name: 'Réinitialiser' })).toBeNull();
   },
 };

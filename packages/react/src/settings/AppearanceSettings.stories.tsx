@@ -18,6 +18,7 @@ import {
 } from './appearance';
 import { keyToEnd, mobileViewport } from '../storybook-helpers';
 import { tokenMs } from '../storybook-motion';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Settings/Appearance Settings',
@@ -40,7 +41,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 export const CustomLabels: Story = {
-  args: { themeLabel: 'Color scheme', accentLabel: 'Highlight color' },
+  args: { labels: { theme: 'Color scheme', accent: 'Highlight color' } },
 };
 
 /** `themes` / `accents` narrow the choice, e.g. dark themes and cool accents only. */
@@ -381,5 +382,77 @@ export const ReducedMotionZeroesTheDurations: Story = {
         else root.setAttribute(name!, value);
       }
     }
+  },
+};
+
+/** The provider writes the headings and the names of the options, and the settings' own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        appearanceSettings: {
+          theme: 'Thème',
+          accent: "Couleur d'accent",
+          font: 'Police',
+          textSize: 'Taille du texte',
+          density: 'Densité',
+          motion: 'Animations',
+        },
+        appearance: {
+          themeLight: 'Clair',
+          themeSand: 'Sable',
+          themeDark: 'Sombre',
+          themeDeepBlue: 'Bleu profond',
+          themeSystem: 'Système',
+          accentTeal: 'Sarcelle',
+          fontSystem: 'Système',
+          textSizeLarge: 'Grand',
+          densityCompact: 'Compact',
+          motionReduced: 'Réduites',
+        },
+      }}
+    >
+      <div data-testid="provider">
+        <AppearanceSettings
+          theme="light"
+          accent="blue"
+          onThemeChange={fn()}
+          onAccentChange={fn()}
+          onFontChange={fn()}
+          onTextSizeChange={fn()}
+          onDensityChange={fn()}
+          onMotionChange={fn()}
+          themes={[COSMOS_SYSTEM_THEME, ...COSMOS_THEMES]}
+        />
+      </div>
+      <div data-testid="own">
+        <AppearanceSettings
+          theme="light"
+          accent="blue"
+          onThemeChange={fn()}
+          onAccentChange={fn()}
+          labels={{ theme: 'Apparence' }}
+        />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const provider = within(canvas.getByTestId('provider'));
+    for (const text of [
+      'Thème',
+      "Couleur d'accent",
+      'Police',
+      'Taille du texte',
+      'Densité',
+      'Animations',
+    ])
+      await expect(provider.getByText(text)).toBeVisible();
+    for (const text of ['Clair', 'Sable', 'Sombre', 'Bleu profond', 'Réduites', 'Grand', 'Compact'])
+      await expect(provider.getByText(text)).toBeVisible();
+    await expect(provider.getAllByText('Système').length).toBeGreaterThan(0);
+    // The settings' own label wins over the provider's.
+    await expect(within(canvas.getByTestId('own')).getByText('Apparence')).toBeVisible();
+    await expect(within(canvas.getByTestId('own')).queryByText('Thème')).toBeNull();
   },
 };
