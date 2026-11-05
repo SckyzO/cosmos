@@ -644,15 +644,13 @@ const ALERT_COLUMNS: ColumnDef<Alert>[] = [
 ];
 
 // The alerts, by severity and the oldest first, eleven to a page: the four informational ones are
-// behind them, and under their own tab. A click on a panel above sets the filter of the tabs and
-// moves the focus to the card's title. While a critical alert fires and no one has acknowledged
-// it, the card is the one the page is about: the danger halo, and the count by the title.
+// behind them, and under their own tab. A click on a panel above sets the filter of the tabs.
 const AlertsTable = ({
   alerts,
   filters,
   onFiltersChange,
   onToggleAcknowledged,
-  id,
+  titleId,
   ref,
   headingRef,
 }: {
@@ -660,68 +658,54 @@ const AlertsTable = ({
   filters: Record<string, Set<string>>;
   onFiltersChange: (filters: Record<string, Set<string>>) => void;
   onToggleAcknowledged: (id: string) => void;
-  /** Where the panels above lead. */
-  id: string;
+  titleId: string;
   ref: Ref<HTMLDivElement>;
   headingRef: Ref<HTMLHeadingElement>;
-}) => {
-  const firing = alerts.filter(
-    (alert) => alert.severity === 'Critical' && !alert.acknowledged
-  ).length;
-  return (
-    <div id={id} ref={ref} className="scroll-mt-6">
-      <SectionCard
-        as="h2"
-        size="md"
-        title="Alerts"
-        titleRef={headingRef}
-        intent={firing > 0 ? 'danger' : 'neutral'}
-        halo={firing > 0}
-        badge={
-          firing > 0 ? (
-            <Badge size="sm" intent="danger">
-              {`${grouped(firing)} critical firing`}
-            </Badge>
-          ) : undefined
-        }
-        flush
-      >
-        <DataTable
-          rows={alerts}
-          columns={ALERT_COLUMNS}
-          rowKey={(alert) => alert.id}
-          pageSize={11}
-          aria-label="Alert list"
-          filterTabs={{
-            columnKey: 'severity',
-            allCount: alerts.length,
-            options: ALERT_SEVERITIES.map((severity) => ({
-              value: severity,
-              label: severity,
-              count: countOf(alerts, severity),
-            })),
-          }}
-          filters={filters}
-          onFiltersChange={onFiltersChange}
-          renderRowAction={(alert) => {
-            const action = alert.acknowledged ? 'Unack' : 'Ack';
-            return (
-              <RowActionButton
-                hideChevron
-                // The name starts with the word on the button, and says which alert it is for.
-                aria-label={`${action} ${alert.name} on ${alert.target}`}
-                onClick={() => onToggleAcknowledged(alert.id)}
-              >
-                {action}
-              </RowActionButton>
-            );
-          }}
-          mobileLayout="cards"
-        />
-      </SectionCard>
-    </div>
-  );
-};
+}) => (
+  <div ref={ref} className="scroll-mt-6">
+    <h2
+      id={titleId}
+      ref={headingRef}
+      // Focused by the panels above, so the keyboard lands on the table they lead to.
+      tabIndex={-1}
+      className="focus-visible:focus-indicator m-0 mb-3 rounded-sm text-base font-semibold text-[var(--color-text-primary)]"
+    >
+      Alerts
+    </h2>
+    <DataTable
+      rows={alerts}
+      columns={ALERT_COLUMNS}
+      rowKey={(alert) => alert.id}
+      pageSize={11}
+      aria-labelledby={titleId}
+      filterTabs={{
+        columnKey: 'severity',
+        allCount: alerts.length,
+        options: ALERT_SEVERITIES.map((severity) => ({
+          value: severity,
+          label: severity,
+          count: countOf(alerts, severity),
+        })),
+      }}
+      filters={filters}
+      onFiltersChange={onFiltersChange}
+      renderRowAction={(alert) => {
+        const action = alert.acknowledged ? 'Unack' : 'Ack';
+        return (
+          <RowActionButton
+            hideChevron
+            // The name starts with the word on the button, and says which alert it is for.
+            aria-label={`${action} ${alert.name} on ${alert.target}`}
+            onClick={() => onToggleAcknowledged(alert.id)}
+          >
+            {action}
+          </RowActionButton>
+        );
+      }}
+      mobileLayout="cards"
+    />
+  </div>
+);
 
 // ── Temperatures and jobs ────────────────────────────────────────────────────
 
@@ -1047,7 +1031,7 @@ const Overview = ({ state, onRetry }: { state: State; onRetry?: () => void }) =>
           <AlertsTable
             ref={tableRef}
             headingRef={headingRef}
-            id={titleId}
+            titleId={titleId}
             alerts={rows}
             filters={filters}
             onFiltersChange={setFilters}
@@ -1141,16 +1125,14 @@ const LoadingPage = () => (
           <DonutChart series={[]} labels={[]} loading height={220} ariaLabel="Node states" />
         </SectionCard>
       </div>
-      <SectionCard as="h2" size="md" title="Alerts" flush>
-        <DataTable
-          rows={[]}
-          columns={ALERT_COLUMNS}
-          rowKey={(alert) => alert.id}
-          loading
-          loadingRows={5}
-          aria-label="Alert list"
-        />
-      </SectionCard>
+      <DataTable
+        rows={[]}
+        columns={ALERT_COLUMNS}
+        rowKey={(alert) => alert.id}
+        loading
+        loadingRows={5}
+        aria-label="Alerts"
+      />
       <div className="flex flex-wrap items-stretch gap-6">
         <Temperatures temps={INLET_TEMPS} loading />
         <Jobs jobs={JOBS} stalledOn="" loading />
@@ -1364,7 +1346,7 @@ export const ContentShowsTheScreen: Story = {
     ).toBeVisible();
 
     // The alerts: eleven rows of the fifteen, the filter tabs with their counts.
-    const table = canvas.getByRole('table', { name: 'Alert list' });
+    const table = canvas.getByRole('table', { name: 'Alerts' });
     await expect(within(table).getAllByRole('row')).toHaveLength(12);
     for (const tab of ['All 15', 'Critical 4', 'Warning 6', 'Info 4', 'Unknown 1']) {
       await expect(canvas.getByRole('tab', { name: tab })).toBeVisible();
@@ -1534,7 +1516,7 @@ export const AlertTabsShowOneSeverity: Story = {
   tags: ['!dev', '!autodocs'],
   args: {},
   play: async ({ canvas }) => {
-    const table = canvas.getByRole('table', { name: 'Alert list' });
+    const table = canvas.getByRole('table', { name: 'Alerts' });
     await expect(severitiesOf(table)).toHaveLength(11);
     await expect(severitiesOf(table)).not.toContain('Info');
 
@@ -1567,7 +1549,7 @@ export const PanelFiltersTheAlerts: Story = {
       'aria-selected',
       'true'
     );
-    const table = canvas.getByRole('table', { name: 'Alert list' });
+    const table = canvas.getByRole('table', { name: 'Alerts' });
     await expect(severitiesOf(table)).toEqual(Array(6).fill('Warning'));
     await expect(window.location.hash).toBe(hash);
     await expect(document.activeElement).toBe(
@@ -1679,7 +1661,7 @@ export const ExtremeContentHoldsTogether: Story = {
     await expect(box.scrollWidth).toBeGreaterThan(box.clientWidth);
 
     // The long alert wraps inside its cell, the long target is cut, the page does not widen.
-    const table = canvas.getByRole('table', { name: 'Alert list' });
+    const table = canvas.getByRole('table', { name: 'Alerts' });
     await expect(
       within(table).getByText(/^atlas-MDT0000 lost quorum after the 03:12 power-feed failover/)
     ).toBeVisible();
