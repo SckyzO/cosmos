@@ -179,12 +179,14 @@ internal: true }`). `onSubmit(text, mode)` receives the selected mode's `value`;
   it gets the text alone, as before. `mode` / `defaultMode` / `onModeChange` work as on other
   fields, and a mode may carry its own `placeholder` and `submitLabel`. An `internal` mode tints
   the field and the submit button like `variant="internal"` tints a comment, with a lock and the
-  line `internalNotice` ("Internal note: only your team sees this."), announced when the mode
-  changes. `modeLabel` names the control.
+  line `labels.internalNotice` ("Internal note: only your team sees this."), announced when the
+  mode changes. `labels.modeLabel` names the control.
 - `time` is a node, as in `Timeline`: a `RelativeTime`, a `<time>` or your own text.
 - Every text can be translated: `labels` on `CommentThread` reaches all its comments (a
-  comment's own `labels` win), `emptyTitle` and `label` on the thread, and the composer's own
-  `label`, `placeholder`, `submitLabel` and `cancelLabel`.
+  comment's own `labels` win), `emptyTitle` and `label` on the thread, and on the composer its
+  `label` and its `labels` (`placeholder`, `submit`, `cancel`, `modeLabel`, `internalNotice`). The
+  provider has a key for each: `comment`, `commentThread` (the list's name and the empty title) and
+  `commentComposer`.
 
 ## Notifications
 
