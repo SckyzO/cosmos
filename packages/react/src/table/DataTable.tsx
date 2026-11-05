@@ -207,8 +207,6 @@ export type DataTableProps<T> = {
   searchValue?: string;
   defaultSearchValue?: string;
   onSearchChange?: (value: string) => void;
-  /** Placeholder of the search field. Default `labels.searchPlaceholder`, `'Search…'`. */
-  searchPlaceholder?: string;
 
   /**
    * Names the table ("Recent alerts"). While the rows scroll, the scrolling area is a region
@@ -451,7 +449,6 @@ export const DataTable = <T,>({
   searchValue: searchValueProp,
   defaultSearchValue,
   onSearchChange,
-  searchPlaceholder,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
   labels: ownLabels,
@@ -974,7 +971,7 @@ export const DataTable = <T,>({
         dir="auto"
         value={searchValue}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder={searchPlaceholder ?? labels.searchPlaceholder}
+        placeholder={labels.searchPlaceholder}
         aria-label={labels.search}
         className="focus:field-focus h-full w-full rounded-lg border border-gray-200 bg-white ps-9 pe-9 text-sm transition-colors placeholder:text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
       />

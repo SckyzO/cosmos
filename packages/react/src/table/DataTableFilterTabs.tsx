@@ -15,8 +15,6 @@ export type DataTableFilterTabsConfig = {
   /** `key` of the column the tabs filter. */
   columnKey: string;
   options: DataTableFilterTabOption[];
-  /** Label of the tab that clears the column's filter. Default `labels.filterAll`, "All". */
-  allLabel?: ReactNode;
   /** Count of the "All" tab. */
   allCount?: number;
 };
@@ -56,7 +54,7 @@ export const DataTableFilterTabsStrip = ({
   onSelect: (value: string | undefined) => void;
   labels: DataTableLabels;
 }) => {
-  const { options, allLabel, allCount } = tabs;
+  const { options, allCount } = tabs;
   let active = '';
   if (!selected || selected.size === 0) active = ALL;
   else if (selected.size === 1) {
@@ -71,7 +69,7 @@ export const DataTableFilterTabsStrip = ({
     >
       <Tabs.List className="px-[var(--cosmos-table-inset,1rem)]">
         <Tabs.Trigger value={ALL}>
-          {allLabel ?? labels.filterAll}
+          {labels.filterAll}
           {allCount !== undefined && <Count active={active === ALL}>{allCount}</Count>}
         </Tabs.Trigger>
         {options.map((o) => (
