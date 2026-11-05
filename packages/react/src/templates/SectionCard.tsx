@@ -286,8 +286,7 @@ export type SectionCardProps = {
   onRetry?: () => void;
   /** There is nothing to show: a compact `EmptyState` replaces the body. */
   empty?: boolean;
-  /** Title of the empty state. Default `labels.empty`, 'No data'. For a richer one, pass your own `EmptyState` as `children`. */
-  emptyMessage?: string;
+  /** For a richer empty state than `labels.empty`, pass your own `EmptyState` as `children`. */
   /** Under the empty message: the way to fill the card (a button, a link). */
   emptyAction?: ReactNode;
   /**
@@ -418,7 +417,6 @@ export const SectionCard = ({
   errorDescription,
   onRetry,
   empty = false,
-  emptyMessage,
   emptyAction,
   minBodyHeight,
   intent = 'neutral',
@@ -534,12 +532,7 @@ export const SectionCard = ({
             className="flex-1"
           />
         ) : empty ? (
-          <EmptyState
-            compact
-            title={emptyMessage ?? labels.empty}
-            action={emptyAction}
-            className="flex-1"
-          />
+          <EmptyState compact title={labels.empty} action={emptyAction} className="flex-1" />
         ) : (
           children
         )}
