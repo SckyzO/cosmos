@@ -57,8 +57,7 @@ export type MapViewProps = {
   onSelectedIdChange?: (id: string | null) => void;
   /** The view after each pan or zoom, however it was triggered (pointer, keyboard, buttons). */
   onViewChange?: (view: MapViewState) => void;
-  /** Shown in place of the map when the browser cannot draw it (no WebGL). Default `labels.unavailable`. */
-  unavailableMessage?: string;
+  /** What is shown in place of the map when the browser cannot draw it (no WebGL) is `labels.unavailable`. */
   /** The texts it writes (the zoom buttons, the popup's close button…), over `LabelsProvider`'s `mapView` and the English defaults. */
   labels?: Partial<MapViewLabels>;
   className?: string;
@@ -127,7 +126,6 @@ export const MapView = ({
   defaultSelectedId = null,
   onSelectedIdChange,
   onViewChange,
-  unavailableMessage,
   labels: ownLabels,
   className,
   ref,
@@ -379,7 +377,7 @@ export const MapView = ({
           role="status"
           className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-[var(--color-text-secondary)]"
         >
-          {unavailableMessage ?? labels.unavailable}
+          {labels.unavailable}
         </p>
       )}
 
