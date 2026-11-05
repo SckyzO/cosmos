@@ -3,27 +3,15 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
 import { Input } from '../forms/Input';
 import { OtpInput } from '../forms/OtpInput';
+import { useLabels } from '../labels/labelsContext';
 import { AlertBanner } from '../ui/AlertBanner';
 import { Button } from '../ui/Button';
 import { Link } from '../ui/Link';
-import { ResendButton, resendLabels, type ResendLabels } from './ResendButton';
+import { TWO_STEP_VERIFICATION_FORM_LABELS, type TwoStepVerificationLabels } from './labels';
+import { ResendButton } from './ResendButton';
 
 /** How the person proves who they are: the verification `code`, or a `backup` code they saved. */
 export type TwoStepMethod = 'code' | 'backup';
-
-/** The words of the backup entry and of the resend wait, to translate with the rest of the page. */
-export type TwoStepVerificationLabels = ResendLabels & {
-  /** The link to the backup entry. Default "Use a backup code". */
-  useBackupCode?: string;
-  /** The link back to the verification code. Default "Use a verification code instead". */
-  useVerificationCode?: string;
-  /** Title of the backup entry. Default "Use a backup code". */
-  backupTitle?: string;
-  /** Description of the backup entry. */
-  backupDescription?: string;
-  /** Label of the backup field. Default "Backup code". */
-  backupField?: string;
-};
 
 export type TwoStepVerificationFormProps = {
   /**
@@ -50,7 +38,11 @@ export type TwoStepVerificationFormProps = {
   /** The entry shown first, while uncontrolled. Default `code`. */
   defaultMethod?: TwoStepMethod;
   onMethodChange?: (method: TwoStepMethod) => void;
-  labels?: TwoStepVerificationLabels;
+  /**
+   * The texts it writes (the backup entry, the resend wait, the lines of the form), over
+   * `LabelsProvider`'s `twoStepVerificationForm` and the English defaults.
+   */
+  labels?: Partial<TwoStepVerificationLabels>;
   /** Email/phone where the code was sent — shown in the description. */
   sentTo?: string;
   length?: number;
@@ -63,10 +55,8 @@ export type TwoStepVerificationFormProps = {
   /** `code` only: trigger onSubmit automatically when the user fills the last cell. Default `true`. */
   autoSubmit?: boolean;
   cancelHref?: string;
-  cancelLabel?: string;
+  /** The title of the code entry. Default `labels.title`. */
   title?: string;
-  submitLabel?: string;
-  resendLabel?: string;
   className?: string;
 };
 
@@ -78,19 +68,17 @@ export const TwoStepVerificationForm = ({
   method: methodProp,
   defaultMethod = 'code',
   onMethodChange,
-  labels,
+  labels: ownLabels,
   sentTo,
   length = 6,
   loading = false,
   error,
   autoSubmit = true,
   cancelHref,
-  cancelLabel = 'Back to sign in',
-  title = 'Two-step verification',
-  submitLabel = 'Verify my account',
-  resendLabel = 'Resend code',
+  title,
   className,
 }: TwoStepVerificationFormProps) => {
+  const labels = useLabels('twoStepVerificationForm', TWO_STEP_VERIFICATION_FORM_LABELS, ownLabels);
   const [method, setMethod] = useControllableState<TwoStepMethod>({
     value: methodProp,
     defaultValue: defaultMethod,
@@ -120,13 +108,9 @@ export const TwoStepVerificationForm = ({
   };
 
   // The address or number is the host's: isolated, it keeps its order in a right-to-left page.
-  const description = sentTo ? (
-    <>
-      Enter the {length}-digit code we sent to <bdi>{sentTo}</bdi>.
-    </>
-  ) : (
-    `Enter the ${length}-digit verification code from your authenticator app.`
-  );
+  const description = sentTo
+    ? labels.sentTo(length, <bdi>{sentTo}</bdi>)
+    : labels.authenticator(length);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -142,21 +126,16 @@ export const TwoStepVerificationForm = ({
     if (autoSubmit && !loading) void onSubmit(value, 'code');
   };
 
-  const resend = resendLabels('code', labels);
-
   return (
     <form onSubmit={handleSubmit} className={className}>
       <div className="bg-brand-500/10 text-brand-600 dark:text-brand-400 mx-auto flex h-12 w-12 items-center justify-center rounded-full">
         <ShieldCheck className="h-6 w-6" aria-hidden />
       </div>
       <h1 className="mt-4 text-center text-xl font-semibold text-gray-900 dark:text-white">
-        {isBackup ? (labels?.backupTitle ?? 'Use a backup code') : title}
+        {isBackup ? labels.backupTitle : (title ?? labels.title)}
       </h1>
       <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
-        {isBackup
-          ? (labels?.backupDescription ??
-            'Enter one of the codes you saved when you turned on two-step verification. Each code works once.')
-          : description}
+        {isBackup ? labels.backupDescription : description}
       </p>
 
       {error && !isBackup && (
@@ -168,7 +147,7 @@ export const TwoStepVerificationForm = ({
       <div className={isBackup ? 'mt-6' : 'mt-6 flex justify-center'}>
         {isBackup ? (
           <Input
-            label={labels?.backupField ?? 'Backup code'}
+            label={labels.backupField}
             ref={backupField}
             required
             autoComplete="off"
@@ -199,20 +178,20 @@ export const TwoStepVerificationForm = ({
           disabled={loading || (isBackup ? backupValue.length === 0 : code.length !== length)}
           className="w-full"
         >
-          {submitLabel}
+          {labels.submit}
         </Button>
         {!isBackup && onResend && (
           // 44px tall, the touch target size, though the label is small.
           <ResendButton
-            label={resendLabel}
+            label={labels.resend}
             onResend={onResend}
             cooldown={resendCooldown}
-            labels={resend}
+            labels={labels}
             disabled={loading}
             variant="ghost"
             size="sm"
             className="min-h-11"
-            prefix={<span>Didn&apos;t get a code?</span>}
+            prefix={<span>{labels.noCode}</span>}
             dot
             rowClassName="flex flex-wrap items-center justify-center gap-x-1 text-xs text-[var(--color-text-muted)]"
           />
@@ -227,9 +206,7 @@ export const TwoStepVerificationForm = ({
               disabled={loading}
               className="min-h-11"
             >
-              {isBackup
-                ? (labels?.useVerificationCode ?? 'Use a verification code instead')
-                : (labels?.useBackupCode ?? 'Use a backup code')}
+              {isBackup ? labels.useVerificationCode : labels.useBackupCode}
             </Button>
           </div>
         )}
@@ -237,7 +214,7 @@ export const TwoStepVerificationForm = ({
           <div className="flex justify-center">
             <Link href={cancelHref} variant="subtle">
               <ArrowLeft className="h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
-              {cancelLabel}
+              {labels.cancel}
             </Link>
           </div>
         )}

@@ -1,6 +1,8 @@
 import { clsx } from 'clsx';
 import { Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
+import { SOCIAL_AUTH_BUTTONS_LABELS, type SocialAuthButtonsLabels } from './labels';
 
 export type SocialProvider = 'google' | 'github' | 'x' | 'facebook' | 'apple' | 'microsoft';
 
@@ -13,11 +15,10 @@ export type SocialAuthButtonsProps = {
   loading?: SocialProvider | null;
   /** Render a "OR continue with" divider below the buttons. Default `true`. */
   divider?: boolean;
-  dividerLabel?: string;
   /** `stacked` (1 per row) or `grid` (2 cols). Default `stacked`. */
   layout?: SocialAuthButtonsLayout;
-  /** Customize button label. Default `Continue with {Provider}`. */
-  labelFor?: (provider: SocialProvider) => string;
+  /** The texts it writes, over `LabelsProvider`'s `socialAuthButtons` and the English defaults. */
+  labels?: Partial<SocialAuthButtonsLabels>;
   /** Render at the top (above divider) or below (between form & nothing). */
   position?: 'above' | 'below';
   className?: string;
@@ -111,12 +112,12 @@ export const SocialAuthButtons = ({
   onProviderClick,
   loading,
   divider = true,
-  dividerLabel = 'OR continue with',
   layout = 'stacked',
-  labelFor,
+  labels: ownLabels,
   position = 'above',
   className,
 }: SocialAuthButtonsProps) => {
+  const labels = useLabels('socialAuthButtons', SOCIAL_AUTH_BUTTONS_LABELS, ownLabels);
   if (providers.length === 0) return null;
 
   const buttonsList = (
@@ -125,7 +126,7 @@ export const SocialAuthButtons = ({
         const Icon = PROVIDER_ICON[provider];
         const isLoading = loading === provider;
         const isDisabled = loading !== undefined && loading !== null;
-        const label = labelFor ? labelFor(provider) : `Continue with ${PROVIDER_NAME[provider]}`;
+        const label = labels.continueWith(PROVIDER_NAME[provider]);
         return (
           <button
             key={provider}
@@ -149,7 +150,7 @@ export const SocialAuthButtons = ({
     <div className="my-4 flex items-center gap-3">
       <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
       <span className="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400">
-        {dividerLabel}
+        {labels.divider}
       </span>
       <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
     </div>

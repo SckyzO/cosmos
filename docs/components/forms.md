@@ -2,6 +2,20 @@
 
 Storybook group: Forms. The text fields, selects and pickers are documented in Storybook; this page holds the ones that need more than their props. The rich text editor is in [Optional entries](../guides/optional-entries.md#editor).
 
+The words the form components write themselves (the names of their buttons, their placeholders and
+error lines, what their live regions announce) are `labels`: translate them once with
+`LabelsProvider` ([Translating](../guides/translating.md)), or for one field with its own `labels`
+prop, which wins. A text that holds a value is a function of it: `tagInput.added: (tags, count) =>
+…`. The keys are the component's name, `datePicker`, `fileInput`, `formFooter`…, and `englishLabels`
+lists them all.
+
+`Calendar` hands the names it writes (the month buttons, the dropdowns, a day, a week number) to
+react-day-picker as its `labels`, from its `calendar` key. The month and weekday names are not
+there: they come from react-day-picker's `locale`, a date-fns `Locale` that `Calendar` takes as a
+prop (`react-day-picker/locale` has translated ones, with names of their own for the buttons, which
+the dictionary overrides when the app sets them). `DatePicker` takes no `locale`, so its calendar
+writes the months and weekdays in English whatever the dictionary says.
+
 ## Slider
 
 Storybook: [Slider](https://sckyzo.github.io/cosmos/?path=/docs/forms-slider--docs).
@@ -88,26 +102,29 @@ field each keep their link. An empty list draws nothing, so the summary can stay
 ```
 
 The sentence around the links ("Fix 3 fields and try again: … need attention.") is English by
-default. `message` writes it for another language or another wording: a function of the number of
-fields and the array of links, one per entry, in order, that returns the sentence. It owns the words
-that depend on the count ("field" and "fields", "needs" and "need") and how the links are joined.
+default. `labels.message` writes it for another language or another wording: a function of the
+number of fields and the array of links, one per entry, in order, that returns the sentence. It owns
+the words that depend on the count ("field" and "fields", "needs" and "need") and how the links are
+joined.
 
 ```tsx
 <ErrorSummary
   title="Nous n’avons pas pu enregistrer"
   errors={errors}
-  message={(count, links) => (
-    <>
-      Corrigez {count} {count === 1 ? 'champ' : 'champs'} :{' '}
-      {links.map((link, i) => (
-        <Fragment key={i}>
-          {i > 0 && (i === links.length - 1 ? ' et ' : ', ')}
-          {link}
-        </Fragment>
-      ))}
-      .
-    </>
-  )}
+  labels={{
+    message: (count, links) => (
+      <>
+        Corrigez {count} {count === 1 ? 'champ' : 'champs'} :{' '}
+        {links.map((link, i) => (
+          <Fragment key={i}>
+            {i > 0 && (i === links.length - 1 ? ' et ' : ', ')}
+            {link}
+          </Fragment>
+        ))}
+        .
+      </>
+    ),
+  }}
 />
 ```
 
@@ -157,7 +174,7 @@ range, a click starts another. Picking a preset does what picking its two days d
 set, `onChange` is called with it and the calendar closes. The preset whose days are the current range is marked `aria-current` and
 tinted, so reopening the calendar shows which one is on. A preset that falls outside `fromDate` or
 `toDate` is disabled. The group of presets is named "Date range presets" for a screen reader;
-`presetsLabel` replaces it, for a page in another language.
+`labels.presets` replaces it, for a page in another language.
 
 `today` is the date the presets count from, and the one the calendar marks as today; it defaults to
 now. A preset gets it at the start of its day, as a day picked in the calendar is, so `to: today`
@@ -194,9 +211,9 @@ a field that suggests (a catalogue, a list of tags) and lets the user write thei
 - Nothing is active until an arrow key moves there, so Enter keeps the text instead of taking the
   first match. With no option active, Enter closes the list and goes on to submit the form around
   the field; with one active, it picks it and the form stays put.
-- When no option matches, the list stays closed: the text is accepted. `emptyMessage` opens it with
-  that message ("Press Enter to use this text"). Without `allowCustomValue` the list opens on
-  "No matches found." (`emptyMessage` changes it). The message is a status line under the list, not
+- When no option matches, the list stays closed: the text is accepted. `labels.emptyCustom` opens it
+  with that message ("Press Enter to use this text"). Without `allowCustomValue` the list opens on
+  "No matches found." (`labels.empty` changes it). The message is a status line under the list, not
   an option, so the input points at nothing and a screen reader reads it when the list turns empty.
   `MultiSelect` says it the same way.
 - Without a visible `label`, `aria-label` names the input, as for a field in a row of lines. A
@@ -418,7 +435,10 @@ Groups are always open: they do not collapse.
 Storybook: [Password Strength Meter](https://sckyzo.github.io/cosmos/?path=/docs/forms-password-strength-meter--docs), [Password Policy Checker](https://sckyzo.github.io/cosmos/?path=/docs/forms-password-policy-checker--docs).
 
 `PasswordPolicyChecker` lists the rules a password must meet, each with a tick or a cross; a screen
-reader also hears "met" or "not met" after each label (`labels` translates both words).
+reader also hears "met" or "not met" after each label (`labels` translates both words, and the
+title). `defaultPasswordRules(password, labels)` words its five rules with the `minLength`,
+`uppercase`, `lowercase`, `number` and `symbol` keys of the same `labels`, in English when it is
+called with the password alone; `SignUpForm` and `NewPasswordForm` pass it their provider's.
 `PasswordStrengthMeter` is the other half: how strong the password is, not whether it follows the
 rules. `score` is 0 to 4 (zxcvbn's scale): that many of the four slots of the bar fill, and the
 level reads above them ("Password strength: Fair"). A slot grows in from the start edge when the

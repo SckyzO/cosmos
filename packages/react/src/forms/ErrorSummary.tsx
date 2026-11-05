@@ -1,6 +1,7 @@
-import { Fragment, type ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { AlertBanner } from '../ui/AlertBanner';
 import { Link } from '../ui/Link';
+import { ERROR_SUMMARY_LABELS, type ErrorSummaryLabels } from './labels';
 
 export type ErrorSummaryItem = {
   /**
@@ -15,31 +16,12 @@ export type ErrorSummaryItem = {
 export type ErrorSummaryProps = {
   /** One entry per field in error, in the order of the page. Nothing is drawn for an empty list. */
   errors: ErrorSummaryItem[];
-  /** Bold first line of the banner. Default "There is a problem". */
+  /** Bold first line of the banner. Default `labels.title`, "There is a problem". */
   title?: string;
-  /**
-   * The sentence under the title, for another language or another wording. It gets the number of
-   * fields and a link to each, in order, and returns what to draw around them:
-   * `(count, links) => <>Corrigez {count} champs : {links}.</>`. Default: "Fix 3 fields and try
-   * again: A, B and C need attention." ("Fix 1 field and try again: A needs attention.").
-   */
-  message?: (count: number, links: ReactNode[]) => ReactNode;
+  /** The texts it writes, over `LabelsProvider`'s `errorSummary` and the English defaults. */
+  labels?: Partial<ErrorSummaryLabels>;
   className?: string;
 };
-
-// The default sentence: the count words it, and the links are joined by commas and an "and".
-const defaultMessage = (count: number, links: ReactNode[]): ReactNode => (
-  <>
-    Fix {count} {count === 1 ? 'field' : 'fields'} and try again:{' '}
-    {links.map((link, i) => (
-      <Fragment key={i}>
-        {i > 0 && (i === links.length - 1 ? ' and ' : ', ')}
-        {link}
-      </Fragment>
-    ))}{' '}
-    {count === 1 ? 'needs' : 'need'} attention.
-  </>
-);
 
 const ENABLED_CONTROL =
   ':is(input:not([type=file]):not([type=hidden]), select, textarea, button):enabled';
@@ -68,10 +50,11 @@ const focusField = (id: string): boolean => {
  */
 export const ErrorSummary = ({
   errors,
-  title = 'There is a problem',
-  message = defaultMessage,
+  title,
+  labels: ownLabels,
   className,
 }: ErrorSummaryProps) => {
+  const labels = useLabels('errorSummary', ERROR_SUMMARY_LABELS, ownLabels);
   if (errors.length === 0) return null;
   // Two entries may name the same field (the two ends of a range, one box): `field` alone is not a key.
   const links = errors.map((entry, i) => (
@@ -88,8 +71,8 @@ export const ErrorSummary = ({
     </Link>
   ));
   return (
-    <AlertBanner intent="danger" title={title} className={className}>
-      {message(errors.length, links)}
+    <AlertBanner intent="danger" title={title ?? labels.title} className={className}>
+      {labels.message(errors.length, links)}
     </AlertBanner>
   );
 };

@@ -3,6 +3,7 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { useId, useRef, useState, type KeyboardEvent, type ReactNode, type Ref } from 'react';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import {
   FIELD_LISTBOX_PANEL,
   FIELD_PAD_START,
@@ -12,6 +13,7 @@ import {
   type FieldSize,
 } from './fieldRecipe';
 import { FieldMessage } from './FieldMessage';
+import { COMBOBOX_LABELS, type ComboboxLabels } from './labels';
 import { useFilteredOptions, useListboxNavigation } from './listboxNavigation';
 import { RequiredMark } from './RequiredMark';
 
@@ -67,18 +69,15 @@ export type ComboboxProps = {
    * catalogue and lets the user write their own entry. The text is the value (`onChange` fires on
    * every keystroke) and stays in the field when focus leaves. Nothing is active until an arrow
    * key moves there, so Enter keeps the text and lets an enclosing form submit; the list closes
-   * when no option matches, unless `emptyMessage` is set. Keep the `value` of the options out of
+   * when no option matches, unless `labels.emptyCustom` is set. Keep the `value` of the options out of
    * what people type: a text equal to one names that option. Default `false`: the typed text is
    * only a filter, and the field goes back to the selected option when focus leaves.
    */
   allowCustomValue?: boolean;
   options: ComboboxOption[];
   placeholder?: string;
-  /**
-   * Show this when no option matches the typed query. Default "No matches found."; none with
-   * `allowCustomValue`, where the text is accepted and the empty list stays closed.
-   */
-  emptyMessage?: string;
+  /** The texts it writes, over `LabelsProvider`'s `combobox` and the English defaults. */
+  labels?: Partial<ComboboxLabels>;
   /** Disable the input + dropdown. */
   disabled?: boolean;
   /** Helper text under the input. */
@@ -110,7 +109,7 @@ export const Combobox = ({
   allowCustomValue = false,
   options,
   placeholder,
-  emptyMessage,
+  labels: ownLabels,
   disabled = false,
   helperText,
   error,
@@ -122,6 +121,7 @@ export const Combobox = ({
   defaultOpen = false,
   onOpenChange,
 }: ComboboxProps) => {
+  const labels = useLabels('combobox', COMBOBOX_LABELS, ownLabels);
   const id = useId();
   const listboxId = `${id}-listbox`;
   const descId = `${id}-desc`;
@@ -165,7 +165,7 @@ export const Combobox = ({
   const filtered = useFilteredOptions(options, query);
   // With typed text accepted, a list with nothing to suggest is no error: it opens only for a
   // message the host asked for.
-  const emptyText = emptyMessage ?? (allowCustomValue ? undefined : 'No matches found.');
+  const emptyText = allowCustomValue ? labels.emptyCustom : labels.empty;
   const listOpen = open && (filtered.length > 0 || emptyText !== undefined);
   const noMatch = filtered.length === 0;
 
@@ -248,7 +248,7 @@ export const Combobox = ({
         />
         <button
           type="button"
-          aria-label="Toggle options"
+          aria-label={labels.toggle}
           disabled={disabled}
           onClick={() => setOpen(!open)}
           className="focus-visible:focus-indicator inset-e-0 absolute inset-y-0 flex items-center rounded-e-lg pe-2 text-gray-400 hover:text-gray-500 focus-visible:ring-inset"

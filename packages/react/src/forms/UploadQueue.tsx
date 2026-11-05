@@ -1,12 +1,13 @@
 import { clsx } from 'clsx';
 import { AlertCircle, Check, RotateCw, X } from 'lucide-react';
 import { useId, useState, type Ref } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { FILE_KIND_VISUAL, kindFromName, type FileKind } from '../lists/fileKind';
 import { IconButton } from '../ui/IconButton';
 import { INTENT_STYLE } from '../ui/intent';
 import { Button } from '../ui/Button';
 import { ProgressBar } from '../ui/ProgressBar';
-import { formatBytes } from './formatBytes';
+import { UPLOAD_QUEUE_LABELS, type UploadQueueLabels } from './labels';
 
 export type UploadStatus = 'queued' | 'uploading' | 'done' | 'failed';
 
@@ -34,25 +35,27 @@ export type UploadQueueProps = {
    * done, "Remove {name}" when failed. The host stops the transfer and drops the item.
    */
   onRemove?: (id: string) => void;
-  /** Title of the card and name of the region. Default `Uploads`. */
+  /** Title of the card and name of the region. Default `labels.title`, `Uploads`. */
   label?: string;
+  /** The texts it writes, over `LabelsProvider`'s `uploadQueue` and the English defaults. */
+  labels?: Partial<UploadQueueLabels>;
   className?: string;
   /** Ref to the card (`<section>`). */
   ref?: Ref<HTMLElement>;
 };
 
-const REMOVE_VERB: Record<UploadStatus, string> = {
-  queued: 'Cancel',
-  uploading: 'Cancel',
-  done: 'Dismiss',
-  failed: 'Remove',
+// The name of the remove button of a row, by what its status lets it do.
+const removeName = (labels: UploadQueueLabels, status: UploadStatus, name: string) => {
+  if (status === 'done') return labels.dismiss(name);
+  if (status === 'failed') return labels.remove(name);
+  return labels.cancel(name);
 };
 
 const percentOf = (progress: number) => Math.round(Math.max(0, Math.min(100, progress)));
 
-const statusLine = (item: UploadQueueItem): string | undefined => {
-  if (item.status === 'done') return `${item.name}: upload complete`;
-  if (item.status === 'failed') return `${item.name}: upload failed`;
+const statusLine = (item: UploadQueueItem, labels: UploadQueueLabels): string | undefined => {
+  if (item.status === 'done') return labels.announceDone(item.name);
+  if (item.status === 'failed') return labels.announceFailed(item.name);
   return undefined;
 };
 
@@ -60,14 +63,16 @@ const statusLine = (item: UploadQueueItem): string | undefined => {
  * What a screen reader hears when a row changes: the rows that just finished or failed, since the
  * last render. A row already `done` or `failed` on first render is not announced.
  */
-const useAnnouncement = (items: UploadQueueItem[]): string => {
+const useAnnouncement = (items: UploadQueueItem[], labels: UploadQueueLabels): string => {
   const [seen, setSeen] = useState(() => new Map(items.map((i) => [i.id, i.status])));
   const [message, setMessage] = useState('');
   const changed = items.some((i) => seen.get(i.id) !== i.status);
   if (changed || seen.size !== items.length) {
     // Adjusting state while rendering, as React documents, so the message lands with the rows.
     const next = items.filter((i) => seen.has(i.id) && seen.get(i.id) !== i.status);
-    const lines = next.map(statusLine).filter((l): l is string => l !== undefined);
+    const lines = next
+      .map((item) => statusLine(item, labels))
+      .filter((l): l is string => l !== undefined);
     setSeen(new Map(items.map((i) => [i.id, i.status])));
     if (lines.length > 0) setMessage(lines.join('. '));
   }
@@ -83,12 +88,14 @@ export const UploadQueue = ({
   items,
   onRetry,
   onRemove,
-  label = 'Uploads',
+  label,
+  labels: ownLabels,
   className,
   ref,
 }: UploadQueueProps) => {
+  const labels = useLabels('uploadQueue', UPLOAD_QUEUE_LABELS, ownLabels);
   const titleId = useId();
-  const announcement = useAnnouncement(items);
+  const announcement = useAnnouncement(items, labels);
   if (items.length === 0) return null;
   const done = items.filter((i) => i.status === 'done').length;
 
@@ -103,12 +110,10 @@ export const UploadQueue = ({
     >
       <div className="flex items-baseline justify-between gap-3 border-b border-[var(--color-border)] px-4 py-3.5">
         <span id={titleId} className="text-sm font-semibold text-[var(--color-text-primary)]">
-          {label}
+          {label ?? labels.title}
         </span>
         <span className="text-xs text-[var(--color-text-muted)]">
-          <bdi>
-            {done} of {items.length} done
-          </bdi>
+          <bdi>{labels.progress(done, items.length)}</bdi>
         </span>
       </div>
       <p role="status" aria-live="polite" className="sr-only">
@@ -116,7 +121,13 @@ export const UploadQueue = ({
       </p>
       <ul className="divide-y divide-[var(--color-border)]">
         {items.map((item) => (
-          <UploadRow key={item.id} item={item} onRetry={onRetry} onRemove={onRemove} />
+          <UploadRow
+            key={item.id}
+            item={item}
+            labels={labels}
+            onRetry={onRetry}
+            onRemove={onRemove}
+          />
         ))}
       </ul>
     </section>
@@ -125,10 +136,12 @@ export const UploadQueue = ({
 
 const UploadRow = ({
   item,
+  labels,
   onRetry,
   onRemove,
 }: {
   item: UploadQueueItem;
+  labels: UploadQueueLabels;
   onRetry: UploadQueueProps['onRetry'];
   onRemove: UploadQueueProps['onRemove'];
 }) => {
@@ -142,9 +155,9 @@ const UploadRow = ({
     status === 'uploading' && pct !== undefined
       ? size === undefined
         ? `${pct}%`
-        : `${formatBytes((size * pct) / 100)} of ${formatBytes(size)} · ${pct}%`
+        : labels.uploaded(labels.fileSize((size * pct) / 100), labels.fileSize(size), pct)
       : undefined;
-  const sizeText = uploaded ?? (size === undefined ? undefined : formatBytes(size));
+  const sizeText = uploaded ?? (size === undefined ? undefined : labels.fileSize(size));
 
   return (
     <li
@@ -182,23 +195,23 @@ const UploadRow = ({
             size="sm"
             value={pct}
             indeterminate={pct === undefined}
-            aria-label={`Upload progress of ${name}`}
+            aria-label={labels.uploadProgress(name)}
           />
         )}
         {status === 'failed' && (
           <span className="flex items-center gap-1.5 text-xs text-red-700 dark:text-red-400">
             <AlertCircle className="size-3.5 shrink-0" aria-hidden />
-            <span className="min-w-0 break-words">{error ?? 'Upload failed.'}</span>
+            <span className="min-w-0 break-words">{error ?? labels.failed}</span>
           </span>
         )}
         {status === 'done' && (
           <span className="flex items-center gap-1.5 text-xs text-green-700 dark:text-green-400">
             <Check className="size-3.5 shrink-0" strokeWidth={2.5} aria-hidden />
-            Done
+            {labels.done}
           </span>
         )}
         {status === 'queued' && (
-          <span className="text-xs text-[var(--color-text-muted)]">Waiting</span>
+          <span className="text-xs text-[var(--color-text-muted)]">{labels.waiting}</span>
         )}
       </div>
       {status === 'failed' && onRetry && (
@@ -206,16 +219,16 @@ const UploadRow = ({
           variant="secondary"
           size="sm"
           icon={RotateCw}
-          aria-label={`Retry ${name}`}
+          aria-label={labels.retryFile(name)}
           onClick={() => onRetry(id)}
           className="shrink-0"
         >
           {/* Icon only below `sm`, so the error keeps the width; the name says Retry either way. */}
-          <span className="hidden sm:inline">Retry</span>
+          <span className="hidden sm:inline">{labels.retry}</span>
         </Button>
       )}
       {onRemove && (
-        <IconButton aria-label={`${REMOVE_VERB[status]} ${name}`} onClick={() => onRemove(id)}>
+        <IconButton aria-label={removeName(labels, status, name)} onClick={() => onRemove(id)}>
           <X aria-hidden />
         </IconButton>
       )}

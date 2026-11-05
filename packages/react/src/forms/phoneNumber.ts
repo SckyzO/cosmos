@@ -5,9 +5,6 @@ export const MIN_NATIONAL_DIGITS = 4;
 /** E.164's own bound: the country code and the national number together. */
 export const MAX_TOTAL_DIGITS = 15;
 
-/** Shown under a number that does not pass the light check. */
-export const PHONE_ERROR = 'Enter a phone number with 4 to 15 digits.';
-
 /** The ISO codes PhoneInput knows, in the order of the table. */
 export const ALL_COUNTRIES: readonly string[] = Object.keys(PHONE_COUNTRIES);
 

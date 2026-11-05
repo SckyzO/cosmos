@@ -15,9 +15,11 @@ import { formatMoney } from '../data/money';
 import { Totals } from '../data/Totals';
 import { EmptyState } from '../feedback/EmptyState';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import { Button } from '../ui/Button';
 import { Combobox, type ComboboxOption } from './Combobox';
 import { Input } from './Input';
+import { LINE_ITEMS_LABELS, type LineItemsLabels } from './labels';
 import {
   currencySymbol,
   focusAfterRemove,
@@ -43,53 +45,6 @@ export type LineItemsCatalogueEntry = {
   label: string;
   /** Unit price, in units of the currency: shown in the list, and copied to the line when picked. */
   rate?: number;
-};
-
-/** The words of the editor, for another language. Every one has an English default. */
-export type LineItemsLabels = {
-  /** Column titles, and the names of the fields ("Quantity, line 2"). */
-  item: string;
-  quantity: string;
-  rate: string;
-  amount: string;
-  /** Placeholder of the item field. Default: "Select or type an item" with a catalogue, else "Describe the item". */
-  itemPlaceholder?: string;
-  add: string;
-  /** The row of the default totals block. */
-  subtotal: string;
-  emptyTitle: string;
-  emptyDescription: string;
-  /** The title of a line in the stacked layout. */
-  line: (n: number) => string;
-  /** The name of the field of `column` on line `n`. */
-  fieldName: (column: string, n: number) => string;
-  /** The name of the remove button of line `n`, whose item is `item` (possibly empty). */
-  remove: (n: number, item: string) => string;
-  /** Announced once line `n` is added, with the number of lines now. */
-  added: (n: number, count: number) => string;
-  /** Announced once line `n` is removed, with the number of lines left. */
-  removed: (n: number, count: number) => string;
-  /** Announced when a cell is committed and the subtotal changed. `amount` is written. */
-  subtotalAnnouncement: (amount: string) => string;
-};
-
-const plural = (count: number) => (count === 1 ? 'line' : 'lines');
-
-const DEFAULT_LABELS: LineItemsLabels = {
-  item: 'Item',
-  quantity: 'Quantity',
-  rate: 'Rate',
-  amount: 'Amount',
-  add: 'Add line',
-  subtotal: 'Subtotal',
-  emptyTitle: 'No lines yet',
-  emptyDescription: 'Add the first item to start the total.',
-  line: (n) => `Line ${n}`,
-  fieldName: (column, n) => `${column}, line ${n}`,
-  remove: (n, item) => `Remove line ${n}${item ? `: ${item}` : ''}`,
-  added: (n, count) => `Line ${n} added. ${count} ${plural(count)}.`,
-  removed: (n, count) => `Line ${n} removed. ${count} ${plural(count)} left.`,
-  subtotalAnnouncement: (amount) => `Subtotal ${amount}`,
 };
 
 export type LineItemsEditorProps = Omit<
@@ -129,6 +84,7 @@ export type LineItemsEditorProps = Omit<
   footer?: false | ((summary: LineItemsSummary) => ReactNode);
   /** Shows the lines as text, with no field, no "Add line" and no remove button. */
   readOnly?: boolean;
+  /** The words of the editor, over `LabelsProvider`'s `lineItemsEditor` and the English defaults. */
   labels?: Partial<LineItemsLabels>;
 };
 
@@ -196,12 +152,12 @@ export const LineItemsEditor = ({
   error,
   footer,
   readOnly = false,
-  labels: labelsProp,
+  labels: ownLabels,
   className,
   ref,
   ...rest
 }: LineItemsEditorProps) => {
-  const labels = { ...DEFAULT_LABELS, ...labelsProp };
+  const labels = useLabels('lineItemsEditor', LINE_ITEMS_LABELS, ownLabels);
   const baseId = useId();
   const errorId = `${baseId}-error`;
   const digits = useMemo(() => minorUnitDigits(currency, locale), [currency, locale]);
@@ -357,7 +313,7 @@ export const LineItemsEditor = ({
     const quantityErrorId = `${baseId}-${index}-quantity-error`;
     const rateErrorId = `${baseId}-${index}-rate-error`;
     const itemPlaceholder =
-      labels.itemPlaceholder ?? (options ? 'Select or type an item' : 'Describe the item');
+      labels.itemPlaceholder ?? (options ? labels.selectItem : labels.describeItem);
 
     return (
       <li

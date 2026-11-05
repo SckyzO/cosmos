@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   bothDirections,
   directionBox,
@@ -547,5 +548,85 @@ export const CooldownFitsOnAPhone: Story = {
     await expect(countdown(canvas)).toHaveAttribute('aria-disabled', 'true');
     await expect(countdown(canvas).getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
     expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+/** The provider's French words both entries and the resend wait; `labels` wins, key by key. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        twoStepVerificationForm: {
+          title: 'Vérification en deux étapes',
+          sentTo: (length, to) => (
+            <>
+              Saisissez le code à {length} chiffres envoyé à {to}.
+            </>
+          ),
+          authenticator: (length) => `Saisissez le code à ${length} chiffres de votre application.`,
+          submit: 'Vérifier mon compte',
+          noCode: 'Pas de code ?',
+          resend: 'Renvoyer le code',
+          resent: 'Nous vous avons envoyé un nouveau code.',
+          ready: 'Vous pouvez demander un nouveau code.',
+          availableIn: (seconds) => `disponible dans ${seconds} s`,
+          useBackupCode: 'Utiliser un code de secours',
+          useVerificationCode: 'Utiliser un code de vérification',
+          backupTitle: 'Utiliser un code de secours',
+          backupDescription: 'Saisissez un des codes enregistrés. Chaque code ne sert qu’une fois.',
+          backupField: 'Code de secours',
+          cancel: 'Retour à la connexion',
+        },
+      }}
+    >
+      <div className="space-y-10">
+        <div role="group" aria-label="Code">
+          <TwoStepVerificationForm
+            onSubmit={fn()}
+            onResend={fn()}
+            resendCooldown={30}
+            backupCode
+            sentTo="jean@exemple.fr"
+            cancelHref="#"
+          />
+        </div>
+        <div role="group" aria-label="Secours">
+          <TwoStepVerificationForm
+            onSubmit={fn()}
+            backupCode
+            defaultMethod="backup"
+            labels={{ backupField: 'Code de récupération' }}
+          />
+        </div>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const code = within(canvas.getByRole('group', { name: 'Code' }));
+    await expect(code.getByRole('heading', { name: 'Vérification en deux étapes' })).toBeVisible();
+    await expect(code.getByText(/^Saisissez le code à 6 chiffres envoyé à/)).toHaveTextContent(
+      'Saisissez le code à 6 chiffres envoyé à jean@exemple.fr.'
+    );
+    await expect(code.getByRole('button', { name: 'Vérifier mon compte' })).toBeVisible();
+    await expect(code.getByText('Pas de code ?')).toBeVisible();
+    await expect(
+      code.getByRole('button', { name: 'Renvoyer le code' })
+    ).toHaveAccessibleDescription(/^disponible dans \d+ s$/);
+    await expect(code.getByRole('button', { name: 'Utiliser un code de secours' })).toBeVisible();
+    await expect(code.getByRole('link', { name: 'Retour à la connexion' })).toBeVisible();
+
+    const backup = within(canvas.getByRole('group', { name: 'Secours' }));
+    await expect(
+      backup.getByRole('heading', { name: 'Utiliser un code de secours' })
+    ).toBeVisible();
+    await expect(
+      backup.getByText('Saisissez un des codes enregistrés. Chaque code ne sert qu’une fois.')
+    ).toBeVisible();
+    // Its own `backupField` wins over the provider's, and the keys it leaves out stay the provider's.
+    await expect(backup.getByRole('textbox', { name: 'Code de récupération' })).toBeVisible();
+    await expect(
+      backup.getByRole('button', { name: 'Utiliser un code de vérification' })
+    ).toBeVisible();
   },
 };

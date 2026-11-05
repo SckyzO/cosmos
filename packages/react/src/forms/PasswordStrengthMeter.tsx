@@ -1,15 +1,10 @@
 import { clsx } from 'clsx';
 import { useEffect, useId, useRef, useState } from 'react';
+import { useLabels } from '../labels/labelsContext';
+import { PASSWORD_STRENGTH_LABELS, type PasswordStrengthLabels } from './labels';
 
 /** The five levels a score of 0 to 4 stands for, from the weakest. */
 export type PasswordStrengthLevels = readonly [string, string, string, string, string];
-
-export type PasswordStrengthLabels = {
-  /** The words before the level, in the visible text and in the announcement. Default "Password strength". */
-  name?: string;
-  /** The level for each score, 0 to 4. Default "Very weak", "Weak", "Fair", "Good", "Strong". */
-  levels?: PasswordStrengthLevels;
-};
 
 export type PasswordStrengthMeterProps = {
   /**
@@ -22,8 +17,8 @@ export type PasswordStrengthMeterProps = {
    * it so the level is read when the field gets focus. Generated when omitted.
    */
   id?: string;
-  /** The words, to translate with the rest of the page. */
-  labels?: PasswordStrengthLabels;
+  /** The texts it writes, over `LabelsProvider`'s `passwordStrengthMeter` and the English defaults. */
+  labels?: Partial<PasswordStrengthLabels>;
   className?: string;
 };
 
@@ -31,9 +26,6 @@ const SEGMENTS = 4;
 
 // The level is announced once the person stops typing, not on every key.
 const ANNOUNCE_DELAY = 800;
-
-const DEFAULT_NAME = 'Password strength';
-const DEFAULT_LEVELS: PasswordStrengthLevels = ['Very weak', 'Weak', 'Fair', 'Good', 'Strong'];
 
 // The colour of the lit segments for each score. A score of 0 lights none: its colour is the one the
 // first segment is already wearing when it grows in.
@@ -61,13 +53,14 @@ const toLevel = (score: number) =>
 export const PasswordStrengthMeter = ({
   score,
   id,
-  labels,
+  labels: ownLabels,
   className,
 }: PasswordStrengthMeterProps) => {
+  const labels = useLabels('passwordStrengthMeter', PASSWORD_STRENGTH_LABELS, ownLabels);
   const generatedId = useId();
   const level = toLevel(score);
-  const name = labels?.name ?? DEFAULT_NAME;
-  const levelName = (labels?.levels ?? DEFAULT_LEVELS)[level];
+  const { name } = labels;
+  const levelName = labels.levels[level];
 
   // The status region exists from the first render and starts empty: a live region only announces
   // a change to what it already holds.

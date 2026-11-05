@@ -9,7 +9,9 @@ import {
 } from 'react';
 import { setRef } from '../ui/mergeRefs';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import { fieldStateClass } from './fieldRecipe';
+import { OTP_INPUT_LABELS, type OtpInputLabels } from './labels';
 
 export type OtpInputProps = {
   /** Number of cells. Default 6. */
@@ -37,7 +39,10 @@ export type OtpInputProps = {
   /** Hidden input `name` for native form submission. */
   name?: string;
   className?: string;
+  /** Name of the group of cells. Default `labels.code`, "Verification code". */
   ariaLabel?: string;
+  /** The texts it writes, over `LabelsProvider`'s `otpInput` and the English defaults. */
+  labels?: Partial<OtpInputLabels>;
   /**
    * Ref to the first cell's `<input>`, where focus belongs on a validation
    * error. The other cells are not exposed.
@@ -64,9 +69,12 @@ export const OtpInput = ({
   autoFocus = false,
   name,
   className,
-  ariaLabel = 'Verification code',
+  ariaLabel: ariaLabelProp,
+  labels: ownLabels,
   ref,
 }: OtpInputProps) => {
+  const labels = useLabels('otpInput', OTP_INPUT_LABELS, ownLabels);
+  const ariaLabel = ariaLabelProp ?? labels.code;
   const refs = useRef<Array<HTMLInputElement | null>>([]);
   const [value, setValue] = useControllableState({
     value: valueProp,
@@ -177,7 +185,7 @@ export const OtpInput = ({
               autoComplete={i === 0 ? 'one-time-code' : 'off'}
               value={display}
               disabled={disabled}
-              aria-label={`${ariaLabel} digit ${i + 1}`}
+              aria-label={labels.digit(ariaLabel, i + 1)}
               onChange={handleChange(i)}
               onKeyDown={handleKeyDown(i)}
               onPaste={handlePaste(i)}

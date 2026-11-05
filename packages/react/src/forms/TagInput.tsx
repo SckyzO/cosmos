@@ -9,11 +9,13 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { mergeRefs } from '../ui/mergeRefs';
 import { Tag } from '../ui/Tag';
 import { useControllableState } from '../hooks/useControllableState';
 import { FIELD_LISTBOX_PANEL, type FieldSize } from './fieldRecipe';
+import { TAG_INPUT_LABELS, type TagInputLabels } from './labels';
 import { filterByLabel, useListboxNavigation } from './listboxNavigation';
 import { RequiredMark } from './RequiredMark';
 import {
@@ -42,7 +44,7 @@ export type TagInputProps = {
    * stays in the input and the field shows `invalidMessage`, until the text changes.
    */
   validate?: (text: string) => boolean;
-  /** Shown when `validate` rejects a text. Default `"<text>" is not a valid tag.` */
+  /** Shown when `validate` rejects a text. Default `labels.invalid`, `"<text>" is not a valid tag.` */
   invalidMessage?: string;
   /**
    * The keys that add the typed text as a tag: `KeyboardEvent.key` values, so `Enter`, `Tab`, or
@@ -52,17 +54,15 @@ export type TagInputProps = {
   separators?: string[];
   /**
    * The most tags the field holds. No limit when omitted. The count shows at the end of the
-   * helper line (`3 / 5`), and `limitLabel` replaces it once the limit is reached.
+   * helper line (`labels.count`, `3 / 5`), and `labels.limit` replaces it once the limit is reached.
    */
   maxTags?: number;
-  /** The count shown with `maxTags`, from the tags added and the limit. Default `"3 / 5"`. */
-  countLabel?: (count: number, max: number) => string;
-  /** Shown in place of the count once `maxTags` is reached. Default `"Limit reached"`. */
-  limitLabel?: string;
   /** Disable the field: the tags cannot be removed. */
   disabled?: boolean;
-  /** Helper text under the field. Default names the `separators` ("Press Enter or comma to add a tag."). */
+  /** Helper text under the field. Default `labels.helper`, which names the `separators` ("Press Enter or comma to add a tag."). */
   helperText?: string;
+  /** The texts it writes, over `LabelsProvider`'s `tagInput` and the English defaults. */
+  labels?: Partial<TagInputLabels>;
   /** Error message, shown in place of the helper text and of `invalidMessage`. */
   error?: string;
   /** Height and text size, aligned on Button's. Default `md`. */
@@ -82,23 +82,6 @@ export type TagInputProps = {
 
 const NONE: string[] = [];
 const DEFAULT_SEPARATORS = ['Enter', ','];
-
-const KEY_NAME: Record<string, string> = {
-  ',': 'comma',
-  ';': 'semicolon',
-  ' ': 'space',
-};
-
-// "Press Enter or comma to add a tag."
-const describeSeparators = (separators: string[]) => {
-  if (separators.length === 0) return undefined;
-  const names = separators.map((s) => KEY_NAME[s] ?? s);
-  const list =
-    names.length === 1
-      ? names[0]
-      : `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}`;
-  return `Press ${list} to add a tag.`;
-};
 
 // A character inside a RegExp class.
 const escapeClass = (c: string) => c.replace(/[\\\]^-]/g, '\\$&');
@@ -130,10 +113,9 @@ export const TagInput = ({
   invalidMessage,
   separators = DEFAULT_SEPARATORS,
   maxTags,
-  countLabel = (count, max) => `${count} / ${max}`,
-  limitLabel = 'Limit reached',
   disabled = false,
   helperText,
+  labels: ownLabels,
   error,
   size = 'md',
   required,
@@ -143,6 +125,7 @@ export const TagInput = ({
   defaultOpen = false,
   onOpenChange,
 }: TagInputProps) => {
+  const labels = useLabels('tagInput', TAG_INPUT_LABELS, ownLabels);
   const id = useId();
   const listboxId = `${id}-listbox`;
   const descId = `${id}-desc`;
@@ -170,10 +153,17 @@ export const TagInput = ({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const helper = helperText ?? describeSeparators(separators);
+  // The names of the separators, as the helper line says them: "Enter", "comma"…
+  const keyName: Record<string, string> = {
+    ',': labels.comma,
+    ';': labels.semicolon,
+    ' ': labels.space,
+  };
+  const helper =
+    helperText ??
+    (separators.length === 0 ? undefined : labels.helper(separators.map((s) => keyName[s] ?? s)));
   const errorText =
-    error ??
-    (rejected !== null ? (invalidMessage ?? `"${rejected}" is not a valid tag.`) : undefined);
+    error ?? (rejected !== null ? (invalidMessage ?? labels.invalid(rejected)) : undefined);
   const description = errorText ?? helper;
 
   const available = suggestions?.filter((s) => !values.some((v) => sameTag(v, s)));
@@ -192,9 +182,9 @@ export const TagInput = ({
       const text = raw.trim();
       if (!text) continue;
       if (next.some((v) => sameTag(v, text))) {
-        notes.push(`${text} is already added`);
+        notes.push(labels.alreadyAdded(text));
       } else if (maxTags !== undefined && next.length >= maxTags) {
-        notes.push(`Maximum of ${maxTags} tags reached`);
+        notes.push(labels.maxReached(maxTags));
         break;
       } else if (validate && !validate(text)) {
         turnedDown = text;
@@ -207,17 +197,16 @@ export const TagInput = ({
     if (added.length > 0) setValues(next);
     if (turnedDown !== undefined) {
       setRejected(turnedDown);
-      notes.push(invalidMessage ?? `"${turnedDown}" is not a valid tag.`);
+      notes.push(invalidMessage ?? labels.invalid(turnedDown));
     }
-    const said = [...(added.length > 0 ? [`${added.join(', ')} added`] : []), ...notes];
-    if (said.length > 0)
-      announce(`${said.join('. ')}${added.length > 0 ? `, ${next.length} tags` : ''}`);
+    const said = [...(added.length > 0 ? [labels.added(added, next.length)] : []), ...notes];
+    if (said.length > 0) announce(said.join('. '));
     return { rejected: turnedDown };
   };
 
   const remove = (v: string) => {
     setValues(values.filter((x) => x !== v));
-    announce(`${v} removed, ${values.length - 1} tags`);
+    announce(labels.removed(v, values.length - 1));
     inputRef.current?.focus();
   };
 
@@ -293,9 +282,10 @@ export const TagInput = ({
     }
   };
 
-  const countText = `${values.length}${maxTags !== undefined ? ` of ${maxTags}` : ''} ${
-    values.length === 1 && maxTags === undefined ? 'tag' : 'tags'
-  }`;
+  const countText =
+    maxTags !== undefined
+      ? labels.tagCountOfMax(values.length, maxTags)
+      : labels.tagCount(values.length);
   const listOpen = open && matches.length > 0;
 
   return (
@@ -371,7 +361,7 @@ export const TagInput = ({
           <ul
             id={listboxId}
             role="listbox"
-            aria-label="Suggestions"
+            aria-label={labels.suggestions}
             className={clsx('max-h-60 w-full text-sm', FIELD_LISTBOX_PANEL)}
           >
             {matches.map((item, i) => (
@@ -405,8 +395,8 @@ export const TagInput = ({
             maxTags === undefined
               ? undefined
               : values.length >= maxTags
-                ? limitLabel
-                : countLabel(values.length, maxTags)
+                ? labels.limit
+                : labels.count(values.length, maxTags)
           }
         >
           {description}

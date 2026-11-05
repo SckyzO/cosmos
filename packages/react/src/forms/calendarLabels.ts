@@ -1,3 +1,6 @@
+import { DateLib, type DateLibOptions, type Labels } from 'react-day-picker';
+import type { CalendarLabels } from './labels';
+
 const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
@@ -22,4 +25,51 @@ export const dayButtonName = (
     'u'
   );
   return asWord.test(label) ? label : `${text}, ${label}`;
+};
+
+/**
+ * What `Calendar` hands react-day-picker as its `labels`: the entries of the labels the app set
+ * (`given`, from `LabelsProvider` and the `labels` prop), written from the resolved `labels`, then
+ * the app's own react-day-picker labels (`own`: every key that starts with `label`), which win.
+ *
+ * A key the app left out is not handed over: react-day-picker keeps its own for it, in the
+ * language of the `locale` when that has labels (the ones of `react-day-picker/locale` do), where
+ * the English default of `labels` would have covered them.
+ */
+export const dayPickerLabels = (
+  labels: CalendarLabels,
+  given: Partial<CalendarLabels>,
+  own: object = {}
+): Partial<Labels> => {
+  const day =
+    (selectable: boolean) =>
+    (
+      date: Date,
+      modifiers: { today?: boolean; selected?: boolean } | undefined,
+      options?: DateLibOptions,
+      dateLib?: DateLib
+    ) =>
+      labels.day((dateLib ?? new DateLib(options)).format(date, 'PPPP'), {
+        today: !!modifiers?.today,
+        selected: selectable && !!modifiers?.selected,
+      });
+  const mapped: Partial<Labels> = {
+    ...(given.navigation !== undefined && { labelNav: () => labels.navigation }),
+    ...(given.previousMonth !== undefined && { labelPrevious: () => labels.previousMonth }),
+    ...(given.nextMonth !== undefined && { labelNext: () => labels.nextMonth }),
+    ...(given.monthDropdown !== undefined && { labelMonthDropdown: () => labels.monthDropdown }),
+    ...(given.yearDropdown !== undefined && { labelYearDropdown: () => labels.yearDropdown }),
+    ...(given.day !== undefined && {
+      labelDayButton: day(true),
+      labelGridcell: day(false),
+    }),
+    ...(given.weekNumber !== undefined && {
+      labelWeekNumber: (week: number) => labels.weekNumber(week),
+    }),
+    ...(given.weekNumberHeader !== undefined && {
+      labelWeekNumberHeader: () => labels.weekNumberHeader,
+    }),
+  };
+  const raw = Object.fromEntries(Object.entries(own).filter(([key]) => key.startsWith('label')));
+  return { ...mapped, ...raw };
 };

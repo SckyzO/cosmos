@@ -2,10 +2,12 @@ import { clsx } from 'clsx';
 import { Check } from 'lucide-react';
 import { useId, useState, type Ref } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import { markInk, normalizeHex } from './colorHex';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { FIELD_PAD_X, FIELD_PLACEHOLDER, fieldClass, type FieldSize } from './fieldRecipe';
 import { FieldMessage } from './FieldMessage';
+import { COLOR_INPUT_LABELS, type ColorInputLabels } from './labels';
 import { onRadioGroupKeyDown, radioTabIndex } from './radioGroupA11y';
 import { RequiredMark } from './RequiredMark';
 
@@ -18,18 +20,17 @@ export type ColorPreset = {
 
 // The eight Tailwind 500 hues, as plain data: a colour a user stored must not move when the theme
 // or the accent does.
-const DEFAULT_PRESETS: ColorPreset[] = [
-  { value: '#ef4444', label: 'Red' },
-  { value: '#f97316', label: 'Orange' },
-  { value: '#f59e0b', label: 'Amber' },
-  { value: '#22c55e', label: 'Green' },
-  { value: '#14b8a6', label: 'Teal' },
-  { value: '#3b82f6', label: 'Blue' },
-  { value: '#8b5cf6', label: 'Violet' },
-  { value: '#ec4899', label: 'Pink' },
+// The eight Tailwind 500 hues, named by the labels.
+const defaultPresets = (labels: ColorInputLabels): ColorPreset[] => [
+  { value: '#ef4444', label: labels.red },
+  { value: '#f97316', label: labels.orange },
+  { value: '#f59e0b', label: labels.amber },
+  { value: '#22c55e', label: labels.green },
+  { value: '#14b8a6', label: labels.teal },
+  { value: '#3b82f6', label: labels.blue },
+  { value: '#8b5cf6', label: labels.violet },
+  { value: '#ec4899', label: labels.pink },
 ];
-
-const INVALID_MESSAGE = 'Enter a hex colour, such as #14b8a6.';
 
 // The space between the swatch and the code follows the field's own padding, so the swatch has as
 // much air on its end as on its start.
@@ -60,6 +61,8 @@ export type ColorInputProps = FieldA11yProps & {
   onChange?: (hex: string) => void;
   /** The swatches above the field. Default: the eight Tailwind 500 hues. `[]` for the hex field alone. */
   presets?: ColorPreset[];
+  /** The texts it writes, over `LabelsProvider`'s `colorInput` and the English defaults. */
+  labels?: Partial<ColorInputLabels>;
   disabled?: boolean;
   /** Merged on the wrapper. */
   className?: string;
@@ -83,12 +86,15 @@ export const ColorInput = ({
   value: valueProp,
   defaultValue = '',
   onChange,
-  presets = DEFAULT_PRESETS,
+  presets: presetsProp,
+  labels: ownLabels,
   disabled = false,
   className,
   ref,
   ...a11y
 }: ColorInputProps) => {
+  const labels = useLabels('colorInput', COLOR_INPUT_LABELS, ownLabels);
+  const presets = presetsProp ?? defaultPresets(labels);
   const id = useId();
   const inputId = a11y.id ?? `${id}-hex`;
   const [value, setValue] = useControllableState({
@@ -111,7 +117,7 @@ export const ColorInput = ({
   const [leftInvalid, setLeftInvalid] = useState(false);
 
   const fieldA11y = useFieldA11y({ ...a11y, id: inputId }, { ownLabel: !!label });
-  const message = error ?? (leftInvalid ? INVALID_MESSAGE : undefined);
+  const message = error ?? (leftInvalid ? labels.invalid : undefined);
   const descId = `${id}-desc`;
   const helper = message ?? description;
   const checked = presets.findIndex((p) => normalizeHex(p.value) === hex);
@@ -141,7 +147,7 @@ export const ColorInput = ({
       {presets.length > 0 && (
         <div
           role="radiogroup"
-          aria-label="Preset colours"
+          aria-label={labels.presets}
           onKeyDown={onRadioGroupKeyDown}
           className="mb-2.5 flex flex-wrap gap-2"
         >
@@ -211,7 +217,7 @@ export const ColorInput = ({
           }
           aria-label={
             fieldA11y['aria-label'] ??
-            (label || fieldA11y['aria-labelledby'] ? undefined : 'Hex value')
+            (label || fieldA11y['aria-labelledby'] ? undefined : labels.hex)
           }
           aria-invalid={message ? true : undefined}
           aria-required={required || undefined}

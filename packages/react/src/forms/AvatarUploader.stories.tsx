@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fireEvent, fn, userEvent, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { AvatarUploader } from './AvatarUploader';
 import { expectTextContrast, inEachTheme } from '../storybook-helpers';
 
@@ -159,5 +160,59 @@ export const ErrorTextContrastInLight: Story = {
   globals: { theme: 'light' },
   play: async ({ canvas }) => {
     expectTextContrast(canvas.getByText('Upload failed — please retry.'));
+  },
+};
+
+/** The provider's French reaches the uploader, and its own `labels` win over the provider's. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        avatarUploader: {
+          upload: 'Téléverser une photo',
+          change: 'Changer la photo',
+          remove: 'Supprimer',
+          helper: (maxSizeMB) => `JPG, PNG ou GIF — ${maxSizeMB} Mo max`,
+          notImage: 'Choisissez un fichier image',
+          uploading: 'Envoi en cours',
+          input: "Téléverser l'avatar",
+        },
+      }}
+    >
+      <div className="space-y-6">
+        <div role="group" aria-label="Avec photo">
+          <AvatarUploader
+            src={SAMPLE_AVATAR}
+            name="Sophia Laurent"
+            onUpload={fn()}
+            onRemove={fn()}
+            labels={{ remove: 'Retirer' }}
+          />
+        </div>
+        <div role="group" aria-label="Sans photo">
+          <AvatarUploader src={null} name="Sophia Laurent" onUpload={fn()} />
+        </div>
+        <div role="group" aria-label="En cours">
+          <AvatarUploader src={SAMPLE_AVATAR} name="Sophia Laurent" loading onUpload={fn()} />
+        </div>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const withPhoto = within(canvas.getByRole('group', { name: 'Avec photo' }));
+    await expect(withPhoto.getByRole('button', { name: 'Changer la photo' })).toBeVisible();
+    await expect(withPhoto.getByRole('button', { name: 'Retirer' })).toBeVisible();
+    await expect(withPhoto.queryByRole('button', { name: 'Supprimer' })).toBeNull();
+    await expect(withPhoto.getByText('JPG, PNG ou GIF — 5 Mo max')).toBeVisible();
+
+    const without = within(canvas.getByRole('group', { name: 'Sans photo' }));
+    await expect(without.getByRole('button', { name: 'Téléverser une photo' })).toBeVisible();
+    const note = new File(['not an image'], 'note.txt', { type: 'text/plain' });
+    fireEvent.change(without.getByLabelText("Téléverser l'avatar"), { target: { files: [note] } });
+    await expect(await without.findByText('Choisissez un fichier image')).toBeVisible();
+
+    const busy = within(canvas.getByRole('group', { name: 'En cours' }));
+    await expect(busy.getByRole('status', { name: 'Envoi en cours' })).toBeVisible();
   },
 };

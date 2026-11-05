@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   bothDirections,
   directionBox,
@@ -638,5 +639,61 @@ export const TagsAndToggleMirrorInRightToLeft: Story = {
     for (const dir of ['ltr', 'rtl'] as const) {
       expectReadsLeftToRight(within(directionBox(canvasElement, dir)).getByText('1 selected'));
     }
+  },
+};
+
+/** The provider's French reaches the count, the announcements and the list; `labels` wins. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        multiSelect: {
+          empty: 'Aucun résultat',
+          toggle: 'Basculer les options',
+          none: 'Aucune sélection',
+          selected: (count) => `${count} sélectionné${count === 1 ? '' : 's'}`,
+          selectedOfMax: (count, max) => `${count} sur ${max} sélectionnés`,
+          added: (label, count) => `${label} ajouté, ${count} sélectionné`,
+          removed: (label, count) => `${label} retiré, ${count} sélectionné`,
+        },
+      }}
+    >
+      <div className="space-y-6">
+        <div role="group" aria-label="Fournisseur">
+          <MultiSelect label="Rôles" options={ROLES} maxItems={3} />
+        </div>
+        <div role="group" aria-label="Propre">
+          <MultiSelect
+            label="Autres rôles"
+            options={ROLES}
+            labels={{ toggle: 'Ouvrir la liste' }}
+          />
+        </div>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const provided = within(canvas.getByRole('group', { name: 'Fournisseur' }));
+    await expect(provided.getByText('Aucune sélection')).toBeInTheDocument();
+    await expect(
+      provided.getByRole('button', { name: 'Basculer les options' })
+    ).toBeInTheDocument();
+    const input = provided.getByRole('combobox');
+    await userEvent.type(input, 'zzz');
+    const status = (await page.findAllByRole('status')).find((el) =>
+      el.textContent?.includes('Aucun résultat')
+    );
+    await expect(status).toBeVisible();
+    await userEvent.clear(input);
+    await userEvent.keyboard('{Enter}');
+    await expect(provided.getByText('1 sur 3 sélectionnés')).toBeInTheDocument();
+    await expect(provided.getByRole('status')).toHaveTextContent(
+      'Administrator ajouté, 1 sélectionné'
+    );
+    await userEvent.keyboard('{Escape}');
+
+    const own = within(canvas.getByRole('group', { name: 'Propre' }));
+    await expect(own.getByRole('button', { name: 'Ouvrir la liste' })).toBeInTheDocument();
   },
 };

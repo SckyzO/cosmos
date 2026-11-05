@@ -9,12 +9,14 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { setRef } from '../ui/mergeRefs';
 import { Calendar } from './Calendar';
 import { useControllableState } from '../hooks/useControllableState';
 import { FIELD_ICON_SIZE, FIELD_PAD_X, fieldClass, type FieldSize } from './fieldRecipe';
 import { FieldMessage } from './FieldMessage';
+import { DATE_PICKER_LABELS, type DatePickerLabels } from './labels';
 import { RequiredMark } from './RequiredMark';
 import { outsideBounds, resolvePreset, sameRange, startOfDay } from './rangePresets';
 
@@ -44,7 +46,7 @@ type SingleProps = {
   value?: Date;
   defaultValue?: Date;
   onChange?: (date: Date | undefined) => void;
-  /** Placeholder for the (single) trigger. */
+  /** Placeholder for the (single) trigger. Default `labels.placeholder`. */
   placeholder?: string;
 };
 
@@ -54,9 +56,9 @@ type RangeProps = {
   defaultValue?: DateRange;
   /** Called with the range. After the first day picked in the calendar `to` is `undefined`. */
   onChange?: (range: DateRange) => void;
-  /** Placeholder for the FROM trigger. */
+  /** Placeholder for the FROM trigger. Default `labels.fromPlaceholder`. */
   fromPlaceholder?: string;
-  /** Placeholder for the TO trigger. */
+  /** Placeholder for the TO trigger. Default `labels.toPlaceholder`. */
   toPlaceholder?: string;
   /**
    * Buttons beside the calendar that set the range in one click ("Last 7 days", "This month").
@@ -66,11 +68,6 @@ type RangeProps = {
    * are a column at its end, after it in the tab order at every width.
    */
   presets?: DateRangePreset[];
-  /**
-   * The name of the group of `presets`, for assistive technology, to translate with the rest of
-   * the page. Default "Date range presets".
-   */
-  presetsLabel?: string;
   /**
    * The date `presets` count from, and the one the calendar marks as today. Default now. Pass a
    * fixed date to test the dates a preset makes. A preset gets it at the start of its day.
@@ -99,12 +96,14 @@ type CommonProps = {
   toYear?: number;
   /** Caption style. `dropdown` (default) shows month + year as `<select>`s. */
   captionLayout?: 'dropdown' | 'dropdown-months' | 'dropdown-years' | 'label';
-  /** Single mode only — show a "Today" shortcut button below the calendar. Default `true`. */
+  /** Single mode only — show a `labels.today` shortcut button below the calendar. Default `true`. */
   showTodayButton?: boolean;
   /** Custom formatter for displayed dates. Default `DD MMM YYYY`. */
   format?: (date: Date) => string;
   /** Single mode only — fully replace the default footer (Today button) with custom JSX. */
   calendarFooter?: ReactNode;
+  /** The texts it writes, over `LabelsProvider`'s `datePicker` and the English defaults. */
+  labels?: Partial<DatePickerLabels>;
   /** Stretch the trigger(s) to fill the parent. */
   fullWidth?: boolean;
   className?: string;
@@ -147,6 +146,7 @@ export const DatePicker = (props: DatePickerProps) => {
     showTodayButton = true,
     format = defaultFormat,
     calendarFooter,
+    labels: ownLabels,
     fullWidth = false,
     className,
     ref,
@@ -154,6 +154,7 @@ export const DatePicker = (props: DatePickerProps) => {
     defaultOpen = false,
     onOpenChange,
   } = props;
+  const labels = useLabels('datePicker', DATE_PICKER_LABELS, ownLabels);
 
   const isRange = props.mode === 'range';
   const fieldId = useId();
@@ -283,7 +284,7 @@ export const DatePicker = (props: DatePickerProps) => {
         onClick={handleToday}
         className="text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-500/10 focus-visible:focus-indicator h-ctrl-28 inline-flex items-center rounded-md px-3 text-xs font-medium transition-colors"
       >
-        Today
+        {labels.today}
       </button>
     ) : undefined);
 
@@ -296,14 +297,14 @@ export const DatePicker = (props: DatePickerProps) => {
         onClick={() => commitRange(EMPTY_RANGE)}
         className="focus-visible:focus-indicator h-ctrl-28 inline-flex items-center rounded-md px-3 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"
       >
-        Clear
+        {labels.clear}
       </button>
       <button
         type="button"
         onClick={() => setOpen(false)}
         className="bg-brand-500 hover:bg-brand-600 focus-visible:focus-indicator h-ctrl-28 inline-flex items-center rounded-md px-3 text-xs font-medium text-white transition-colors"
       >
-        Done
+        {labels.done}
       </button>
     </div>
   );
@@ -386,7 +387,7 @@ export const DatePicker = (props: DatePickerProps) => {
           className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           {label}
-          {required && <RequiredMark srText=" (required)" />}
+          {required && <RequiredMark srText={` ${labels.required}`} />}
         </label>
       )}
 
@@ -399,14 +400,14 @@ export const DatePicker = (props: DatePickerProps) => {
             fieldId,
             'from',
             selectedRange.from,
-            (props as RangeProps).fromPlaceholder ?? 'Start date'
+            (props as RangeProps).fromPlaceholder ?? labels.fromPlaceholder
           )}
-          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">to</span>
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{labels.to}</span>
           {renderTrigger(
             undefined,
             'to',
             selectedRange.to,
-            (props as RangeProps).toPlaceholder ?? 'End date'
+            (props as RangeProps).toPlaceholder ?? labels.toPlaceholder
           )}
         </div>
       ) : (
@@ -414,7 +415,7 @@ export const DatePicker = (props: DatePickerProps) => {
           fieldId,
           'from',
           selectedSingle,
-          (props as SingleProps).placeholder ?? 'Pick a date'
+          (props as SingleProps).placeholder ?? labels.placeholder
         )
       )}
 
@@ -439,7 +440,7 @@ export const DatePicker = (props: DatePickerProps) => {
         placement={{ side: 'bottom', align: 'start', offset: 6 }}
         role="dialog"
         tabIndex={-1}
-        aria-label={label ? `${label} calendar` : 'Calendar'}
+        aria-label={label ? labels.calendarOf(label) : labels.calendar}
         className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl outline-none dark:border-gray-700 dark:bg-gray-900"
       >
         {isRange ? (
@@ -448,7 +449,7 @@ export const DatePicker = (props: DatePickerProps) => {
               {rangeCalendar}
               <div
                 role="group"
-                aria-label={range?.presetsLabel ?? 'Date range presets'}
+                aria-label={labels.presets}
                 className="flex flex-wrap gap-1 border-t border-gray-200 p-3 sm:w-44 sm:flex-col sm:flex-nowrap sm:border-s sm:border-t-0 dark:border-gray-700"
               >
                 {presets.map((preset) => (

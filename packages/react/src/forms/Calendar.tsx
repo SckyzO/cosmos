@@ -1,6 +1,13 @@
 import { clsx } from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { createContext, use, type CSSProperties, type ReactNode, type RefCallback } from 'react';
+import {
+  createContext,
+  use,
+  useContext,
+  type CSSProperties,
+  type ReactNode,
+  type RefCallback,
+} from 'react';
 import {
   Day,
   DayButton,
@@ -12,10 +19,19 @@ import {
   type RootProps,
 } from 'react-day-picker';
 import { useParentDirection } from '../hooks/direction';
+import { definedLabels, LabelsContext, useLabels } from '../labels/labelsContext';
 import { mergeRefs } from '../ui/mergeRefs';
-import { dayButtonName } from './calendarLabels';
+import { dayButtonName, dayPickerLabels } from './calendarLabels';
+import { CALENDAR_LABELS, type CalendarLabels } from './labels';
 
 export type CalendarProps = DayPickerProps & {
+  /**
+   * The texts it writes (the names of the month buttons and dropdowns, of a day), over
+   * `LabelsProvider`'s `calendar` and the English defaults. They reach react-day-picker as its
+   * `labels`. The month and weekday names come from `locale`, not from here. react-day-picker's
+   * own `labels` (`labelNext`, `labelDayButton`…) go in the same prop and win over these.
+   */
+  labels?: Partial<CalendarLabels>;
   className?: string;
 };
 
@@ -88,7 +104,20 @@ const CalendarRoot = ({ rootRef, ...props }: RootProps) => (
  * the bundle breaks `require` in Node): load `@sckyzo/cosmos-react/calendar.css`
  * once in your app.
  */
-export const Calendar = ({ classNames, components, className, style, ...rest }: CalendarProps) => {
+export const Calendar = ({
+  classNames,
+  components,
+  className,
+  style,
+  labels: ownLabels,
+  ...rest
+}: CalendarProps) => {
+  const labels = useLabels('calendar', CALENDAR_LABELS, ownLabels);
+  // What the app set, from its provider and this prop: react-day-picker keeps its own for the rest.
+  const given = {
+    ...definedLabels(useContext(LabelsContext).calendar),
+    ...definedLabels(ownLabels),
+  };
   const def = getDefaultClassNames();
   const [direction, directionRef] = useParentDirection<HTMLDivElement>();
   const showLabel = (rest.captionLayout ?? 'label') === 'label';
@@ -200,6 +229,7 @@ export const Calendar = ({ classNames, components, className, style, ...rest }: 
           },
           ...components,
         }}
+        labels={dayPickerLabels(labels, given, ownLabels)}
         {...rest}
       />
     </DirectionRef>

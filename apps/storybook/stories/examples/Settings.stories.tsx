@@ -337,7 +337,7 @@ const SettingsScreen = ({
                     <AvatarUploader
                       src={values.logo}
                       name={values.name || 'Organisation'}
-                      uploadLabel={values.logo ? 'Change logo' : 'Upload logo'}
+                      labels={{ upload: 'Upload logo', change: 'Change logo' }}
                       helperText="JPG or PNG, 1 MB max."
                       maxSizeMB={1}
                       error={errors.logo}

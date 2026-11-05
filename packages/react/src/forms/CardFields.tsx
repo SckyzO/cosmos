@@ -1,12 +1,14 @@
 import { clsx } from 'clsx';
 import { useId, type Ref } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import { CardBrandContext } from './cardBrandContext';
 import { CardCvcInput } from './CardCvcInput';
 import { CardExpiryInput } from './CardExpiryInput';
 import { cardBrand, type CardBrand } from './cardFormat';
 import { CardNumberInput } from './CardNumberInput';
 import type { FieldSize } from './fieldRecipe';
+import { CARD_FIELDS_LABELS, type CardFieldsLabels } from './labels';
 
 /** What a card group holds: the number as digits, the expiry as `MMYY`, the code as digits. */
 export type CardValue = { number: string; expiry: string; cvc: string };
@@ -14,12 +16,6 @@ export type CardValue = { number: string; expiry: string; cvc: string };
 type CardFieldKey = keyof CardValue;
 
 const EMPTY_CARD: CardValue = { number: '', expiry: '', cvc: '' };
-
-const DEFAULT_LABELS: Record<CardFieldKey, string> = {
-  number: 'Card number',
-  expiry: 'Expiry date',
-  cvc: 'Security code',
-};
 
 export type CardFieldsProps = {
   /** The group's name, drawn as its `<legend>` and read by a screen reader before each field. */
@@ -37,8 +33,11 @@ export type CardFieldsProps = {
    * the group's description. It is announced when it appears.
    */
   error?: string;
-  /** Labels of the three fields. Default `Card number`, `Expiry date` and `Security code`. */
-  labels?: Partial<Record<CardFieldKey, string>>;
+  /**
+   * The texts it writes (the labels of the three fields), over `LabelsProvider`'s `cardFields` and
+   * the English defaults: `Card number`, `Expiry date` and `Security code`.
+   */
+  labels?: Partial<CardFieldsLabels>;
   /** Height and text size of the three fields, aligned on Button's. Default `md`. */
   size?: FieldSize;
   /** Marks the three fields required. */
@@ -67,7 +66,7 @@ export const CardFields = ({
   onChange,
   errors,
   error,
-  labels,
+  labels: ownLabels,
   size,
   required,
   disabled,
@@ -75,6 +74,7 @@ export const CardFields = ({
   inputRefs,
   className,
 }: CardFieldsProps) => {
+  const labels = useLabels('cardFields', CARD_FIELDS_LABELS, ownLabels);
   const errorId = useId();
   const [value, setValue] = useControllableState({
     value: valueProp,
@@ -84,7 +84,6 @@ export const CardFields = ({
   });
   const set = (key: CardFieldKey) => (next: string) =>
     setValue((current) => ({ ...current, [key]: next }));
-  const text = (key: CardFieldKey) => labels?.[key] ?? DEFAULT_LABELS[key];
   const shared = { size, required, disabled };
 
   return (
@@ -99,7 +98,7 @@ export const CardFields = ({
           <CardNumberInput
             {...shared}
             className="col-span-2"
-            label={text('number')}
+            label={labels.number}
             error={errors?.number}
             value={value.number}
             onChange={set('number')}
@@ -108,7 +107,7 @@ export const CardFields = ({
           />
           <CardExpiryInput
             {...shared}
-            label={text('expiry')}
+            label={labels.expiry}
             error={errors?.expiry}
             value={value.expiry}
             onChange={set('expiry')}
@@ -116,7 +115,7 @@ export const CardFields = ({
           />
           <CardCvcInput
             {...shared}
-            label={text('cvc')}
+            label={labels.cvc}
             error={errors?.cvc}
             value={value.cvc}
             onChange={set('cvc')}

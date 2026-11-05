@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { bothDirections, expectMirrored } from '../storybook-helpers';
 import { ZoomBar } from './ZoomBar';
 
@@ -75,5 +76,53 @@ export const ButtonsAndDividersMirrorInRightToLeft: Story = {
       expect(getComputedStyle(fit).borderInlineStartWidth).toBe('1px');
       expect(getComputedStyle(fit).borderInlineEndWidth).toBe('0px');
     }
+  },
+};
+
+/** The provider's French names the four buttons; the bar's own `labels` win, key by key. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        zoomBar: {
+          zoomOut: 'Zoom arrière',
+          zoomIn: 'Zoom avant',
+          fit: 'Ajuster à la zone',
+          reset: 'Revenir à 100 %',
+        },
+      }}
+    >
+      <div className="space-y-4">
+        <div role="group" aria-label="Fournisseur">
+          <ZoomBar
+            zoom={1}
+            onZoomIn={() => {}}
+            onZoomOut={() => {}}
+            onFit={() => {}}
+            onReset={() => {}}
+          />
+        </div>
+        <div role="group" aria-label="Propre">
+          <ZoomBar
+            zoom={1}
+            onZoomIn={() => {}}
+            onZoomOut={() => {}}
+            onFit={() => {}}
+            labels={{ fit: 'Adapter' }}
+          />
+        </div>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const provided = within(canvas.getByRole('group', { name: 'Fournisseur' }));
+    await expect(provided.getByRole('button', { name: 'Zoom arrière' })).toBeVisible();
+    await expect(provided.getByRole('button', { name: 'Zoom avant' })).toBeVisible();
+    await expect(provided.getByRole('button', { name: 'Ajuster à la zone' })).toBeVisible();
+    await expect(provided.getByRole('button', { name: 'Revenir à 100 %' })).toBeVisible();
+    const own = within(canvas.getByRole('group', { name: 'Propre' }));
+    await expect(own.getByRole('button', { name: 'Adapter' })).toBeVisible();
+    await expect(own.getByRole('button', { name: 'Zoom avant' })).toBeVisible();
   },
 };

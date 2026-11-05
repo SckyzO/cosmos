@@ -1,7 +1,8 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { Activity } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { Input } from '../forms/Input';
 import { portalDocsParams } from '../storybook-helpers';
 import { AuthLayout } from './AuthLayout';
@@ -90,7 +91,7 @@ export const CustomLabel: Story = {
   decorators: [inSignInColumn],
   args: {
     providers: ['google', 'github'],
-    labelFor: (p) => `Sign in with ${p[0].toUpperCase() + p.slice(1)}`,
+    labels: { continueWith: (name) => `Sign in with ${name}` },
   },
 };
 
@@ -203,5 +204,43 @@ export const EmptyProvidersRendersNothing: Story = {
   args: { providers: [], onProviderClick: fn() },
   play: async ({ canvasElement }) => {
     await expect(canvasElement.querySelector('button')).toBeNull();
+  },
+};
+
+/** The provider's French words the buttons and the divider; the buttons' own `labels` win. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        socialAuthButtons: {
+          continueWith: (name) => `Continuer avec ${name}`,
+          divider: 'OU continuer avec',
+        },
+      }}
+    >
+      <div className="space-y-10">
+        <div role="group" aria-label="Fournisseur">
+          <SocialAuthButtons providers={['google', 'github']} onProviderClick={fn()} />
+        </div>
+        <div role="group" aria-label="Propre">
+          <SocialAuthButtons
+            providers={['apple']}
+            onProviderClick={fn()}
+            labels={{ continueWith: (name) => `Se connecter via ${name}` }}
+          />
+        </div>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const provided = within(canvas.getByRole('group', { name: 'Fournisseur' }));
+    await expect(provided.getByRole('button', { name: 'Continuer avec Google' })).toBeVisible();
+    await expect(provided.getByRole('button', { name: 'Continuer avec GitHub' })).toBeVisible();
+    await expect(provided.getByText('OU continuer avec')).toBeVisible();
+    // Its own `continueWith` wins, and its divider is still the provider's.
+    const own = within(canvas.getByRole('group', { name: 'Propre' }));
+    await expect(own.getByRole('button', { name: 'Se connecter via Apple' })).toBeVisible();
+    await expect(own.getByText('OU continuer avec')).toBeVisible();
   },
 };

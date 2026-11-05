@@ -1,6 +1,8 @@
 import { clsx } from 'clsx';
 import { Maximize2, Minus, Plus, RotateCcw } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
+import { ZOOM_BAR_LABELS, type ZoomBarLabels } from './labels';
 
 export type ZoomBarProps = {
   zoom: number;
@@ -14,6 +16,8 @@ export type ZoomBarProps = {
    * floated over a canvas, so the compact default is the right one.
    */
   fullWidth?: boolean;
+  /** The texts it writes (the buttons' names and tooltips), over `LabelsProvider`'s `zoomBar` and the English defaults. */
+  labels?: Partial<ZoomBarLabels>;
   className?: string;
 };
 
@@ -52,33 +56,37 @@ export const ZoomBar = ({
   onFit,
   onReset,
   fullWidth = false,
+  labels: ownLabels,
   className,
-}: ZoomBarProps) => (
-  <div
-    className={clsx(
-      fullWidth ? 'flex w-full' : 'inline-flex',
-      'overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800',
-      className
-    )}
-  >
-    <ZoomBtn onClick={onZoomOut} title="Zoom out">
-      <Minus className="h-4 w-4" />
-    </ZoomBtn>
-    <span className="py-row-8 flex min-w-[3.5rem] items-center justify-center border-x border-gray-200 px-3 font-mono text-sm font-medium text-gray-600 dark:border-gray-700 dark:text-gray-300">
-      {Math.round(zoom * 100)}%
-    </span>
-    <ZoomBtn onClick={onZoomIn} title="Zoom in">
-      <Plus className="h-4 w-4" />
-    </ZoomBtn>
-    {onFit && (
-      <ZoomBtn onClick={onFit} title="Fit to canvas" dividerStart>
-        <Maximize2 className="h-4 w-4" />
+}: ZoomBarProps) => {
+  const labels = useLabels('zoomBar', ZOOM_BAR_LABELS, ownLabels);
+  return (
+    <div
+      className={clsx(
+        fullWidth ? 'flex w-full' : 'inline-flex',
+        'overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800',
+        className
+      )}
+    >
+      <ZoomBtn onClick={onZoomOut} title={labels.zoomOut}>
+        <Minus className="h-4 w-4" />
       </ZoomBtn>
-    )}
-    {onReset && (
-      <ZoomBtn onClick={onReset} title="Reset to 100%" dividerStart>
-        <RotateCcw className="h-4 w-4" />
+      <span className="py-row-8 flex min-w-[3.5rem] items-center justify-center border-x border-gray-200 px-3 font-mono text-sm font-medium text-gray-600 dark:border-gray-700 dark:text-gray-300">
+        {Math.round(zoom * 100)}%
+      </span>
+      <ZoomBtn onClick={onZoomIn} title={labels.zoomIn}>
+        <Plus className="h-4 w-4" />
       </ZoomBtn>
-    )}
-  </div>
-);
+      {onFit && (
+        <ZoomBtn onClick={onFit} title={labels.fit} dividerStart>
+          <Maximize2 className="h-4 w-4" />
+        </ZoomBtn>
+      )}
+      {onReset && (
+        <ZoomBtn onClick={onReset} title={labels.reset} dividerStart>
+          <RotateCcw className="h-4 w-4" />
+        </ZoomBtn>
+      )}
+    </div>
+  );
+};

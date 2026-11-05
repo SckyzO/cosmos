@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   expectFocusBorder,
   expectFocusRing,
@@ -376,5 +377,50 @@ export const HexFieldIsLeftToRightInRightToLeft: Story = {
     await expect(preview.getBoundingClientRect().right).toBeLessThanOrEqual(
       field.getBoundingClientRect().left + 1
     );
+  },
+};
+
+/** The provider's French names the swatches, the group, the hex field and the error; `labels` wins. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        colorInput: {
+          presets: 'Couleurs prédéfinies',
+          hex: 'Valeur hexadécimale',
+          invalid: 'Saisissez une couleur hexadécimale, comme #14b8a6.',
+          red: 'Rouge',
+          teal: 'Sarcelle',
+        },
+      }}
+    >
+      <div className="space-y-6">
+        <div role="group" aria-label="Fournisseur">
+          <ColorInput />
+        </div>
+        <div role="group" aria-label="Propre">
+          <ColorInput labels={{ hex: 'Code hex' }} />
+        </div>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const provided = within(canvas.getByRole('group', { name: 'Fournisseur' }));
+    await expect(provided.getByRole('radiogroup', { name: 'Couleurs prédéfinies' })).toBeVisible();
+    await expect(provided.getByRole('radio', { name: 'Rouge' })).toBeVisible();
+    await expect(provided.getByRole('radio', { name: 'Sarcelle' })).toBeVisible();
+    // A name the app left out stays English.
+    await expect(provided.getByRole('radio', { name: 'Orange' })).toBeVisible();
+    const hex = provided.getByRole('textbox', { name: 'Valeur hexadécimale' });
+    await userEvent.type(hex, 'zz');
+    await userEvent.tab();
+    await expect(
+      await provided.findByText('Saisissez une couleur hexadécimale, comme #14b8a6.')
+    ).toBeVisible();
+
+    const own = within(canvas.getByRole('group', { name: 'Propre' }));
+    await expect(own.getByRole('textbox', { name: 'Code hex' })).toBeVisible();
+    await expect(own.getByRole('radiogroup', { name: 'Couleurs prédéfinies' })).toBeVisible();
   },
 };

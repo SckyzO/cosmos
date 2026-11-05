@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { PASSWORD_POLICY_LABELS } from './labels';
 import { defaultPasswordRules } from './PasswordPolicyChecker';
 
 const passing = (pwd: string) =>
@@ -35,5 +36,17 @@ describe('defaultPasswordRules', () => {
     expect(passing('a')).toEqual(['One lowercase letter']);
     expect(passing('1')).toEqual(['One number']);
     expect(passing('!')).toEqual(['One symbol']);
+  });
+
+  it('words the rules from the labels it is given', () => {
+    const words = {
+      ...PASSWORD_POLICY_LABELS,
+      minLength: 'Au moins 12 caractères',
+      symbol: 'Un symbole',
+    };
+    const labels = defaultPasswordRules('', words).map((r) => r.label);
+    expect(labels[0]).toBe('Au moins 12 caractères');
+    expect(labels[4]).toBe('Un symbole');
+    expect(labels[1]).toBe('One uppercase letter');
   });
 });

@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   bothDirections,
   directionBox,
@@ -242,5 +243,74 @@ export const SentViewWithoutCooldownIsAsItWas: Story = {
     await userEvent.click(resend);
     await expect(args.onResend).toHaveBeenCalledTimes(2);
     await expect(canvas.queryByRole('status')).toBeNull();
+  },
+};
+
+/** The provider's French words the form, the `sent` view and its resend wait; `labels` wins. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        resetPasswordForm: {
+          title: 'Réinitialiser votre mot de passe',
+          description: 'Saisissez votre e-mail pour recevoir un lien.',
+          email: 'E-mail',
+          emailPlaceholder: 'jean@exemple.fr',
+          submit: 'Envoyer le lien',
+          signIn: 'Retour à la connexion',
+          sentTitle: 'Consultez votre boîte de réception',
+          sentDescription: (email) => (
+            <>Nous avons envoyé un lien à {email}. Il expire dans 1 heure.</>
+          ),
+          resend: 'Renvoyer',
+          resent: 'Nous vous avons envoyé un nouveau lien.',
+          ready: 'Vous pouvez demander un nouveau lien.',
+          availableIn: (seconds) => `disponible dans ${seconds} s`,
+        },
+      }}
+    >
+      <div className="space-y-10">
+        <div role="group" aria-label="Formulaire">
+          <ResetPasswordForm onSubmit={fn()} signInHref="#" labels={{ signIn: 'Retour' }} />
+        </div>
+        <div role="group" aria-label="Envoyé">
+          <ResetPasswordForm
+            onSubmit={fn()}
+            sent
+            sentEmail="jean@exemple.fr"
+            onResend={fn()}
+            resendCooldown={30}
+            signInHref="#"
+          />
+        </div>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const form = within(canvas.getByRole('group', { name: 'Formulaire' }));
+    await expect(
+      form.getByRole('heading', { name: 'Réinitialiser votre mot de passe' })
+    ).toBeVisible();
+    await expect(form.getByText('Saisissez votre e-mail pour recevoir un lien.')).toBeVisible();
+    await expect(form.getByRole('textbox', { name: 'E-mail' })).toHaveAttribute(
+      'placeholder',
+      'jean@exemple.fr'
+    );
+    await expect(form.getByRole('button', { name: 'Envoyer le lien' })).toBeVisible();
+    // Its own `signIn` wins over the provider's.
+    await expect(form.getByRole('link', { name: 'Retour' })).toBeVisible();
+    await expect(form.queryByRole('link', { name: 'Retour à la connexion' })).toBeNull();
+
+    const sent = within(canvas.getByRole('group', { name: 'Envoyé' }));
+    await expect(
+      sent.getByRole('heading', { name: 'Consultez votre boîte de réception' })
+    ).toBeVisible();
+    await expect(sent.getByText(/^Nous avons envoyé un lien à/).closest('p')).toHaveTextContent(
+      'Nous avons envoyé un lien à jean@exemple.fr. Il expire dans 1 heure.'
+    );
+    const resend = sent.getByRole('button', { name: 'Renvoyer' });
+    await expect(resend).toHaveAccessibleDescription(/^disponible dans \d+ s$/);
+    await expect(sent.getByRole('link', { name: 'Retour à la connexion' })).toBeVisible();
   },
 };

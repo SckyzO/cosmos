@@ -2,15 +2,16 @@ import { ArrowLeft, Mail, MailCheck } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Input } from '../forms/Input';
 import { useFocusOnSwitch } from '../hooks/useFocusOnSwitch';
+import { useLabels } from '../labels/labelsContext';
 import { AlertBanner } from '../ui/AlertBanner';
 import { Button } from '../ui/Button';
 import { Link } from '../ui/Link';
-import { ResendButton, resendLabels, type ResendLabels } from './ResendButton';
+import { RESET_PASSWORD_FORM_LABELS, type ResetPasswordFormLabels } from './labels';
+import { ResendButton } from './ResendButton';
 
 export type ResetPasswordFormProps = {
   onSubmit: (email: string) => void | Promise<void>;
   signInHref?: string;
-  signInLabel?: string;
   /**
    * Switch to the post-submit confirmation view. Default `false`. When it changes, the focus goes
    * to the heading of the new view, since the button that was pressed is gone with the old one;
@@ -21,12 +22,12 @@ export type ResetPasswordFormProps = {
   sentEmail?: string;
   loading?: boolean;
   error?: string;
+  /** The title. Default `labels.title`. */
   title?: string;
+  /** The line under the title. Default `labels.description`. */
   description?: string;
-  submitLabel?: string;
   /** Resend handler in the `sent` view. Hidden if not provided. */
   onResend?: () => void;
-  resendLabel?: string;
   /**
    * Seconds the resend button waits before it can be pressed again, from the moment the `sent`
    * view shows (the e-mail was just sent) and from each press. Default `0`: no wait. While it
@@ -35,28 +36,26 @@ export type ResetPasswordFormProps = {
    * authority: show its refusal (a 429) through `error`.
    */
   resendCooldown?: number;
-  /** The words of the resend wait, to translate with the rest of the page. */
-  resendLabels?: ResendLabels;
+  /** The texts it writes, over `LabelsProvider`'s `resetPasswordForm` and the English defaults. */
+  labels?: Partial<ResetPasswordFormLabels>;
   className?: string;
 };
 
 export const ResetPasswordForm = ({
   onSubmit,
   signInHref,
-  signInLabel = 'Back to sign in',
   sent = false,
   sentEmail,
   loading = false,
   error,
-  title = 'Reset your password',
-  description = 'Enter your email and we’ll send you a link to reset your password.',
-  submitLabel = 'Send reset link',
+  title,
+  description,
   onResend,
-  resendLabel = 'Resend',
   resendCooldown = 0,
-  resendLabels: resendWords,
+  labels: ownLabels,
   className,
 }: ResetPasswordFormProps) => {
+  const labels = useLabels('resetPasswordForm', RESET_PASSWORD_FORM_LABELS, ownLabels);
   const [email, setEmail] = useState('');
   // When the host shows or leaves the `sent` view, the button that was pressed is gone: the focus
   // goes to the heading of the new one.
@@ -79,20 +78,20 @@ export const ResetPasswordForm = ({
           tabIndex={-1}
           className="mt-4 text-center text-xl font-semibold text-gray-900 outline-hidden dark:text-white"
         >
-          Check your inbox
+          {labels.sentTitle}
         </h1>
         <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
-          We&apos;ve sent a reset link to{' '}
-          <bdi className="font-medium text-gray-700 dark:text-gray-200">{sentEmail ?? email}</bdi>.
-          The link expires in 1 hour.
+          {labels.sentDescription(
+            <bdi className="font-medium text-gray-700 dark:text-gray-200">{sentEmail ?? email}</bdi>
+          )}
         </p>
         <div className="mt-6 flex flex-col items-stretch gap-2">
           {onResend && (
             <ResendButton
-              label={resendLabel}
+              label={labels.resend}
               onResend={onResend}
               cooldown={resendCooldown}
-              labels={resendLabels('link', resendWords)}
+              labels={labels}
               disabled={loading}
               loading={loading}
               variant="secondary"
@@ -102,7 +101,7 @@ export const ResetPasswordForm = ({
           {signInHref && (
             <Link href={signInHref} variant="subtle" className="justify-center">
               <ArrowLeft className="h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
-              {signInLabel}
+              {labels.signIn}
             </Link>
           )}
         </div>
@@ -118,10 +117,12 @@ export const ResetPasswordForm = ({
           tabIndex={-1}
           className="text-xl font-semibold text-gray-900 outline-hidden dark:text-white"
         >
-          {title}
+          {title ?? labels.title}
         </h1>
-        {description && (
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
+        {(description ?? labels.description) && (
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {description ?? labels.description}
+          </p>
         )}
       </div>
 
@@ -133,12 +134,12 @@ export const ResetPasswordForm = ({
 
       <div className="space-y-4">
         <Input
-          label="Email"
+          label={labels.email}
           type="email"
           icon={Mail}
           autoComplete="email"
           required
-          placeholder="john@example.com"
+          placeholder={labels.emailPlaceholder}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={loading}
@@ -149,7 +150,7 @@ export const ResetPasswordForm = ({
           disabled={loading || email.length === 0}
           className="w-full"
         >
-          {submitLabel}
+          {labels.submit}
         </Button>
       </div>
 
@@ -157,7 +158,7 @@ export const ResetPasswordForm = ({
         <p className="mt-5 text-center text-xs text-[var(--color-text-muted)]">
           <Link href={signInHref} variant="colored">
             <ArrowLeft className="h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
-            {signInLabel}
+            {labels.signIn}
           </Link>
         </p>
       )}

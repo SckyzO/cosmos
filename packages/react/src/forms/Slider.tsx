@@ -3,7 +3,9 @@ import { clsx } from 'clsx';
 import { useMemo } from 'react';
 import { useParentDirection } from '../hooks/direction';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import type { Intent } from '../ui/intent';
+import { SLIDER_LABELS, type SliderLabels } from './labels';
 
 export type SliderIntent = Extract<Intent, 'brand' | 'success' | 'warning' | 'danger'>;
 
@@ -31,7 +33,8 @@ export type SliderProps = {
   step?: number;
   /**
    * Names the slider, at the start of the header row. The handles take it as their accessible
-   * name; a range names them "<label> minimum" and "<label> maximum".
+   * name; a range names them with `labels.minimum` and `labels.maximum` ("<label> minimum" and
+   * "<label> maximum").
    */
   label?: string;
   /** Names the handles when there is no visible `label`. It wins over `label` as the name. */
@@ -48,6 +51,8 @@ export type SliderProps = {
    * with a coarse one.
    */
   marks?: boolean;
+  /** The texts it writes (the names of a range's two handles), over `LabelsProvider`'s `slider` and the English defaults. */
+  labels?: Partial<SliderLabels>;
   disabled?: boolean;
   className?: string;
 };
@@ -102,9 +107,11 @@ export const Slider = ({
   formatValue,
   intent = 'brand',
   marks = false,
+  labels: ownLabels,
   disabled = false,
   className,
 }: SliderProps) => {
+  const labels = useLabels('slider', SLIDER_LABELS, ownLabels);
   const [value, setValue] = useControllableState<SliderValue>({
     value: valueProp,
     defaultValue: defaultValue ?? min,
@@ -126,7 +133,7 @@ export const Slider = ({
     name === undefined
       ? undefined
       : isRange
-        ? `${name} ${index === 0 ? 'minimum' : 'maximum'}`
+        ? (index === 0 ? labels.minimum : labels.maximum)(name)
         : name;
   const styles = INTENT_CLASSES[intent];
   const ticks = marks ? markValues(min, max, step) : [];

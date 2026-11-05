@@ -1,15 +1,14 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { Button, type ButtonIntent, type ButtonVariant } from '../ui/Button';
+import { FORM_FOOTER_LABELS, type FormFooterLabels } from './labels';
 
 export type FormFooterAlign = 'end' | 'between';
 
 export type FormFooterProps = {
   /** Cancel button handler. Hidden when omitted. */
   onCancel?: () => void;
-  cancelLabel?: string;
-  /** Submit button. Defaults to `<button type="submit">`. Override via `submitProps.type`. */
-  submitLabel?: string;
   /** When true, the submit button shows a spinner and is disabled. */
   submitting?: boolean;
   /** Disable the submit button (e.g. form invalid / not dirty). */
@@ -28,13 +27,13 @@ export type FormFooterProps = {
   extra?: ReactNode;
   /** Replace the entire button row (still keeps padding + border). */
   children?: ReactNode;
+  /** The texts it writes, over `LabelsProvider`'s `formFooter` and the English defaults. */
+  labels?: Partial<FormFooterLabels>;
   className?: string;
 };
 
 export const FormFooter = ({
   onCancel,
-  cancelLabel = 'Cancel',
-  submitLabel = 'Save changes',
   submitting = false,
   submitDisabled = false,
   submitVariant = 'primary',
@@ -44,13 +43,15 @@ export const FormFooter = ({
   bordered = true,
   extra,
   children,
+  labels: ownLabels,
   className,
 }: FormFooterProps) => {
+  const labels = useLabels('formFooter', FORM_FOOTER_LABELS, ownLabels);
   const buttons = children ?? (
     <>
       {onCancel && (
         <Button type="button" variant="secondary" onClick={() => onCancel()} disabled={submitting}>
-          {cancelLabel}
+          {labels.cancel}
         </Button>
       )}
       <Button
@@ -61,7 +62,7 @@ export const FormFooter = ({
         disabled={submitDisabled || submitting}
         form={formId}
       >
-        {submitLabel}
+        {labels.submit}
       </Button>
     </>
   );

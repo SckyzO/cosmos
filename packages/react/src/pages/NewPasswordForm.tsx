@@ -1,14 +1,15 @@
 import { ArrowLeft, CircleCheck, Clock } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { PasswordInput } from '../forms/PasswordInput';
+import { PASSWORD_POLICY_LABELS } from '../forms/labels';
 import { defaultPasswordRules, type PasswordRule } from '../forms/PasswordPolicyChecker';
 import { useFocusOnSwitch } from '../hooks/useFocusOnSwitch';
+import { useLabels } from '../labels/labelsContext';
 import { AlertBanner } from '../ui/AlertBanner';
 import { Button } from '../ui/Button';
 import { Link } from '../ui/Link';
+import { NEW_PASSWORD_FORM_LABELS, type NewPasswordFormLabels } from './labels';
 import { NewPasswordField } from './NewPasswordField';
-
-const MISMATCH = 'Passwords don’t match';
 
 /** `form` asks for the password, `expired` is a link that no longer works, `done` is the end. */
 export type NewPasswordFormView = 'form' | 'expired' | 'done';
@@ -20,12 +21,8 @@ export type NewPasswordFormProps = {
   view?: NewPasswordFormView;
   /** `expired`: where to ask for another link. Without it, the view has no link to follow. */
   requestHref?: string;
-  requestLabel?: string;
   /** `form` and `expired`: where "Back to sign in" goes; `done`: where "Continue to sign in" goes. */
   signInHref?: string;
-  signInLabel?: string;
-  /** `done`: the label of the link to the sign-in page. */
-  continueLabel?: string;
   /**
    * The password policy: what the rules say of a password, listed live under the field. Default
    * `defaultPasswordRules`. The form stays closed until they all hold; a list that comes back
@@ -39,9 +36,12 @@ export type NewPasswordFormProps = {
   strength?: (password: string) => number;
   loading?: boolean;
   error?: string;
+  /** The title of the form. Default `labels.title`. */
   title?: string;
+  /** The line under the title. Default `labels.description`. */
   description?: string;
-  submitLabel?: string;
+  /** The texts it writes, over `LabelsProvider`'s `newPasswordForm` and the English defaults. */
+  labels?: Partial<NewPasswordFormLabels>;
   className?: string;
 };
 
@@ -56,19 +56,17 @@ export const NewPasswordForm = ({
   onSubmit,
   view = 'form',
   requestHref,
-  requestLabel = 'Send me a new link',
   signInHref,
-  signInLabel = 'Back to sign in',
-  continueLabel = 'Continue to sign in',
-  rules: rulesOf = defaultPasswordRules,
+  rules: rulesProp,
   strength,
   loading = false,
   error,
-  title = 'Choose a new password',
-  description = 'Use a password you don’t use anywhere else. A reset link works once.',
-  submitLabel = 'Update password',
+  title,
+  description,
+  labels: ownLabels,
   className,
 }: NewPasswordFormProps) => {
+  const labels = useLabels('newPasswordForm', NEW_PASSWORD_FORM_LABELS, ownLabels);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   // The mismatch shows when the field is left, not on every key.
@@ -77,7 +75,9 @@ export const NewPasswordForm = ({
   // heading of the new one.
   const heading = useFocusOnSwitch(view);
 
-  const rules = rulesOf(password);
+  // The default policy is worded by the dictionary's `passwordPolicyChecker` keys.
+  const policy = useLabels('passwordPolicyChecker', PASSWORD_POLICY_LABELS);
+  const rules = (rulesProp ?? ((value) => defaultPasswordRules(value, policy)))(password);
   const matches = confirm === password;
   const mismatch = confirmLeft && !matches;
   const canSubmit =
@@ -86,7 +86,7 @@ export const NewPasswordForm = ({
   const backLink = signInHref && (
     <Link href={signInHref} variant="subtle" className="justify-center">
       <ArrowLeft className="h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
-      {signInLabel}
+      {labels.signIn}
     </Link>
   );
 
@@ -101,15 +101,15 @@ export const NewPasswordForm = ({
           tabIndex={-1}
           className="mt-4 text-center text-xl font-semibold text-gray-900 outline-hidden dark:text-white"
         >
-          This link is no longer valid
+          {labels.expiredTitle}
         </h1>
         <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
-          Reset links work once and expire after 1 hour. Ask for a new one to continue.
+          {labels.expiredDescription}
         </p>
         <div className="mt-6 flex flex-col items-stretch gap-3">
           {requestHref && (
             <Link href={requestHref} variant="colored" className="justify-center font-medium">
-              {requestLabel}
+              {labels.request}
             </Link>
           )}
           {backLink}
@@ -129,15 +129,15 @@ export const NewPasswordForm = ({
           tabIndex={-1}
           className="mt-4 text-center text-xl font-semibold text-gray-900 outline-hidden dark:text-white"
         >
-          Password updated
+          {labels.doneTitle}
         </h1>
         <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
-          You can now sign in with your new password.
+          {labels.doneDescription}
         </p>
         {signInHref && (
           <div className="mt-6 flex flex-col items-stretch">
             <Link href={signInHref} variant="colored" className="justify-center font-medium">
-              {continueLabel}
+              {labels.continue}
             </Link>
           </div>
         )}
@@ -159,10 +159,12 @@ export const NewPasswordForm = ({
           tabIndex={-1}
           className="text-xl font-semibold text-gray-900 outline-hidden dark:text-white"
         >
-          {title}
+          {title ?? labels.title}
         </h1>
-        {description && (
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
+        {(description ?? labels.description) && (
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {description ?? labels.description}
+          </p>
         )}
       </div>
 
@@ -174,7 +176,7 @@ export const NewPasswordForm = ({
 
       <div className="space-y-4">
         <NewPasswordField
-          label="New password"
+          label={labels.newPassword}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={loading}
@@ -188,25 +190,25 @@ export const NewPasswordForm = ({
           }}
         >
           <PasswordInput
-            label="Confirm password"
+            label={labels.confirmPassword}
             autoComplete="new-password"
             required
-            placeholder="Repeat the password"
+            placeholder={labels.confirmPlaceholder}
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            error={mismatch ? MISMATCH : undefined}
-            success={confirm.length > 0 && matches ? 'Passwords match' : undefined}
+            error={mismatch ? labels.mismatch : undefined}
+            success={confirm.length > 0 && matches ? labels.match : undefined}
             disabled={loading}
           />
           {/* The focus has left the field, so its description is not read: the alert says it. */}
           {mismatch && (
             <span role="alert" className="sr-only">
-              {MISMATCH}
+              {labels.mismatch}
             </span>
           )}
         </div>
         <Button type="submit" loading={loading} disabled={!canSubmit} className="w-full">
-          {submitLabel}
+          {labels.submit}
         </Button>
       </div>
 

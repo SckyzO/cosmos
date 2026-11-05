@@ -488,7 +488,7 @@ screen reader reads the countdown ("available in 0:30") as its description. The 
 every second and is not a live region. One polite status says when a new link went out and when the
 button works again, and nothing else. `loading` still disables the button for real, and without
 `resendCooldown` the button is as it was. The server stays the authority: show a refusal (a 429)
-through `error`. `resendLabels` takes the words to translate: `resent`, `ready` and
+through `error`. The form's `labels` take the words to translate: `resent`, `ready` and
 `availableIn(seconds)`.
 
 ```tsx
@@ -531,3 +531,20 @@ hidden on the backup entry, which has nothing to resend.
 `labels` takes the words to translate: the title, description and field of the backup entry
 (`backupTitle`, `backupDescription`, `backupField`), the two links (`useBackupCode`,
 `useVerificationCode`) and the three words of the wait (`resent`, `ready`, `availableIn`).
+
+### Translating the forms
+
+The words of `SignInForm`, `SignUpForm`, `ResetPasswordForm`, `NewPasswordForm`,
+`TwoStepVerificationForm` and `SocialAuthButtons` are their `labels`: translate them once with
+`LabelsProvider` ([Translating](../guides/translating.md)), under the keys `signInForm`,
+`signUpForm`, `resetPasswordForm`, `newPasswordForm`, `twoStepVerificationForm` and
+`socialAuthButtons`, or for one form with its own `labels` prop, which wins. They cover the field
+labels, the buttons, the lines of the `sent`, `expired` and `done` views, the sample placeholders
+(`john@example.com`, `John`, `Doe`) and the words of the resend wait. A sentence that holds a link or
+a value is a function of it: `signUpForm.agree: (terms, privacy) => …` gets the two links, drawn, and
+`resetPasswordForm.sentDescription: (email) => …` the address, isolated for right to left.
+`SocialAuthButtons` takes `continueWith: (name) => …` for its buttons and `divider` for the line
+between them. `title` and `description` stay props, the text a page writes for itself, and win over
+the labels. The default password rules (`defaultPasswordRules`) are worded by the `minLength`,
+`uppercase`, `lowercase`, `number` and `symbol` keys of `passwordPolicyChecker`, and the strength
+meter by `passwordStrengthMeter` (`name` and `levels`); a form given its own `rules` writes its own.

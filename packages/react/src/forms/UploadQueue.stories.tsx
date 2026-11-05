@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useEffect, useState } from 'react';
 import { expect, fireEvent, fn, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   bothDirections,
   directionBox,
@@ -445,5 +446,67 @@ export const CountAndSizesReadLeftToRight: Story = {
       expectReadsLeftToRight(box.getByText('2.0 MB'));
       expectReadsLeftToRight(box.getByText('2.0 MB of 4.0 MB · 50%'));
     }
+  },
+};
+
+/** The provider's French reaches the rows, the names of their buttons and the sizes; `labels` wins. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        uploadQueue: {
+          title: 'Envois',
+          progress: (done, total) => `${done} sur ${total} terminé${done > 1 ? 's' : ''}`,
+          uploaded: (sent, total, percent) => `${sent} sur ${total} · ${percent} %`,
+          uploadProgress: (name) => `Progression de l’envoi de ${name}`,
+          failed: 'Échec de l’envoi.',
+          done: 'Terminé',
+          waiting: 'En attente',
+          retry: 'Réessayer',
+          retryFile: (name) => `Réessayer ${name}`,
+          cancel: (name) => `Annuler ${name}`,
+          dismiss: (name) => `Ignorer ${name}`,
+          remove: (name) => `Retirer ${name}`,
+          fileSize: (bytes) => `${Math.round(bytes / 1024)} Ko`,
+        },
+      }}
+    >
+      <div className="space-y-6">
+        <UploadQueue
+          items={[
+            { id: 'a', name: 'contrat.pdf', size: 100 * 1024, status: 'uploading', progress: 50 },
+            { id: 'b', name: 'photo.jpg', status: 'failed' },
+            { id: 'c', name: 'stock.xlsx', size: 86 * 1024, status: 'done' },
+            { id: 'd', name: 'notes.docx', status: 'queued' },
+          ]}
+          onRetry={fn()}
+          onRemove={fn()}
+        />
+        <UploadQueue
+          items={[{ id: 'z', name: 'z.txt', status: 'queued' }]}
+          labels={{ title: 'Mes envois' }}
+        />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const queue = within(canvas.getByRole('region', { name: 'Envois' }));
+    await expect(queue.getByText('1 sur 4 terminé')).toBeVisible();
+    await expect(queue.getByText('50 Ko sur 100 Ko · 50 %')).toBeVisible();
+    await expect(queue.getByText('86 Ko')).toBeVisible();
+    await expect(queue.getByText('Échec de l’envoi.')).toBeVisible();
+    await expect(queue.getByText('Terminé')).toBeVisible();
+    await expect(queue.getByText('En attente')).toBeVisible();
+    await expect(
+      queue.getByRole('progressbar', { name: 'Progression de l’envoi de contrat.pdf' })
+    ).toBeVisible();
+    await expect(queue.getByRole('button', { name: 'Réessayer photo.jpg' })).toBeVisible();
+    await expect(queue.getByRole('button', { name: 'Annuler contrat.pdf' })).toBeVisible();
+    await expect(queue.getByRole('button', { name: 'Retirer photo.jpg' })).toBeVisible();
+    await expect(queue.getByRole('button', { name: 'Ignorer stock.xlsx' })).toBeVisible();
+    await expect(queue.getByRole('button', { name: 'Annuler notes.docx' })).toBeVisible();
+    // Its own `title` wins over the provider's.
+    await expect(canvas.getByRole('region', { name: 'Mes envois' })).toBeVisible();
   },
 };

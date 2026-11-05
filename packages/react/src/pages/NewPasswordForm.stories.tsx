@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 import { estimateStrength } from '../storybook-strength';
 import { Button } from '../ui/Button';
@@ -380,5 +381,86 @@ export const FitsOnAPhone: Story = {
   play: async ({ canvas, canvasElement }) => {
     await userEvent.type(canvas.getByLabelText(/^New password/), 'Correct-Horse-9');
     expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+/** The provider's French words the three views and the confirmation; `labels` wins. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        newPasswordForm: {
+          title: 'Choisissez un nouveau mot de passe',
+          description: 'Un mot de passe que vous n’utilisez nulle part ailleurs.',
+          newPassword: 'Nouveau mot de passe',
+          confirmPassword: 'Confirmer le mot de passe',
+          confirmPlaceholder: 'Répétez le mot de passe',
+          mismatch: 'Les mots de passe ne correspondent pas',
+          match: 'Les mots de passe correspondent',
+          submit: 'Mettre à jour',
+          signIn: 'Retour à la connexion',
+          expiredTitle: 'Ce lien n’est plus valide',
+          expiredDescription: 'Les liens ne servent qu’une fois. Demandez-en un nouveau.',
+          request: 'Demander un nouveau lien',
+          doneTitle: 'Mot de passe mis à jour',
+          doneDescription: 'Vous pouvez vous connecter avec votre nouveau mot de passe.',
+          continue: 'Continuer vers la connexion',
+        },
+      }}
+    >
+      <div className="space-y-10">
+        <div role="group" aria-label="Formulaire">
+          <NewPasswordForm onSubmit={fn()} signInHref="#" labels={{ submit: 'Valider' }} />
+        </div>
+        <div role="group" aria-label="Expiré">
+          <NewPasswordForm onSubmit={fn()} view="expired" requestHref="#" signInHref="#" />
+        </div>
+        <div role="group" aria-label="Terminé">
+          <NewPasswordForm onSubmit={fn()} view="done" signInHref="#" />
+        </div>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const form = within(canvas.getByRole('group', { name: 'Formulaire' }));
+    await expect(
+      form.getByRole('heading', { name: 'Choisissez un nouveau mot de passe' })
+    ).toBeVisible();
+    await expect(
+      form.getByText('Un mot de passe que vous n’utilisez nulle part ailleurs.')
+    ).toBeVisible();
+    await expect(form.getByRole('link', { name: 'Retour à la connexion' })).toBeVisible();
+    // Its own `submit` wins over the provider's.
+    await expect(form.getByRole('button', { name: 'Valider' })).toBeVisible();
+    await expect(form.queryByRole('button', { name: 'Mettre à jour' })).toBeNull();
+    await userEvent.type(
+      form.getByLabelText(/^Nouveau mot de passe/, { selector: 'input' }),
+      'abc'
+    );
+    const confirm = form.getByLabelText(/^Confirmer le mot de passe/, { selector: 'input' });
+    await expect(confirm).toHaveAttribute('placeholder', 'Répétez le mot de passe');
+    await userEvent.type(confirm, 'abd');
+    await userEvent.click(document.body);
+    await expect(
+      (await form.findAllByText('Les mots de passe ne correspondent pas')).length
+    ).toBeGreaterThan(0);
+    await userEvent.clear(confirm);
+    await userEvent.type(confirm, 'abc');
+    await expect(await form.findByText('Les mots de passe correspondent')).toBeVisible();
+
+    const expired = within(canvas.getByRole('group', { name: 'Expiré' }));
+    await expect(expired.getByRole('heading', { name: 'Ce lien n’est plus valide' })).toBeVisible();
+    await expect(
+      expired.getByText('Les liens ne servent qu’une fois. Demandez-en un nouveau.')
+    ).toBeVisible();
+    await expect(expired.getByRole('link', { name: 'Demander un nouveau lien' })).toBeVisible();
+
+    const done = within(canvas.getByRole('group', { name: 'Terminé' }));
+    await expect(done.getByRole('heading', { name: 'Mot de passe mis à jour' })).toBeVisible();
+    await expect(
+      done.getByText('Vous pouvez vous connecter avec votre nouveau mot de passe.')
+    ).toBeVisible();
+    await expect(done.getByRole('link', { name: 'Continuer vers la connexion' })).toBeVisible();
   },
 };

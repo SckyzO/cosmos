@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import {
   bothDirections,
   directionBox,
@@ -600,5 +601,32 @@ export const MirrorsInRightToLeft: Story = {
       ]);
       await waitFor(() => expect(valueOf(handle)).toBe(75));
     }
+  },
+};
+
+/** The provider's French names the two handles of a range; the slider's own `labels` win. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        slider: { minimum: (name) => `${name} : minimum`, maximum: (name) => `${name} : maximum` },
+      }}
+    >
+      <div className="space-y-6">
+        <Slider label="Prix" defaultValue={[20, 80]} />
+        <Slider
+          label="Durée"
+          defaultValue={[10, 50]}
+          labels={{ maximum: (name) => `${name} : max` }}
+        />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('slider', { name: 'Prix : minimum' })).toBeVisible();
+    await expect(canvas.getByRole('slider', { name: 'Prix : maximum' })).toBeVisible();
+    await expect(canvas.getByRole('slider', { name: 'Durée : minimum' })).toBeVisible();
+    await expect(canvas.getByRole('slider', { name: 'Durée : max' })).toBeVisible();
   },
 };

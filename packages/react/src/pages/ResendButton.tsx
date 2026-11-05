@@ -1,24 +1,15 @@
 import { clsx } from 'clsx';
 import { useId, useState, type ReactNode } from 'react';
-import { formatCountdown, useCooldown } from '../hooks/useCooldown';
+import { useCooldown } from '../hooks/useCooldown';
 import { Button, type ButtonProps } from '../ui/Button';
-
-/** The words of a resend button that waits between two presses. */
-export type ResendLabels = {
-  /** Said when a press sends again, and shown until the wait ends. */
-  resent?: string;
-  /** Said once, when the wait ends and the button works again. */
-  ready?: string;
-  /** What the button is waiting for, as its description: "available in 0:30". */
-  availableIn?: (seconds: number) => string;
-};
+import type { ResendLabels } from './labels';
 
 type ResendButtonProps = {
   label: string;
   onResend: () => void;
   /** Seconds to wait before the next press, from mount and from each press. 0 for no wait. */
   cooldown: number;
-  labels: Required<ResendLabels>;
+  labels: ResendLabels;
   /** The host is busy: the button is disabled for real. */
   disabled?: boolean;
   /** Also draw the button's own spinner. */
@@ -110,10 +101,3 @@ export const ResendButton = ({
     </>
   );
 };
-
-/** The words of a resend button, with the defaults of a form that sends `what` ("code", "link"). */
-export const resendLabels = (what: string, labels?: ResendLabels): Required<ResendLabels> => ({
-  resent: labels?.resent ?? `We sent you a new ${what}.`,
-  ready: labels?.ready ?? `You can request a new ${what}.`,
-  availableIn: labels?.availableIn ?? ((seconds) => `available in ${formatCountdown(seconds)}`),
-});
