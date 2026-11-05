@@ -71,8 +71,9 @@ nothing in it is `UNKNOWN`.
   instead: OK plain, warning, critical, unknown and info with a sign in it (–, !, ?, i, 3:1 or more
   on the fill), so a status still reads without its color. `variant="pills"` writes the status in
   each cell. The
-  grid scrolls in its own box when it is wider than the screen; `maxHeight` also scrolls it
-  vertically. `rowHeader` names the first header cell ("Service" by default; a cluster says "Rack").
+  grid scrolls in its own box when it is wider than the screen, and fades its end edge where there
+  is more to see (the first column stays pinned, so the start edge never fades); `maxHeight` also
+  scrolls it vertically. `rowHeader` names the first header cell ("Service" by default; a cluster says "Rack").
   `attentionStrip` adds a "Needs attention" strip above the grid: one chip per row that holds a
   warning or a critical cell, with its counts in words ("2 Critical, 1 Warning"), the worst rows
   first. Picking a chip scrolls its row into view, in the grid's own box when `maxHeight` is set,
@@ -340,7 +341,8 @@ a word, not only a color. Each level color holds 4.5:1 on both tones in the four
   browser skips the ones out of view with `content-visibility`). Keep the buffer to a few
   thousand lines with `wrap` on, as rackscope does with 2,000. Newest first and paused, wrapped
   lines do not stay put when new ones arrive.
-- Without `wrap` a long line scrolls sideways: the scroll width is that of the widest row drawn.
+- Without `wrap` a long line scrolls sideways: the scroll width is that of the widest row drawn,
+  and the log fades its edges on the side that has more, as `Table` does.
 - The labels ("Jump to latest", "Filters"…) are English.
 - Not here: the log volume chart (stacked `BarChart` of `@sckyzo/cosmos-charts`, as the lines per
   level over time) and a structured logs table. The output of a job is `JobLog`: see [Job logs](#job-logs).
@@ -426,7 +428,8 @@ and the lines of an open step a named group. A line number is a link named "Line
 - The windowing needs a row of a fixed height, so it is off with `wrap`: all the lines of an open
   step are then drawn (the browser skips the ones out of view). Keep a step to a few thousand lines
   with `wrap` on. A line link that scrolls out of the window loses the focus.
-- Without `wrap`, the lines of a step scroll sideways inside the step, under its header.
+- Without `wrap`, the lines of a step scroll sideways inside the step, under its header, and fade
+  at the edge that has more.
 - A search compiles the plain text of every line of every step: for logs of hundreds of thousands
   of lines, filter on the host.
 - The labels ("Jump to latest", "More options"…) are English.
