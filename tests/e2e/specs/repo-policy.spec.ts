@@ -459,9 +459,10 @@ test('the package uses logical utilities only', () => {
 
 // Every word a component writes for its user goes through its labels: defaults in its group's
 // `labels.ts`, read with `useLabels`, so an app translates it once with `LabelsProvider`. This
-// refuses English written in place in a source of `packages/react/src`: JSX text, a string given
-// to a prop that is shown or read out, a string default of a prop that holds text, and a string
-// after `??` for one. It sees words (two letters or more), not their language.
+// refuses English written in place in a source of `packages/react/src` and of `packages/charts/src`
+// (which keeps labels of its own, in `core/labels.ts`, since it imports neither react nor the theme):
+// JSX text, a string given to a prop that is shown or read out, a string default of a prop that holds
+// text, and a string after `??` for one. It sees words (two letters or more), not their language.
 
 /** The files that still write English in place, translated a group at a time: the list only shrinks. */
 const TEXT_DEFERRED: string[] = [
@@ -541,6 +542,11 @@ const TEXT_ALLOWED: { file: string; text: string; reason: string }[] = [
     file: 'packages/react/src/lists/GridList.tsx',
     text: 'gap-6',
     reason: 'the default of gapClassName, a Tailwind class, not text',
+  },
+  {
+    file: 'packages/charts/src/RealtimeChart.tsx',
+    text: 'insideTopRight',
+    reason: "where Recharts places a reference line's label on the line, not text it shows",
   },
 ];
 
@@ -674,8 +680,23 @@ test('the text check sees what it must and lets the rest through', () => {
   ).toEqual([]);
 });
 
+/** The sources of `packages/charts/src` the check reads: the same files as `packageSources`, in charts. */
+const chartsSources = () =>
+  readdirSync(new URL('../../../packages/charts/src', import.meta.url), {
+    recursive: true,
+    encoding: 'utf8',
+  })
+    .filter(
+      (path) =>
+        /\.tsx?$/.test(path) &&
+        !/\.(?:stories\.tsx|test\.ts)$/.test(path) &&
+        !/(?:^|\/)storybook-[^/]*$/.test(path)
+    )
+    .map((path) => `packages/charts/src/${path}`)
+    .sort();
+
 test('the components write no English in place, outside the files still to translate', () => {
-  const files = packageSources();
+  const files = [...packageSources(), ...chartsSources()];
   const found = new Map(files.map((file) => [file, englishInPlace(file, read(file))]));
   const allowed = (file: string, hit: string) =>
     TEXT_ALLOWED.some((entry) => entry.file === file && hit.endsWith(`: ${entry.text}`));
