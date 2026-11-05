@@ -13,6 +13,7 @@ import {
   startOffset,
 } from '../storybook-helpers';
 import { RelativeTime } from '../data/RelativeTime';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { Comment } from './Comment';
 import { CommentComposer } from './CommentComposer';
 import { CommentThread } from './CommentThread';
@@ -360,8 +361,7 @@ export const Translated: Story = {
         composer={
           <CommentComposer
             label="Commentaire"
-            placeholder="Écrire un commentaire…"
-            submitLabel="Publier"
+            labels={{ placeholder: 'Écrire un commentaire…', submit: 'Publier' }}
             onSubmit={() => {}}
           />
         }
@@ -1362,5 +1362,101 @@ export const ModeKeyboardArrowsMoveTheSelection: Story = {
     await userEvent.keyboard(`{${keyToEnd()}}`);
     await expect(canvas.getByRole('radio', { name: 'Internal note' })).toBeChecked();
     await expect(canvas.getByRole('status')).toHaveTextContent('Internal note');
+  },
+};
+
+/**
+ * Every word under a provider: the thread's list and empty state, the comments' buttons, fields and
+ * marks, and the composer's modes, notice and buttons. A comment's own labels win, and a thread's
+ * win over the provider's.
+ */
+export const TranslatedByProvider: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        comment: {
+          reply: 'Répondre',
+          edit: 'Modifier',
+          delete: 'Supprimer',
+          internal: 'Note interne',
+          edited: 'modifié',
+          replyPlaceholder: 'Écrire une réponse…',
+          replySubmit: 'Publier la réponse',
+          editSubmit: 'Enregistrer',
+          cancel: 'Annuler',
+          replyField: (author) => `Répondre à ${author}`,
+          editField: 'Modifier le commentaire',
+          replies: (author) => `Réponses à ${author}`,
+          showReplies: (n) => `Afficher ${n} réponse${n > 1 ? 's' : ''} de plus`,
+          hideReplies: 'Afficher moins de réponses',
+        },
+        commentThread: { label: 'Commentaires', emptyTitle: 'Aucun commentaire' },
+        commentComposer: {
+          modeLabel: 'Type de message',
+          internalNotice: 'Note interne : seule votre équipe la voit.',
+          field: 'Commentaire',
+          placeholder: 'Écrire un commentaire…',
+          submit: 'Commenter',
+          cancel: 'Annuler',
+        },
+      }}
+    >
+      <Frame>
+        <CommentThread
+          labels={{ delete: 'Retirer' }}
+          composer={
+            <CommentComposer
+              modes={[
+                { value: 'reply', label: 'Réponse' },
+                { value: 'note', label: 'Note interne', internal: true },
+              ]}
+              onCancel={() => {}}
+              onSubmit={() => {}}
+            />
+          }
+        >
+          <Comment
+            author="Camille Durand"
+            variant="internal"
+            edited
+            text="Le worker est bloqué, je redémarre le service."
+            onReply={() => {}}
+            onEdit={() => {}}
+            onDelete={() => {}}
+            maxReplies={1}
+            labels={{ edit: 'Corriger' }}
+            replies={[1, 2, 3].map((n) => (
+              <Comment key={n} author="Julien Roux" text={`Réponse ${n}.`} />
+            ))}
+          />
+        </CommentThread>
+        <CommentThread />
+      </Frame>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('list', { name: 'Commentaires' })).toBeVisible();
+    await expect(canvas.getByText('Aucun commentaire')).toBeVisible();
+    await expect(canvas.getAllByText('Note interne').length).toBeGreaterThan(0);
+    await expect(canvas.getByText('(modifié)')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Afficher 2 réponses de plus' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Répondre' })).toBeVisible();
+    // The comment's own `edit` wins over the provider's; the thread's `delete` over the provider's.
+    await expect(canvas.getByRole('button', { name: 'Corriger' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Retirer' })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'Supprimer' })).toBeNull();
+    // The composer: its control, its field, its notice when a note is picked, its buttons.
+    await expect(canvas.getByRole('radiogroup', { name: 'Type de message' })).toBeVisible();
+    const field = canvas.getByRole('textbox', { name: 'Commentaire' });
+    await expect(field).toHaveAttribute('placeholder', 'Écrire un commentaire…');
+    await expect(canvas.getByRole('button', { name: 'Commenter' })).toBeVisible();
+    await userEvent.click(canvas.getByRole('radio', { name: 'Note interne' }));
+    await expect(canvas.getByText('Note interne : seule votre équipe la voit.')).toBeVisible();
+    // The reply composer under a comment.
+    await userEvent.click(canvas.getByRole('button', { name: 'Répondre' }));
+    const reply = await canvas.findByRole('textbox', { name: 'Répondre à Camille Durand' });
+    await expect(reply).toHaveAttribute('placeholder', 'Écrire une réponse…');
+    await expect(canvas.getByRole('button', { name: 'Publier la réponse' })).toBeVisible();
   },
 };
