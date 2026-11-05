@@ -3,8 +3,10 @@ import { useEffect, useRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { endOffset, portalDocsParams, startOffset } from '../storybook-helpers';
 import { isFading, tokenMs, transitionMs, transitionValues } from '../storybook-motion';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { Modal } from '../ui/Modal';
 import { Chatbot, type ChatbotMessage } from './Chatbot';
+import { FRENCH_CHAT } from './storybook-labels';
 
 const meta = {
   title: 'Chat/Chatbot',
@@ -384,5 +386,60 @@ export const PanelSkipsMotionWhenReduced: Story = {
     await userEvent.keyboard('{Escape}');
     await expect(body.queryByRole('dialog')).toBeNull();
     await expect(launcherOf()).toHaveFocus();
+  },
+};
+
+/**
+ * The panel, the thread, the composer, the suggestions and the typing line under a provider with
+ * French labels. The panel's own labels win over the provider's; the parts inside it read theirs.
+ */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={FRENCH_CHAT}>
+      <Chatbot
+        messages={history.slice(0, 2)}
+        onSend={fn()}
+        defaultOpen
+        typing
+        suggestions={['Afficher la baie B4']}
+        error="L’assistant est injoignable."
+        onRetry={fn()}
+        labels={{ close: 'Réduire' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async () => {
+    const panel = within(
+      await within(document.body).findByRole('dialog', { name: 'Assistant virtuel' })
+    );
+    await expect(
+      panel.getByRole('log', { name: 'Conversation avec Assistant virtuel' })
+    ).toBeVisible();
+    // Its own `close` wins over the provider's.
+    await expect(panel.getByRole('button', { name: 'Réduire' })).toBeVisible();
+    await expect(panel.queryByRole('button', { name: 'Fermer le chat' })).toBeNull();
+    await expect(panel.getByRole('button', { name: 'Réessayer' })).toBeVisible();
+    await expect(panel.getByText('Assistant virtuel est en train d’écrire')).toBeInTheDocument();
+    await expect(panel.getByText('Lu')).toBeInTheDocument();
+    await expect(panel.getByRole('list', { name: 'Réponses suggérées' })).toBeVisible();
+    const field = panel.getByRole('textbox', { name: 'Votre message' });
+    await expect(field).toHaveAttribute('placeholder', 'Écrire un message…');
+    await expect(panel.getByRole('button', { name: 'Envoyer le message' })).toBeVisible();
+  },
+};
+
+/** The launcher is named by the provider, with the unread count while the panel is closed. */
+export const LauncherTranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={FRENCH_CHAT}>
+      <Chatbot messages={history} onSend={fn()} unreadCount={2} />
+    </LabelsProvider>
+  ),
+  play: async () => {
+    await expect(
+      await within(document.body).findByRole('button', { name: 'Ouvrir le chat, 2 non lus' })
+    ).toBeVisible();
   },
 };
