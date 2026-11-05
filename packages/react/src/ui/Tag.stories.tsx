@@ -244,7 +244,7 @@ export const RemoveLabel: Story = {
         <Tag onRemove={() => {}}>
           <b>Bold</b> text
         </Tag>
-        <Tag onRemove={() => {}} removeLabel="Clear status filter">
+        <Tag onRemove={() => {}} labels={{ remove: () => 'Clear status filter' }}>
           Status · Open
         </Tag>
       </div>
@@ -252,7 +252,7 @@ export const RemoveLabel: Story = {
   ),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    // The name is read from the text of `children`, or set by `removeLabel`.
+    // The name is read from the text of `children`, or set by `labels.remove`.
     await expect(canvas.getByRole('button', { name: 'Remove Bold text' })).toBeInTheDocument();
     await expect(canvas.getByRole('button', { name: 'Clear status filter' })).toBeInTheDocument();
   },

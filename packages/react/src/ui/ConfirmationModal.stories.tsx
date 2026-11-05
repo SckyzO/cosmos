@@ -39,7 +39,7 @@ export const ConfirmDelete: Story = {
     open: true,
     title: 'Delete this rack?',
     message: 'This action cannot be undone.',
-    discardLabel: 'Delete',
+    labels: { discard: 'Delete' },
     hideSave: true,
     onClose: () => {},
     onDiscard: () => {},
@@ -266,8 +266,7 @@ export const ConfirmDanger: Story = {
     intent: 'danger',
     title: 'Delete this rack?',
     message: 'This deletes the rack and its 14 devices. It cannot be undone.',
-    discardLabel: 'Delete rack',
-    stayLabel: 'Cancel',
+    labels: { discard: 'Delete rack', stay: 'Cancel' },
     hideSave: true,
     onClose: () => {},
     onDiscard: () => {},
@@ -281,8 +280,7 @@ export const ConfirmDangerTypeToConfirm: Story = {
     intent: 'danger',
     title: 'Delete project?',
     message: 'This deletes cosmos-prod, its 14 dashboards and their history. It cannot be undone.',
-    discardLabel: 'Delete project',
-    stayLabel: 'Cancel',
+    labels: { discard: 'Delete project', stay: 'Cancel' },
     hideSave: true,
     requireText: 'cosmos-prod',
     onClose: () => {},
@@ -363,7 +361,7 @@ const TypeToConfirmHarness = () => {
         intent="danger"
         title="Delete project?"
         message="This cannot be undone."
-        discardLabel="Delete"
+        labels={{ discard: 'Delete' }}
         hideSave
         requireText="cosmos-prod"
         onClose={() => setOpen(false)}

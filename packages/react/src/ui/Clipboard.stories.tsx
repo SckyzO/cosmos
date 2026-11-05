@@ -60,8 +60,7 @@ export const CustomLabels: Story = {
   args: {
     variant: 'button',
     size: 'md',
-    copyLabel: 'Share link',
-    copiedLabel: 'Link copied!',
+    labels: { copy: 'Share link', copied: 'Link copied!' },
   },
 };
 
@@ -344,28 +343,29 @@ const CHECK_SHOWN = ['0', '1'];
 const LOOKS = ['Copy icon', 'Copy floating', 'Copy plain', 'Copy button'] as const;
 const Looks = ({ duration }: { duration: number }) => (
   <div className="group relative flex flex-wrap items-center gap-4 p-4">
-    <Clipboard value="a" duration={duration} copyLabel="Copy icon" copiedLabel="Copied icon" />
+    <Clipboard
+      value="a"
+      duration={duration}
+      labels={{ copy: 'Copy icon', copied: 'Copied icon' }}
+    />
     <Clipboard
       value="b"
       duration={duration}
       floating
-      copyLabel="Copy floating"
-      copiedLabel="Copied floating"
+      labels={{ copy: 'Copy floating', copied: 'Copied floating' }}
     />
     <Clipboard
       value="c"
       duration={duration}
       plain
-      copyLabel="Copy plain"
-      copiedLabel="Copied plain"
+      labels={{ copy: 'Copy plain', copied: 'Copied plain' }}
     />
     <Clipboard
       value="d"
       duration={duration}
       variant="button"
       size="md"
-      copyLabel="Copy button"
-      copiedLabel="Copied button"
+      labels={{ copy: 'Copy button', copied: 'Copied button' }}
     />
   </div>
 );
