@@ -18,3 +18,4 @@ export {
   type UptimeThresholds,
 } from './types';
 export { DEFAULT_THRESHOLDS, resolveThresholds, uptimeLevel, formatUptime } from './uptime';
+export type { UptimeLabels } from './labels';

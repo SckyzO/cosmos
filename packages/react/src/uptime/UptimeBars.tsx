@@ -1,5 +1,7 @@
 import { clsx } from 'clsx';
 import { useRef, type ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
+import { UPTIME_LABELS, type UptimeLabels } from './labels';
 import { MarkStrip, type StripMark } from './MarkStrip';
 import { LEVEL_FILL, LEVEL_TEXT } from './styles';
 import type { UptimeDay, UptimeThresholds } from './types';
@@ -37,8 +39,10 @@ export type UptimeBarsProps = {
    * named and reachable.
    */
   compact?: boolean;
-  /** Accessible name of the bars. Default: "Daily uptime over N days". */
+  /** Accessible name of the bars. Default: "Daily uptime over N days", from `labels`. */
   ariaLabel?: string;
+  /** The texts it writes, over `LabelsProvider`'s `uptime` and the English defaults. */
+  labels?: Partial<UptimeLabels>;
   className?: string;
 };
 
@@ -65,15 +69,17 @@ export const UptimeBars = ({
   legend = false,
   compact = false,
   ariaLabel,
+  labels: ownLabels,
   className,
 }: UptimeBarsProps) => {
+  const labels = useLabels('uptime', UPTIME_LABELS, ownLabels);
   const stripRef = useRef<HTMLDivElement>(null);
   const fit = useFitCount(stripRef, MIN_DAY, GAP);
   const shown = tail(days, Math.min(period, fit));
 
   const marks: StripMark[] = shown.map((day) => ({
-    name: dayName(day),
-    lines: dayLines(day),
+    name: dayName(day, labels),
+    lines: dayLines(day, labels),
     className: clsx(
       'h-full min-w-0 flex-1 rounded-[2px]',
       LEVEL_FILL[uptimeLevel(day.uptime, thresholds)]
@@ -94,18 +100,13 @@ export const UptimeBars = ({
             </span>
           )}
           <span className={clsx('ms-auto text-sm font-semibold', LEVEL_TEXT[overallLevel])}>
-            <bdi>{overall === null ? 'No data' : `${formatUptime(overall)} uptime`}</bdi>
+            <bdi>{overall === null ? labels.noData : labels.uptimeOf(formatUptime(overall))}</bdi>
           </span>
         </div>
       )}
       <MarkStrip
         marks={marks}
-        ariaLabel={
-          ariaLabel ??
-          (count === 0
-            ? 'No daily uptime'
-            : `Daily uptime over ${count} ${count === 1 ? 'day' : 'days'}`)
-        }
+        ariaLabel={ariaLabel ?? (count === 0 ? labels.noDays : labels.dailyUptime(count))}
         stripRef={stripRef}
         className={clsx(
           'flex w-full min-w-0 gap-[2px] overflow-clip [overflow-clip-margin:4px]',
@@ -117,16 +118,16 @@ export const UptimeBars = ({
           dir="ltr"
           className="mt-1.5 flex justify-between text-xs text-[var(--color-text-secondary)]"
         >
-          <span>{count} days ago</span>
-          <span>Today</span>
+          <span>{labels.daysAgo(count)}</span>
+          <span>{labels.today}</span>
         </div>
       )}
       {!compact && legend && (
         <ul
-          aria-label="Legend"
+          aria-label={labels.legend}
           className="m-0 mt-2.5 flex list-none flex-wrap gap-x-4 gap-y-1 p-0 text-sm text-[var(--color-text-secondary)]"
         >
-          {thresholdLegend(thresholds).map(({ level, label }) => (
+          {thresholdLegend(thresholds, labels).map(({ level, label }) => (
             <li key={level} className="flex items-center gap-1.5">
               <span
                 aria-hidden="true"

@@ -133,6 +133,7 @@ import {
   USER_MENU_LABELS,
   VIDEO_EMBED_LABELS,
 } from '../ui/labels';
+import { UPTIME_LABELS } from '../uptime/labels';
 import type { CosmosLabels } from './cosmosLabels';
 
 export type EnglishLabels = CosmosLabels;
@@ -259,6 +260,7 @@ export const englishLabels: EnglishLabels = {
   twoStepVerificationForm: TWO_STEP_VERIFICATION_FORM_LABELS,
   unsavedIndicator: UNSAVED_INDICATOR_LABELS,
   uploadQueue: UPLOAD_QUEUE_LABELS,
+  uptime: UPTIME_LABELS,
   userMenu: USER_MENU_LABELS,
   verticalNavigation: VERTICAL_NAVIGATION_LABELS,
   videoEmbed: VIDEO_EMBED_LABELS,

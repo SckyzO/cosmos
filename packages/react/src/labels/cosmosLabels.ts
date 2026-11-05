@@ -133,6 +133,7 @@ import type {
   UserMenuLabels,
   VideoEmbedLabels,
 } from '../ui/labels';
+import type { UptimeLabels } from '../uptime/labels';
 
 /**
  * Every text the components write themselves, one key per component, so an app translates them
@@ -258,6 +259,7 @@ export type CosmosLabels = {
   twoStepVerificationForm: TwoStepVerificationLabels;
   unsavedIndicator: UnsavedIndicatorLabels;
   uploadQueue: UploadQueueLabels;
+  uptime: UptimeLabels;
   userMenu: UserMenuLabels;
   verticalNavigation: VerticalNavigationLabels;
   videoEmbed: VideoEmbedLabels;

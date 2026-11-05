@@ -476,10 +476,6 @@ const TEXT_DEFERRED: string[] = [
   'packages/react/src/map/MapMarkerList.tsx',
   'packages/react/src/map/MapPin.tsx',
   'packages/react/src/map/MapView.tsx',
-  'packages/react/src/uptime/HeartbeatBar.tsx',
-  'packages/react/src/uptime/MonitorRow.tsx',
-  'packages/react/src/uptime/UptimeBars.tsx',
-  'packages/react/src/uptime/UptimeStat.tsx',
 ];
 
 /**
