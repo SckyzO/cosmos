@@ -247,6 +247,13 @@ charts ───────────── storybook      (charts imports ne
 `react` depends on `theme` only so npm consumers get the CSS installed transitively — the coupling
 is resolved by the consumer's CSS bundler, not by module resolution.
 
+**Labels.** The text a component writes itself (button names, default titles, state lines) is a
+key of its labels, never English in place: types and English defaults in the group's `labels.ts`,
+registered in `labels/cosmosLabels.ts` and `labels/englishLabels.ts`, read with `useLabels(key,
+DEFAULTS, labels)` (defaults, then the app's `LabelsProvider`, then the `labels` prop). Text props
+such as `closeLabel` fold into `labels`. `repo-policy.spec.ts` refuses English written in place
+outside `TEXT_DEFERRED` (#502, translated a group at a time; the list only shrinks).
+
 ### Consuming the theme — `@source` is mandatory
 
 Tailwind 4 only scans the config root, so a consumer that doesn't declare `@source` over the Cosmos

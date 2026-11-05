@@ -455,6 +455,306 @@ test('the package uses logical utilities only', () => {
   }
 });
 
+// ── Text an app translates (#502) ──────────────────────────────────────────
+
+// Every word a component writes for its user goes through its labels: defaults in its group's
+// `labels.ts`, read with `useLabels`, so an app translates it once with `LabelsProvider`. This
+// refuses English written in place in a source of `packages/react/src`: JSX text, a string given
+// to a prop that is shown or read out, a string default of a prop that holds text, and a string
+// after `??` for one. It sees words (two letters or more), not their language.
+
+/** The files that still write English in place, translated a group at a time: the list only shrinks. */
+const TEXT_DEFERRED: string[] = [
+  'packages/react/src/chat/Chatbot.tsx',
+  'packages/react/src/chat/ChatComposer.tsx',
+  'packages/react/src/chat/ChatConversationList.tsx',
+  'packages/react/src/chat/ChatMessageActions.tsx',
+  'packages/react/src/chat/ChatSources.tsx',
+  'packages/react/src/chat/ChatSuggestions.tsx',
+  'packages/react/src/chat/ChatThread.tsx',
+  'packages/react/src/chat/ChatToolCall.tsx',
+  'packages/react/src/comments/CommentComposer.tsx',
+  'packages/react/src/comments/CommentThread.tsx',
+  'packages/react/src/data/BarList.tsx',
+  'packages/react/src/data/Countdown.tsx',
+  'packages/react/src/data/EventCalendarChip.tsx',
+  'packages/react/src/data/EventCalendarStrip.tsx',
+  'packages/react/src/data/EventCalendarTimeGrid.tsx',
+  'packages/react/src/data/EventCalendar.tsx',
+  'packages/react/src/data/KanbanBoard.tsx',
+  'packages/react/src/data/KpiCard.tsx',
+  'packages/react/src/data/MiniCalendar.tsx',
+  'packages/react/src/data/PlanCard.tsx',
+  'packages/react/src/editor/ImageForm.tsx',
+  'packages/react/src/editor/LinkForm.tsx',
+  'packages/react/src/forms/AvatarUploader.tsx',
+  'packages/react/src/forms/CardExpiryInput.tsx',
+  'packages/react/src/forms/ColorInput.tsx',
+  'packages/react/src/forms/Combobox.tsx',
+  'packages/react/src/forms/DatePicker.tsx',
+  'packages/react/src/forms/Dropzone.tsx',
+  'packages/react/src/forms/ErrorSummary.tsx',
+  'packages/react/src/forms/FileInput.tsx',
+  'packages/react/src/forms/FormFooter.tsx',
+  'packages/react/src/forms/LineItemsEditor.tsx',
+  'packages/react/src/forms/MultiSelect.tsx',
+  'packages/react/src/forms/NumberInput.tsx',
+  'packages/react/src/forms/OtpInput.tsx',
+  'packages/react/src/forms/PasswordInput.tsx',
+  'packages/react/src/forms/PasswordPolicyChecker.tsx',
+  'packages/react/src/forms/PhoneInput.tsx',
+  'packages/react/src/forms/SearchInput.tsx',
+  'packages/react/src/forms/TagInput.tsx',
+  'packages/react/src/forms/UploadQueue.tsx',
+  'packages/react/src/forms/ZoomBar.tsx',
+  'packages/react/src/layout/Divider.tsx',
+  'packages/react/src/layout/MediaObject.tsx',
+  'packages/react/src/layout/Sidebar.tsx',
+  'packages/react/src/layout/SiteFooter.tsx',
+  'packages/react/src/layout/Topbar.tsx',
+  'packages/react/src/lists/FileTile.tsx',
+  'packages/react/src/lists/GridList.tsx',
+  'packages/react/src/lists/StackedList.tsx',
+  'packages/react/src/logs/JobLogToolbar.tsx',
+  'packages/react/src/logs/JobLog.tsx',
+  'packages/react/src/logs/LogEntryDetail.tsx',
+  'packages/react/src/logs/LogToolbar.tsx',
+  'packages/react/src/logs/LogViewer.tsx',
+  'packages/react/src/map/MapMarkerList.tsx',
+  'packages/react/src/map/MapPin.tsx',
+  'packages/react/src/map/MapView.tsx',
+  'packages/react/src/navigation/Navbar.tsx',
+  'packages/react/src/navigation/Pagination.tsx',
+  'packages/react/src/navigation/RecordPager.tsx',
+  'packages/react/src/navigation/Stepper.tsx',
+  'packages/react/src/navigation/StickyScrollNav.tsx',
+  'packages/react/src/navigation/VerticalNavigation.tsx',
+  'packages/react/src/pages/NewPasswordForm.tsx',
+  'packages/react/src/pages/ResetPasswordForm.tsx',
+  'packages/react/src/pages/SignInForm.tsx',
+  'packages/react/src/pages/SignUpForm.tsx',
+  'packages/react/src/pages/SocialAuthButtons.tsx',
+  'packages/react/src/pages/TwoStepVerificationForm.tsx',
+  'packages/react/src/settings/AppearanceMenu.tsx',
+  'packages/react/src/settings/AppearanceSettings.tsx',
+  'packages/react/src/settings/Customizer.tsx',
+  'packages/react/src/status/HealthMatrix.tsx',
+  'packages/react/src/status/HealthSummary.tsx',
+  'packages/react/src/status/NodeGrid.tsx',
+  'packages/react/src/status/StaleBadge.tsx',
+  'packages/react/src/table/ActiveFiltersBar.tsx',
+  'packages/react/src/table/ColumnFilterDropdown.tsx',
+  'packages/react/src/table/ColumnHeader.tsx',
+  'packages/react/src/table/DataTableBulkActions.tsx',
+  'packages/react/src/table/DataTableColumnsMenu.tsx',
+  'packages/react/src/table/DataTableFilterTabs.tsx',
+  'packages/react/src/table/DataTableMobileCards.tsx',
+  'packages/react/src/table/DataTableMobileFilters.tsx',
+  'packages/react/src/table/DataTable.tsx',
+  'packages/react/src/table/DataTableViews.tsx',
+  'packages/react/src/table/InlineEdit.tsx',
+  'packages/react/src/table/PageSizeSelect.tsx',
+  'packages/react/src/templates/SectionCard.tsx',
+  'packages/react/src/ui/AlertBanner.tsx',
+  'packages/react/src/ui/AnnouncementBar.tsx',
+  'packages/react/src/ui/BackToTopFab.tsx',
+  'packages/react/src/ui/Carousel.tsx',
+  'packages/react/src/ui/Clipboard.tsx',
+  'packages/react/src/ui/CommandPaletteTrigger.tsx',
+  'packages/react/src/ui/CommandPalette.tsx',
+  'packages/react/src/ui/ConfirmationModal.tsx',
+  'packages/react/src/ui/CookieBanner.tsx',
+  'packages/react/src/ui/Drawer.tsx',
+  'packages/react/src/ui/Dropdown.tsx',
+  'packages/react/src/ui/HelpOverlay.tsx',
+  'packages/react/src/ui/Lightbox.tsx',
+  'packages/react/src/ui/Modal.tsx',
+  'packages/react/src/ui/NotificationCard.tsx',
+  'packages/react/src/ui/NotificationRow.tsx',
+  'packages/react/src/ui/NotificationsPanel.tsx',
+  'packages/react/src/ui/ProgressBar.tsx',
+  'packages/react/src/ui/Rating.tsx',
+  'packages/react/src/ui/RefreshButton.tsx',
+  'packages/react/src/ui/SecretValue.tsx',
+  'packages/react/src/ui/Spinner.tsx',
+  'packages/react/src/ui/Tag.tsx',
+  'packages/react/src/ui/Tooltip.tsx',
+  'packages/react/src/ui/UnsavedIndicator.tsx',
+  'packages/react/src/ui/UserMenu.tsx',
+  'packages/react/src/ui/VideoEmbed.tsx',
+  'packages/react/src/uptime/HeartbeatBar.tsx',
+  'packages/react/src/uptime/MonitorRow.tsx',
+  'packages/react/src/uptime/UptimeBars.tsx',
+  'packages/react/src/uptime/UptimeStat.tsx',
+];
+
+/**
+ * Words the check takes for text and that are not: `file`, the exact `text` it reports and why,
+ * so each exception is a decision and not a leftover. An entry that no longer matches fails too.
+ */
+const TEXT_ALLOWED: { file: string; text: string; reason: string }[] = [];
+
+// The props a browser shows or a screen reader reads out, as JSX attributes.
+const TEXT_PROPS = new Set([
+  'aria-label',
+  'aria-description',
+  'aria-roledescription',
+  'aria-valuetext',
+  'title',
+  'placeholder',
+  'alt',
+  'label',
+]);
+
+// A name that holds text: `closeLabel`, `emptyMessage`, `title`, `labels`, `placeholder`…
+const TEXT_NAME =
+  /(?:^|[a-z])(?:[Ll]abels?|[Tt]itle|[Mm]essage|[Tt]ext|[Pp]laceholder|[Dd]escription|[Nn]otice|[Nn]ame|[Hh]eading|[Cc]aption|[Hh]int|[Tt]ooltip)$/;
+
+const hasWords = (text: string) => /\p{L}{2,}/u.test(text);
+
+const COMPARISONS = new Set([
+  ts.SyntaxKind.EqualsEqualsEqualsToken,
+  ts.SyntaxKind.ExclamationEqualsEqualsToken,
+  ts.SyntaxKind.EqualsEqualsToken,
+  ts.SyntaxKind.ExclamationEqualsToken,
+]);
+
+/** The strings an expression writes in place: its literals and template text, not what it calls. */
+const literalTexts = (node: ts.Node, out: string[] = []): string[] => {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) out.push(node.text);
+  else if (ts.isTemplateExpression(node)) {
+    out.push(node.head.text);
+    for (const span of node.templateSpans) {
+      out.push(span.literal.text);
+      literalTexts(span.expression, out);
+    }
+  } else if (
+    !ts.isCallExpression(node) &&
+    !ts.isElementAccessExpression(node) &&
+    // A comparison's literal is a value to match, and nested JSX is visited on its own.
+    !(ts.isBinaryExpression(node) && COMPARISONS.has(node.operatorToken.kind)) &&
+    !ts.isJsxElement(node) &&
+    !ts.isJsxSelfClosingElement(node) &&
+    !ts.isJsxFragment(node)
+  )
+    ts.forEachChild(node, (child) => void literalTexts(child, out));
+  return out;
+};
+
+/** The name an expression stands for: `labels?.close` is `close`, `title ?? message` is `message`. */
+const nameOf = (node: ts.Expression): string | undefined => {
+  if (ts.isIdentifier(node)) return node.text;
+  if (ts.isPropertyAccessExpression(node)) return node.name.text;
+  if (ts.isParenthesizedExpression(node) || ts.isNonNullExpression(node))
+    return nameOf(node.expression);
+  if (ts.isBinaryExpression(node)) return nameOf(node.right);
+  return undefined;
+};
+
+const englishInPlace = (file: string, source: string) => {
+  const sourceFile = ts.createSourceFile(
+    file,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+  );
+  const found: string[] = [];
+  const add = (kind: string, texts: string[]) => {
+    for (const text of texts) if (hasWords(text)) found.push(`${kind}: ${text.trim()}`);
+  };
+  const visit = (node: ts.Node) => {
+    if (ts.isJsxText(node)) add('text', [node.text]);
+    else if (ts.isJsxAttribute(node) && node.initializer) {
+      const name = node.name.getText(sourceFile);
+      if (TEXT_PROPS.has(name)) add(name, literalTexts(node.initializer));
+    } else if (
+      ts.isBindingElement(node) &&
+      node.initializer &&
+      ts.isObjectBindingPattern(node.parent) &&
+      TEXT_NAME.test((node.propertyName ?? node.name).getText(sourceFile).replace(/['"]/g, ''))
+    )
+      add(
+        `default of ${(node.propertyName ?? node.name).getText(sourceFile)}`,
+        literalTexts(node.initializer)
+      );
+    else if (
+      ts.isBinaryExpression(node) &&
+      node.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken &&
+      TEXT_NAME.test(nameOf(node.left) ?? '')
+    )
+      add('??', literalTexts(node.right));
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return found;
+};
+
+test('the text check sees what it must and lets the rest through', () => {
+  const check = (source: string) => englishInPlace('Sample.tsx', source);
+  expect(check('const A = () => <p>No data</p>;')).toEqual(['text: No data']);
+  expect(check('const A = () => <button aria-label="Close modal" />;')).toEqual([
+    'aria-label: Close modal',
+  ]);
+  expect(check('const A = ({ n }) => <b title={`Show ${n} more`} />;')).toEqual([
+    'title: Show',
+    'title: more',
+  ]);
+  expect(check("const A = ({ open }) => <b aria-label={open ? 'Collapse' : 'Expand'} />;")).toEqual(
+    ['aria-label: Collapse', 'aria-label: Expand']
+  );
+  expect(check("const A = ({ closeLabel = 'Close' }) => null;")).toEqual([
+    'default of closeLabel: Close',
+  ]);
+  expect(
+    check("const A = ({ title, message }) => <h2>{title ?? message ?? 'Loading…'}</h2>;")
+  ).toEqual(['??: Loading…']);
+  // Labels, data, enums, CSS and calls are not text written in place.
+  expect(
+    check(
+      [
+        "const A = ({ size = 'md', variant = 'default', labels }) => (",
+        '  <b aria-label={labels.close} title={format(name)} className="px-2 text-sm">',
+        "    {kind ?? 'brand'} {' '} · {count} / {total}",
+        '    <i title={typeof label === \'string\' ? label : undefined} label={<bdi className="font-mono">{key}</bdi>} />',
+        '  </b>',
+        ');',
+      ].join('\n')
+    )
+  ).toEqual([]);
+});
+
+test('the components write no English in place, outside the files still to translate', () => {
+  const files = packageSources();
+  const found = new Map(files.map((file) => [file, englishInPlace(file, read(file))]));
+  const allowed = (file: string, hit: string) =>
+    TEXT_ALLOWED.some((entry) => entry.file === file && hit.endsWith(`: ${entry.text}`));
+  const written = [...found]
+    .filter(([file]) => !TEXT_DEFERRED.includes(file))
+    .flatMap(([file, hits]) =>
+      hits.filter((hit) => !allowed(file, hit)).map((hit) => `${file}: ${hit}`)
+    );
+  expect(
+    written,
+    "English written in place: give it a key in the group's labels.ts and read it with useLabels, or add a TEXT_ALLOWED entry with the reason"
+  ).toEqual([]);
+
+  for (const file of TEXT_DEFERRED) {
+    expect(found.has(file), `TEXT_DEFERRED names a file that is gone: ${file}`).toBe(true);
+    expect(
+      (found.get(file) ?? []).filter((hit) => !allowed(file, hit)).length,
+      `${file} writes no English in place any more: take it off TEXT_DEFERRED`
+    ).toBeGreaterThan(0);
+  }
+  for (const { file, text, reason } of TEXT_ALLOWED) {
+    expect(reason, `${file}: ${text}`).not.toBe('');
+    expect(
+      (found.get(file) ?? []).some((hit) => hit.endsWith(`: ${text}`)),
+      `TEXT_ALLOWED entry no longer needed: ${file}: ${text}`
+    ).toBe(true);
+  }
+});
+
 // ── Inline sides in prop types ──────────────────────────────────────────────
 
 // A prop that names a side of the line takes `start` and `end` (CONTRIBUTING, "Component API"):

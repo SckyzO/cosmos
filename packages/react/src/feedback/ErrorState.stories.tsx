@@ -58,7 +58,7 @@ export const WithRetryAndAction: Story = {
   args: {
     title: 'Failed to load the ticket.',
     onRetry: fn(),
-    retryLabel: 'Reload',
+    labels: { retry: 'Reload' },
     action: (
       <Button variant="secondary" size="sm" icon={ArrowLeft}>
         Back to tickets
@@ -72,7 +72,7 @@ export const RetryLabelAndActionRender: Story = {
   args: {
     title: 'Failed to load the ticket.',
     onRetry: fn(),
-    retryLabel: 'Reload',
+    labels: { retry: 'Reload' },
     action: <button type="button">Back to tickets</button>,
   },
   play: async ({ args, canvas }) => {

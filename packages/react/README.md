@@ -68,6 +68,7 @@ function Example() {
 - [Appearance](https://github.com/SckyzO/cosmos/blob/main/docs/guides/appearance.md): themes, accents, fonts, density, radius, and the pickers.
 - [Optional entries](https://github.com/SckyzO/cosmos/blob/main/docs/guides/optional-entries.md): `@sckyzo/cosmos-react/code`, `/editor`, `/map` and `/qr`.
 - [Right to left](https://github.com/SckyzO/cosmos/blob/main/docs/guides/right-to-left.md) and [refs and routing](https://github.com/SckyzO/cosmos/blob/main/docs/guides/refs-and-routing.md).
+- [Translating](https://github.com/SckyzO/cosmos/blob/main/docs/guides/translating.md): `LabelsProvider`, for the text the components write.
 - [Component notes](https://github.com/SckyzO/cosmos/blob/main/docs/README.md#components): tables, forms, payments, monitoring, logs, chat, the application shell and more.
 - [Charts](https://github.com/SckyzO/cosmos/blob/main/docs/guides/charts.md) live in `@sckyzo/cosmos-charts`, so apps that don't render charts
   don't ship a chart library.
