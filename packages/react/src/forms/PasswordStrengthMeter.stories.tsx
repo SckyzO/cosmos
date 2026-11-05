@@ -78,6 +78,7 @@ export const Translated: Story = {
     labels: {
       name: 'Robustesse du mot de passe',
       levels: ['Très faible', 'Faible', 'Moyen', 'Bon', 'Fort'],
+      separator: '\u202f: ',
     },
   },
 };
@@ -243,7 +244,10 @@ export const LabelsAreTranslated: Story = {
   ...Translated,
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
-    expect(canvasElement.querySelector('p')).toHaveTextContent('Robustesse du mot de passe: Bon');
+    // French sets a narrow no-break space before the colon.
+    expect(canvasElement.querySelector('p')?.textContent).toBe(
+      'Robustesse du mot de passe\u202f: Bon'
+    );
   },
 };
 
