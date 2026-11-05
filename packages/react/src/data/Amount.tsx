@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import type { ComponentPropsWithRef } from 'react';
+import { useLocale } from '../labels/labelsContext';
 import { formatMoney, type MoneySignDisplay, type MoneyTrailingZeroDisplay } from './money';
 
 export type AmountProps = Omit<ComponentPropsWithRef<'bdi'>, 'children'> & {
@@ -7,7 +8,10 @@ export type AmountProps = Omit<ComponentPropsWithRef<'bdi'>, 'children'> & {
   value: number;
   /** ISO 4217 code (`'EUR'`): writes the value as a price. Without it, as a plain number. */
   currency?: string;
-  /** BCP 47 locale of the figure. Default: the user's. Pass it when the text around is in one. */
+  /**
+   * BCP 47 locale of the figure. Default `LabelsProvider`'s `locale`, else the user's. Pass it
+   * when the text around is in one.
+   */
   locale?: string;
   /**
    * Which amounts get a sign. Default `negative`: a minus in front of a loss, nothing in front of
@@ -33,16 +37,19 @@ export type AmountProps = Omit<ComponentPropsWithRef<'bdi'>, 'children'> & {
 export const Amount = ({
   value,
   currency,
-  locale,
+  locale: ownLocale,
   signDisplay,
   trailingZeroDisplay,
   format,
   className,
   ...rest
-}: AmountProps) => (
-  <bdi className={clsx('whitespace-nowrap tabular-nums', className)} {...rest}>
-    {format
-      ? format(value)
-      : formatMoney(value, { currency, locale, signDisplay, trailingZeroDisplay })}
-  </bdi>
-);
+}: AmountProps) => {
+  const locale = useLocale(ownLocale);
+  return (
+    <bdi className={clsx('whitespace-nowrap tabular-nums', className)} {...rest}>
+      {format
+        ? format(value)
+        : formatMoney(value, { currency, locale, signDisplay, trailingZeroDisplay })}
+    </bdi>
+  );
+};

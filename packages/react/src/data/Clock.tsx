@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { useCallback } from 'react';
 import { useIsClient } from '../hooks/useIsClient';
 import { useTicker } from '../hooks/useTicker';
+import { useLocale } from '../labels/labelsContext';
 import { INTENT_STYLE } from '../ui/intent';
 import { clockTick, formatClockDate, formatClockTime, nextClockDelay } from './time';
 
@@ -14,7 +15,7 @@ export type ClockProps = {
   variant?: ClockVariant;
   /** IANA zone (`Asia/Tokyo`). Default: the browser's zone. */
   timeZone?: string;
-  /** BCP 47 tag (`fr-FR`). Default: the browser's language. */
+  /** BCP 47 tag (`fr-FR`). Default `LabelsProvider`'s `locale`, else the browser's language. */
   locale?: string;
   /** 12-hour clock when `true`, 24-hour when `false`. Default: the locale's. */
   hour12?: boolean;
@@ -73,7 +74,7 @@ const PLACEHOLDER = { time: '--:--:--', timeNoSeconds: '--:--', date: '' };
 export const Clock = ({
   variant = 'inline',
   timeZone,
-  locale,
+  locale: ownLocale,
   hour12,
   showSeconds = true,
   showDate = false,
@@ -81,6 +82,7 @@ export const Clock = ({
   now,
   className,
 }: ClockProps) => {
+  const locale = useLocale(ownLocale);
   const isClient = useIsClient();
   const read = useCallback((at: number) => clockTick(at, showSeconds), [showSeconds]);
   const delay = useCallback((at: number) => nextClockDelay(at, showSeconds), [showSeconds]);

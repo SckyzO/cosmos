@@ -10,5 +10,17 @@ export const conversionRate = (previous: number, current: number): number | null
   return (current / previous) * 100;
 };
 
-/** A rate with one decimal and a fixed `.`, whatever the machine's locale: `54.8%`. */
-export const formatRate = (rate: number): string => `${rate.toFixed(1)}%`;
+/**
+ * A rate with one decimal: `54.8%`. With no `locale` the decimal is a fixed `.`, whatever the
+ * machine's, and with one it is written as that locale writes a percent (`54,8 %` in `fr-FR`).
+ */
+export const formatRate = (rate: number, locale?: string): string =>
+  locale === undefined
+    ? `${rate.toFixed(1)}%`
+    : new Intl.NumberFormat(locale, {
+        style: 'unit',
+        unit: 'percent',
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+        useGrouping: false,
+      }).format(rate);

@@ -7,7 +7,14 @@ import type { CosmosLabels } from './cosmosLabels';
  */
 export type LabelsInput = { [K in keyof CosmosLabels]?: Partial<CosmosLabels[K]> };
 
-export const LabelsContext = createContext<LabelsInput>({});
+/** What `LabelsProvider` holds: the texts, and the locale the components format with. */
+export type LabelsContextValue = {
+  labels: LabelsInput;
+  /** BCP 47 tag, or `undefined` for the runtime's default. */
+  locale: string | undefined;
+};
+
+export const LabelsContext = createContext<LabelsContextValue>({ labels: {}, locale: undefined });
 
 /** The keys set to a value: `{ retry: undefined }` keeps the default, as a key left out does. */
 export const definedLabels = <T extends object>(labels: Partial<T> | undefined): Partial<T> =>
@@ -28,6 +35,17 @@ export const useLabels = <K extends keyof CosmosLabels>(
   defaults: CosmosLabels[K],
   own?: Partial<CosmosLabels[K]>
 ): CosmosLabels[K] => {
-  const app = useContext(LabelsContext)[key];
+  const app = useContext(LabelsContext).labels[key];
   return { ...defaults, ...definedLabels(app), ...definedLabels(own) } as CosmosLabels[K];
+};
+
+/**
+ * The locale a component formats its dates, times, numbers and sizes with: its own `locale` prop,
+ * else the nearest `LabelsProvider`'s, else `undefined`, the runtime's default.
+ *
+ * Internal to the package, not exported.
+ */
+export const useLocale = (own?: string): string | undefined => {
+  const { locale } = useContext(LabelsContext);
+  return own ?? locale;
 };

@@ -115,7 +115,7 @@ export const Calendar = ({
   const labels = useLabels('calendar', CALENDAR_LABELS, ownLabels);
   // What the app set, from its provider and this prop: react-day-picker keeps its own for the rest.
   const given = {
-    ...definedLabels(useContext(LabelsContext).calendar),
+    ...definedLabels(useContext(LabelsContext).labels.calendar),
     ...definedLabels(ownLabels),
   };
   const def = getDefaultClassNames();

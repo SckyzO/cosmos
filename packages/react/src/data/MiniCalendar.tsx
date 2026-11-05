@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { createCalendarFormats, isoDate, isoWeekday, sameDay } from './calendar-dates';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLocale } from '../labels/labelsContext';
 
 export type MiniCalendarProps = {
   today?: Date;
@@ -16,7 +17,7 @@ export type MiniCalendarProps = {
   eventDays?: Set<string>;
   /**
    * BCP 47 language tag (`'fr-FR'`) for the weekday names, the month title and the
-   * accessible name of each day. Defaults to the browser's locale. The grid itself
+   * accessible name of each day. Defaults to `LabelsProvider`'s `locale`, else the browser's. The grid itself
    * stays Gregorian, weeks starting on Monday, whatever the locale. The button
    * labels (Previous month, Next month) stay English. An invalid tag throws a
    * `RangeError`.
@@ -35,7 +36,7 @@ export const MiniCalendar = ({
   defaultSelected,
   onSelect,
   eventDays,
-  locale,
+  locale: ownLocale,
   className,
 }: MiniCalendarProps) => {
   const [selected, select] = useControllableState({
@@ -63,6 +64,7 @@ export const MiniCalendar = ({
 
   // The accessible name of a day button is its full date, "Thursday, May 7, 2026"
   // in en-US. The visible text stays the bare day number.
+  const locale = useLocale(ownLocale);
   const fmt = useMemo(() => createCalendarFormats(locale), [locale]);
 
   const goPrev = () => setView((v) => new Date(v.getFullYear(), v.getMonth() - 1, 1));

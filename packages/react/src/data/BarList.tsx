@@ -5,6 +5,7 @@ import { useAfterSkeleton } from '../feedback/useAfterSkeleton';
 import { AppLink } from '../ui/AppLink';
 import type { Intent } from '../ui/intent';
 import { barPercent, largestValue } from './bar-list';
+import { useNumberFormat } from './useNumberFormat';
 
 export type BarListIntent = Extract<Intent, 'brand' | 'success' | 'warning' | 'danger' | 'info'>;
 
@@ -33,8 +34,13 @@ export type BarListProps = {
    * `max` to put them on one scale.
    */
   max?: number;
-  /** Writes a value. Default: grouped digits, `12,480`. */
+  /** Writes a value. Default: grouped digits, `12,480`, in `locale`. */
   formatValue?: (value: number) => string;
+  /**
+   * BCP 47 locale of the default digits (`'fr-FR'`: `12 480`). Default `LabelsProvider`'s
+   * `locale`, else `en-US`, so the figures read the same on every machine. `formatValue` wins.
+   */
+  locale?: string;
   /** Numbers the rows, in the order they are shown, and makes the list an `ol`. */
   showRank?: boolean;
   /** `desc` orders the rows by value, largest first. Default `none`: the host orders them. */
@@ -63,10 +69,6 @@ const FILL: Record<BarListIntent, string> = {
   info: 'bg-blue-500',
 };
 
-// A fixed locale keeps the default output the same on every machine.
-const GROUPED = new Intl.NumberFormat('en-US');
-const defaultFormat = (value: number) => GROUPED.format(value);
-
 const SKELETON_ROWS = 5;
 
 // Rank column: fixed, so the bars of every row start at the same place.
@@ -90,7 +92,8 @@ const Track = ({ children }: { children?: ReactNode }) => (
 export const BarList = ({
   items,
   max,
-  formatValue = defaultFormat,
+  formatValue,
+  locale,
   showRank = false,
   sort = 'none',
   intent = 'brand',
@@ -101,6 +104,8 @@ export const BarList = ({
   className,
 }: BarListProps) => {
   const List = showRank ? 'ol' : 'ul';
+  const grouped = useNumberFormat(locale);
+  const format = formatValue ?? ((value: number) => grouped.format(value));
   const arrival = useAfterSkeleton(loading);
   const listClass = clsx('m-0 flex list-none flex-col gap-3 p-0', className);
 
@@ -171,7 +176,7 @@ export const BarList = ({
                   </span>
                 </span>
                 <span className="shrink-0 text-sm font-semibold text-[var(--color-text-primary)] tabular-nums">
-                  <bdi>{formatValue(item.value)}</bdi>
+                  <bdi>{format(item.value)}</bdi>
                 </span>
                 {item.delta && <span className="shrink-0">{item.delta}</span>}
               </span>

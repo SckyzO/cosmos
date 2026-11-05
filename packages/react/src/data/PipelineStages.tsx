@@ -3,8 +3,10 @@ import { ArrowDown, ArrowRight } from 'lucide-react';
 import type { ReactNode, Ref } from 'react';
 import { onRadioGroupKeyDown, radioTabIndex } from '../forms/radioGroupA11y';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLocale } from '../labels/labelsContext';
 import type { Intent } from '../ui/intent';
 import { conversionRate, formatRate } from './pipeline-stages';
+import { useNumberFormat } from './useNumberFormat';
 
 export type PipelineStageIntent = Extract<
   Intent,
@@ -31,8 +33,14 @@ export type PipelineStagesProps = {
    * (`54.8%`). A stage that follows a stage at 0 has none. Default `true`.
    */
   showConversion?: boolean;
-  /** Writes a count. Default: grouped digits, `1,240`. */
+  /** Writes a count. Default: grouped digits, `1,240`, in `locale`. */
   formatCount?: (count: number) => string;
+  /**
+   * BCP 47 locale of the default digits and of the conversion rates (`'fr-FR'`: `1 240`, `54,8 %`).
+   * Default `LabelsProvider`'s `locale`; with none, counts are `en-US` and rates have a `.`, the
+   * same on every machine. `formatCount` wins for the counts.
+   */
+  locale?: string;
   /** The picked stage, when controlled. */
   selectedId?: string;
   /** The picked stage, when uncontrolled. None is picked when omitted. */
@@ -54,10 +62,6 @@ const DOT: Record<PipelineStageIntent, string> = {
   info: 'bg-blue-500',
 };
 
-// A fixed locale keeps the default output the same on every machine.
-const GROUPED = new Intl.NumberFormat('en-US');
-const defaultFormat = (count: number) => GROUPED.format(count);
-
 // The 1px inside the border, drawn on a pseudo-element: the picked stage reads 2px wide without
 // moving the layout, and the focus ring (a box-shadow) is left alone.
 const SELECTED_EDGE =
@@ -74,7 +78,8 @@ const SELECTED_EDGE =
 export const PipelineStages = ({
   stages,
   showConversion = true,
-  formatCount = defaultFormat,
+  formatCount,
+  locale: ownLocale,
   selectedId: selectedIdProp,
   defaultSelectedId,
   onSelectedChange,
@@ -82,6 +87,9 @@ export const PipelineStages = ({
   className,
   ref,
 }: PipelineStagesProps) => {
+  const locale = useLocale(ownLocale);
+  const grouped = useNumberFormat(locale);
+  const format = formatCount ?? ((count: number) => grouped.format(count));
   const selectable =
     selectedIdProp !== undefined ||
     defaultSelectedId !== undefined ||
@@ -101,7 +109,7 @@ export const PipelineStages = ({
   const items = stages.map((stage, index) => {
     const previous = index > 0 ? stages[index - 1] : undefined;
     const rate = previous ? conversionRate(previous.count, stage.count) : null;
-    const rateText = showConversion && rate !== null ? formatRate(rate) : null;
+    const rateText = showConversion && rate !== null ? formatRate(rate, locale) : null;
     const from = typeof previous?.label === 'string' ? previous.label : 'the previous stage';
     const checked = stage.id === selectedId;
 
@@ -123,7 +131,7 @@ export const PipelineStages = ({
         </span>
         <span className="flex shrink-0 items-baseline gap-2 sm:flex-col sm:items-start sm:gap-0">
           <span className="text-base font-semibold text-[var(--color-text-primary)] tabular-nums sm:text-2xl">
-            <bdi>{formatCount(stage.count)}</bdi>
+            <bdi>{format(stage.count)}</bdi>
           </span>
           {stage.amount !== undefined && (
             <span

@@ -5,6 +5,7 @@ import { SegmentedControl } from '../forms/SegmentedControl';
 import { useControllableState } from '../hooks/useControllableState';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useTicker } from '../hooks/useTicker';
+import { useLocale } from '../labels/labelsContext';
 import { Button } from '../ui/Button';
 import type { Intent } from '../ui/intent';
 import { SectionLabel } from '../ui/SectionLabel';
@@ -107,7 +108,7 @@ export type EventCalendarProps = {
   /**
    * BCP 47 language tag (`'fr-FR'`) for the weekday names, the titles, the times and the
    * date in the accessible name of each day and of its "+N more" list. Defaults to
-   * the browser's locale. The grid itself stays Gregorian, weeks starting on
+   * `LabelsProvider`'s `locale`, else the browser's. The grid itself stays Gregorian, weeks starting on
    * Monday, whatever the locale. The button labels (Today, Previous month, Next
    * month, "+N more") stay English. An invalid tag throws a `RangeError`.
    */
@@ -213,7 +214,7 @@ export const EventCalendar = ({
   onEventClick,
   onDayClick,
   onSlotClick,
-  locale,
+  locale: ownLocale,
   emptyMessage,
   className,
 }: EventCalendarProps) => {
@@ -236,6 +237,7 @@ export const EventCalendar = ({
   const [pickedKey, setPickedKey] = useState<string | null>(null);
   const shown = periodStart(current, view);
   const shownTime = shown.getTime();
+  const locale = useLocale(ownLocale);
   const fmt = useMemo(() => createCalendarFormats(locale), [locale]);
 
   const { days, byDay } = useMemo(() => {
