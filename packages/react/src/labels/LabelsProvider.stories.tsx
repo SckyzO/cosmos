@@ -3,6 +3,9 @@ import { expect, fn, within } from 'storybook/test';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
 import { LoadingState } from '../feedback/LoadingState';
+import { Amount } from '../data/Amount';
+import { BarList } from '../data/BarList';
+import { DateTime } from '../data/DateTime';
 import { Breadcrumb } from '../navigation/Breadcrumb';
 import { englishLabels } from './englishLabels';
 import { LabelsProvider, type LabelsInput } from './LabelsProvider';
@@ -141,5 +144,94 @@ export const EnglishLabelsAreTheDefaults: Story = {
     await expect(canvas.getByRole('alert')).toHaveTextContent('Something went wrong.');
     await expect(canvas.getByRole('button', { name: 'Try again' })).toBeVisible();
     await expect(canvas.getByRole('status')).toHaveTextContent('Loading…');
+  },
+};
+
+const DAY = '2026-01-15T12:00:00Z';
+
+/** What the components write with a `locale`: a weekday, an amount, the digits of a bar list. */
+const Formatted = ({ locale }: { locale?: string }) => (
+  <div className="flex flex-col gap-2">
+    <DateTime value={DAY} format="weekday" timeZone="UTC" locale={locale} />
+    <Amount value={1234.5} currency="EUR" locale={locale} />
+    <BarList items={[{ id: 'pages', label: 'Pages', value: 12480 }]} locale={locale} />
+  </div>
+);
+
+/** `locale` is the default of every component that writes a date, a number or an amount. */
+export const FrenchLocale: Story = {
+  args: { labels: FRENCH, locale: 'fr-FR' },
+  render: (args) => (
+    <LabelsProvider {...args}>
+      <Formatted />
+    </LabelsProvider>
+  ),
+};
+
+export const ProviderLocaleReachesTheComponents: Story = {
+  ...FrenchLocale,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('jeudi')).toBeVisible();
+    await expect(canvas.getByText(/^1\s234,50\s€$/)).toBeVisible();
+    await expect(canvas.getByText(/^12\s480$/)).toBeVisible();
+  },
+};
+
+/** A component's own `locale` wins over the provider's. */
+export const OwnLocaleWinsOverTheProvider: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { locale: 'fr-FR' },
+  render: (args) => (
+    <LabelsProvider {...args}>
+      <Formatted locale="de-DE" />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('Donnerstag')).toBeVisible();
+    await expect(canvas.getByText(/^1\.234,50\s€$/)).toBeVisible();
+    await expect(canvas.getByText('12.480')).toBeVisible();
+  },
+};
+
+/** A nested provider keeps the outer locale unless it gives one. */
+export const NestedProviderKeepsTheOuterLocale: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { locale: 'fr-FR' },
+  render: (args) => (
+    <LabelsProvider {...args}>
+      <div data-testid="inherits">
+        <LabelsProvider labels={{ errorState: { retry: 'Relancer' } }}>
+          <Formatted />
+        </LabelsProvider>
+      </div>
+      <div data-testid="overrides">
+        <LabelsProvider locale="de-DE">
+          <Formatted />
+        </LabelsProvider>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const inherits = within(canvas.getByTestId('inherits'));
+    const overrides = within(canvas.getByTestId('overrides'));
+    await expect(await inherits.findByText('jeudi')).toBeVisible();
+    await expect(inherits.getByText(/^12\s480$/)).toBeVisible();
+    await expect(await overrides.findByText('Donnerstag')).toBeVisible();
+    await expect(overrides.getByText('12.480')).toBeVisible();
+  },
+};
+
+/** With no locale anywhere the figures stay as they were: `en-US` where it was fixed. */
+export const NoLocaleKeepsTheEnglishDigits: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { labels: FRENCH },
+  render: (args) => (
+    <LabelsProvider {...args}>
+      <BarList items={[{ id: 'pages', label: 'Pages', value: 12480 }]} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('12,480')).toBeVisible();
   },
 };
