@@ -471,13 +471,13 @@ export const ExtremeContent: Story = {
 };
 
 /** On a phone: the rows become cards and the column filters move into a sheet. */
-export const Phone: Story = {
+const phone: Story = {
   globals: mobileViewport,
   args: { filtered: true },
 };
 
 export const PhoneChecks: Story = {
-  ...Phone,
+  ...phone,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();

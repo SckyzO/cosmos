@@ -732,13 +732,13 @@ export const ExtremeContent: Story = {
 };
 
 /** At 375px the sidebar is off screen: the Topbar shows the hamburger, the logo and the actions. */
-export const Phone: Story = {
+const phone: Story = {
   globals: mobileViewport,
   render: () => <AppShellScreen state="content" />,
 };
 
 export const PhoneChecks: Story = {
-  ...Phone,
+  ...phone,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
@@ -746,13 +746,13 @@ export const PhoneChecks: Story = {
 };
 
 /** The hamburger's other half: the sidebar open as a drawer over a backdrop. */
-export const PhoneSidebarOpen: Story = {
+const phoneSidebarOpen: Story = {
   globals: mobileViewport,
   render: () => <AppShellScreen state="content" defaultSidebarOpen />,
 };
 
 export const PhoneSidebarOpenChecks: Story = {
-  ...PhoneSidebarOpen,
+  ...phoneSidebarOpen,
   tags: ['!dev', '!autodocs'],
   play: async () => {
     expectNoHorizontalOverflow();
