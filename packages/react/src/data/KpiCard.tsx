@@ -12,10 +12,17 @@ import { useAfterSkeleton, type AfterSkeleton } from '../feedback/useAfterSkelet
 import { AppLink } from '../ui/AppLink';
 import { CARD_LIFT } from '../ui/cardLift';
 import { INTENT_STYLE, type Intent } from '../ui/intent';
+import { SOLID, SOLID_TILE } from '../ui/solidIntent';
 import { Tooltip } from '../ui/Tooltip';
 
-/** The meanings a card can carry: the plain one, or a metric that needs a look. */
-export type KpiCardIntent = Extract<Intent, 'neutral' | 'warning' | 'danger'>;
+/** The meaning of the metric: the plain one, the accent, a state, or a metric that needs a look. */
+export type KpiCardIntent = Intent;
+
+/**
+ * The surface: `outline` (the card, its border in the intent's color), `tinted` (the tint of the
+ * intent) or `solid` (filled with it).
+ */
+export type KpiCardVariant = 'outline' | 'tinted' | 'solid';
 
 /** Where the `chart` goes: under the delta, or at the end of the line beside the value. */
 export type KpiCardChartPosition = 'bottom' | 'end';
@@ -55,14 +62,18 @@ export type KpiCardProps = {
    */
   chartPosition?: KpiCardChartPosition;
   /**
-   * The one figure a dashboard leads with: the card takes the tinted surface of its meaning (the
-   * accent for `neutral`, else the intent's color), and its label, value and sub line stay readable
-   * on it in every theme. Default `false`: the plain card.
+   * The surface. `outline` (default) is the plain card. `tinted` is for the one figure a dashboard
+   * leads with: the tinted surface of its meaning (the accent for `neutral`). `solid` fills the card
+   * with the intent's color and writes in white on it (a neutral card is the dark ink of the theme,
+   * light in a dark one): a status that has to stand out from across the room. The label, the value
+   * and the sub line keep 4.5:1 on every surface, in every theme. A `solid` card is for a figure
+   * and its words: a colored `delta` or `chart` would not hold on its fill.
    */
-  featured?: boolean;
+  variant?: KpiCardVariant;
   /**
-   * Meaning of the metric. `warning` and `danger` take the border, the icon chip and the value
-   * to the intent color; the background stays the card's. Default `neutral`.
+   * Meaning of the metric. On an `outline` card a non-neutral intent takes the border, the icon chip
+   * and the value to its color, the background staying the card's; `tinted` and `solid` take their
+   * surface from it. Default `neutral`.
    */
   intent?: KpiCardIntent;
   /**
@@ -81,9 +92,10 @@ export type KpiCardProps = {
 };
 
 // Muted gray text (a `TrendDelta`'s comparison, a legend) is `gray-500`: 4.8:1 on white, and 4.3:1 on
-// the accent tint of a featured card in the light themes. Inside one it steps a shade darker; the
-// dark themes keep the `gray-400` they have.
+// the accent tint of a tinted card in the light themes. Inside one it steps a shade darker; the
+// dark themes keep the `gray-400` they have. On a solid card it takes the card's ink.
 const MUTED_ON_TINT = '[&_.text-gray-500]:text-gray-600 dark:[&_.text-gray-500]:text-gray-400';
+const MUTED_ON_SOLID = '[&_.text-gray-500]:text-inherit dark:[&_.text-gray-500]:text-inherit';
 
 // While loading, the real content stays in the flow, hidden, so the card keeps its height;
 // the skeleton is drawn over it.
@@ -131,7 +143,7 @@ export const KpiCard = ({
   delta,
   chart,
   chartPosition = 'bottom',
-  featured = false,
+  variant = 'outline',
   intent = 'neutral',
   loading = false,
   href,
@@ -141,8 +153,12 @@ export const KpiCard = ({
 }: KpiCardProps) => {
   const chipIntent = iconIntent ?? (intent === 'neutral' ? 'brand' : intent);
   const chip = INTENT_STYLE[chipIntent];
-  // A featured card is tinted in the color of its meaning, the accent when it has none.
+  const tinted = variant === 'tinted';
+  const solid = variant === 'solid';
+  // A tinted card takes the tint of its meaning, the accent when it has none.
   const tint = INTENT_STYLE[intent === 'neutral' ? 'brand' : intent];
+  // The label and the sub line: the tint's text, the solid card's own ink, or the muted gray.
+  const quiet = tinted ? tint.text : solid ? undefined : 'text-gray-500 dark:text-gray-400';
   const chartEnd = chartPosition === 'end';
   const interactive = Boolean(href || onClick);
   const arrival = useAfterSkeleton(loading);
@@ -162,11 +178,15 @@ export const KpiCard = ({
       : {};
   const classes = clsx(
     'flex flex-col rounded-2xl border p-5 text-start',
-    featured
+    tinted
       ? [tint.surface, MUTED_ON_TINT]
-      : ['bg-white dark:bg-gray-900', INTENT_STYLE[intent].border],
+      : solid
+        ? [SOLID[intent].fill, SOLID[intent].edge, MUTED_ON_SOLID]
+        : ['bg-white dark:bg-gray-900', INTENT_STYLE[intent].border],
     interactive && [
-      'hover:border-brand-300 dark:hover:border-brand-500/40 focus-visible:focus-indicator relative cursor-pointer transition-[translate,box-shadow,border-color]',
+      'focus-visible:focus-indicator relative cursor-pointer transition-[translate,box-shadow,border-color]',
+      // A solid card keeps its edge in its fill: only the lift says it is under the pointer.
+      !solid && 'hover:border-brand-300 dark:hover:border-brand-500/40',
       CARD_LIFT,
     ],
     className
@@ -185,7 +205,11 @@ export const KpiCard = ({
             // A figure with no break in it (`€12,418,906.40`) wraps in a narrow card instead of
             // running out of it: cut, it would read as another number.
             'block text-3xl font-bold tracking-tight break-words tabular-nums',
-            intent === 'neutral' ? 'text-gray-900 dark:text-white' : INTENT_STYLE[intent].text
+            solid
+              ? undefined
+              : intent === 'neutral'
+                ? 'text-gray-900 dark:text-white'
+                : INTENT_STYLE[intent].text
           )}
         >
           {withExact ? (
@@ -232,12 +256,7 @@ export const KpiCard = ({
         </Slot>
       )}
       {sub && (
-        <span
-          className={clsx(
-            'mt-1 block text-xs',
-            featured ? tint.text : 'text-gray-500 dark:text-gray-400'
-          )}
-        >
+        <span className={clsx('mt-1 block text-xs', quiet)}>
           <bdi>{sub}</bdi>
         </span>
       )}
@@ -261,7 +280,7 @@ export const KpiCard = ({
         <span
           className={clsx(
             'min-w-0 text-xs font-medium tracking-wider break-words hyphens-auto uppercase',
-            featured ? tint.text : 'text-gray-500 dark:text-gray-400'
+            quiet
           )}
         >
           <bdi>{label}</bdi>
@@ -270,9 +289,11 @@ export const KpiCard = ({
           <span
             className={clsx(
               'flex size-10 shrink-0 items-center justify-center rounded-xl',
-              // On the tint of a featured card the chip's own tint would vanish: white over it.
-              featured ? 'bg-white/70 dark:bg-white/10' : chip.tile,
-              chip.iconColor
+              // On the tint of a tinted card the chip's own tint would vanish: white over it. On a
+              // solid one the chip is a veil of the fill and the icon is in the card's ink.
+              solid
+                ? [SOLID_TILE[intent].bg, SOLID_TILE[intent].color]
+                : [tinted ? 'bg-white/70 dark:bg-white/10' : chip.tile, chip.iconColor]
             )}
           >
             <Icon className="size-5" aria-hidden />
