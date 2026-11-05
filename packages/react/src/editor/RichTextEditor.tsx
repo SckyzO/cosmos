@@ -18,11 +18,12 @@ import {
   type RichTextAction,
   type RichTextForm,
 } from './actions';
+import { useLabels } from '../labels/labelsContext';
 import { BlockDirection } from './blockDirection';
 import { withoutDefaultAlignment } from './documentJson';
 import { FormattingToolbar } from './FormattingToolbar';
 import { RichTextImage } from './image';
-import { resolveLabels, type RichTextLabels } from './labels';
+import { RICH_TEXT_EDITOR_LABELS, type RichTextLabels } from './labels';
 
 /** What `value` and `onChange` carry: the HTML string, or the ProseMirror JSON document. */
 export type RichTextFormat = 'html' | 'json';
@@ -213,7 +214,7 @@ export function RichTextEditor<F extends RichTextFormat = 'html'>({
   const fieldId = id ?? generatedId;
   const labelId = `${fieldId}-label`;
   const descId = `${fieldId}-desc`;
-  const labels = useMemo(() => resolveLabels(labelProps), [labelProps]);
+  const labels = useLabels('richTextEditor', RICH_TEXT_EDITOR_LABELS, labelProps);
   const actions = toolbar ?? (variant === 'bubble' ? BUBBLE_ACTIONS : RICH_TEXT_ACTIONS);
   const hasLinkField = variant !== 'minimal' && actions.includes('link');
   const editable = !readOnly && !disabled;

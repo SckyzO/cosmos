@@ -79,7 +79,6 @@ export type RichTextForm = 'link' | 'image';
 
 export type ChoiceSpec = {
   id: RichTextChoice;
-  label: string;
   /** Shown on the button while this is the checked item. */
   icon: LucideIcon;
   mirror?: boolean;
@@ -100,7 +99,6 @@ export type ActionSpec = {
   icon: LucideIcon;
   /** The icon points along the line (an indented list, undo): it turns around in right to left. */
   mirror?: boolean;
-  label: string;
   /** `Mod` is Cmd on macOS and Ctrl elsewhere. Matches the shortcut Tiptap binds. */
   shortcut?: readonly string[];
   isActive: (editor: Editor) => boolean;
@@ -128,35 +126,30 @@ const HEADINGS = [
 export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
   bold: {
     icon: Bold,
-    label: 'Bold',
     shortcut: ['Mod', 'B'],
     isActive: (editor) => editor.isActive('bold'),
     run: (editor) => editor.chain().toggleBold().run(),
   },
   italic: {
     icon: Italic,
-    label: 'Italic',
     shortcut: ['Mod', 'I'],
     isActive: (editor) => editor.isActive('italic'),
     run: (editor) => editor.chain().toggleItalic().run(),
   },
   underline: {
     icon: Underline,
-    label: 'Underline',
     shortcut: ['Mod', 'U'],
     isActive: (editor) => editor.isActive('underline'),
     run: (editor) => editor.chain().toggleUnderline().run(),
   },
   strike: {
     icon: Strikethrough,
-    label: 'Strikethrough',
     shortcut: ['Mod', 'Shift', 'S'],
     isActive: (editor) => editor.isActive('strike'),
     run: (editor) => editor.chain().toggleStrike().run(),
   },
   heading: {
     icon: Heading2,
-    label: 'Heading',
     isActive: (editor) => editor.isActive('heading'),
     menu: {
       rest: 'paragraph',
@@ -165,14 +158,12 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
       choices: [
         {
           id: 'paragraph',
-          label: 'Paragraph',
           icon: Pilcrow,
           shortcut: ['Mod', 'Alt', '0'],
           run: (editor) => editor.chain().focus().setParagraph().run(),
         },
         ...HEADINGS.map(({ id, level, icon }) => ({
           id,
-          label: `Heading ${level}`,
           icon,
           shortcut: ['Mod', 'Alt', String(level)],
           run: (editor: Editor) => editor.chain().focus().setHeading({ level }).run(),
@@ -183,7 +174,6 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
   bulletList: {
     icon: List,
     mirror: true,
-    label: 'Bulleted list',
     shortcut: ['Mod', 'Shift', '8'],
     isActive: (editor) => editor.isActive('bulletList'),
     run: (editor) => editor.chain().toggleBulletList().run(),
@@ -191,7 +181,6 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
   orderedList: {
     icon: ListOrdered,
     mirror: true,
-    label: 'Numbered list',
     shortcut: ['Mod', 'Shift', '7'],
     isActive: (editor) => editor.isActive('orderedList'),
     run: (editor) => editor.chain().toggleOrderedList().run(),
@@ -199,21 +188,18 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
   blockquote: {
     icon: Quote,
     mirror: true,
-    label: 'Quote',
     shortcut: ['Mod', 'Shift', 'B'],
     isActive: (editor) => editor.isActive('blockquote'),
     run: (editor) => editor.chain().toggleBlockquote().run(),
   },
   code: {
     icon: Code,
-    label: 'Code',
     shortcut: ['Mod', 'E'],
     isActive: (editor) => editor.isActive('code'),
     run: (editor) => editor.chain().toggleCode().run(),
   },
   codeBlock: {
     icon: SquareCode,
-    label: 'Code block',
     shortcut: ['Mod', 'Alt', 'C'],
     isActive: (editor) => editor.isActive('codeBlock'),
     run: (editor) => editor.chain().toggleCodeBlock().run(),
@@ -221,7 +207,6 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
   align: {
     icon: TextAlignStart,
     mirror: true,
-    label: 'Text alignment',
     isActive: (editor) =>
       editor.isActive({ textAlign: 'center' }) || editor.isActive({ textAlign: 'end' }),
     menu: {
@@ -235,7 +220,6 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
       choices: [
         {
           id: 'alignStart',
-          label: 'Align start',
           icon: TextAlignStart,
           mirror: true,
           // The start is what a block has when nothing is set.
@@ -243,13 +227,11 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
         },
         {
           id: 'alignCenter',
-          label: 'Align center',
           icon: TextAlignCenter,
           run: (editor) => editor.chain().focus().setTextAlign('center').run(),
         },
         {
           id: 'alignEnd',
-          label: 'Align end',
           icon: TextAlignEnd,
           mirror: true,
           run: (editor) => editor.chain().focus().setTextAlign('end').run(),
@@ -259,14 +241,12 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
   },
   link: {
     icon: Link,
-    label: 'Link',
     shortcut: ['Mod', 'K'],
     isActive: (editor) => editor.isActive('link'),
     form: 'link',
   },
   image: {
     icon: ImageIcon,
-    label: 'Image',
     isActive: (editor) => selectedImage(editor) !== undefined,
     // An image lives in a line of text, and a code block has none.
     isIdle: (editor) => selectedImage(editor) === undefined && imagePosition(editor) === undefined,
@@ -275,7 +255,6 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
   undo: {
     icon: Undo2,
     mirror: true,
-    label: 'Undo',
     shortcut: ['Mod', 'Z'],
     isActive: () => false,
     isIdle: (editor) => !editor.can().undo(),
@@ -284,7 +263,6 @@ export const ACTION_SPECS: Record<RichTextAction, ActionSpec> = {
   redo: {
     icon: Redo2,
     mirror: true,
-    label: 'Redo',
     shortcut: ['Mod', 'Shift', 'Z'],
     isActive: () => false,
     isIdle: (editor) => !editor.can().redo(),

@@ -465,10 +465,7 @@ test('the package uses logical utilities only', () => {
 // text, and a string after `??` for one. It sees words (two letters or more), not their language.
 
 /** The files that still write English in place, translated a group at a time: the list only shrinks. */
-const TEXT_DEFERRED: string[] = [
-  'packages/react/src/editor/ImageForm.tsx',
-  'packages/react/src/editor/LinkForm.tsx',
-];
+const TEXT_DEFERRED: string[] = [];
 
 /**
  * Words the check takes for text and that are not: `file`, the exact `text` it reports and why,

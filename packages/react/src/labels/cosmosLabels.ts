@@ -24,6 +24,7 @@ import type {
   PlanCardLabels,
   TrendDeltaLabels,
 } from '../data/labels';
+import type { RichTextEditorLabels } from '../editor/labels';
 import type { EmptyStateLabels, ErrorStateLabels, LoadingStateLabels } from '../feedback/labels';
 import type {
   AvatarUploaderLabels,
@@ -235,6 +236,7 @@ export type CosmosLabels = {
   recordPager: RecordPagerLabels;
   refreshButton: RefreshButtonLabels;
   resetPasswordForm: ResetPasswordFormLabels;
+  richTextEditor: RichTextEditorLabels;
   rowActionButton: RowActionButtonLabels;
   rowActionsMenu: RowActionsMenuLabels;
   searchInput: SearchInputLabels;

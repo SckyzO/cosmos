@@ -109,7 +109,7 @@ export function ImageForm({ editor, labels, onDone, className }: ImageFormProps)
           dir="ltr"
           aria-invalid={invalid === 'url' || undefined}
           aria-describedby={invalid === 'url' ? urlErrorId : undefined}
-          placeholder="https://"
+          placeholder={labels.imagePlaceholder}
           value={src}
           onChange={(e) => {
             setSrc(e.target.value);

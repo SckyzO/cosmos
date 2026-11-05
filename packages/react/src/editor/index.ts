@@ -8,4 +8,4 @@ export {
   type RichTextVariant,
 } from './RichTextEditor';
 export { RICH_TEXT_ACTIONS, type RichTextAction } from './actions';
-export type { RichTextLabels } from './labels';
+export { RICH_TEXT_EDITOR_LABELS, type RichTextEditorLabels, type RichTextLabels } from './labels';

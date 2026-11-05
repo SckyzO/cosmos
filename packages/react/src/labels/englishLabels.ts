@@ -142,7 +142,7 @@ import type { CosmosLabels } from './cosmosLabels';
  * `@sckyzo/cosmos-react/map`), which are built apart from this file and bring their own English
  * (`RICH_TEXT_EDITOR_LABELS`, `MAP_VIEW_LABELS`…).
  */
-export type EnglishLabels = Omit<CosmosLabels, 'mapMarkerList' | 'mapView'>;
+export type EnglishLabels = Omit<CosmosLabels, 'mapMarkerList' | 'mapView' | 'richTextEditor'>;
 
 /**
  * The English every component writes by default: the start of a translation. Each component reads
