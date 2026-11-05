@@ -14,12 +14,13 @@ import {
   type RefObject,
 } from 'react';
 import { MessageText } from '../chat/MessageText';
+import { useLabels } from '../labels/labelsContext';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { TIMESTAMP_CLASS } from '../ui/timestamp';
 import { CommentComposer } from './CommentComposer';
-import { useCommentLabels, type CommentLabels } from './commentLabels';
+import { COMMENT_LABELS, type CommentLabels } from './labels';
 
 export type CommentVariant = 'default' | 'internal';
 
@@ -90,7 +91,7 @@ type CommentBaseProps = {
    */
   keepReplies?: 'first' | 'last';
   /** Texts for another language; a `CommentThread` can give them to all of its comments. */
-  labels?: CommentLabels;
+  labels?: Partial<CommentLabels>;
   className?: string;
   /** Ref to the root `<article>`. */
   ref?: Ref<HTMLElement>;
@@ -140,7 +141,7 @@ export function Comment({
   className,
   ref,
 }: CommentProps) {
-  const labels = useCommentLabels(ownLabels);
+  const labels = useLabels('comment', COMMENT_LABELS, ownLabels);
   const isReply = useContext(ReplyContext);
   const nameId = useId();
   const [replying, setReplying] = useState(false);

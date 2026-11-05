@@ -1,3 +1,4 @@
+import { COMMENT_COMPOSER_LABELS, COMMENT_LABELS, COMMENT_THREAD_LABELS } from '../comments/labels';
 import {
   AUDIT_DIFF_LABELS,
   BAR_LIST_LABELS,
@@ -75,6 +76,9 @@ export const englishLabels: CosmosLabels = {
   columnFilterDropdown: COLUMN_FILTER_DROPDOWN_LABELS,
   columnHeader: COLUMN_HEADER_LABELS,
   combobox: COMBOBOX_LABELS,
+  comment: COMMENT_LABELS,
+  commentComposer: COMMENT_COMPOSER_LABELS,
+  commentThread: COMMENT_THREAD_LABELS,
   countdown: COUNTDOWN_LABELS,
   dataTable: DATA_TABLE_LABELS,
   datePicker: DATE_PICKER_LABELS,

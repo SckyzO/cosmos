@@ -1,3 +1,4 @@
+import type { CommentComposerLabels, CommentLabels, CommentThreadLabels } from '../comments/labels';
 import type {
   AuditDiffLabels,
   BarListLabels,
@@ -76,6 +77,9 @@ export type CosmosLabels = {
   columnFilterDropdown: ColumnFilterDropdownLabels;
   columnHeader: ColumnHeaderLabels;
   combobox: ComboboxLabels;
+  comment: CommentLabels;
+  commentComposer: CommentComposerLabels;
+  commentThread: CommentThreadLabels;
   countdown: CountdownLabels;
   dataTable: DataTableLabels;
   datePicker: DatePickerLabels;

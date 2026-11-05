@@ -473,8 +473,6 @@ const TEXT_DEFERRED: string[] = [
   'packages/react/src/chat/ChatSuggestions.tsx',
   'packages/react/src/chat/ChatThread.tsx',
   'packages/react/src/chat/ChatToolCall.tsx',
-  'packages/react/src/comments/CommentComposer.tsx',
-  'packages/react/src/comments/CommentThread.tsx',
   'packages/react/src/editor/ImageForm.tsx',
   'packages/react/src/editor/LinkForm.tsx',
   'packages/react/src/layout/Divider.tsx',
