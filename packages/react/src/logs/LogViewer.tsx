@@ -32,6 +32,8 @@ import {
   splitLogMatches,
 } from './log-lines';
 import { GROW_IN } from './growIn';
+import { type LogViewerLabels } from './labels';
+import { LogViewerLabelsContext, useLogViewerLabels } from './useLogLabels';
 import { detailSlots, lineWindow, slotOf, totalSlots, type ExpandedBlock } from './log-window';
 import type { LogColumn, LogLevelKey, LogLine, LogLineId, LogOrder } from './types';
 
@@ -118,8 +120,10 @@ export type LogViewerProps = {
    * stream read aloud line by line cannot be followed.
    */
   announceErrors?: boolean;
-  /** Shown when no line is left to draw. Default `No log lines.` */
+  /** Shown when no line is left to draw. Default `labels.noLines`, `No log lines.` */
   emptyMessage?: string;
+  /** The texts it and its parts write, over `LabelsProvider`'s `logViewer` and the English defaults. */
+  labels?: Partial<LogViewerLabels>;
   /** BCP 47 tag for the times (`fr-FR`). Default: the browser's language. */
   locale?: string;
   /** IANA zone for the times (`Asia/Tokyo`). Default: the browser's zone. */
@@ -247,6 +251,7 @@ const LogRow = ({
   timeZone,
   height,
 }: RowProps) => {
+  const labels = useLogViewerLabels();
   const level = parseLogLevel(line.level);
   const palette = TONE[tone];
   const comfortable = density === 'comfortable';
@@ -262,7 +267,7 @@ const LogRow = ({
       onClick={() => onToggle()}
       aria-expanded={expanded}
       aria-controls={expanded ? detailsId : undefined}
-      aria-label={expanded ? 'Hide details' : 'Show details'}
+      aria-label={expanded ? labels.hideDetails : labels.showDetails}
       className={clsx(
         'focus-visible:focus-indicator flex h-5 w-4 shrink-0 items-center justify-center rounded-sm focus-visible:ring-inset',
         palette.button
@@ -396,13 +401,14 @@ const LogDetails = ({
   onArrived: () => void;
   onOpen: (() => void) | null;
 }) => {
+  const labels = useLogViewerLabels();
   const palette = TONE[tone];
   const fields = line.fields ? Object.entries(line.fields) : [];
   return (
     <div
       id={id}
       role="group"
-      aria-label={`Details of line ${number ?? line.id}`}
+      aria-label={labels.detailsOfLine(String(number ?? line.id))}
       tabIndex={fixed ? 0 : undefined}
       style={style}
       onTransitionEnd={(e) => {
@@ -448,7 +454,7 @@ const LogDetails = ({
               tone === 'terminal' ? 'text-sky-300' : 'text-brand-600 dark:text-brand-400'
             )}
           >
-            Open details
+            {labels.openDetails}
           </button>
         )}
       </div>
@@ -492,13 +498,15 @@ export const LogViewer = ({
   onOpenLine,
   currentId,
   announceErrors: announce = false,
-  emptyMessage = 'No log lines.',
+  emptyMessage,
+  labels: ownLabels,
   locale,
   timeZone,
   height = '24rem',
   className,
   ref,
 }: LogViewerProps) => {
+  const labels = useLogViewerLabels(ownLabels);
   const uid = useId();
   const isClient = useIsClient();
   const palette = TONE[tone];
@@ -689,7 +697,7 @@ export const LogViewer = ({
   if (announced.last !== newestId) {
     setAnnounced({
       last: newestId,
-      text: announce ? announceErrors(visible, announced.last) : '',
+      text: announce ? announceErrors(visible, announced.last, undefined, labels.moreErrors) : '',
     });
   }
 
@@ -775,8 +783,8 @@ export const LogViewer = ({
       >
         <bdi>
           {waiting > 0
-            ? `Jump to latest (${waiting.toLocaleString('en-US')} new)`
-            : 'Jump to latest'}
+            ? labels.jumpToLatestNew(waiting.toLocaleString('en-US'))
+            : labels.jumpToLatest}
         </bdi>
       </Button>
     </div>
@@ -784,71 +792,75 @@ export const LogViewer = ({
 
   const probeLine: LogLine = { id: '', time: 0, level: 'info', source: 'a', message: '0' };
   return (
-    <div
-      style={{ height }}
-      className={clsx('@container relative min-h-0 overflow-hidden', palette.root, className)}
-    >
+    <LogViewerLabelsContext value={ownLabels}>
       <div
-        ref={mergedRef}
-        role="log"
-        aria-live="off"
-        aria-label={ariaLabel ?? (ariaLabelledBy ? undefined : 'Log')}
-        aria-labelledby={ariaLabelledBy}
-        tabIndex={0}
-        onScroll={onScroll}
-        // A log is output: its records keep their column order and scroll from the left,
-        // whatever the page reads. The toolbar and the jump button around it follow the page.
-        dir="ltr"
-        style={fade}
-        className={clsx(
-          'focus-visible:focus-indicator relative overflow-auto py-2 [overflow-anchor:none] focus-visible:ring-inset',
-          // Paused: the strip of the "Jump to latest" button is taken off the log's height.
-          follow ? 'h-full' : newest ? 'h-[calc(100%-3rem)]' : 'mt-12 h-[calc(100%-3rem)]'
-        )}
+        style={{ height }}
+        className={clsx('@container relative min-h-0 overflow-hidden', palette.root, className)}
       >
-        {/* Measures a row, so the window knows how tall one is at this text size. */}
         <div
-          ref={probeRef}
-          aria-hidden
+          ref={mergedRef}
+          role="log"
+          aria-live="off"
+          aria-label={ariaLabel ?? (ariaLabelledBy ? undefined : labels.log)}
+          aria-labelledby={ariaLabelledBy}
+          tabIndex={0}
+          onScroll={onScroll}
+          // A log is output: its records keep their column order and scroll from the left,
+          // whatever the page reads. The toolbar and the jump button around it follow the page.
           dir="ltr"
-          className="inset-s-0 pointer-events-none invisible absolute top-0"
-        >
-          <LogRow
-            line={probeLine}
-            index={0}
-            number={lineNumbers ? 0 : null}
-            tone={tone}
-            density={density}
-            wrap={false}
-            columns={columns}
-            expression={null}
-            matchState="none"
-            current={false}
-            expanded={false}
-            detailsId=""
-            onToggle={null}
-            isClient={false}
-            height={undefined}
-          />
-        </div>
-        <div ref={contentRef}>
-          {count === 0 ? (
-            <p dir="auto" className={clsx('m-0 px-3 py-2 font-sans text-sm', palette.muted)}>
-              {emptyMessage}
-            </p>
-          ) : (
-            <>
-              {shown.before > 0 && <div aria-hidden style={{ height: shown.before * rowHeight }} />}
-              {rows}
-              {shown.after > 0 && <div aria-hidden style={{ height: shown.after * rowHeight }} />}
-            </>
+          style={fade}
+          className={clsx(
+            'focus-visible:focus-indicator relative overflow-auto py-2 [overflow-anchor:none] focus-visible:ring-inset',
+            // Paused: the strip of the "Jump to latest" button is taken off the log's height.
+            follow ? 'h-full' : newest ? 'h-[calc(100%-3rem)]' : 'mt-12 h-[calc(100%-3rem)]'
           )}
+        >
+          {/* Measures a row, so the window knows how tall one is at this text size. */}
+          <div
+            ref={probeRef}
+            aria-hidden
+            dir="ltr"
+            className="inset-s-0 pointer-events-none invisible absolute top-0"
+          >
+            <LogRow
+              line={probeLine}
+              index={0}
+              number={lineNumbers ? 0 : null}
+              tone={tone}
+              density={density}
+              wrap={false}
+              columns={columns}
+              expression={null}
+              matchState="none"
+              current={false}
+              expanded={false}
+              detailsId=""
+              onToggle={null}
+              isClient={false}
+              height={undefined}
+            />
+          </div>
+          <div ref={contentRef}>
+            {count === 0 ? (
+              <p dir="auto" className={clsx('m-0 px-3 py-2 font-sans text-sm', palette.muted)}>
+                {emptyMessage ?? labels.noLines}
+              </p>
+            ) : (
+              <>
+                {shown.before > 0 && (
+                  <div aria-hidden style={{ height: shown.before * rowHeight }} />
+                )}
+                {rows}
+                {shown.after > 0 && <div aria-hidden style={{ height: shown.after * rowHeight }} />}
+              </>
+            )}
+          </div>
         </div>
+        {!follow && jump}
+        <span role="status" aria-live="polite" className="sr-only">
+          {announced.text}
+        </span>
       </div>
-      {!follow && jump}
-      <span role="status" aria-live="polite" className="sr-only">
-        {announced.text}
-      </span>
-    </div>
+    </LogViewerLabelsContext>
   );
 };

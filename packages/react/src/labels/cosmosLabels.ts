@@ -59,6 +59,7 @@ import type {
   TopbarLabels,
 } from '../layout/labels';
 import type { FileTileLabels, StackedListLabels } from '../lists/labels';
+import type { JobLogLabels, LogViewerLabels } from '../logs/labels';
 import type {
   BreadcrumbLabels,
   NavbarLabels,
@@ -201,11 +202,13 @@ export type CosmosLabels = {
   healthSummary: HealthSummaryLabels;
   helpOverlay: HelpOverlayLabels;
   integrationCard: IntegrationCardLabels;
+  jobLog: JobLogLabels;
   kanbanBoard: KanbanBoardLabels;
   kpiCard: KpiCardLabels;
   lightbox: LightboxLabels;
   lineItemsEditor: LineItemsLabels;
   loadingState: LoadingStateLabels;
+  logViewer: LogViewerLabels;
   miniCalendar: MiniCalendarLabels;
   modal: ModalLabels;
   multiSelect: MultiSelectLabels;

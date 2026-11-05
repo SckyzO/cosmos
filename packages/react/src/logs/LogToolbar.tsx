@@ -19,9 +19,10 @@ import { HealthDot } from '../status/HealthDot';
 import { Button } from '../ui/Button';
 import { Popover } from '../ui/Popover';
 import { SectionLabel } from '../ui/SectionLabel';
-import { LOG_LEVEL_LABEL } from './LogLevelBadge';
 import { compileLogSearch, stepLogMatch } from './log-lines';
+import { type LogViewerLabels } from './labels';
 import type { LogLevelKey, LogOrder } from './types';
+import { useLogViewerLabels } from './useLogLabels';
 
 export type LogToolbarProps = {
   /** Accessible name of the group of controls. Default `Log controls`. */
@@ -98,13 +99,12 @@ export type LogToolbarProps = {
 
   /** BCP 47 tag for the counts. Default `en-US`: the numbers do not change between server and browser. */
   locale?: string;
+  /** The texts it writes, over `LabelsProvider`'s `logViewer` and the English defaults. */
+  labels?: Partial<LogViewerLabels>;
   className?: string;
 };
 
 const NONE: readonly never[] = [];
-const LEVEL_NAME = (level: LogLevelKey) =>
-  LOG_LEVEL_LABEL[level].charAt(0) + LOG_LEVEL_LABEL[level].slice(1).toLowerCase();
-
 const CONTROL =
   'focus-visible:focus-indicator inline-flex h-ctrl-36 items-center justify-center gap-2 rounded-lg border text-sm font-medium whitespace-nowrap';
 const CONTROL_IDLE =
@@ -158,7 +158,7 @@ const ToggleButton = ({
  * filters (levels narrowed, sources chosen). It sits in a page header, a card header, or on its own.
  */
 export const LogToolbar = ({
-  'aria-label': ariaLabel = 'Log controls',
+  'aria-label': ariaLabel,
   live: liveProp,
   defaultLive = true,
   onLiveChange,
@@ -189,8 +189,13 @@ export const LogToolbar = ({
   onDownload,
   onClear,
   locale = 'en-US',
+  labels: ownLabels,
   className,
 }: LogToolbarProps) => {
+  const labels = useLogViewerLabels(ownLabels);
+  // A level button reads like its badge, in lower case with a capital.
+  const levelName = (level: LogLevelKey) =>
+    labels[level].charAt(0) + labels[level].slice(1).toLowerCase();
   const wide = useMediaQuery('(min-width: 640px)', true);
   const [live, setLive] = useControllableState({
     value: liveProp,
@@ -246,14 +251,14 @@ export const LogToolbar = ({
     <button
       type="button"
       aria-pressed={live}
-      aria-label={live ? 'Live, pause the stream' : 'Paused, resume the stream'}
+      aria-label={live ? labels.pauseStream : labels.resumeStream}
       onClick={() => setLive(!live)}
       className={clsx(CONTROL, 'px-3', live ? CONTROL_ON : CONTROL_IDLE)}
     >
       <span aria-hidden>
         <HealthDot status={live ? 'OK' : 'UNKNOWN'} pulse={live} />
       </span>
-      {live ? 'Live' : 'Paused'}
+      {live ? labels.live : labels.paused}
     </button>
   );
 
@@ -270,7 +275,7 @@ export const LogToolbar = ({
   const levelGroup = levels && (
     <div
       role="group"
-      aria-label="Levels"
+      aria-label={labels.levels}
       className="h-ctrl-36 inline-flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"
     >
       {levels.map((level) => {
@@ -289,7 +294,7 @@ export const LogToolbar = ({
                 : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
             )}
           >
-            {LEVEL_NAME(level)}
+            {levelName(level)}
             {count !== null && (
               <span className="text-xs text-gray-600 tabular-nums dark:text-gray-400">{count}</span>
             )}
@@ -301,7 +306,7 @@ export const LogToolbar = ({
 
   const regexToggle = onSearchRegexChange !== undefined && (
     <ToggleButton pressed={regex} onToggle={() => setRegex(!regex)} icon={Regex} iconOnly>
-      Regular expression
+      {labels.regularExpression}
     </ToggleButton>
   );
 
@@ -316,12 +321,12 @@ export const LogToolbar = ({
     search === ''
       ? null
       : invalid
-        ? 'Invalid pattern'
+        ? labels.invalidPattern
         : matchCount === undefined
           ? null
           : matchCount === 0
-            ? 'No matches'
-            : `${format(Math.min(activeMatch, matchCount - 1) + 1)} of ${format(matchCount)}`;
+            ? labels.noMatches
+            : labels.matchOf(format(Math.min(activeMatch, matchCount - 1) + 1), format(matchCount));
 
   // The count and the arrows sit at the end of the field in the bar, so the field keeps its width
   // whether they show or not; narrow, they get a row under it.
@@ -350,7 +355,7 @@ export const LogToolbar = ({
             size="sm"
             shape="square"
             icon={ChevronUp}
-            aria-label="Previous match"
+            aria-label={labels.previousMatch}
             disabled={!matchCount}
             onClick={() => step(-1)}
           />
@@ -359,7 +364,7 @@ export const LogToolbar = ({
             size="sm"
             shape="square"
             icon={ChevronDown}
-            aria-label="Next match"
+            aria-label={labels.nextMatch}
             disabled={!matchCount}
             onClick={() => step(1)}
           />
@@ -372,8 +377,8 @@ export const LogToolbar = ({
     <div className="relative min-w-0 flex-1 sm:max-w-xs">
       <div onKeyDown={onSearchKeyDown}>
         <SearchInput
-          aria-label="Search logs"
-          placeholder="Search…"
+          aria-label={labels.searchLogs}
+          placeholder={labels.searchPlaceholder}
           size="md"
           value={search}
           onChange={setSearch}
@@ -389,10 +394,10 @@ export const LogToolbar = ({
       <MultiSelect
         size="md"
         // In the bar the label and the count are not drawn, so the field sits where the others do.
-        label="Sources"
+        label={labels.sources}
         labelHidden={!visibleLabel}
-        placeholder="All sources"
-        emptyMessage="No such source."
+        placeholder={labels.allSources}
+        emptyMessage={labels.noSource}
         options={sources.map((source) => ({ value: source, label: source }))}
         value={[...activeSources]}
         onChange={setActiveSources}
@@ -401,7 +406,7 @@ export const LogToolbar = ({
 
   const wrapToggle = onWrapChange !== undefined && (
     <ToggleButton pressed={wrap} onToggle={() => setWrap(!wrap)} icon={WrapText} iconOnly={wide}>
-      Wrap lines
+      {labels.wrapLines}
     </ToggleButton>
   );
   const orderToggle = onOrderChange !== undefined && (
@@ -411,7 +416,7 @@ export const LogToolbar = ({
       icon={ArrowDownUp}
       iconOnly={wide}
     >
-      Newest first
+      {labels.newestFirst}
     </ToggleButton>
   );
   const downloadButton = onDownload !== undefined && (
@@ -420,11 +425,11 @@ export const LogToolbar = ({
       size="md"
       icon={Download}
       shape={wide ? 'square' : 'rounded'}
-      aria-label={wide ? 'Download' : undefined}
-      title={wide ? 'Download' : undefined}
+      aria-label={wide ? labels.download : undefined}
+      title={wide ? labels.download : undefined}
       onClick={() => onDownload()}
     >
-      {wide ? undefined : 'Download'}
+      {wide ? undefined : labels.download}
     </Button>
   );
   const clearButton = onClear !== undefined && (
@@ -433,11 +438,11 @@ export const LogToolbar = ({
       size="md"
       icon={Trash2}
       shape={wide ? 'square' : 'rounded'}
-      aria-label={wide ? 'Clear' : undefined}
-      title={wide ? 'Clear' : undefined}
+      aria-label={wide ? labels.clear : undefined}
+      title={wide ? labels.clear : undefined}
       onClick={() => onClear()}
     >
-      {wide ? undefined : 'Clear'}
+      {wide ? undefined : labels.clear}
     </Button>
   );
 
@@ -445,7 +450,7 @@ export const LogToolbar = ({
     return (
       <div
         role="group"
-        aria-label={ariaLabel}
+        aria-label={ariaLabel ?? labels.controls}
         className={clsx('flex flex-wrap items-center gap-2', className)}
       >
         {liveButton}
@@ -484,7 +489,7 @@ export const LogToolbar = ({
   return (
     <div
       role="group"
-      aria-label={ariaLabel}
+      aria-label={ariaLabel ?? labels.controls}
       className={clsx('flex flex-wrap items-center gap-2', className)}
     >
       <div className="flex w-full items-center gap-2">
@@ -493,11 +498,11 @@ export const LogToolbar = ({
         {hasFilters && (
           <Popover>
             <Popover.Trigger
-              aria-label={activeFilters > 0 ? `Filters, ${activeFilters} active` : 'Filters'}
+              aria-label={activeFilters > 0 ? labels.filtersActive(activeFilters) : labels.filters}
               className={clsx(CONTROL, 'px-3', CONTROL_IDLE)}
             >
               <SlidersHorizontal aria-hidden className="h-4 w-4" />
-              Filters
+              {labels.filters}
               {activeFilters > 0 && (
                 <span
                   aria-hidden
@@ -508,7 +513,7 @@ export const LogToolbar = ({
               )}
             </Popover.Trigger>
             <Popover.Content
-              aria-label="Log filters"
+              aria-label={labels.logFilters}
               align="end"
               width="w-[calc(100vw-2rem)] max-w-sm"
               padding="p-4"
@@ -517,7 +522,7 @@ export const LogToolbar = ({
                 {levels && (
                   <fieldset className="m-0 min-w-0 border-0 p-0">
                     <SectionLabel as="legend" size="lg" className="mb-1">
-                      Levels
+                      {labels.levels}
                     </SectionLabel>
                     <div className="flex flex-col gap-2.5">
                       {levels.map((level) => {
@@ -529,7 +534,7 @@ export const LogToolbar = ({
                             onChange={() => toggleLevel(level)}
                             label={
                               <span className="flex w-full items-center justify-between gap-4">
-                                {LEVEL_NAME(level)}
+                                {levelName(level)}
                                 {count !== null && (
                                   <span className="text-gray-600 tabular-nums dark:text-gray-400">
                                     {count}
@@ -547,7 +552,7 @@ export const LogToolbar = ({
                 {(wrapToggle || orderToggle || regexToggle) && (
                   <div>
                     <SectionLabel size="lg" className="mb-1">
-                      View
+                      {labels.view}
                     </SectionLabel>
                     <div className="flex flex-wrap gap-2">
                       {wrapToggle}
@@ -557,7 +562,7 @@ export const LogToolbar = ({
                           onToggle={() => setRegex(!regex)}
                           icon={Regex}
                         >
-                          Regex
+                          {labels.regex}
                         </ToggleButton>
                       )}
                       {orderToggle}

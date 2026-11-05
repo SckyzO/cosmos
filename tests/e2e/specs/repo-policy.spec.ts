@@ -468,11 +468,6 @@ test('the package uses logical utilities only', () => {
 const TEXT_DEFERRED: string[] = [
   'packages/react/src/editor/ImageForm.tsx',
   'packages/react/src/editor/LinkForm.tsx',
-  'packages/react/src/logs/JobLogToolbar.tsx',
-  'packages/react/src/logs/JobLog.tsx',
-  'packages/react/src/logs/LogEntryDetail.tsx',
-  'packages/react/src/logs/LogToolbar.tsx',
-  'packages/react/src/logs/LogViewer.tsx',
   'packages/react/src/map/MapMarkerList.tsx',
   'packages/react/src/map/MapPin.tsx',
   'packages/react/src/map/MapView.tsx',
@@ -517,6 +512,11 @@ const TEXT_ALLOWED: { file: string; text: string; reason: string }[] = [
     file: 'packages/react/src/navigation/Pagination.tsx',
     text: 'icon',
     reason: "`prevNextLabel` says how Previous and Next read ('icon' or 'text'), it is not text",
+  },
+  {
+    file: 'packages/react/src/logs/JobLog.tsx',
+    text: 'job-log.txt',
+    reason: 'the default of `fileName`, the name of the downloaded file and not text',
   },
 ];
 

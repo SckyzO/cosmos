@@ -59,6 +59,7 @@ import {
   TOPBAR_LABELS,
 } from '../layout/labels';
 import { FILE_TILE_LABELS, STACKED_LIST_LABELS } from '../lists/labels';
+import { JOB_LOG_LABELS, LOG_VIEWER_LABELS } from '../logs/labels';
 import {
   BREADCRUMB_LABELS,
   NAVBAR_LABELS,
@@ -202,11 +203,13 @@ export const englishLabels: EnglishLabels = {
   healthSummary: HEALTH_SUMMARY_LABELS,
   helpOverlay: HELP_OVERLAY_LABELS,
   integrationCard: INTEGRATION_CARD_LABELS,
+  jobLog: JOB_LOG_LABELS,
   kanbanBoard: KANBAN_BOARD_LABELS,
   kpiCard: KPI_CARD_LABELS,
   lightbox: LIGHTBOX_LABELS,
   lineItemsEditor: LINE_ITEMS_LABELS,
   loadingState: LOADING_STATE_LABELS,
+  logViewer: LOG_VIEWER_LABELS,
   miniCalendar: MINI_CALENDAR_LABELS,
   modal: MODAL_LABELS,
   multiSelect: MULTI_SELECT_LABELS,

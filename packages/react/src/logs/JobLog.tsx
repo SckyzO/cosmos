@@ -29,6 +29,8 @@ import { windowSlice } from '../hooks/useVirtualWindow';
 import { downloadFile } from '../table/download';
 import { mergeRefs } from '../ui/mergeRefs';
 import { JobLogToolbar } from './JobLogToolbar';
+import { type JobLogLabels } from './labels';
+import { JobLogLabelsContext, useJobLogLabels } from './useLogLabels';
 import { TIME_OPTIONS, TONE } from './LogViewer';
 import type { LogTone } from './LogLevelBadge';
 import { markAnsiSegments, parseAnsi } from './ansi';
@@ -147,6 +149,8 @@ export type JobLogProps = {
   timeZone?: string;
   /** The height of the log: a CSS length, or a number of px. Default `32rem`. */
   height?: number | string;
+  /** The texts it and its parts write, over `LabelsProvider`'s `jobLog` and the English defaults. */
+  labels?: Partial<JobLogLabels>;
   className?: string;
   /** Ref to the scrolling element. */
   ref?: Ref<HTMLDivElement>;
@@ -174,9 +178,10 @@ const STATUS_ICON: Record<JobStatus, LucideIcon> = {
 
 /** The icon of a status, named for assistive technology: the colour only backs it. */
 const StatusIcon = ({ status, tone }: { status: JobStatus; tone: LogTone }) => {
+  const labels = useJobLogLabels();
   const Icon = STATUS_ICON[status];
   return (
-    <span role="img" aria-label={statusLabel(status)} className="inline-flex shrink-0">
+    <span role="img" aria-label={statusLabel(status, labels)} className="inline-flex shrink-0">
       <Icon
         aria-hidden
         strokeWidth={status === 'passed' || status === 'failed' || status === 'running' ? 2.5 : 2}
@@ -234,6 +239,7 @@ const JobLogRow = ({
   timeZone,
   height,
 }: RowProps) => {
+  const labels = useJobLogLabels();
   const palette = TONE[tone];
   const look = FRAME[tone];
   const ref: JobLogLineRef = { step: stepId, line: number };
@@ -279,7 +285,7 @@ const JobLogRow = ({
           and never goes through a router. */}
       <a
         href={jobLogLineHref(prefix, ref)}
-        aria-label={`Line ${number}`}
+        aria-label={labels.line(number)}
         aria-current={current ? 'location' : undefined}
         onClick={onClick}
         style={{ minWidth: `${digits}ch` }}
@@ -366,14 +372,6 @@ const StepLines = ({
   );
 };
 
-const EMPTY_STEP: Record<JobStatus, string> = {
-  queued: 'Not started.',
-  running: 'No output yet.',
-  passed: 'No output.',
-  failed: 'No output.',
-  skipped: 'Skipped.',
-};
-
 /**
  * JobLog — the output of a CI job or a build: collapsible steps, each with its status and
  * duration, its lines numbered from 1 and drawn with their ANSI colours as theme colours. Failed
@@ -424,9 +422,18 @@ export const JobLog = ({
   locale,
   timeZone,
   height = '32rem',
+  labels: ownLabels,
   className,
   ref,
 }: JobLogProps) => {
+  const labels = useJobLogLabels(ownLabels);
+  const emptyStep: Record<JobStatus, string> = {
+    queued: labels.emptyQueued,
+    running: labels.emptyRunning,
+    passed: labels.emptyPassed,
+    failed: labels.emptyFailed,
+    skipped: labels.emptySkipped,
+  };
   const uid = useId();
   const isClient = useIsClient();
   const palette = TONE[tone];
@@ -679,7 +686,8 @@ export const JobLog = ({
   const toggleAll = () => setExpanded(allExpanded ? [] : steps.map((step) => step.id));
   const step = (direction: 1 | -1) =>
     setMatchIndex(stepLogMatch(activeIndex, matches.length, direction));
-  const onDownload = () => downloadFile(jobLogText(steps), fileName, 'text/plain;charset=utf-8');
+  const onDownload = () =>
+    downloadFile(jobLogText(steps, labels), fileName, 'text/plain;charset=utf-8');
   const select = useCallback((target: JobLogLineRef) => setCurrent(target), [setCurrent]);
 
   // ── Drawing ───────────────────────────────────────────────────────────────
@@ -689,7 +697,7 @@ export const JobLog = ({
   // The log is named by what the host says, else by its title, else by a default.
   const regionLabelledBy =
     ariaLabelledBy ?? (ariaLabel === undefined && title !== undefined ? titleId : undefined);
-  const regionName = regionLabelledBy !== undefined ? undefined : (ariaLabel ?? 'Job log');
+  const regionName = regionLabelledBy !== undefined ? undefined : (ariaLabel ?? labels.log);
   const searchExpression = expression === 'invalid' ? null : expression;
 
   const probeLine: JobLogLine = { text: '0' };
@@ -798,7 +806,7 @@ export const JobLog = ({
           <div
             id={bodyId}
             role="group"
-            aria-label={`${job.name} output`}
+            aria-label={labels.output(job.name)}
             onTransitionEnd={(e) => {
               if (e.target === e.currentTarget) setArriving(null);
             }}
@@ -806,7 +814,7 @@ export const JobLog = ({
           >
             {count === 0 ? (
               <p className={clsx('m-0 px-4 py-1 font-sans text-xs', palette.muted)}>
-                {EMPTY_STEP[job.status]}
+                {emptyStep[job.status]}
               </p>
             ) : (
               <StepLines id={job.id} count={count} wrap={wrap}>
@@ -822,145 +830,149 @@ export const JobLog = ({
   });
 
   return (
-    <div
-      style={{ height }}
-      className={clsx(
-        '@container relative flex min-h-0 flex-col overflow-hidden rounded-xl border',
-        palette.root,
-        look.border,
-        className
-      )}
-    >
-      {hasHeader && (
-        <div
-          className={clsx(
-            'py-row-12 flex flex-wrap items-center gap-x-3 gap-y-1 border-b px-4',
-            look.border
-          )}
-        >
-          {title !== undefined && (
-            <p id={titleId} className={clsx('m-0 text-sm font-semibold', look.title)}>
-              <bdi>{title}</bdi>
-            </p>
-          )}
-          {meta !== undefined && (
-            <span
-              className={clsx(
-                'font-mono text-xs [unicode-bidi:isolate] @max-md:order-last @max-md:w-full',
-                palette.muted
-              )}
-            >
-              {meta}
-            </span>
-          )}
-          {status !== undefined && (
-            <span
-              className={clsx(
-                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
-                STATUS[tone][status].pill
-              )}
-            >
-              {status === 'running' && (
-                <LoaderCircle
-                  aria-hidden
-                  strokeWidth={3}
-                  className="size-3 motion-safe:animate-spin"
-                />
-              )}
-              {statusLabel(status)}
-            </span>
-          )}
-          {duration !== undefined && (
-            <span className={clsx('ms-auto font-mono text-xs', palette.muted)}>
-              <bdi>{formatJobDuration(duration)}</bdi>
-            </span>
-          )}
-        </div>
-      )}
-      {controlSet.size > 0 && (
-        <JobLogToolbar
-          tone={tone}
-          controls={controlSet}
-          search={search}
-          onSearchChange={(text) => {
-            setSearch(text);
-            // A new search starts at its first match.
-            setMatchIndex(0);
-          }}
-          matchCount={matches.length}
-          activeMatch={activeIndex}
-          onStep={step}
-          timestamps={timestamps}
-          onTimestampsChange={setTimestamps}
-          wrap={wrap}
-          onWrapChange={setWrap}
-          allExpanded={allExpanded}
-          onToggleAll={toggleAll}
-          onDownload={onDownload}
-        />
-      )}
+    <JobLogLabelsContext value={ownLabels}>
       <div
-        ref={mergedRef}
-        role="region"
-        aria-label={regionName}
-        aria-labelledby={regionLabelledBy}
-        tabIndex={0}
-        onScroll={onScroll}
-        className="focus-visible:focus-indicator relative min-h-0 flex-1 overflow-y-auto [overflow-anchor:none] focus-visible:ring-inset"
+        style={{ height }}
+        className={clsx(
+          '@container relative flex min-h-0 flex-col overflow-hidden rounded-xl border',
+          palette.root,
+          look.border,
+          className
+        )}
       >
-        {/* Measures a row, so the window knows how tall one is at this text size. */}
-        <div
-          ref={probeRef}
-          aria-hidden
-          dir="ltr"
-          className="inset-s-0 pointer-events-none invisible absolute top-0"
-        >
-          <JobLogRow {...probeProps} height={undefined} />
-        </div>
-        <div ref={contentRef}>
-          {steps.length === 0 ? (
-            <p className={clsx('m-0 px-4 py-2 font-sans text-sm', palette.muted)}>No steps.</p>
-          ) : (
-            stepElements
-          )}
-        </div>
-      </div>
-      {running && (
-        <div
-          className={clsx(
-            'py-row-6 flex items-center gap-2 border-t px-4 text-xs',
-            look.border,
-            palette.muted
-          )}
-        >
-          <span
-            aria-hidden
-            className={clsx('size-2 shrink-0 rounded-full', following ? look.dot : 'bg-gray-400')}
-          />
-          <span>{following ? 'Following the running step' : 'Paused'}</span>
-          <button
-            type="button"
-            onClick={() => setFollow(!following)}
+        {hasHeader && (
+          <div
             className={clsx(
-              'focus-visible:focus-indicator h-ctrl-28 ms-auto inline-flex items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium',
-              look.footerButton
+              'py-row-12 flex flex-wrap items-center gap-x-3 gap-y-1 border-b px-4',
+              look.border
             )}
           >
-            {following ? (
-              'Pause'
-            ) : (
-              <>
-                <ArrowDown aria-hidden className="size-3.5" />
-                <bdi>
-                  {waiting > 0
-                    ? `Jump to latest (${waiting.toLocaleString('en-US')} new)`
-                    : 'Jump to latest'}
-                </bdi>
-              </>
+            {title !== undefined && (
+              <p id={titleId} className={clsx('m-0 text-sm font-semibold', look.title)}>
+                <bdi>{title}</bdi>
+              </p>
             )}
-          </button>
+            {meta !== undefined && (
+              <span
+                className={clsx(
+                  'font-mono text-xs [unicode-bidi:isolate] @max-md:order-last @max-md:w-full',
+                  palette.muted
+                )}
+              >
+                {meta}
+              </span>
+            )}
+            {status !== undefined && (
+              <span
+                className={clsx(
+                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
+                  STATUS[tone][status].pill
+                )}
+              >
+                {status === 'running' && (
+                  <LoaderCircle
+                    aria-hidden
+                    strokeWidth={3}
+                    className="size-3 motion-safe:animate-spin"
+                  />
+                )}
+                {statusLabel(status, labels)}
+              </span>
+            )}
+            {duration !== undefined && (
+              <span className={clsx('ms-auto font-mono text-xs', palette.muted)}>
+                <bdi>{formatJobDuration(duration)}</bdi>
+              </span>
+            )}
+          </div>
+        )}
+        {controlSet.size > 0 && (
+          <JobLogToolbar
+            tone={tone}
+            controls={controlSet}
+            search={search}
+            onSearchChange={(text) => {
+              setSearch(text);
+              // A new search starts at its first match.
+              setMatchIndex(0);
+            }}
+            matchCount={matches.length}
+            activeMatch={activeIndex}
+            onStep={step}
+            timestamps={timestamps}
+            onTimestampsChange={setTimestamps}
+            wrap={wrap}
+            onWrapChange={setWrap}
+            allExpanded={allExpanded}
+            onToggleAll={toggleAll}
+            onDownload={onDownload}
+          />
+        )}
+        <div
+          ref={mergedRef}
+          role="region"
+          aria-label={regionName}
+          aria-labelledby={regionLabelledBy}
+          tabIndex={0}
+          onScroll={onScroll}
+          className="focus-visible:focus-indicator relative min-h-0 flex-1 overflow-y-auto [overflow-anchor:none] focus-visible:ring-inset"
+        >
+          {/* Measures a row, so the window knows how tall one is at this text size. */}
+          <div
+            ref={probeRef}
+            aria-hidden
+            dir="ltr"
+            className="inset-s-0 pointer-events-none invisible absolute top-0"
+          >
+            <JobLogRow {...probeProps} height={undefined} />
+          </div>
+          <div ref={contentRef}>
+            {steps.length === 0 ? (
+              <p className={clsx('m-0 px-4 py-2 font-sans text-sm', palette.muted)}>
+                {labels.noSteps}
+              </p>
+            ) : (
+              stepElements
+            )}
+          </div>
         </div>
-      )}
-    </div>
+        {running && (
+          <div
+            className={clsx(
+              'py-row-6 flex items-center gap-2 border-t px-4 text-xs',
+              look.border,
+              palette.muted
+            )}
+          >
+            <span
+              aria-hidden
+              className={clsx('size-2 shrink-0 rounded-full', following ? look.dot : 'bg-gray-400')}
+            />
+            <span>{following ? labels.following : labels.paused}</span>
+            <button
+              type="button"
+              onClick={() => setFollow(!following)}
+              className={clsx(
+                'focus-visible:focus-indicator h-ctrl-28 ms-auto inline-flex items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium',
+                look.footerButton
+              )}
+            >
+              {following ? (
+                labels.pause
+              ) : (
+                <>
+                  <ArrowDown aria-hidden className="size-3.5" />
+                  <bdi>
+                    {waiting > 0
+                      ? labels.jumpToLatestNew(waiting.toLocaleString('en-US'))
+                      : labels.jumpToLatest}
+                  </bdi>
+                </>
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+    </JobLogLabelsContext>
   );
 };

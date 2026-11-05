@@ -10,6 +10,8 @@ import { Clipboard } from '../ui/Clipboard';
 import { CodeBlock } from '../ui/CodeBlock';
 import { SectionLabel } from '../ui/SectionLabel';
 import { LogLevelBadge, LOG_MESSAGE_CLASS } from './LogLevelBadge';
+import { type LogViewerLabels } from './labels';
+import { LogViewerLabelsContext, useLogViewerLabels } from './useLogLabels';
 import { LogViewer } from './LogViewer';
 import { formatLogField, parseLogLevel, stringifyLogLine } from './log-lines';
 import type { LogLine } from './types';
@@ -44,6 +46,8 @@ export type LogEntryDetailProps = {
   locale?: string;
   /** IANA zone for the time. Default: the browser's zone. */
   timeZone?: string;
+  /** The texts it writes, over `LabelsProvider`'s `logViewer` and the English defaults. */
+  labels?: Partial<LogViewerLabels>;
   className?: string;
 };
 
@@ -79,8 +83,10 @@ export const LogEntryDetail = ({
   onExcludeValue,
   locale,
   timeZone,
+  labels: ownLabels,
   className,
 }: LogEntryDetailProps) => {
+  const labels = useLogViewerLabels(ownLabels);
   const isClient = useIsClient();
   const [showContext, setShowContext] = useState(false);
   const level = parseLogLevel(line.level);
@@ -94,126 +100,133 @@ export const LogEntryDetail = ({
   };
 
   return (
-    <div className={clsx('flex flex-col gap-6 text-sm', className)}>
-      <div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs text-[var(--color-text-secondary)]">
-          <LogLevelBadge level={line.level} />
-          {isClient ? (
-            <TimeLabel
-              timestamp={timestamp}
-              text={formatDateTime(timestamp, TIME_OPTIONS, locale, timeZone)}
-              tooltip={false}
-            />
-          ) : (
-            <TimePlaceholder width="26ch" />
-          )}
-          {line.source && (
-            <span className="break-all">
-              <bdi>{line.source}</bdi>
-            </span>
-          )}
-        </div>
-        <p
-          // A message is output, as in the log it comes from: it reads left to right.
-          dir="ltr"
-          className={clsx(
-            'm-0 mt-2 font-mono text-sm break-words whitespace-pre-wrap',
-            LOG_MESSAGE_CLASS.surface[level]
-          )}
-        >
-          {line.message}
-        </p>
-      </div>
-
-      {fields.length > 0 && (
-        <section>
-          <Heading>Fields</Heading>
-          <DescriptionList compact>
-            {fields.map(([key, value]) => {
-              const text = formatLogField(value);
-              return (
-                <DescriptionList.Item key={key} label={<bdi className="font-mono">{key}</bdi>}>
-                  <span className="flex items-center justify-end gap-1">
-                    <span
-                      dir="ltr"
-                      className="min-w-0 font-mono text-xs font-normal break-all whitespace-pre-wrap"
-                    >
-                      {text}
-                    </span>
-                    <Clipboard
-                      value={text}
-                      plain
-                      copyLabel={`Copy ${key}`}
-                      onCopy={() => onCopyField?.(key, value)}
-                    />
-                    {onFilterValue && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        shape="square"
-                        icon={Plus}
-                        aria-label={`Filter on ${key}`}
-                        title="Filter on this value"
-                        onClick={() => onFilterValue(key, value)}
-                      />
-                    )}
-                    {onExcludeValue && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        shape="square"
-                        icon={Minus}
-                        aria-label={`Exclude ${key}`}
-                        title="Exclude this value"
-                        onClick={() => onExcludeValue(key, value)}
-                      />
-                    )}
-                  </span>
-                </DescriptionList.Item>
-              );
-            })}
-          </DescriptionList>
-        </section>
-      )}
-
-      {line.stack && (
-        <section>
-          <Heading>Stack trace</Heading>
-          <pre
-            dir="ltr"
-            className="m-0 overflow-x-auto rounded-xl border border-gray-200 bg-gray-50 p-3 font-mono text-xs leading-relaxed text-red-700 dark:border-gray-800 dark:bg-gray-900 dark:text-red-300"
-          >
-            {line.stack}
-          </pre>
-        </section>
-      )}
-
-      {hasContextButton && (
-        <section>
-          <Heading>Context</Heading>
-          <Button variant="secondary" size="sm" aria-expanded={showContext} onClick={toggleContext}>
-            {showContext ? 'Hide context' : 'Show context'}
-          </Button>
-          {showContext && context !== undefined && (
-            <div className="mt-3 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
-              <LogViewer
-                lines={[...context.before, line, ...context.after]}
-                aria-label={`Lines around ${line.id}`}
-                tone="surface"
-                currentId={line.id}
-                height="auto"
-                locale={locale}
-                timeZone={timeZone}
+    <LogViewerLabelsContext value={ownLabels}>
+      <div className={clsx('flex flex-col gap-6 text-sm', className)}>
+        <div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs text-[var(--color-text-secondary)]">
+            <LogLevelBadge level={line.level} />
+            {isClient ? (
+              <TimeLabel
+                timestamp={timestamp}
+                text={formatDateTime(timestamp, TIME_OPTIONS, locale, timeZone)}
+                tooltip={false}
               />
-            </div>
-          )}
-        </section>
-      )}
+            ) : (
+              <TimePlaceholder width="26ch" />
+            )}
+            {line.source && (
+              <span className="break-all">
+                <bdi>{line.source}</bdi>
+              </span>
+            )}
+          </div>
+          <p
+            // A message is output, as in the log it comes from: it reads left to right.
+            dir="ltr"
+            className={clsx(
+              'm-0 mt-2 font-mono text-sm break-words whitespace-pre-wrap',
+              LOG_MESSAGE_CLASS.surface[level]
+            )}
+          >
+            {line.message}
+          </p>
+        </div>
 
-      <section>
-        <Heading>Raw record</Heading>
-        <CodeBlock code={stringifyLogLine(line)} language="json" />
-      </section>
-    </div>
+        {fields.length > 0 && (
+          <section>
+            <Heading>{labels.fields}</Heading>
+            <DescriptionList compact>
+              {fields.map(([key, value]) => {
+                const text = formatLogField(value);
+                return (
+                  <DescriptionList.Item key={key} label={<bdi className="font-mono">{key}</bdi>}>
+                    <span className="flex items-center justify-end gap-1">
+                      <span
+                        dir="ltr"
+                        className="min-w-0 font-mono text-xs font-normal break-all whitespace-pre-wrap"
+                      >
+                        {text}
+                      </span>
+                      <Clipboard
+                        value={text}
+                        plain
+                        labels={{ copy: labels.copyField(key) }}
+                        onCopy={() => onCopyField?.(key, value)}
+                      />
+                      {onFilterValue && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          shape="square"
+                          icon={Plus}
+                          aria-label={labels.filterField(key)}
+                          title={labels.filterValue}
+                          onClick={() => onFilterValue(key, value)}
+                        />
+                      )}
+                      {onExcludeValue && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          shape="square"
+                          icon={Minus}
+                          aria-label={labels.excludeField(key)}
+                          title={labels.excludeValue}
+                          onClick={() => onExcludeValue(key, value)}
+                        />
+                      )}
+                    </span>
+                  </DescriptionList.Item>
+                );
+              })}
+            </DescriptionList>
+          </section>
+        )}
+
+        {line.stack && (
+          <section>
+            <Heading>{labels.stackTrace}</Heading>
+            <pre
+              dir="ltr"
+              className="m-0 overflow-x-auto rounded-xl border border-gray-200 bg-gray-50 p-3 font-mono text-xs leading-relaxed text-red-700 dark:border-gray-800 dark:bg-gray-900 dark:text-red-300"
+            >
+              {line.stack}
+            </pre>
+          </section>
+        )}
+
+        {hasContextButton && (
+          <section>
+            <Heading>{labels.context}</Heading>
+            <Button
+              variant="secondary"
+              size="sm"
+              aria-expanded={showContext}
+              onClick={toggleContext}
+            >
+              {showContext ? labels.hideContext : labels.showContext}
+            </Button>
+            {showContext && context !== undefined && (
+              <div className="mt-3 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
+                <LogViewer
+                  lines={[...context.before, line, ...context.after]}
+                  aria-label={labels.linesAround(String(line.id))}
+                  tone="surface"
+                  currentId={line.id}
+                  height="auto"
+                  locale={locale}
+                  timeZone={timeZone}
+                />
+              </div>
+            )}
+          </section>
+        )}
+
+        <section>
+          <Heading>{labels.rawRecord}</Heading>
+          <CodeBlock code={stringifyLogLine(line)} language="json" />
+        </section>
+      </div>
+    </LogViewerLabelsContext>
   );
 };
