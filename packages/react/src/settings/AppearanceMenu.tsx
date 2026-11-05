@@ -1,18 +1,20 @@
 import { clsx } from 'clsx';
 import { Palette } from 'lucide-react';
+import { useLabels } from '../labels/labelsContext';
 import { Button } from '../ui/Button';
 import { Popover } from '../ui/Popover';
 import { AppearanceSettings, type AppearanceSettingsProps } from './AppearanceSettings';
 import type { CosmosTheme, CosmosThemeChoice } from './appearance';
+import { APPEARANCE_MENU_LABELS, type AppearanceMenuLabels } from './labels';
 
 export type AppearanceMenuSize = 'sm' | 'md';
 
 export type AppearanceMenuProps<T extends CosmosThemeChoice = CosmosTheme> = Omit<
   AppearanceSettingsProps<T>,
-  'className' | 'stickyHeadings'
+  'className' | 'stickyHeadings' | 'labels'
 > & {
-  /** Trigger label (title + aria-label), also the panel's name. Default `'Appearance'`. */
-  label?: string;
+  /** The texts it writes (its name, the reset button), over `LabelsProvider`'s `appearanceMenu` and the English defaults. */
+  labels?: Partial<AppearanceMenuLabels>;
   /** Trigger size, as `ThemeToggle`. `md` (default) = 40px, `sm` = 32px. */
   size?: AppearanceMenuSize;
   /**
@@ -37,12 +39,14 @@ const SIZE_CLASS: Record<AppearanceMenuSize, { box: string; icon: string }> = {
  * outside or the button close it.
  */
 export const AppearanceMenu = <T extends CosmosThemeChoice = CosmosTheme>({
-  label = 'Appearance',
+  labels: ownLabels,
   size = 'md',
   onReset,
   className,
   ...settings
 }: AppearanceMenuProps<T>) => {
+  const labels = useLabels('appearanceMenu', APPEARANCE_MENU_LABELS, ownLabels);
+  const label = labels.label;
   const { box, icon } = SIZE_CLASS[size];
   return (
     <Popover>
@@ -69,7 +73,7 @@ export const AppearanceMenu = <T extends CosmosThemeChoice = CosmosTheme>({
           {onReset && (
             <div className="border-t border-gray-200 px-4 py-3 dark:border-gray-700">
               <Button type="button" variant="ghost" size="sm" onClick={() => onReset()}>
-                Reset
+                {labels.reset}
               </Button>
             </div>
           )}

@@ -8,7 +8,9 @@ import {
   type ComponentType,
   type Ref,
 } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import type { Intent } from './intent';
+import { BACK_TO_TOP_FAB_LABELS, type BackToTopFabLabels } from './labels';
 
 export type BackToTopFabPosition = 'bottom-end' | 'bottom-start';
 export type BackToTopFabIntent = Extract<Intent, 'brand' | 'neutral'>;
@@ -32,6 +34,8 @@ export type BackToTopFabProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'o
   /** Distance from the viewport edges in px. Default `24`. */
   offset?: number;
   ariaLabel?: string;
+  /** The texts it writes (the button's name), over `LabelsProvider`'s `backToTopFab` and the English defaults. */
+  labels?: Partial<BackToTopFabLabels>;
   /** Ref to the `<button>`. It is in the DOM even while faded out. */
   ref?: Ref<HTMLButtonElement>;
 };
@@ -55,12 +59,14 @@ export const BackToTopFab = ({
   intent = 'brand',
   onActivate,
   offset = 24,
-  ariaLabel = 'Back to top',
+  ariaLabel,
+  labels: ownLabels,
   className,
   style,
   ref,
   ...rest
 }: BackToTopFabProps) => {
+  const labels = useLabels('backToTopFab', BACK_TO_TOP_FAB_LABELS, ownLabels);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -88,7 +94,7 @@ export const BackToTopFab = ({
     <button
       ref={ref}
       type="button"
-      aria-label={ariaLabel}
+      aria-label={ariaLabel ?? labels.label}
       aria-hidden={!visible || undefined}
       tabIndex={visible ? 0 : -1}
       onClick={handleClick}

@@ -13,6 +13,8 @@ import {
   type ReactNode,
 } from 'react';
 import { useParentDirection } from '../hooks/direction';
+import { useLabels } from '../labels/labelsContext';
+import { CAROUSEL_LABELS, type CarouselLabels } from './labels';
 
 type EmblaApi = UseEmblaCarouselType[1];
 
@@ -28,6 +30,8 @@ type Ctx = {
   scrollTo: (i: number) => void;
   canScrollPrev: boolean;
   canScrollNext: boolean;
+  /** What the root's `labels` prop gave: the controls, dots and thumbnails read it. */
+  labels: Partial<CarouselLabels> | undefined;
 };
 
 const CarouselContext = createContext<Ctx | null>(null);
@@ -48,6 +52,11 @@ export type CarouselProps = {
   autoplay?: boolean | number;
   /** Pause autoplay on user interaction. Default `true`. */
   stopOnInteraction?: boolean;
+  /**
+   * The texts its controls, dots and thumbnails write, over `LabelsProvider`'s `carousel` and the
+   * English defaults.
+   */
+  labels?: Partial<CarouselLabels>;
   className?: string;
   children: ReactNode;
 };
@@ -56,6 +65,7 @@ export const CarouselRoot = ({
   options,
   autoplay = false,
   stopOnInteraction = true,
+  labels,
   className,
   children,
 }: CarouselProps) => {
@@ -113,6 +123,7 @@ export const CarouselRoot = ({
         scrollTo,
         canScrollPrev,
         canScrollNext,
+        labels,
       }}
     >
       <div ref={rootRef} className={clsx('relative', className)}>
@@ -154,17 +165,11 @@ export type CarouselControlsProps = {
   /** Place buttons. `inside` overlays them on the viewport edges; `outside` puts them above the indicators. Default `inside`. */
   position?: 'inside' | 'outside';
   className?: string;
-  prevLabel?: string;
-  nextLabel?: string;
 };
 
-const CarouselControls = ({
-  position = 'inside',
-  className,
-  prevLabel = 'Previous slide',
-  nextLabel = 'Next slide',
-}: CarouselControlsProps) => {
-  const { scrollPrev, scrollNext, canScrollPrev, canScrollNext } = useCtx();
+const CarouselControls = ({ position = 'inside', className }: CarouselControlsProps) => {
+  const { scrollPrev, scrollNext, canScrollPrev, canScrollNext, labels: ownLabels } = useCtx();
+  const labels = useLabels('carousel', CAROUSEL_LABELS, ownLabels);
   const baseBtn =
     'flex h-ctrl-36 w-ctrl-36 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 focus-visible:focus-indicator';
   // Over a slide (an image, a card) the arrows must read whatever the theme: a dark scrim with
@@ -176,7 +181,7 @@ const CarouselControls = ({
       <div className={clsx('mt-3 flex items-center justify-center gap-2', className)}>
         <button
           type="button"
-          aria-label={prevLabel}
+          aria-label={labels.previous}
           disabled={!canScrollPrev}
           onClick={() => scrollPrev()}
           className={baseBtn}
@@ -185,7 +190,7 @@ const CarouselControls = ({
         </button>
         <button
           type="button"
-          aria-label={nextLabel}
+          aria-label={labels.next}
           disabled={!canScrollNext}
           onClick={() => scrollNext()}
           className={baseBtn}
@@ -199,7 +204,7 @@ const CarouselControls = ({
     <>
       <button
         type="button"
-        aria-label={prevLabel}
+        aria-label={labels.previous}
         disabled={!canScrollPrev}
         onClick={() => scrollPrev()}
         className={clsx('inset-s-4 absolute top-1/2 z-10 -translate-y-1/2', overlayBtn, className)}
@@ -208,7 +213,7 @@ const CarouselControls = ({
       </button>
       <button
         type="button"
-        aria-label={nextLabel}
+        aria-label={labels.next}
         disabled={!canScrollNext}
         onClick={() => scrollNext()}
         className={clsx('inset-e-4 absolute top-1/2 z-10 -translate-y-1/2', overlayBtn, className)}
@@ -253,7 +258,8 @@ const DOT_CLASS = {
 } as const;
 
 const CarouselIndicators = ({ position = 'outside', className }: CarouselIndicatorsProps) => {
-  const { snapCount, selectedIndex, scrollTo } = useCtx();
+  const { snapCount, selectedIndex, scrollTo, labels: ownLabels } = useCtx();
+  const labels = useLabels('carousel', CAROUSEL_LABELS, ownLabels);
   // Before the carousel has measured its slides there is nothing to count: an empty pill would
   // flash over the slide.
   if (position === 'inside' && snapCount === 0) return null;
@@ -267,7 +273,7 @@ const CarouselIndicators = ({ position = 'outside', className }: CarouselIndicat
           <button
             key={i}
             type="button"
-            aria-label={`Go to slide ${i + 1}`}
+            aria-label={labels.goTo(i + 1)}
             aria-current={active}
             onClick={() => scrollTo(i)}
             // The button is the 24px touch target; the dot inside it stays small.
@@ -298,17 +304,12 @@ export type CarouselThumbnailsProps = {
    * carries the name ("Go to slide N"), so an image takes `alt=""` unless it says more.
    */
   children: ReactNode;
-  /** Accessible name of the strip. Default "Slide thumbnails". */
-  label?: string;
   className?: string;
 };
 
-const CarouselThumbnails = ({
-  children,
-  label = 'Slide thumbnails',
-  className,
-}: CarouselThumbnailsProps) => {
-  const { selectedIndex, scrollTo } = useCtx();
+const CarouselThumbnails = ({ children, className }: CarouselThumbnailsProps) => {
+  const { selectedIndex, scrollTo, labels: ownLabels } = useCtx();
+  const labels = useLabels('carousel', CAROUSEL_LABELS, ownLabels);
   const strip = useRef<HTMLDivElement>(null);
   // Not on mount: scrolling the first thumbnail into view could scroll the page to it. A plain
   // scrolling row, no second Embla instance.
@@ -324,7 +325,7 @@ const CarouselThumbnails = ({
     <div
       ref={strip}
       role="group"
-      aria-label={label}
+      aria-label={labels.thumbnails}
       // The padding leaves room for the selected ring and its halo, which the scroll container
       // would clip.
       className={clsx(
@@ -338,7 +339,7 @@ const CarouselThumbnails = ({
           <button
             key={i}
             type="button"
-            aria-label={`Go to slide ${i + 1}`}
+            aria-label={labels.goTo(i + 1)}
             aria-current={active}
             onClick={() => scrollTo(i)}
             className={clsx(

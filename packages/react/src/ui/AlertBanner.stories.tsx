@@ -12,6 +12,7 @@ import {
   inEachTheme,
   startOffset,
 } from '../storybook-helpers';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Feedback/Alert Banner',
@@ -434,5 +435,24 @@ export const AccentEdgeAndDismissFollowTheDirection: Story = {
       (box: HTMLElement) => within(box).getByRole('alert').querySelector('svg'),
     ])
       expectMirrored(canvasElement, find);
+  },
+};
+
+/** The provider names the close button, and the banner's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ alertBanner: { dismiss: "Fermer l'alerte" } }}>
+      <div className="space-y-2">
+        <AlertBanner onDismiss={fn()}>Enregistré.</AlertBanner>
+        <AlertBanner onDismiss={fn()} labels={{ dismiss: 'Masquer' }}>
+          Autre alerte.
+        </AlertBanner>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: "Fermer l'alerte" })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Masquer' })).toBeVisible();
   },
 };

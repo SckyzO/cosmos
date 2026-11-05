@@ -3,3 +3,4 @@ export { SectionCard, type SectionCardProps } from './SectionCard';
 export { ContentNarrow, type ContentNarrowProps } from './ContentNarrow';
 export { ColBox, type ColBoxProps } from './ColBox';
 export { ProfileHeader, type ProfileHeaderProps, type ProfileHeaderStat } from './ProfileHeader';
+export type { SectionCardLabels } from './labels';

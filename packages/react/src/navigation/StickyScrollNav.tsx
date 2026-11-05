@@ -2,7 +2,9 @@ import { clsx } from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 import { Select } from '../forms/Select';
 import { useIndicator } from '../hooks/useIndicator';
+import { useLabels } from '../labels/labelsContext';
 import { SlidingIndicator } from '../ui/SlidingIndicator';
+import { STICKY_SCROLL_NAV_LABELS, type StickyScrollNavLabels } from './labels';
 
 export type StickyScrollNavSection = {
   id: string;
@@ -21,11 +23,8 @@ export type StickyScrollNavProps = {
    * above. A jump lands the section below the nav, so below that header too.
    */
   topOffset?: number;
-  /**
-   * Name of the jump menu shown below `sm`, in place of the row of buttons. Default
-   * 'Jump to section'; a translated app passes its own wording.
-   */
-  jumpLabel?: string;
+  /** The texts it writes, over `LabelsProvider`'s `stickyScrollNav` and the English defaults. */
+  labels?: Partial<StickyScrollNavLabels>;
   className?: string;
 };
 
@@ -59,9 +58,10 @@ export const StickyScrollNav = ({
   sections,
   onNavigate,
   topOffset = 0,
-  jumpLabel = 'Jump to section',
+  labels: ownLabels,
   className,
 }: StickyScrollNavProps) => {
+  const labels = useLabels('stickyScrollNav', STICKY_SCROLL_NAV_LABELS, ownLabels);
   const navRef = useRef<HTMLElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const [current, setCurrent] = useState(sections[0]?.id ?? '');
@@ -163,7 +163,7 @@ export const StickyScrollNav = ({
       </div>
       <div className="sm:hidden">
         <Select
-          aria-label={jumpLabel}
+          aria-label={labels.jump}
           value={current}
           onChange={(e) => {
             setCurrent(e.target.value);

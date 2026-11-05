@@ -12,6 +12,7 @@ import {
 } from '../storybook-helpers';
 import { LogEntryDetail } from './LogEntryDetail';
 import { fakeLine, fakeLines } from './storybook-logs';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Monitoring/Log Entry Detail',
@@ -129,5 +130,53 @@ export const RecordReadsLeftToRightInsideAPageThatDoesNot: Story = {
         );
       });
     }
+  },
+};
+
+/** The provider writes the detail's texts, and the detail's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        logViewer: {
+          fields: 'Champs',
+          copyField: (field) => `Copier ${field}`,
+          filterField: (field) => `Filtrer sur ${field}`,
+          excludeField: (field) => `Exclure ${field}`,
+          stackTrace: 'Trace de la pile',
+          context: 'Contexte',
+          showContext: 'Afficher le contexte',
+          rawRecord: 'Enregistrement brut',
+        },
+      }}
+    >
+      <LogEntryDetail
+        line={{
+          id: 1,
+          time: 1768460530000,
+          level: 'error',
+          source: 'api',
+          message: 'Disque plein',
+          fields: { host: 'a01' },
+          stack: 'Error: boom',
+        }}
+        context={{ before: [], after: [] }}
+        onFilterValue={fn()}
+        onExcludeValue={fn()}
+        labels={{ rawRecord: 'JSON brut' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    for (const heading of ['Champs', 'Trace de la pile', 'Contexte'])
+      await expect(canvas.getByRole('heading', { name: heading })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Copier host' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Filtrer sur host' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Exclure host' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Afficher le contexte' })).toBeVisible();
+    // The detail's own label wins over the provider's.
+    await expect(canvas.getByRole('heading', { name: 'JSON brut' })).toBeVisible();
+    await expect(canvas.queryByRole('heading', { name: 'Enregistrement brut' })).toBeNull();
   },
 };

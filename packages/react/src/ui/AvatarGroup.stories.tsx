@@ -12,6 +12,7 @@ import { SectionCard } from '../templates/SectionCard';
 import { Avatar, type AvatarSize } from './Avatar';
 import { AVATAR_SIZE_CLASS } from './avatarSizes';
 import { AvatarGroup } from './AvatarGroup';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Atoms/AvatarGroup',
@@ -453,5 +454,45 @@ export const MirrorsInRightToLeft: Story = {
     await expect(first!.getBoundingClientRect().right).toBeGreaterThan(
       second!.getBoundingClientRect().right
     );
+  },
+};
+
+/** The provider names the "+N", and the group's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const people = ['Ana Costa', 'Bo Chen', 'Cy Dupont', 'Di Evans', 'Ed Fox'].map((name) => ({
+      name,
+    }));
+    return (
+      <LabelsProvider
+        labels={{
+          avatarGroup: {
+            overflow: (hidden) =>
+              `${hidden} autre${hidden === 1 ? '' : 's'} personne${hidden === 1 ? '' : 's'}`,
+          },
+        }}
+      >
+        <AvatarGroup avatars={people} max={2} aria-label="Équipe" />
+        <AvatarGroup
+          avatars={people}
+          max={4}
+          aria-label="Relecteurs"
+          labels={{ overflow: (hidden) => `encore ${hidden}` }}
+        />
+      </LabelsProvider>
+    );
+  },
+  play: async ({ canvas }) => {
+    await expect(
+      within(canvas.getByRole('group', { name: 'Équipe' })).getByRole('img', {
+        name: '3 autres personnes',
+      })
+    ).toBeVisible();
+    await expect(
+      within(canvas.getByRole('group', { name: 'Relecteurs' })).getByRole('img', {
+        name: 'encore 1',
+      })
+    ).toBeVisible();
   },
 };

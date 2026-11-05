@@ -9,7 +9,9 @@ import type {
   StyleSpecification,
 } from 'maplibre-gl';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import { useCosmosTheme } from '../settings/useCosmosTheme';
+import { MAP_VIEW_LABELS, type MapViewLabels } from './labels';
 import { ClusterPin, MapPin } from './MapPin';
 import { isDrawable, markerBounds, markersToGeoJSON } from './mapGeo';
 import type { MapMarker } from './types';
@@ -38,7 +40,7 @@ export type MapViewProps = {
    * pictures, so give the places to assistive technology with a `MapMarkerList`.
    */
   variant?: 'interactive' | 'static';
-  /** Names the map for assistive technology. Default `Map`. */
+  /** Names the map for assistive technology. Default `labels.map`, `Map`. */
   ariaLabel?: string;
   /** Height of the map, in pixels or any CSS length. Default 360. */
   height?: number | string;
@@ -55,8 +57,9 @@ export type MapViewProps = {
   onSelectedIdChange?: (id: string | null) => void;
   /** The view after each pan or zoom, however it was triggered (pointer, keyboard, buttons). */
   onViewChange?: (view: MapViewState) => void;
-  /** Shown in place of the map when the browser cannot draw it (no WebGL). */
-  unavailableMessage?: string;
+  /** What is shown in place of the map when the browser cannot draw it (no WebGL) is `labels.unavailable`. */
+  /** The texts it writes (the zoom buttons, the popup's close button…), over `LabelsProvider`'s `mapView` and the English defaults. */
+  labels?: Partial<MapViewLabels>;
   className?: string;
   ref?: Ref<HTMLDivElement>;
 };
@@ -113,7 +116,7 @@ export const MapView = ({
   style,
   darkStyle,
   variant = 'interactive',
-  ariaLabel = 'Map',
+  ariaLabel,
   height = 360,
   fit = true,
   initialCenter,
@@ -123,10 +126,12 @@ export const MapView = ({
   defaultSelectedId = null,
   onSelectedIdChange,
   onViewChange,
-  unavailableMessage = 'The map could not be displayed.',
+  labels: ownLabels,
   className,
   ref,
 }: MapViewProps) => {
+  const labels = useLabels('mapView', MAP_VIEW_LABELS, ownLabels);
+  const mapName = ariaLabel ?? labels.map;
   const interactive = variant === 'interactive';
   const theme = useCosmosTheme();
   const wantedStyle = theme === 'dark' && darkStyle ? darkStyle : style;
@@ -140,7 +145,7 @@ export const MapView = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const appliedStyle = useRef(wantedStyle);
-  const ariaLabelRef = useRef(ariaLabel);
+  const ariaLabelRef = useRef(mapName);
   const reveal = useRef<(id: string) => void>(undefined);
   const refit = useRef<() => void>(undefined);
   const [visible, setVisible] = useState<Visible[]>([]);
@@ -304,9 +309,9 @@ export const MapView = ({
 
   // The accessible name follows the prop without rebuilding the map.
   useEffect(() => {
-    ariaLabelRef.current = ariaLabel;
-    mapRef.current?.getCanvas().setAttribute('aria-label', ariaLabel);
-  }, [ariaLabel]);
+    ariaLabelRef.current = mapName;
+    mapRef.current?.getCanvas().setAttribute('aria-label', mapName);
+  }, [mapName]);
 
   // Light and dark styles: the theme class on <html> reaches us through `useCosmosTheme`.
   useEffect(() => {
@@ -372,7 +377,7 @@ export const MapView = ({
           role="status"
           className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-[var(--color-text-secondary)]"
         >
-          {unavailableMessage}
+          {labels.unavailable}
         </p>
       )}
 
@@ -381,6 +386,7 @@ export const MapView = ({
           <ClusterPin
             count={v.cluster.count}
             interactive={interactive}
+            labels={labels}
             onOpen={() => {
               const map = mapRef.current;
               const source = map?.getSource(SOURCE) as GeoJSONSource | undefined;
@@ -400,6 +406,7 @@ export const MapView = ({
               marker={byId.get(v.marker)!}
               selected={v.marker === selectedId}
               interactive={interactive}
+              labels={labels}
               onSelect={setSelectedId}
               onClose={() => setSelectedId(null)}
             />
@@ -412,7 +419,7 @@ export const MapView = ({
         <div className="inset-e-3 absolute top-3 z-10 flex flex-col overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-panel)] shadow-sm">
           <button
             type="button"
-            aria-label="Zoom in"
+            aria-label={labels.zoomIn}
             onClick={() => zoomBy(1)}
             className="focus-visible:focus-indicator size-ctrl-36 flex cursor-pointer items-center justify-center text-[var(--color-text-base)] hover:bg-gray-100 focus-visible:ring-inset dark:hover:bg-white/10"
           >
@@ -420,7 +427,7 @@ export const MapView = ({
           </button>
           <button
             type="button"
-            aria-label="Zoom out"
+            aria-label={labels.zoomOut}
             onClick={() => zoomBy(-1)}
             className="focus-visible:focus-indicator size-ctrl-36 flex cursor-pointer items-center justify-center border-t border-[var(--color-border)] text-[var(--color-text-base)] hover:bg-gray-100 focus-visible:ring-inset dark:hover:bg-white/10"
           >

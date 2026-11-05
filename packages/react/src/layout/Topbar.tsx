@@ -1,7 +1,9 @@
 import { type ReactNode } from 'react';
 import { clsx } from 'clsx';
 import { Ellipsis } from 'lucide-react';
+import { useLabels } from '../labels/labelsContext';
 import { Menu } from '../ui/Menu';
+import { TOPBAR_LABELS, type TopbarLabels } from './labels';
 import { useShell } from './shellContext';
 import { SidebarToggle } from './SidebarToggle';
 
@@ -46,6 +48,8 @@ export type TopbarProps = {
    * what must stay in reach, such as the profile menu.
    */
   moreActions?: ReactNode;
+  /** The texts it writes, over `LabelsProvider`'s `topbar` and the English defaults. */
+  labels?: Partial<TopbarLabels>;
   /** Optional className override. */
   className?: string;
 };
@@ -74,8 +78,10 @@ export const Topbar = ({
   center,
   endActions,
   moreActions,
+  labels: ownLabels,
   className,
 }: TopbarProps) => {
+  const labels = useLabels('topbar', TOPBAR_LABELS, ownLabels);
   const shell = useShell();
   // Inside a Shell, the toggle follows the Shell's state, so a `sidebarCollapsed` set there
   // can't freeze it; outside, it needs the host's state and handler.
@@ -130,12 +136,12 @@ export const Topbar = ({
             <div className="sm:hidden">
               <Menu align="end">
                 <Menu.Trigger
-                  aria-label="More actions"
+                  aria-label={labels.moreActions}
                   className="h-ctrl-40 w-ctrl-40 flex items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-black/5 dark:hover:bg-white/5"
                 >
                   <Ellipsis className="h-4 w-4" aria-hidden />
                 </Menu.Trigger>
-                <Menu.Content aria-label="More actions">{moreActions}</Menu.Content>
+                <Menu.Content aria-label={labels.moreActions}>{moreActions}</Menu.Content>
               </Menu>
             </div>
           )}

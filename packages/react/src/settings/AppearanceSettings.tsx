@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { useId, type ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { AccentPicker } from './AccentPicker';
 import { OptionPicker } from './OptionPicker';
 import { PalettePicker } from './PalettePicker';
@@ -25,6 +26,19 @@ import {
   type CosmosThemeChoice,
   type CosmosThemeMeta,
 } from './appearance';
+import {
+  nameAccents,
+  nameDensities,
+  nameFonts,
+  nameMotions,
+  nameTextSizes,
+  nameThemes,
+} from './appearanceNames';
+import {
+  APPEARANCE_LABELS,
+  APPEARANCE_SETTINGS_LABELS,
+  type AppearanceSettingsLabels,
+} from './labels';
 
 export type AppearanceSettingsProps<T extends CosmosThemeChoice = CosmosTheme> = {
   /** Selected theme (`'system'` when `themes` offers it: then type the state as `CosmosThemeChoice`). */
@@ -33,10 +47,6 @@ export type AppearanceSettingsProps<T extends CosmosThemeChoice = CosmosTheme> =
   accent: CosmosAccent;
   onThemeChange: (theme: T) => void;
   onAccentChange: (accent: CosmosAccent) => void;
-  /** Heading of the theme group. Default `'Theme'`. */
-  themeLabel?: string;
-  /** Heading of the accent group. Default `'Accent color'`. */
-  accentLabel?: string;
   /**
    * Themes to offer. Default: all of `COSMOS_THEMES`. Add `COSMOS_SYSTEM_THEME`
    * to offer "System", then resolve it with `applyAppearance`.
@@ -66,14 +76,6 @@ export type AppearanceSettingsProps<T extends CosmosThemeChoice = CosmosTheme> =
   motion?: CosmosMotion;
   /** Shows the animations group: normal or reduced. */
   onMotionChange?: (motion: CosmosMotion) => void;
-  /** Heading of the font group. Default `'Font'`. */
-  fontLabel?: string;
-  /** Heading of the text size group. Default `'Text size'`. */
-  textSizeLabel?: string;
-  /** Heading of the density group. Default `'Density'`. */
-  densityLabel?: string;
-  /** Heading of the animations group. Default `'Animations'`. */
-  motionLabel?: string;
   /**
    * Fonts to offer. Default: all of `COSMOS_FONTS`. Offer only the fonts whose
    * CSS the app imports (`@sckyzo/cosmos-theme/fonts/<id>`).
@@ -92,6 +94,12 @@ export type AppearanceSettingsProps<T extends CosmosThemeChoice = CosmosTheme> =
    * padding. Default `false`.
    */
   stickyHeadings?: boolean;
+  /**
+   * The headings of the groups, over `LabelsProvider`'s `appearanceSettings` and the English
+   * defaults. The names of the default options (themes, accents, sizes…) are the provider's
+   * `appearance`.
+   */
+  labels?: Partial<AppearanceSettingsLabels>;
   className?: string;
 };
 
@@ -128,11 +136,9 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
   accent,
   onThemeChange,
   onAccentChange,
-  themeLabel = 'Theme',
-  accentLabel = 'Accent color',
-  themes = COSMOS_THEMES,
-  accents = COSMOS_ACCENTS,
-  themeColumns = Math.max(4, themes.length),
+  themes: themesProp,
+  accents: accentsProp,
+  themeColumns: themeColumnsProp,
   font = 'outfit',
   onFontChange,
   textSize = 'md',
@@ -141,17 +147,23 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
   onDensityChange,
   motion = 'full',
   onMotionChange,
-  fontLabel = 'Font',
-  textSizeLabel = 'Text size',
-  densityLabel = 'Density',
-  motionLabel = 'Animations',
-  fonts = COSMOS_FONTS,
-  textSizes = COSMOS_TEXT_SIZES,
-  densities = COSMOS_DENSITIES,
-  motions = COSMOS_MOTIONS,
+  fonts: fontsProp,
+  textSizes: textSizesProp,
+  densities: densitiesProp,
+  motions: motionsProp,
   stickyHeadings = false,
+  labels: ownLabels,
   className,
 }: AppearanceSettingsProps<T>) => {
+  const labels = useLabels('appearanceSettings', APPEARANCE_SETTINGS_LABELS, ownLabels);
+  const names = useLabels('appearance', APPEARANCE_LABELS);
+  const themes = nameThemes(themesProp ?? COSMOS_THEMES, names);
+  const accents = nameAccents(accentsProp ?? COSMOS_ACCENTS, names);
+  const fonts = nameFonts(fontsProp ?? COSMOS_FONTS, names);
+  const textSizes = nameTextSizes(textSizesProp ?? COSMOS_TEXT_SIZES, names);
+  const densities = nameDensities(densitiesProp ?? COSMOS_DENSITIES, names);
+  const motions = nameMotions(motionsProp ?? COSMOS_MOTIONS, names);
+  const themeColumns = themeColumnsProp ?? Math.max(4, themes.length);
   const themeHeadingId = useId();
   const accentHeadingId = useId();
   const fontHeadingId = useId();
@@ -166,7 +178,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
     <div className={clsx('space-y-6', className)}>
       <div>
         <p id={themeHeadingId} className={headingClass}>
-          {themeLabel}
+          {labels.theme}
         </p>
         <PalettePicker
           aria-labelledby={themeHeadingId}
@@ -180,7 +192,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
       </div>
       <div>
         <p id={accentHeadingId} className={headingClass}>
-          {accentLabel}
+          {labels.accent}
         </p>
         <AccentPicker
           aria-labelledby={accentHeadingId}
@@ -194,7 +206,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
       {onFontChange && (
         <div>
           <p id={fontHeadingId} className={headingClass}>
-            {fontLabel}
+            {labels.font}
           </p>
           <OptionPicker
             aria-labelledby={fontHeadingId}
@@ -212,7 +224,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
                   style={{ fontFamily: f.family }}
                   className="text-xl text-gray-900 dark:text-gray-100"
                 >
-                  Aa
+                  {names.sample}
                 </span>
               ),
             }))}
@@ -222,7 +234,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
       {onTextSizeChange && (
         <div>
           <p id={textSizeHeadingId} className={headingClass}>
-            {textSizeLabel}
+            {labels.textSize}
           </p>
           <OptionPicker
             aria-labelledby={textSizeHeadingId}
@@ -240,7 +252,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
                   style={{ fontSize: `${16 * t.scale}px` }}
                   className="text-gray-900 dark:text-gray-100"
                 >
-                  Aa
+                  {names.sample}
                 </span>
               ),
             }))}
@@ -250,7 +262,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
       {onDensityChange && (
         <div>
           <p id={densityHeadingId} className={headingClass}>
-            {densityLabel}
+            {labels.density}
           </p>
           <OptionPicker
             aria-labelledby={densityHeadingId}
@@ -278,7 +290,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
       {onMotionChange && (
         <div>
           <p id={motionHeadingId} className={headingClass}>
-            {motionLabel}
+            {labels.motion}
           </p>
           <OptionPicker
             aria-labelledby={motionHeadingId}

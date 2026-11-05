@@ -10,6 +10,7 @@ import {
 import { AlertBanner } from './AlertBanner';
 import { Button } from './Button';
 import { Toaster, toast } from './Toast';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Feedback/Toast',
@@ -763,5 +764,27 @@ export const CloseButtonSitsOnTheStartCorner: Story = {
         })
       );
     }
+  },
+};
+
+/** The provider names the close button of a toast and the region, and the toaster's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  beforeEach: dismissLeftovers,
+  render: function Render() {
+    useEffect(() => keepOpen(() => [toast('Enregistré', { duration: Infinity })]), []);
+    return (
+      <LabelsProvider labels={{ toaster: { close: 'Fermer la notification', region: 'Avis' } }}>
+        <Toaster labels={{ region: 'Messages' }} />
+      </LabelsProvider>
+    );
+  },
+  play: async () => {
+    const body = within(document.body);
+    await expect(
+      await body.findByRole('button', { name: 'Fermer la notification' })
+    ).toBeInTheDocument();
+    // The toaster's own region name wins over the provider's; sonner adds its hotkey after it.
+    await expect(body.getByRole('region', { name: /^Messages/ })).toBeInTheDocument();
   },
 };

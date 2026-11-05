@@ -1,6 +1,8 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import type { Intent } from './intent';
+import { PROGRESS_BAR_LABELS, type ProgressBarLabels } from './labels';
 import { fitSegments } from './progress';
 
 export type ProgressBarSize = 'xs' | 'sm' | 'md' | 'lg';
@@ -68,8 +70,13 @@ export type SegmentedProgressBarProps = ProgressBarBaseProps & {
   label?: Exclude<ProgressBarLabel, 'inside'>;
   /** A row of swatch, label and value under the bar, with what is left on the track. Default `false`. */
   legend?: boolean;
-  /** The entry of the legend and of the accessible text for what is left on the track. */
+  /**
+   * The entry of the legend and of the accessible text for what is left on the track. `label`
+   * defaults to `labels.free`, 'Free'.
+   */
   free?: { label?: string; valueLabel?: string };
+  /** The texts it writes, over `LabelsProvider`'s `progressBar` and the English defaults. */
+  labels?: Partial<ProgressBarLabels>;
   value?: undefined;
   intent?: undefined;
   striped?: undefined;
@@ -216,15 +223,17 @@ const SegmentedProgressBar = ({
   labelContent,
   legend = false,
   free,
+  labels: ownLabels,
   'aria-label': ariaLabel,
   'aria-labelledby': labelledBy,
   className,
 }: SegmentedProgressBarProps) => {
+  const labels = useLabels('progressBar', PROGRESS_BAR_LABELS, ownLabels);
   const fit = fitSegments(
     segments.map((s) => s.value),
     max
   );
-  const freeLabel = free?.label ?? 'Free';
+  const freeLabel = free?.label ?? labels.free;
   const freeText = free?.valueLabel ?? String(fit.rest);
   const showFree = fit.rest > 0;
   // What a screen reader gets in place of a bare percentage: every part, and what is left.

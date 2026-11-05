@@ -18,6 +18,7 @@ import {
 import { NodeGrid, type NodeGridProps } from './NodeGrid';
 import type { NodeGridGroup } from './nodeGridModel';
 import type { HealthStatus } from './types';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
@@ -163,20 +164,26 @@ const EVERY_STATUS: NodeGridGroup[] = [
 export const EveryStatus: Story = { args: { groups: EVERY_STATUS, legend: true } };
 
 /**
- * `labels` writes the counts and the statuses in another language: the words after the counts,
- * and the status in a node's name, its tooltip and the legend.
+ * The words after the counts (`statusBadge`) and the status in a node's name, its tooltip and the
+ * legend (`healthStatus`) are the provider's labels.
  */
 export const Translated: Story = {
+  render: (args) => (
+    <LabelsProvider
+      labels={{
+        statusBadge: { CRIT: 'CRIT', WARN: 'ALERTE', OK: 'OK' },
+        healthStatus: { CRIT: 'Critique', WARN: 'Avertissement', OK: 'OK' },
+      }}
+    >
+      <NodeGrid {...args} />
+    </LabelsProvider>
+  ),
   args: {
     title: 'Santé des nœuds',
     ariaLabel: 'Santé des nœuds',
     groups: GROUPS.map((group) => ({ ...group, label: group.label.replace('Room', 'Salle') })),
     marks: SHAPES,
     legend: true,
-    labels: {
-      counts: { CRIT: 'CRIT', WARN: 'ALERTE', OK: 'OK' },
-      statuses: { CRIT: 'Critique', WARN: 'Avertissement', OK: 'OK' },
-    },
   },
 };
 
@@ -738,7 +745,7 @@ export const MaxHeightScrollsTheGroups: Story = {
   },
 };
 
-/** The status words, the counts and the legend follow `labels`. */
+/** The status words, the counts and the legend follow the provider's labels. */
 export const LabelsTranslateTheTexts: Story = {
   ...Translated,
   tags: ['!dev', '!autodocs'],
@@ -802,5 +809,53 @@ export const LayoutMirrorsInRightToLeft: Story = {
     await expect(within(rtl).getByText('40 CRIT').getBoundingClientRect().left).toBeGreaterThan(
       within(rtl).getByText('77 OK').getBoundingClientRect().left
     );
+  },
+};
+
+/** The provider writes the grid's texts and the status names, and the grid's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        nodeGrid: {
+          grid: 'Santé des nœuds',
+          legend: 'Légende',
+          allHealthy: 'Tous les nœuds sont sains',
+          noNodes: 'Aucun nœud',
+        },
+        healthStatus: {
+          OK: 'OK',
+          WARN: 'Alerte',
+          CRIT: 'Critique',
+          UNKNOWN: 'Inconnu',
+          INFO: 'Info',
+        },
+        statusBadge: { OK: 'OK', WARN: 'ALERTE', CRIT: 'CRIT.', UNKNOWN: 'INC.', INFO: 'INFO' },
+      }}
+    >
+      <div className="space-y-4">
+        <NodeGrid
+          legend
+          groups={[{ id: 'g', label: 'Baie A', nodes: [{ id: 'n1', status: 'CRIT' }] }]}
+        />
+        <NodeGrid
+          groups={[{ id: 'h', label: 'Baie B', nodes: [{ id: 'n2', status: 'OK' }] }]}
+          show="alerting"
+          ariaLabel="Baie B"
+        />
+        <NodeGrid groups={[]} labels={{ noNodes: 'Rien' }} ariaLabel="Vide" />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const grid = within(canvas.getByRole('group', { name: 'Santé des nœuds' }));
+    await expect(grid.getByRole('list', { name: 'Légende' })).toBeVisible();
+    await expect(grid.getByText('1 CRIT.')).toBeVisible();
+    await expect(
+      within(canvas.getByRole('group', { name: 'Baie B' })).getByText('Tous les nœuds sont sains')
+    ).toBeVisible();
+    // The grid's own label wins over the provider's.
+    await expect(canvas.getByText('Rien')).toBeVisible();
   },
 };

@@ -65,7 +65,7 @@ export function LinkForm({ editor, labels, onDone, className }: LinkFormProps) {
         aria-label={labels.linkUrl}
         aria-invalid={invalid || undefined}
         aria-describedby={invalid ? errorId : undefined}
-        placeholder="https://"
+        placeholder={labels.linkPlaceholder}
         value={value}
         onChange={(e) => {
           setValue(e.target.value);

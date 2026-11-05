@@ -269,7 +269,7 @@ export type CosmosAccent =
 
 Composes the existing `PalettePicker` (themes) and `AccentPicker` (accents) components:
 
-- props: `theme`, `accent`, `onThemeChange(theme)`, `onAccentChange(accent)`, `themeLabel` (default `'Theme'`), `accentLabel` (default `'Accent color'`), `className`; optional `themes` / `accents` (default `COSMOS_THEMES` / `COSMOS_ACCENTS`) to narrow the list.
+- props: `theme`, `accent`, `onThemeChange(theme)`, `onAccentChange(accent)`, `labels` (the headings of the groups: `theme`, default `'Theme'`, `accent`, default `'Accent color'`…), `className`; optional `themes` / `accents` (default `COSMOS_THEMES` / `COSMOS_ACCENTS`) to narrow the list.
 - Each group has a visible heading tied to the group (`aria-labelledby`).
 - `AppearanceSettings.stories.tsx` story with `play` tests (in the style of the existing stories): clicking `Sand` calls `onThemeChange('sand')`, clicking `Teal` calls `onAccentChange('teal')`.
 

@@ -21,6 +21,7 @@ import {
 import { isFading, tokenMs, transitionMs } from '../storybook-motion';
 import { CodeBlock as ShikiCodeBlock } from '../code/CodeBlock';
 import { CodeBlock } from './CodeBlock';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Media/CodeBlock',
@@ -1027,5 +1028,26 @@ export const CopyButtonSwapsItsIcon: Story = {
     } finally {
       clipboard.restore();
     }
+  },
+};
+
+/** The provider names the scrolling region, and the block's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{ codeBlock: { region: (name) => `${name}, code source`, untitled: 'Code' } }}
+    >
+      <CodeBlock code={'a\nb\nc\nd\ne\nf'} maxHeight={40} filename="app.ts" />
+      <CodeBlock
+        code={'a\nb\nc\nd\ne\nf'}
+        maxHeight={40}
+        labels={{ region: (name) => `${name} : extrait` }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('region', { name: 'app.ts, code source' })).toBeVisible();
+    await expect(canvas.getByRole('region', { name: 'Code : extrait' })).toBeVisible();
   },
 };

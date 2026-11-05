@@ -1,8 +1,10 @@
 import { clsx } from 'clsx';
 import { useRef } from 'react';
+import { useLabels } from '../labels/labelsContext';
+import { UPTIME_LABELS, type UptimeLabels } from './labels';
 import { MarkStrip, type StripMark } from './MarkStrip';
 import { BEAT_FILL } from './styles';
-import { BEAT_NAME, BEAT_STATUSES, type Beat, type BeatStatus } from './types';
+import { BEAT_STATUSES, type Beat, type BeatStatus } from './types';
 import { useFitCount } from './useFitCount';
 import { beatLines, beatName, beatsSummary, tail } from './uptime';
 
@@ -26,6 +28,8 @@ export type HeartbeatBarProps = {
   ariaLabel?: string;
   /** Draws the key of the statuses under the bar. Default `false`. */
   legend?: boolean;
+  /** The texts it writes, over `LabelsProvider`'s `uptime` and the English defaults. */
+  labels?: Partial<UptimeLabels>;
   className?: string;
 };
 
@@ -65,12 +69,6 @@ const markShape = (variant: HeartbeatBarVariant, status: BeatStatus): string => 
   }
 };
 
-const DOWN_SHAPE: Record<HeartbeatBarVariant, string> = {
-  bars: 'taller bar',
-  blocks: 'crossed block',
-  dots: 'square dot',
-};
-
 /**
  * HeartbeatBar — one mark per check of a monitor, the newest at the end.
  *
@@ -86,25 +84,25 @@ export const HeartbeatBar = ({
   size = 'md',
   ariaLabel,
   legend = false,
+  labels: ownLabels,
   className,
 }: HeartbeatBarProps) => {
+  const labels = useLabels('uptime', UPTIME_LABELS, ownLabels);
+  const downShape = { bars: labels.downBars, blocks: labels.downBlocks, dots: labels.downDots };
   const stripRef = useRef<HTMLDivElement>(null);
   const metrics = METRICS[variant];
   const fit = useFitCount(stripRef, metrics.size, metrics.gap);
   const shown = tail(beats, fit);
 
   const marks: StripMark[] = shown.map((beat) => ({
-    name: beatName(beat),
-    lines: beatLines(beat),
+    name: beatName(beat, labels),
+    lines: beatLines(beat, labels),
     className: clsx(markShape(variant, beat.status), BEAT_FILL[beat.status]),
   }));
 
-  const summary = beatsSummary(shown);
+  const summary = beatsSummary(shown, labels);
   const label =
-    ariaLabel ??
-    (shown.length === 0
-      ? 'No checks yet'
-      : `Last ${shown.length} ${shown.length === 1 ? 'check' : 'checks'}: ${summary}`);
+    ariaLabel ?? (shown.length === 0 ? labels.noChecks : labels.lastChecks(shown.length, summary));
 
   return (
     <div className={clsx('min-w-0', className)}>
@@ -120,7 +118,7 @@ export const HeartbeatBar = ({
       />
       {legend && (
         <ul
-          aria-label="Legend"
+          aria-label={labels.legend}
           className="m-0 mt-2 flex list-none flex-wrap gap-x-4 gap-y-1 p-0 text-sm text-[var(--color-text-secondary)]"
         >
           {BEAT_STATUSES.map((status) => (
@@ -129,8 +127,9 @@ export const HeartbeatBar = ({
                 aria-hidden="true"
                 className={clsx('size-2.5 shrink-0 rounded-[2px]', BEAT_FILL[status])}
               />
-              {BEAT_NAME[status]}
-              {status === 'down' && ` (${DOWN_SHAPE[variant]})`}
+              {status === 'down'
+                ? labels.downLegend(labels.down, downShape[variant])
+                : labels[status]}
             </li>
           ))}
         </ul>

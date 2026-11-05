@@ -1,4 +1,5 @@
 import type { DateTimeValue } from '../data/time';
+import { UPTIME_LABELS } from './labels';
 
 /**
  * What one check of a monitor found. `maintenance` is a planned window, `pending` a check
@@ -52,11 +53,14 @@ export const BEAT_STATUSES: readonly BeatStatus[] = [
   'pending',
 ];
 
-/** The reading of each status, for names, tooltips and legends. */
+/**
+ * The English reading of each status, for names, tooltips and legends. The components read it from
+ * the `uptime` labels, which an app translates.
+ */
 export const BEAT_NAME: Record<BeatStatus, string> = {
-  up: 'Up',
-  down: 'Down',
-  degraded: 'Degraded',
-  maintenance: 'Maintenance',
-  pending: 'Pending',
+  up: UPTIME_LABELS.up,
+  down: UPTIME_LABELS.down,
+  degraded: UPTIME_LABELS.degraded,
+  maintenance: UPTIME_LABELS.maintenance,
+  pending: UPTIME_LABELS.pending,
 };

@@ -1,6 +1,8 @@
 import { type Ref } from 'react';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useLabels } from '../labels/labelsContext';
+import { SIDEBAR_TOGGLE_LABELS, type SidebarToggleLabels } from './labels';
 import { useShell } from './shellContext';
 
 export type SidebarToggleVariant = 'hamburger' | 'panel';
@@ -28,6 +30,8 @@ export type SidebarToggleProps = {
    * a Shell, it defaults to the Shell's Sidebar.
    */
   controls?: string;
+  /** The texts it writes, over `LabelsProvider`'s `sidebarToggle` and the English defaults. */
+  labels?: Partial<SidebarToggleLabels>;
   /** Extra classes on the button. */
   className?: string;
   /** Ref to the `<button>`. */
@@ -53,9 +57,11 @@ export const SidebarToggle = ({
   collapsed: collapsedProp,
   onCollapsedChange,
   controls,
+  labels: ownLabels,
   className,
   ref,
 }: SidebarToggleProps) => {
+  const labels = useLabels('sidebarToggle', SIDEBAR_TOGGLE_LABELS, ownLabels);
   const shell = useShell();
   // `collapsed` set means the host owns the state; otherwise the Shell's, if any.
   const fromShell = collapsedProp === undefined ? shell : null;
@@ -67,11 +73,11 @@ export const SidebarToggle = ({
 
   const label = drawer
     ? drawer.open
-      ? 'Close navigation'
-      : 'Open navigation'
+      ? labels.close
+      : labels.open
     : collapsed
-      ? 'Expand sidebar'
-      : 'Collapse sidebar';
+      ? labels.expand
+      : labels.collapse;
   const expanded = drawer ? drawer.open : !collapsed;
   const panel = variant === 'panel';
   const Icon = collapsed ? PanelLeftOpen : PanelLeftClose;
@@ -109,7 +115,7 @@ export const SidebarToggle = ({
       {panel ? (
         <>
           <Icon className="h-5 w-5 shrink-0 rtl:-scale-x-100" aria-hidden />
-          {!collapsed && <span>{drawer ? 'Close' : 'Collapse'}</span>}
+          {!collapsed && <span>{drawer ? labels.closeText : labels.collapseText}</span>}
         </>
       ) : (
         // TailAdmin asymmetric hamburger — distinctive 3-line glyph, its short line at the start

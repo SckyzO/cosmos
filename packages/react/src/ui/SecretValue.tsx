@@ -2,7 +2,9 @@ import { clsx } from 'clsx';
 import { Eye, EyeOff } from 'lucide-react';
 import { useEffect, type Ref } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import { Clipboard } from './Clipboard';
+import { SECRET_VALUE_LABELS, type SecretValueLabels } from './labels';
 
 export type SecretValueProps = {
   /** The secret. While masked it is held in props only: it is never written to the DOM. */
@@ -22,6 +24,8 @@ export type SecretValueProps = {
   visibleSuffix?: number;
   /** Milliseconds after which a revealed value hides again. Default: it stays shown. */
   autoHideAfter?: number;
+  /** The texts it writes (the buttons' names), over `LabelsProvider`'s `secretValue` and the English defaults. */
+  labels?: Partial<SecretValueLabels>;
   className?: string;
   /** Ref to the root element. */
   ref?: Ref<HTMLDivElement>;
@@ -48,9 +52,11 @@ export const SecretValue = ({
   onRevealedChange,
   visibleSuffix = 0,
   autoHideAfter,
+  labels: ownLabels,
   className,
   ref,
 }: SecretValueProps) => {
+  const labels = useLabels('secretValue', SECRET_VALUE_LABELS, ownLabels);
   const [revealed, setRevealed] = useControllableState({
     value: revealedProp,
     defaultValue: defaultRevealed,
@@ -86,14 +92,18 @@ export const SecretValue = ({
       </code>
       <button
         type="button"
-        aria-label={`${revealed ? 'Hide' : 'Show'} ${label}`}
+        aria-label={revealed ? labels.hide(label) : labels.show(label)}
         aria-pressed={revealed}
         onClick={() => setRevealed(!revealed)}
         className={BUTTON}
       >
         <Icon className="h-4 w-4" aria-hidden />
       </button>
-      <Clipboard value={value} size="md" copyLabel={`Copy ${label}`} copiedLabel="Copied!" />
+      <Clipboard
+        value={value}
+        size="md"
+        labels={{ copy: labels.copy(label), copied: labels.copied }}
+      />
     </div>
   );
 };

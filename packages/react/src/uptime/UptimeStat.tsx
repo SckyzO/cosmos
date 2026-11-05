@@ -1,11 +1,13 @@
 import { clsx } from 'clsx';
 import { AlertTriangle } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { formatLatency } from '../status/health';
 import { UptimeBars } from './UptimeBars';
 import { LEVEL_TEXT } from './styles';
+import { UPTIME_LABELS, type UptimeLabels } from './labels';
 import type { UptimeDay, UptimeThresholds } from './types';
-import { daysLeftText, downtimeText, formatUptime, uptimeLevel } from './uptime';
+import { daysLeftText, downtimeText, formatUptime, isNoDowntime, uptimeLevel } from './uptime';
 
 /** The uptime of one period: "24 hours", "30 days". */
 export type UptimePeriod = {
@@ -50,8 +52,10 @@ export type UptimeStatProps = {
   label?: ReactNode;
   /** The days of the `card`, drawn as compact bars under the figure. */
   days?: UptimeDay[];
-  /** Accessible name of the `row`. Default "Uptime". */
+  /** Accessible name of the `row`. Default `labels.uptimeGroup`, "Uptime". */
   ariaLabel?: string;
+  /** The texts it writes, over `LabelsProvider`'s `uptime` and the English defaults. */
+  labels?: Partial<UptimeLabels>;
   className?: string;
 };
 
@@ -64,15 +68,18 @@ const figure = (uptime: number | null): string => (uptime === null ? '—' : for
 const Figure = ({
   uptime,
   thresholds,
+  noData,
   className,
 }: {
   uptime: number | null;
   thresholds?: Partial<UptimeThresholds>;
+  /** What a screen reader hears for a period with no figure. */
+  noData: string;
   className?: string;
 }) => (
   <span className={clsx('tabular-nums', LEVEL_TEXT[uptimeLevel(uptime, thresholds)], className)}>
     <bdi>{figure(uptime)}</bdi>
-    {uptime === null && <span className="sr-only">No data</span>}
+    {uptime === null && <span className="sr-only">{noData}</span>}
   </span>
 );
 
@@ -94,29 +101,36 @@ export const UptimeStat = ({
   certificate,
   label,
   days,
-  ariaLabel = 'Uptime',
+  ariaLabel,
+  labels: ownLabels,
   className,
 }: UptimeStatProps) => {
+  const labels = useLabels('uptime', UPTIME_LABELS, ownLabels);
   if (variant === 'card') {
     const period = periods[0];
     const down =
       period && period.uptime !== null && period.duration !== undefined
-        ? downtimeText(period.uptime, period.duration)
+        ? downtimeText(period.uptime, period.duration, labels)
         : undefined;
+    const noDowntime =
+      period?.uptime != null &&
+      period.duration !== undefined &&
+      isNoDowntime(period.uptime, period.duration);
     return (
       <div className={clsx(CARD, 'min-w-0 px-5 py-[18px]', className)}>
         <p className="m-0 text-xs text-[var(--color-text-secondary)]">
-          <bdi>{label ?? `Uptime, ${period?.label ?? ''}`}</bdi>
+          <bdi>{label ?? labels.uptimeCard(period?.label ?? '')}</bdi>
         </p>
         <p className="m-0 mt-1 flex flex-wrap items-baseline gap-x-2.5">
           <Figure
             uptime={period?.uptime ?? null}
             thresholds={thresholds}
+            noData={labels.noData}
             className="text-3xl font-semibold"
           />
           {down && (
             <span className="text-sm text-[var(--color-text-secondary)]">
-              <bdi>{down === 'No downtime' ? down : `${down} down`}</bdi>
+              <bdi>{noDowntime ? down : labels.downFor(down)}</bdi>
             </span>
           )}
         </p>
@@ -125,7 +139,8 @@ export const UptimeStat = ({
             days={days}
             thresholds={thresholds}
             compact
-            ariaLabel={`Daily uptime, ${period?.label ?? 'period'}`}
+            ariaLabel={labels.dailyUptimeCard(period?.label ?? labels.period)}
+            labels={labels}
             className="mt-3"
           />
         )}
@@ -139,7 +154,11 @@ export const UptimeStat = ({
   const item =
     'flex min-w-0 flex-col gap-0.5 sm:border-e sm:border-[var(--color-border)] sm:px-5 sm:first:ps-0 sm:last:border-e-0';
   return (
-    <div role="group" aria-label={ariaLabel} className={clsx(CARD, 'px-5 py-4', className)}>
+    <div
+      role="group"
+      aria-label={ariaLabel ?? labels.uptimeGroup}
+      className={clsx(CARD, 'px-5 py-4', className)}
+    >
       <dl className="m-0 grid grid-cols-2 gap-y-4 sm:flex sm:flex-wrap">
         {periods.map((period) => (
           <div key={period.label} className={item}>
@@ -147,13 +166,13 @@ export const UptimeStat = ({
               <bdi>{period.label}</bdi>
             </dt>
             <dd className="m-0 text-xl font-semibold">
-              <Figure uptime={period.uptime} thresholds={thresholds} />
+              <Figure uptime={period.uptime} thresholds={thresholds} noData={labels.noData} />
             </dd>
           </div>
         ))}
         {responseTime !== undefined && (
           <div className={item}>
-            <dt className="text-xs text-[var(--color-text-secondary)]">Avg. response</dt>
+            <dt className="text-xs text-[var(--color-text-secondary)]">{labels.avgResponse}</dt>
             <dd className="m-0 text-xl font-semibold text-[var(--color-text-primary)] tabular-nums">
               <bdi>{formatLatency(responseTime)}</bdi>
             </dd>
@@ -161,7 +180,7 @@ export const UptimeStat = ({
         )}
         {certificate && (
           <div className={item}>
-            <dt className="text-xs text-[var(--color-text-secondary)]">Certificate</dt>
+            <dt className="text-xs text-[var(--color-text-secondary)]">{labels.certificate}</dt>
             <dd
               className={clsx(
                 'm-0 inline-flex flex-wrap items-center gap-1.5 text-xl font-semibold',
@@ -173,10 +192,10 @@ export const UptimeStat = ({
               )}
             >
               {expiring && (
-                <AlertTriangle role="img" aria-label="Warning" className="size-4 shrink-0" />
+                <AlertTriangle role="img" aria-label={labels.warning} className="size-4 shrink-0" />
               )}
               {/* One phrase: a narrow cell moves it whole, it never leaves "left" alone. */}
-              <bdi className="whitespace-nowrap">{daysLeftText(certificate.daysLeft)}</bdi>
+              <bdi className="whitespace-nowrap">{daysLeftText(certificate.daysLeft, labels)}</bdi>
             </dd>
           </div>
         )}

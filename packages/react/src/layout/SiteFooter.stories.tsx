@@ -19,6 +19,7 @@ import { Navbar } from '../navigation/Navbar';
 import { Button } from '../ui/Button';
 import { LinkProvider, type LinkComponentProps } from '../ui/LinkProvider';
 import { SiteFooter } from './SiteFooter';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Layout/Site Footer',
@@ -366,15 +367,13 @@ export const LandmarksOnAPageStayUnique: Story = {
   },
 };
 
-/** The legal links' nav takes the name the page gives it. */
-export const LegalNavNameFollowsLinksLabel: Story = {
+/** The legal links' nav takes the name the page gives it, through `labels`. */
+export const LegalNavNameFollowsLabels: Story = {
   globals: DESKTOP,
   tags: HIDDEN,
   render: () => (
-    <SiteFooter>
-      <SiteFooter.Bottom links={LEGAL} linksLabel="Mentions légales">
-        &copy; 2026
-      </SiteFooter.Bottom>
+    <SiteFooter labels={{ legalLinks: 'Mentions légales' }}>
+      <SiteFooter.Bottom links={LEGAL}>&copy; 2026</SiteFooter.Bottom>
     </SiteFooter>
   ),
   play: async ({ canvas }) => {
@@ -791,5 +790,36 @@ export const PartsMirrorInRightToLeft: Story = {
       // The legal links are at the end of the bottom row, the copyright at its start.
       expect(rtl[5][0]).toBeLessThan(rtl[6][0]);
     });
+  },
+};
+
+/** The provider names the legal links. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ siteFooter: { legalLinks: 'Mentions légales' } }}>
+      <SiteFooter variant="compact">
+        <SiteFooter.Bottom links={LEGAL}>&copy; 2026 Harbor</SiteFooter.Bottom>
+      </SiteFooter>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('navigation', { name: 'Mentions légales' })).toBeVisible();
+  },
+};
+
+/** The footer's own `labels` win over the provider's. */
+export const OwnLabelsWinOverTheProvider: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ siteFooter: { legalLinks: 'Mentions légales' } }}>
+      <SiteFooter variant="compact" labels={{ legalLinks: 'Légal' }}>
+        <SiteFooter.Bottom links={LEGAL}>&copy; 2026 Pine</SiteFooter.Bottom>
+      </SiteFooter>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('navigation', { name: 'Légal' })).toBeVisible();
+    await expect(canvas.queryByRole('navigation', { name: 'Mentions légales' })).toBeNull();
   },
 };

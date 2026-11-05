@@ -11,6 +11,7 @@ import {
 } from '../storybook-helpers';
 import { loopStops } from '../storybook-motion';
 import { RefreshButton, useAutoRefresh } from './RefreshButton';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Actions/Refresh Button',
@@ -173,5 +174,32 @@ export const SpinnerKeepsTurningUnderReducedMotion: Story = {
   play: async ({ canvasElement }) => {
     const spinner = canvasElement.querySelector<HTMLElement>('.animate-spin')!;
     await expect(loopStops(spinner)).toMatchObject({ running: 'spin', reduced: 'spin' });
+  },
+};
+
+/** The provider writes the button's texts and the "Off" option, and the button's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <LabelsProvider
+      labels={{
+        refreshButton: {
+          refresh: 'Actualiser',
+          chooseInterval: "Choisir l'intervalle",
+          off: 'Désactivé',
+        },
+      }}
+    >
+      <RefreshButton {...args} />
+      <RefreshButton {...args} labels={{ refresh: 'Rafraîchir' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Actualiser' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Rafraîchir' })).toBeVisible();
+    await userEvent.click(canvas.getAllByRole('button', { name: "Choisir l'intervalle" })[0]);
+    await expect(
+      await within(document.body).findByRole('button', { name: 'Désactivé' })
+    ).toBeVisible();
   },
 };

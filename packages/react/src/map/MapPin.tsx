@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { MapPin as PinIcon, X } from 'lucide-react';
 import type { Intent } from '../ui/intent';
+import type { MapViewLabels } from './labels';
 import type { MapMarker } from './types';
 
 // A pin is HTML, not a map layer: its colour is a class, so a theme or accent switch repaints it
@@ -22,12 +23,13 @@ type PinProps = {
   selected: boolean;
   /** `false` on a static map: the pin is a picture, with no button and no popup. */
   interactive: boolean;
+  labels: MapViewLabels;
   onSelect: (id: string) => void;
   onClose: () => void;
 };
 
 /** One marker, drawn inside the element MapLibre positions on the map. */
-export const MapPin = ({ marker, selected, interactive, onSelect, onClose }: PinProps) => {
+export const MapPin = ({ marker, selected, interactive, labels, onSelect, onClose }: PinProps) => {
   const { id, label, description, intent = 'brand', icon } = marker;
   // A text icon (a number) is visible, so the name carries it too: axe checks that the visible text
   // is part of the name.
@@ -80,7 +82,7 @@ export const MapPin = ({ marker, selected, interactive, onSelect, onClose }: Pin
           )}
           <button
             type="button"
-            aria-label="Close"
+            aria-label={labels.close}
             onClick={() => onClose()}
             className="focus-visible:focus-indicator inset-e-1.5 absolute top-1.5 flex size-6 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] hover:bg-gray-100 dark:hover:bg-white/10"
           >
@@ -92,10 +94,15 @@ export const MapPin = ({ marker, selected, interactive, onSelect, onClose }: Pin
   );
 };
 
-type ClusterPinProps = { count: number; interactive: boolean; onOpen: () => void };
+type ClusterPinProps = {
+  count: number;
+  interactive: boolean;
+  labels: MapViewLabels;
+  onOpen: () => void;
+};
 
 /** A group of markers too close to tell apart at this zoom: a counted circle. */
-export const ClusterPin = ({ count, interactive, onOpen }: ClusterPinProps) => {
+export const ClusterPin = ({ count, interactive, labels, onOpen }: ClusterPinProps) => {
   const size = count < 10 ? 'size-9' : count < 100 ? 'size-11' : 'size-14';
   const className = clsx(
     'bg-brand-600 ring-brand-500/30 flex items-center justify-center rounded-full border-2 border-white text-sm font-semibold text-white shadow-md ring-4',
@@ -112,7 +119,7 @@ export const ClusterPin = ({ count, interactive, onOpen }: ClusterPinProps) => {
     <button
       type="button"
       tabIndex={-1}
-      aria-label={`${count} places, zoom in`}
+      aria-label={labels.cluster(count)}
       className={clsx(className, 'focus-visible:focus-indicator cursor-pointer')}
       onClick={() => onOpen()}
     >

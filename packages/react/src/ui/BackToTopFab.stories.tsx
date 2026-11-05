@@ -4,6 +4,7 @@ import { createRef, useState } from 'react';
 import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import { bothDirections, directionBox, expectRefFocuses } from '../storybook-helpers';
 import { BackToTopFab } from './BackToTopFab';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Atoms/Back To Top FAB',
@@ -73,7 +74,7 @@ export const CustomIcon: Story = {
 export const RocketIcon: Story = {
   render: () => (
     <TallContent>
-      <BackToTopFab icon={Rocket} ariaLabel="Launch to top" />
+      <BackToTopFab icon={Rocket} labels={{ label: 'Launch to top' }} />
     </TallContent>
   ),
 };
@@ -291,5 +292,21 @@ export const BottomStartMirrorsInRightToLeft: Story = {
     const width = document.documentElement.clientWidth;
     await expect(fabIn(canvasElement, 'ltr').left).toBeCloseTo(24, 0);
     await expect(width - fabIn(canvasElement, 'rtl').right).toBeCloseTo(24, 0);
+  },
+};
+
+/** The provider names the button, and the button's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ backToTopFab: { label: 'Haut de page' } }}>
+      <BackToTopFab />
+      <BackToTopFab position="bottom-start" labels={{ label: 'Remonter' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    // Faded out and hidden from assistive technology until the page has scrolled.
+    await expect(canvas.getByLabelText('Haut de page')).toBeInTheDocument();
+    await expect(canvas.getByLabelText('Remonter')).toBeInTheDocument();
   },
 };

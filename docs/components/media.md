@@ -78,10 +78,10 @@ const [index, setIndex] = useState(0);
 - `thumbnails` draws a strip under the picture, from `sm` up, with the current thumbnail ringed and
   a click to jump. It draws `thumbSrc`, or `src` when there is none: give the small picture, or
   the large one is downloaded twice.
-- Every text is a prop with an English default: `ariaLabel` ("Picture viewer"), `prevLabel`,
-  `nextLabel`, `closeLabel`, `counterLabel(position, total)` ("Picture 3 of 12", read out by a
-  polite live region with the picture's name), `thumbnailsLabel`, `thumbnailLabel(position, total)`,
-  `errorLabel` and `retryLabel`.
+- Every text is a label with an English default (`labels`, over `LabelsProvider`'s `lightbox`):
+  `viewer` ("Picture viewer"), `previous`, `next`, `close`, `counter(position, total)` ("Picture 3
+  of 12", read out by a polite live region with the picture's name), `thumbnails`,
+  `thumbnail(position, total)`, `error` and `retry`.
 
 The viewer is dark in every theme: it is a photo viewer, not a themed panel. It is a modal dialog:
 focus moves in and goes back to the tile that opened it when it closes, Tab stays inside, the page

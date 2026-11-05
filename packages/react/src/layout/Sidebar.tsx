@@ -28,6 +28,8 @@ import { useControllableState } from '../hooks/useControllableState';
 import { useClamped } from '../hooks/useClamped';
 import { useExpandOnHover } from '../hooks/useExpandOnHover';
 import { useKeepFocus } from '../hooks/useKeepFocus';
+import { useLabels } from '../labels/labelsContext';
+import { SIDEBAR_LABELS, type SidebarLabels } from './labels';
 import { useShell } from './shellContext';
 import { SidebarToggle } from './SidebarToggle';
 
@@ -98,6 +100,8 @@ type SidebarContextValue = {
   labelOrigin?: number;
   /** The rows (by label id) whose label the width cap cuts: they show it in a tooltip. */
   truncated?: ReadonlySet<string>;
+  /** What the parts of the sidebar write: the close button of the brand, the sub-menu toggle. */
+  labels: SidebarLabels;
 };
 
 const SidebarContext = createContext<SidebarContextValue>({
@@ -108,6 +112,7 @@ const SidebarContext = createContext<SidebarContextValue>({
   inset: 'wide',
   activeStyle: 'tint',
   subMenuGuides: true,
+  labels: SIDEBAR_LABELS,
 });
 
 // A row collapsed on its own (the `collapsed` prop) can't keep the wide margin.
@@ -486,6 +491,11 @@ export type SidebarProps = {
    * called after it.
    */
   onCollapsedChange?: (collapsed: boolean) => void;
+  /**
+   * The texts it and its parts write (the landmark's name, the close button of the drawer, the
+   * sub-menu toggles), over `LabelsProvider`'s `sidebar` and the English defaults.
+   */
+  labels?: Partial<SidebarLabels>;
   /** Optional className override. */
   className?: string;
 };
@@ -526,8 +536,10 @@ const SidebarRoot = ({
   subMenuGuides = true,
   edgeToggle: edgeToggleProp,
   onCollapsedChange,
+  labels: ownLabels,
   className,
 }: SidebarProps) => {
+  const labels = useLabels('sidebar', SIDEBAR_LABELS, ownLabels);
   const [ownCollapsed, setOwnCollapsed] = useControllableState({
     value: collapsedProp,
     defaultValue: defaultCollapsed,
@@ -580,13 +592,14 @@ const SidebarRoot = ({
     activeStyle,
     subMenuGuides,
     truncated: fit.truncated,
+    labels,
   };
   const overlay = expandOnHover === 'overlay' && !inDrawer && !compact;
   const nav = (
     <nav
       ref={navRef}
       id={navId}
-      aria-label="Main navigation"
+      aria-label={labels.landmark}
       style={{
         ...(inDrawer ? {} : { width: compact ? COMPACT_WIDTH : rail ? collapsedWidth : fit.width }),
         ...(gutter === 'tight'
@@ -625,7 +638,7 @@ const SidebarRoot = ({
           aria-hidden
           data-sidebar-edge=""
           onClick={toggleCollapsed}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? labels.expand : labels.collapse}
           className={clsx(
             'group/edge absolute inset-y-0 end-0 z-10 w-2',
             collapsed
@@ -864,7 +877,7 @@ const SidebarBrand = ({
       <button
         type="button"
         onClick={() => shell.setOpen(false)}
-        aria-label="Close navigation"
+        aria-label={ctx.labels.closeNavigation}
         className="focus-visible:focus-indicator flex size-10 shrink-0 items-center justify-center rounded-lg text-[var(--color-text-secondary)] transition-colors hover:bg-black/5 hover:text-[var(--color-text-primary)] dark:hover:bg-white/5"
       >
         <X className="size-5" aria-hidden />
@@ -1156,6 +1169,7 @@ const SidebarSubMenu = ({
               inset: 'tight',
               activeStyle: ctx.activeStyle,
               subMenuGuides: ctx.subMenuGuides,
+              labels: ctx.labels,
               labelOrigin: 8 + NESTED_PADDING,
             }}
           >
@@ -1269,7 +1283,7 @@ const SidebarSubMenu = ({
           onClick={toggle}
           aria-expanded={open}
           aria-controls={listId}
-          aria-label={`${label} sub-menu`}
+          aria-label={ctx.labels.subMenu(label)}
           className="focus-visible:focus-indicator me-1 flex size-7 shrink-0 items-center justify-center rounded-md hover:bg-black/5 dark:hover:bg-white/5"
         >
           {chevron}

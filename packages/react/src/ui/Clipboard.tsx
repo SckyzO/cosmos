@@ -1,6 +1,8 @@
 import { clsx } from 'clsx';
 import { Check, Copy } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ComponentPropsWithRef } from 'react';
+import { useLabels } from '../labels/labelsContext';
+import { CLIPBOARD_LABELS, type ClipboardLabels } from './labels';
 
 export type ClipboardVariant = 'icon' | 'button';
 export type ClipboardSize = 'sm' | 'md';
@@ -11,9 +13,12 @@ export type ClipboardProps = Omit<ComponentPropsWithRef<'button'>, 'onCopy'> & {
   /** `icon` (default) → square icon-only button. `button` → icon + label. */
   variant?: ClipboardVariant;
   size?: ClipboardSize;
-  /** Override the label (only shown when `variant="button"`). */
+  /** Name of the button, and its text with `variant="button"`. Default `labels.copy`. */
   copyLabel?: string;
+  /** The same once the value is copied. Default `labels.copied`. */
   copiedLabel?: string;
+  /** The texts it writes, over `LabelsProvider`'s `clipboard` and the English defaults. */
+  labels?: Partial<ClipboardLabels>;
   /** Milliseconds the "copied" state stays visible. Default 1500. */
   duration?: number;
   /** Fires after the value is copied. */
@@ -65,8 +70,9 @@ export function Clipboard({
   value,
   variant = 'icon',
   size = 'sm',
-  copyLabel = 'Copy',
-  copiedLabel = 'Copied!',
+  copyLabel,
+  copiedLabel,
+  labels: ownLabels,
   duration = 1500,
   onCopy,
   floating = false,
@@ -76,6 +82,7 @@ export function Clipboard({
   ref,
   ...rest
 }: ClipboardProps) {
+  const labels = useLabels('clipboard', CLIPBOARD_LABELS, ownLabels);
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 
@@ -103,7 +110,7 @@ export function Clipboard({
     []
   );
 
-  const label = copied ? copiedLabel : copyLabel;
+  const label = copied ? (copiedLabel ?? labels.copied) : (copyLabel ?? labels.copy);
   const flatStyle = plain && !floating;
   const icons = (
     <CopyIcons

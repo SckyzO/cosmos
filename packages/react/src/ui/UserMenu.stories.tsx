@@ -14,6 +14,7 @@ import {
 } from '../storybook-helpers';
 import { Badge } from './Badge';
 import { UserMenu } from './UserMenu';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Overlays/User Menu',
@@ -558,5 +559,28 @@ export const TriggerAndPanelFollowTheDirection: Story = {
       expectReadsLeftToRight(within(menu).getByText('John Doe (admin).').closest('p')!);
     }
     expectMirrored(canvasElement, (box) => within(box).getByRole('button').querySelector('svg'));
+  },
+};
+
+/** The provider names the trigger and the menu, and the menu's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ userMenu: { trigger: 'Menu du compte de', menu: 'Menu du compte' } }}>
+      <UserMenu labels={{ menu: 'Compte' }}>
+        <UserMenu.Trigger name="Ana Costa" />
+        <UserMenu.Content>
+          <UserMenu.Items>
+            <UserMenu.Item>Profil</UserMenu.Item>
+          </UserMenu.Items>
+        </UserMenu.Content>
+      </UserMenu>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Menu du compte de Ana Costa' });
+    await userEvent.click(trigger);
+    // The menu's own name wins over the provider's.
+    await expect(await within(document.body).findByRole('menu', { name: 'Compte' })).toBeVisible();
   },
 };

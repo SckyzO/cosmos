@@ -15,6 +15,7 @@ import {
   startOffset,
 } from '../storybook-helpers';
 import { Rating } from './Rating';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Feedback/Rating',
@@ -289,5 +290,35 @@ export const HalfStarsPickFromTheStartHalf: Story = {
       const next = within(group).getByRole('radio', { name: '1.5 stars' });
       expect(startOffset(next, group)).toBeGreaterThan(startOffset(upper, group));
     }
+  },
+};
+
+/** The provider names the stars, and the rating's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        rating: {
+          group: 'Note',
+          rated: (value, max) => `Noté ${value} sur ${max}`,
+          ratedSubject: (subject, value, max) => `${subject} : ${value} sur ${max}`,
+          star: (value) => `${value} étoile${value === 1 ? '' : 's'}`,
+        },
+      }}
+    >
+      <Rating defaultValue={2} />
+      <Rating value={4.5} readOnly allowHalf />
+      <Rating value={3} readOnly label="Produit" />
+      <Rating readOnly value={1} labels={{ rated: (value) => `Seulement ${value}` }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const group = canvas.getByRole('radiogroup', { name: 'Note' });
+    await expect(within(group).getByRole('radio', { name: '3 étoiles' })).toBeVisible();
+    await expect(within(group).getByRole('radio', { name: '1 étoile' })).toBeVisible();
+    await expect(canvas.getByRole('img', { name: 'Noté 4.5 sur 5' })).toBeVisible();
+    await expect(canvas.getByRole('img', { name: 'Produit : 3 sur 5' })).toBeVisible();
+    await expect(canvas.getByRole('img', { name: 'Seulement 1' })).toBeVisible();
   },
 };

@@ -1,10 +1,15 @@
 import { clsx } from 'clsx';
 import { ChevronRight } from 'lucide-react';
 import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
+import { useLabels } from '../labels/labelsContext';
+import { ROW_ACTION_BUTTON_LABELS, type RowActionButtonLabels } from './labels';
 
 export type RowActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  /** The text. Default `labels.view`, 'View'. */
   children?: ReactNode;
   hideChevron?: boolean;
+  /** The texts it writes, over `LabelsProvider`'s `rowActionButton` and the English defaults. */
+  labels?: Partial<RowActionButtonLabels>;
   /** Ref to the `<button>`. */
   ref?: Ref<HTMLButtonElement>;
 };
@@ -14,23 +19,27 @@ export type RowActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
  * or list items. Defaults to a chevron indicator suggesting navigation, pointing along the reading direction.
  */
 export const RowActionButton = ({
-  children = 'View',
+  children,
   hideChevron = false,
+  labels: ownLabels,
   className,
   type = 'button',
   ref,
   ...rest
-}: RowActionButtonProps) => (
-  <button
-    ref={ref}
-    type={type}
-    className={clsx(
-      'focus-visible:focus-indicator hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:hover:border-brand-700/50 dark:hover:bg-brand-500/10 dark:hover:text-brand-400 inline-flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 transition-colors dark:border-gray-700 dark:text-gray-400',
-      className
-    )}
-    {...rest}
-  >
-    {children}
-    {!hideChevron && <ChevronRight className="h-3.5 w-3.5 rtl:-scale-x-100" />}
-  </button>
-);
+}: RowActionButtonProps) => {
+  const labels = useLabels('rowActionButton', ROW_ACTION_BUTTON_LABELS, ownLabels);
+  return (
+    <button
+      ref={ref}
+      type={type}
+      className={clsx(
+        'focus-visible:focus-indicator hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:hover:border-brand-700/50 dark:hover:bg-brand-500/10 dark:hover:text-brand-400 inline-flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 transition-colors dark:border-gray-700 dark:text-gray-400',
+        className
+      )}
+      {...rest}
+    >
+      {children === undefined ? labels.view : children}
+      {!hideChevron && <ChevronRight className="h-3.5 w-3.5 rtl:-scale-x-100" />}
+    </button>
+  );
+};

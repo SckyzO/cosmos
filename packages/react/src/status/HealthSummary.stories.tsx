@@ -11,6 +11,7 @@ import {
 } from '../storybook-helpers';
 import { flattenChecks } from './health';
 import { HealthSummary } from './HealthSummary';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Monitoring/Health Summary',
@@ -289,5 +290,57 @@ export const SeparatorNeverStartsALine: Story = {
         ).toBeGreaterThan(1);
       }
     }
+  },
+};
+
+/** The provider writes the headlines, the detail and the status names, and the summary's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const checks = [
+      { id: 'a', name: 'API', status: 'OK' as const },
+      { id: 'b', name: 'Base', status: 'WARN' as const },
+    ];
+    return (
+      <LabelsProvider
+        labels={{
+          healthSummary: {
+            WARN: 'Performances dégradées',
+            OK: 'Tout fonctionne',
+            group: 'Santé du système',
+            noChecks: 'Aucun contrôle',
+            allClear: (total) => `${total} contrôles, aucun à surveiller`,
+            needAttention: (attention, total) => `${attention} contrôle sur ${total} à surveiller`,
+            lastCheck: ' dernier contrôle ',
+            staleNote: ', données obsolètes',
+          },
+          healthStatus: {
+            OK: 'OK',
+            WARN: 'Alerte',
+            CRIT: 'Critique',
+            UNKNOWN: 'Inconnu',
+            INFO: 'Info',
+          },
+        }}
+      >
+        <HealthSummary checks={checks} />
+        <HealthSummary checks={[]} ariaLabel="Autre" labels={{ UNKNOWN: 'Statut inconnu' }} />
+        <HealthSummary
+          checks={[checks[0]!]}
+          variant="compact"
+          labels={{ group: 'Santé compacte' }}
+        />
+      </LabelsProvider>
+    );
+  },
+  play: async ({ canvas }) => {
+    const group = within(canvas.getByRole('group', { name: 'Santé du système' }));
+    await expect(group.getByText('Performances dégradées')).toBeVisible();
+    await expect(group.getByText(/1 contrôle sur 2 à surveiller/)).toBeVisible();
+    await expect(group.getByText('1 Alerte')).toBeVisible();
+    const other = within(canvas.getByRole('group', { name: 'Autre' }));
+    await expect(other.getByText('Statut inconnu')).toBeVisible();
+    await expect(other.getByText('Aucun contrôle')).toBeVisible();
+    await expect(canvas.getByRole('group', { name: 'Santé compacte' })).toBeVisible();
   },
 };

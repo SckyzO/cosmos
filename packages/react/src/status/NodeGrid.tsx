@@ -2,9 +2,15 @@ import { clsx } from 'clsx';
 import { CheckCircle } from 'lucide-react';
 import { useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { directionOf } from '../hooks/direction';
+import { useLabels } from '../labels/labelsContext';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { SectionLabel } from '../ui/SectionLabel';
-import { STATUS_NAME } from './health';
+import {
+  HEALTH_STATUS_LABELS,
+  NODE_GRID_LABELS,
+  STATUS_BADGE_LABELS,
+  type NodeGridLabels,
+} from './labels';
 import {
   countNodes,
   headerStatuses,
@@ -18,16 +24,6 @@ import {
   type NodeGridShow,
 } from './nodeGridModel';
 import { STATUS_DOT, type HealthStatus } from './types';
-
-export type NodeGridLabels = {
-  /** The word after each count in the header, short: "40 CRIT". Defaults CRIT, WARN, OK, UNKNOWN, INFO. */
-  counts?: Partial<Record<HealthStatus, string>>;
-  /**
-   * The status in full, for the name of a node ("node-07, Critical"), its tooltip and the legend.
-   * Defaults Critical, Warning, OK, Unknown, Info.
-   */
-  statuses?: Partial<Record<HealthStatus, string>>;
-};
 
 export type NodeGridProps = {
   /** The nodes by group, a group being a room, a rack, a cluster. Drawn in the order given. */
@@ -54,8 +50,12 @@ export type NodeGridProps = {
   showCounts?: boolean;
   /** One entry per status in the grid, each with its mark, under the groups. Default `false`. */
   legend?: boolean;
-  /** The texts of the counts and of the statuses, for another language. Give only the ones to change. */
-  labels?: NodeGridLabels;
+  /**
+   * The texts it writes (the grid's name, the legend, the empty states), over `LabelsProvider`'s
+   * `nodeGrid` and the English defaults. The status in full ("node-07, Critical") is the
+   * provider's `healthStatus`, the word after each count ("40 CRIT") its `statusBadge`.
+   */
+  labels?: Partial<NodeGridLabels>;
   /**
    * Makes each node a button. Enter, Space or a click calls it with the node and its group.
    * Without it a node is not interactive: hovering or focusing it only shows its tooltip.
@@ -68,17 +68,9 @@ export type NodeGridProps = {
   emptyMessage?: ReactNode;
   /** Height past which the groups scroll inside the card, the header and the legend staying in view. */
   maxHeight?: number | string;
-  /** Accessible name of the grid. Default "Node health". */
+  /** Accessible name of the grid. Default `labels.grid`, "Node health". */
   ariaLabel?: string;
   className?: string;
-};
-
-const COUNT_WORD: Record<HealthStatus, string> = {
-  OK: 'OK',
-  WARN: 'WARN',
-  CRIT: 'CRIT',
-  UNKNOWN: 'UNKNOWN',
-  INFO: 'INFO',
 };
 
 // The color of a count written as text: a step darker than the mark, for 4.5:1 on the card.
@@ -136,13 +128,16 @@ export const NodeGrid = ({
   title,
   showCounts = true,
   legend = false,
-  labels,
+  labels: ownLabels,
   onNodeSelect,
   emptyMessage,
   maxHeight,
-  ariaLabel = 'Node health',
+  ariaLabel,
   className,
 }: NodeGridProps) => {
+  const labels = useLabels('nodeGrid', NODE_GRID_LABELS, ownLabels);
+  const statuses = useLabels('healthStatus', HEALTH_STATUS_LABELS);
+  const counted = useLabels('statusBadge', STATUS_BADGE_LABELS);
   const bodyRef = useRef<HTMLDivElement>(null);
   const baseId = useId();
   const tipId = `${baseId}-tip`;
@@ -166,7 +161,7 @@ export const NodeGrid = ({
     [drawn]
   );
 
-  const word = (status: HealthStatus) => labels?.statuses?.[status] ?? STATUS_NAME[status];
+  const word = (status: HealthStatus) => statuses[status];
   const shapeOf = (status: HealthStatus): NodeGridMark => marks?.[status] ?? 'square';
   const nameOf = (node: NodeGridNode) => `${node.label ?? node.id}, ${word(node.status)}`;
 
@@ -202,7 +197,7 @@ export const NodeGrid = ({
   return (
     <div
       role="group"
-      aria-label={ariaLabel}
+      aria-label={ariaLabel ?? labels.grid}
       className={clsx(
         'min-w-0 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-panel)]',
         className
@@ -221,7 +216,7 @@ export const NodeGrid = ({
                 <span key={status} className={COUNT_TEXT[status]}>
                   {/* Isolated, and read in the direction of its own words: "40 CRIT" stays in this order in a right-to-left line, and a word in Arabic puts the number after it. */}
                   <bdi>
-                    {counts[status]} {labels?.counts?.[status] ?? COUNT_WORD[status]}
+                    {counts[status]} {counted[status]}
                   </bdi>
                 </span>
               ))}
@@ -269,7 +264,7 @@ export const NodeGrid = ({
                 className="size-4 shrink-0 text-green-600 dark:text-green-400"
               />
             )}
-            {emptyMessage ?? (healthy ? 'All nodes healthy' : 'No nodes')}
+            {emptyMessage ?? (healthy ? labels.allHealthy : labels.noNodes)}
           </p>
         ) : (
           drawn.map((group) => {
@@ -326,7 +321,7 @@ export const NodeGrid = ({
       {present.length > 0 && (
         <ul
           role="list"
-          aria-label="Legend"
+          aria-label={labels.legend}
           className={clsx(
             'm-0 flex list-none flex-wrap gap-x-4 gap-y-1 px-4 pb-3 text-xs text-[var(--color-text-secondary)]',
             // Under a scrolling box the legend needs a line of its own.

@@ -1,6 +1,8 @@
 import { clsx } from 'clsx';
 import { Play } from 'lucide-react';
 import { useState, type HTMLAttributeReferrerPolicy } from 'react';
+import { useLabels } from '../labels/labelsContext';
+import { VIDEO_EMBED_LABELS, type VideoEmbedLabels } from './labels';
 
 export type VideoEmbedAspect = '16:9' | '4:3' | '1:1' | '21:9' | (string & {});
 
@@ -40,6 +42,8 @@ export type VideoEmbedProps = {
    * `false`: the iframe is there from the start. Only applies to `type="iframe"`.
    */
   facade?: boolean;
+  /** The texts it writes (the play button's name), over `LabelsProvider`'s `videoEmbed` and the English defaults. */
+  labels?: Partial<VideoEmbedLabels>;
   className?: string;
 };
 
@@ -90,8 +94,10 @@ export const VideoEmbed = ({
   controls = true,
   poster,
   facade = false,
+  labels: ownLabels,
   className,
 }: VideoEmbedProps) => {
+  const labels = useLabels('videoEmbed', VIDEO_EMBED_LABELS, ownLabels);
   const [loaded, setLoaded] = useState(false);
   const showFacade = type === 'iframe' && facade && !loaded;
   return (
@@ -107,7 +113,7 @@ export const VideoEmbed = ({
         <button
           type="button"
           onClick={() => setLoaded(true)}
-          aria-label={`Play ${title}`}
+          aria-label={labels.play(title)}
           className="group focus-visible:focus-indicator absolute inset-0 flex h-full w-full items-center justify-center focus-visible:ring-inset"
         >
           {poster && (

@@ -14,6 +14,8 @@ import {
 import type { KeyboardEvent } from 'react';
 import { Menu } from '../ui/Menu';
 import { FRAME } from './job-log-styles';
+import { type JobLogLabels } from './labels';
+import { useJobLogLabels } from './useLogLabels';
 import type { JobLogControl } from './job-log';
 import type { LogTone } from './LogLevelBadge';
 
@@ -37,6 +39,8 @@ export type JobLogToolbarProps = {
   allExpanded: boolean;
   onToggleAll: () => void;
   onDownload: () => void;
+  /** The texts it writes, over `LabelsProvider`'s `jobLog` and the English defaults. */
+  labels?: Partial<JobLogLabels>;
 };
 
 const ICON_BUTTON =
@@ -91,9 +95,11 @@ export const JobLogToolbar = ({
   allExpanded,
   onToggleAll,
   onDownload,
+  labels: ownLabels,
 }: JobLogToolbarProps) => {
+  const labels = useJobLogLabels(ownLabels);
   const look = FRAME[tone];
-  const toggleLabel = allExpanded ? 'Collapse all steps' : 'Expand all steps';
+  const toggleLabel = allExpanded ? labels.collapseAll : labels.expandAll;
   const ToggleIcon = allExpanded ? ChevronsDownUp : ChevronsUpDown;
   const hasMore =
     controls.has('timestamps') ||
@@ -107,12 +113,12 @@ export const JobLogToolbar = ({
     onStep(event.shiftKey ? -1 : 1);
   };
   const matchText =
-    search === '' ? null : matchCount === 0 ? 'No matches' : `${activeMatch + 1}/${matchCount}`;
+    search === '' ? null : matchCount === 0 ? labels.noMatches : `${activeMatch + 1}/${matchCount}`;
 
   return (
     <div
       role="group"
-      aria-label="Log controls"
+      aria-label={labels.controls}
       className={clsx('py-row-6 flex items-center gap-1 border-b px-3', look.border)}
     >
       {controls.has('search') && (
@@ -125,8 +131,8 @@ export const JobLogToolbar = ({
           <Search aria-hidden className="size-4 shrink-0" />
           <input
             type="text"
-            aria-label="Search the log"
-            placeholder="Search the log"
+            aria-label={labels.search}
+            placeholder={labels.search}
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
             onKeyDown={onKeyDown}
@@ -147,7 +153,7 @@ export const JobLogToolbar = ({
             <>
               <button
                 type="button"
-                aria-label="Previous match"
+                aria-label={labels.previousMatch}
                 disabled={matchCount === 0}
                 onClick={() => onStep(-1)}
                 className={clsx(
@@ -159,7 +165,7 @@ export const JobLogToolbar = ({
               </button>
               <button
                 type="button"
-                aria-label="Next match"
+                aria-label={labels.nextMatch}
                 disabled={matchCount === 0}
                 onClick={() => onStep(1)}
                 className={clsx(
@@ -181,7 +187,7 @@ export const JobLogToolbar = ({
               <IconButton
                 tone={tone}
                 icon={Clock}
-                label="Timestamps"
+                label={labels.timestamps}
                 pressed={timestamps}
                 onClick={() => onTimestampsChange(!timestamps)}
               />
@@ -190,7 +196,7 @@ export const JobLogToolbar = ({
               <IconButton
                 tone={tone}
                 icon={WrapText}
-                label="Wrap lines"
+                label={labels.wrapLines}
                 pressed={wrap}
                 onClick={() => onWrapChange(!wrap)}
                 rtlFlip
@@ -203,7 +209,7 @@ export const JobLogToolbar = ({
               <IconButton
                 tone={tone}
                 icon={Download}
-                label="Download the log"
+                label={labels.download}
                 onClick={onDownload}
               />
             )}
@@ -211,20 +217,20 @@ export const JobLogToolbar = ({
           <div className="ms-auto @md:hidden">
             <Menu align="end">
               <Menu.Trigger
-                aria-label="More options"
+                aria-label={labels.moreOptions}
                 className={clsx(ICON_BUTTON, look.iconButton)}
               >
                 <Ellipsis aria-hidden className="size-4" />
               </Menu.Trigger>
-              <Menu.Content aria-label="Log options" width="w-56">
+              <Menu.Content aria-label={labels.logOptions} width="w-56">
                 {controls.has('timestamps') && (
                   <Menu.CheckboxItem checked={timestamps} onCheckedChange={onTimestampsChange}>
-                    Timestamps
+                    {labels.timestamps}
                   </Menu.CheckboxItem>
                 )}
                 {controls.has('wrap') && (
                   <Menu.CheckboxItem checked={wrap} onCheckedChange={onWrapChange}>
-                    Wrap lines
+                    {labels.wrapLines}
                   </Menu.CheckboxItem>
                 )}
                 {controls.has('expand') && (
@@ -234,7 +240,7 @@ export const JobLogToolbar = ({
                 )}
                 {controls.has('download') && (
                   <Menu.Item icon={Download} onSelect={onDownload}>
-                    Download the log
+                    {labels.download}
                   </Menu.Item>
                 )}
               </Menu.Content>

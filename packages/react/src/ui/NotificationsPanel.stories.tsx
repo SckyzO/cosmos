@@ -15,6 +15,7 @@ import {
 import { loopStops } from '../storybook-motion';
 import { Button } from './Button';
 import { NotificationsPanel, type NotificationsPanelIntent } from './NotificationsPanel';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Overlays/Notifications Panel',
@@ -713,5 +714,44 @@ export const PingStopsUnderReducedMotion: Story = {
   play: async ({ canvasElement }) => {
     const ping = canvasElement.querySelector<HTMLElement>('.animate-ping')!;
     await expect(loopStops(ping)).toMatchObject({ running: 'ping', reduced: 'none' });
+  },
+};
+
+/** The provider names the trigger, the panel and its texts, and the panel's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        notificationsPanel: {
+          trigger: (count, muted) =>
+            `${muted ? 'Notifications en sourdine' : 'Notifications'}${count ? `, ${count} non lues` : ''}`,
+          panel: 'Centre de notifications',
+          markAllRead: 'Tout marquer comme lu',
+          emptyTitle: 'Aucune alerte',
+          emptySubtitle: 'Tout va bien.',
+        },
+      }}
+    >
+      <NotificationsPanel open labels={{ markAllRead: 'Tout lire' }}>
+        <NotificationsPanel.Trigger count={3} />
+        <NotificationsPanel.Content>
+          <NotificationsPanel.Header title="Alertes" onMarkAllRead={fn()} />
+          <NotificationsPanel.Empty />
+        </NotificationsPanel.Content>
+      </NotificationsPanel>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Notifications, 3 non lues' })).toBeVisible();
+    const panel = await within(document.body).findByRole('dialog', {
+      name: 'Centre de notifications',
+    });
+    const scope = within(panel);
+    await expect(scope.getByText('Aucune alerte')).toBeVisible();
+    await expect(scope.getByText('Tout va bien.')).toBeVisible();
+    // The panel's own label wins over the provider's.
+    await expect(scope.getByRole('button', { name: 'Tout lire' })).toBeVisible();
+    await expect(scope.queryByRole('button', { name: 'Tout marquer comme lu' })).toBeNull();
   },
 };

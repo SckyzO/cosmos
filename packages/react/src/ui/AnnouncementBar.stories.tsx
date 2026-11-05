@@ -12,6 +12,7 @@ import {
 import { SlowFolds, clipOf, finishAnimations } from '../storybook-folds';
 import { AnnouncementBar, type AnnouncementBarIntent } from './AnnouncementBar';
 import { Link } from './Link';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Feedback/Announcement Bar',
@@ -281,5 +282,25 @@ export const ActionAndDismissSitAtTheEnd: Story = {
       (box: HTMLElement) => within(box).getByRole('link'),
     ])
       expectMirrored(canvasElement, find);
+  },
+};
+
+/** The provider names the close button, and the bar's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ announcementBar: { dismiss: "Fermer l'annonce" } }}>
+      <AnnouncementBar message="Nouvelle version disponible." dismissible onDismiss={fn()} />
+      <AnnouncementBar
+        message="Maintenance ce soir."
+        dismissible
+        onDismiss={fn()}
+        labels={{ dismiss: 'Masquer' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: "Fermer l'annonce" })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Masquer' })).toBeVisible();
   },
 };

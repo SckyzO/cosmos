@@ -100,7 +100,12 @@ const [open, setOpen] = useState(false);
 
 <Topbar
   pageTitle="Projects"
-  center={<CommandPaletteTrigger placeholder="Search projects" onClick={() => setOpen(true)} />}
+  center={
+    <CommandPaletteTrigger
+      labels={{ placeholder: 'Search projects' }}
+      onClick={() => setOpen(true)}
+    />
+  }
 />
 <CommandPalette open={open} onOpenChange={setOpen}>
   <CommandPalette.Input placeholder="Search…" />
@@ -125,7 +130,7 @@ an `href`, a `Menu.Group`, a `Menu.Separator`) that follows the menu button patt
 and the arrows open it, the arrows move between the links, Escape closes it and gives the focus
 back to the trigger, Tab leaves it. Mark the group `active` while one of its links is the current
 page, and that link with `aria-current="page"`. Items that do not fit move, from the last, into a
-"More" menu (`moreLabel` renames it) and come back when there is room. Only `Navbar.Item` and
+"More" menu (`labels.more` on `Navbar` renames it) and come back when there is room. Only `Navbar.Item` and
 `Navbar.Menu` placed directly in `Navbar.Items` move; `Navbar.Items` inside a `Navbar.Brand` takes
 the room the bar leaves, and anywhere else it needs a bounded width (`min-w-0 flex-1`) to measure
 against. Below `md` the items leave the bar and `Navbar.MobileMenuButton` opens your own menu.
@@ -187,7 +192,7 @@ error.
   errorDescription="The request timed out."
   onRetry={() => query.refetch()}
   empty={query.data?.length === 0}
-  emptyMessage="No revenue yet"
+  labels={{ empty: "No revenue yet" }}
   emptyAction={<Button size="sm">Connect your store</Button>}
 >
   <LineAreaChart ... />
@@ -199,7 +204,7 @@ error.
   never loaded does not fade.
 - `error` shows an `ErrorState` (announced as an alert); `onRetry` adds the "Try again" button.
   `errorMessage` defaults to "Something went wrong.", and `errorDescription` adds a line under it.
-- `empty` shows an `EmptyState` titled `emptyMessage` (default "No data"), with `emptyAction`
+- `empty` shows an `EmptyState` titled `labels.empty` (default "No data"), with `emptyAction`
   under it. For a richer one (an icon, a description), leave `empty` off and pass your own
   `EmptyState` as `children`.
 - The action stays visible in every state. A "View all" link that means nothing on an empty card
@@ -308,7 +313,7 @@ instead of sitting inside it, built from parts:
   newsletter. It goes first and the bottom row goes last, wherever they come among the parts.
 - `SiteFooter.Bottom`: the copyright as children and the legal links as `links`
   (`{ label, href }`, plus any anchor prop such as `aria-current`) in a `nav` named `Legal`
-  (`linksLabel` renames it).
+  (`labels.legalLinks` renames it).
 
 ```tsx
 <SiteFooter>

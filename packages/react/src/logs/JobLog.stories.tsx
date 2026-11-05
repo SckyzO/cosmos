@@ -20,6 +20,7 @@ import {
   longSteps,
   runningSteps,
 } from './storybook-job-log';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Monitoring/JobLog',
@@ -785,5 +786,57 @@ export const StepsFollowThePageAndLinesKeepTheirOrder: Story = {
     // The gutter does not move between directions: the lines are not mirrored.
     expect(gutters[1]).toBeCloseTo(gutters[0]!, 0);
     expectMirrored(canvasElement, (box) => within(box).getByText('Build #1287'));
+  },
+};
+
+/** The provider writes the log's texts, and the log's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        jobLog: {
+          log: 'Journal du job',
+          failed: 'Échec',
+          queued: 'En attente',
+          line: (number) => `Ligne ${number}`,
+          output: (name) => `Sortie de ${name}`,
+          emptyQueued: 'Pas commencé.',
+          noSteps: 'Aucune étape.',
+          controls: 'Contrôles du journal',
+          search: 'Rechercher dans le journal',
+          download: 'Télécharger le journal',
+        },
+      }}
+    >
+      <div className="space-y-4">
+        <JobLog
+          steps={[
+            { id: 's1', name: 'Build', status: 'failed', lines: ['erreur de compilation'] },
+            { id: 's2', name: 'Test', status: 'queued', lines: [] },
+          ]}
+          defaultExpandedSteps={['s1', 's2']}
+        />
+        <JobLog steps={[]} aria-label="Vide" />
+        <JobLog steps={[]} aria-label="Autre" labels={{ noSteps: 'Rien' }} />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const log = within(canvas.getByRole('region', { name: 'Journal du job' }));
+    await expect(log.getAllByRole('img', { name: 'Échec' }).length).toBeGreaterThan(0);
+    await expect(log.getByRole('group', { name: 'Sortie de Build' })).toBeVisible();
+    await expect(log.getByText('Pas commencé.')).toBeVisible();
+    await expect(log.getByRole('link', { name: 'Ligne 1' })).toBeVisible();
+    await expect(canvas.getAllByRole('group', { name: 'Contrôles du journal' })[0]).toBeVisible();
+    await expect(
+      canvas.getAllByRole('button', { name: 'Télécharger le journal' })[0]
+    ).toBeVisible();
+    await expect(
+      within(canvas.getByRole('region', { name: 'Vide' })).getByText('Aucune étape.')
+    ).toBeVisible();
+    await expect(
+      within(canvas.getByRole('region', { name: 'Autre' })).getByText('Rien')
+    ).toBeVisible();
   },
 };

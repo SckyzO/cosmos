@@ -14,6 +14,7 @@ import {
   type CosmosTextSize,
   type CosmosTheme,
 } from './appearance';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Settings/Appearance Menu',
@@ -236,5 +237,23 @@ export const HeadingsStayPinnedWhileScrolling: Story = {
     await expect(scroller.contains(within(panel()).getByRole('button', { name: 'Reset' }))).toBe(
       false
     );
+  },
+};
+
+/** The provider names the menu and writes its reset button, and the menu's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <LabelsProvider labels={{ appearanceMenu: { label: 'Apparence', reset: 'Réinitialiser' } }}>
+      <div className="flex justify-end p-6">
+        <AppearanceMenu {...args} onReset={fn()} labels={{ reset: 'Tout remettre' }} />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Apparence' }));
+    const dialog = await within(document.body).findByRole('dialog', { name: 'Apparence' });
+    await expect(within(dialog).getByRole('button', { name: 'Tout remettre' })).toBeVisible();
+    await expect(within(dialog).queryByRole('button', { name: 'Réinitialiser' })).toBeNull();
   },
 };

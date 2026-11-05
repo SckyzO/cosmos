@@ -11,9 +11,11 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { useLabels } from '../labels/labelsContext';
 import { Kbd } from '../typography/Kbd';
 import { TOOLTIP_Z } from './FloatingPanel';
 import type { Intent } from './intent';
+import { TOOLTIP_HELP_LABELS, type TooltipHelpLabels } from './labels';
 import { useOverlayLayer, usePortalContainer } from './overlayA11y';
 import { useAnchorPosition, type AnchorSide } from '../hooks/useAnchorPosition';
 import { useControllableState } from '../hooks/useControllableState';
@@ -292,26 +294,32 @@ export const TooltipHelp = ({
   position = 'top',
   variant = 'dark',
   intent,
+  labels: ownLabels,
 }: {
   text: string;
   position?: TooltipPosition;
   variant?: TooltipVariant;
   intent?: TooltipIntent;
-}) => (
-  <Tooltip
-    content={text}
-    position={position}
-    variant={variant}
-    intent={intent}
-    maxWidth="max-w-[260px]"
-  >
-    {/* A button, so keyboard users can reach it and open the tooltip. */}
-    <button
-      type="button"
-      aria-label="Help"
-      className="focus-visible:focus-indicator inline-flex cursor-help rounded-full text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+  /** The texts it writes (the button's name), over `LabelsProvider`'s `tooltipHelp` and the English defaults. */
+  labels?: Partial<TooltipHelpLabels>;
+}) => {
+  const labels = useLabels('tooltipHelp', TOOLTIP_HELP_LABELS, ownLabels);
+  return (
+    <Tooltip
+      content={text}
+      position={position}
+      variant={variant}
+      intent={intent}
+      maxWidth="max-w-[260px]"
     >
-      <HelpCircle className="h-3.5 w-3.5" aria-hidden />
-    </button>
-  </Tooltip>
-);
+      {/* A button, so keyboard users can reach it and open the tooltip. */}
+      <button
+        type="button"
+        aria-label={labels.label}
+        className="focus-visible:focus-indicator inline-flex cursor-help rounded-full text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+      >
+        <HelpCircle className="h-3.5 w-3.5" aria-hidden />
+      </button>
+    </Tooltip>
+  );
+};

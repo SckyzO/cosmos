@@ -1,11 +1,13 @@
 import { clsx } from 'clsx';
 import type { DateTimeValue } from '../data/time';
+import { useLabels } from '../labels/labelsContext';
 import { StaleBadge } from '../status/StaleBadge';
 import { formatLatency } from '../status/health';
 import { AppLink } from '../ui/AppLink';
 import { HeartbeatBar } from './HeartbeatBar';
 import { BEAT_FILL, LEVEL_TEXT } from './styles';
-import { BEAT_NAME, type Beat, type BeatStatus, type UptimeThresholds } from './types';
+import { UPTIME_LABELS, type UptimeLabels } from './labels';
+import type { Beat, BeatStatus, UptimeThresholds } from './types';
 import { formatUptime, uptimeLevel } from './uptime';
 
 /** What a monitor is doing: the status of its last check, or paused. */
@@ -49,10 +51,10 @@ export type MonitorRowProps = {
    * stacks on a narrow screen. `card` is a tile for a grid of monitors.
    */
   variant?: 'row' | 'card';
+  /** The texts it writes, over `LabelsProvider`'s `uptime` and the English defaults. */
+  labels?: Partial<UptimeLabels>;
   className?: string;
 };
-
-const STATE_NAME: Record<MonitorState, string> = { ...BEAT_NAME, paused: 'Paused' };
 
 // The chip behind the dot: a tint of the status, as the badges have.
 const CHIP: Record<MonitorState, string> = {
@@ -69,10 +71,18 @@ const DOT: Record<MonitorState, string> = {
   paused: 'bg-gray-400 dark:bg-gray-500',
 };
 
-const StateChip = ({ state, stale }: { state: MonitorState; stale: boolean }) => (
+const StateChip = ({
+  state,
+  stale,
+  labels,
+}: {
+  state: MonitorState;
+  stale: boolean;
+  labels: UptimeLabels;
+}) => (
   <span
     role="img"
-    aria-label={stale ? `${STATE_NAME[state]}, stale` : STATE_NAME[state]}
+    aria-label={stale ? labels.staleState(labels[state]) : labels[state]}
     className={clsx(
       'flex size-7 shrink-0 items-center justify-center rounded-full',
       CHIP[state],
@@ -104,8 +114,10 @@ export const MonitorRow = ({
   now,
   href,
   variant = 'row',
+  labels: ownLabels,
   className,
 }: MonitorRowProps) => {
+  const labels = useLabels('uptime', UPTIME_LABELS, ownLabels);
   const last = beats[beats.length - 1];
   const state: MonitorState = paused ? 'paused' : (status ?? last?.status ?? 'pending');
   const currentLatency = latency ?? last?.latency;
@@ -136,10 +148,10 @@ export const MonitorRow = ({
   );
 
   const uptimeText = paused ? (
-    <span className="text-[var(--color-text-secondary)]">Paused</span>
+    <span className="text-[var(--color-text-secondary)]">{labels.paused}</span>
   ) : uptime === null || uptime === undefined ? (
     <span className="text-[var(--color-text-secondary)]">
-      —<span className="sr-only">No data</span>
+      —<span className="sr-only">{labels.noData}</span>
     </span>
   ) : (
     <span className={clsx(LEVEL_TEXT[level], isStale && 'grayscale')}>
@@ -161,13 +173,15 @@ export const MonitorRow = ({
     currentLatency === undefined || paused || state === 'down' ? (
       <>
         <span aria-hidden="true">—</span>
-        <span className="sr-only">No response time</span>
+        <span className="sr-only">{labels.noResponseTime}</span>
       </>
     ) : (
       <bdi>{formatLatency(currentLatency)}</bdi>
     );
 
-  const beatBar = <HeartbeatBar beats={beats} size="sm" ariaLabel={`${name}: recent checks`} />;
+  const beatBar = (
+    <HeartbeatBar beats={beats} size="sm" ariaLabel={labels.recentChecks(name)} labels={labels} />
+  );
   const bar = isStale ? <div className="grayscale">{beatBar}</div> : beatBar;
 
   if (card) {
@@ -180,17 +194,17 @@ export const MonitorRow = ({
         )}
       >
         <div className="flex min-w-0 items-center gap-3">
-          <StateChip state={state} stale={isStale} />
+          <StateChip state={state} stale={isStale} labels={labels} />
           {title}
         </div>
         {bar}
         <dl className="m-0 flex gap-6 text-[var(--color-text-secondary)]">
           <div>
-            <dt className="text-xs">24 h uptime</dt>
+            <dt className="text-xs">{labels.uptime24h}</dt>
             <dd className="m-0 font-semibold tabular-nums">{uptimeText}</dd>
           </div>
           <div>
-            <dt className="text-xs">Latency</dt>
+            <dt className="text-xs">{labels.latency}</dt>
             <dd className="m-0 font-semibold text-[var(--color-text-primary)] tabular-nums">
               {latencyText}
             </dd>
@@ -208,16 +222,16 @@ export const MonitorRow = ({
         className
       )}
     >
-      <StateChip state={state} stale={isStale} />
+      <StateChip state={state} stale={isStale} labels={labels} />
       {title}
       <div className="col-span-3 row-start-2 min-w-0 sm:col-span-1 sm:row-start-auto">{bar}</div>
       <div className="flex gap-3 sm:contents">
         <span className="text-end font-semibold tabular-nums sm:font-normal">
-          <span className="sr-only">24 h uptime: </span>
+          <span className="sr-only">{labels.uptime24h}: </span>
           {uptimeText}
         </span>
         <span className="text-end text-[var(--color-text-secondary)] tabular-nums">
-          <span className="sr-only">Latency: </span>
+          <span className="sr-only">{labels.latency}: </span>
           {latencyText}
         </span>
       </div>

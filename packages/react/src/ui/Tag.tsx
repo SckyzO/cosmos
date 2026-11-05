@@ -2,8 +2,10 @@ import { clsx } from 'clsx';
 import { X } from 'lucide-react';
 import { Children, isValidElement } from 'react';
 import type { ElementType, ReactNode, Ref } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { AppLink } from './AppLink';
 import { INTENT_STYLE, type Intent } from './intent';
+import { TAG_LABELS, type TagLabels } from './labels';
 
 export type TagSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
 
@@ -26,10 +28,12 @@ export type TagProps = {
   /** Shows a remove button; it is called when the button is pressed. */
   onRemove?: () => void;
   /**
-   * Accessible name of the remove button. Default `Remove {text}`, with the text read from
-   * `children`; set it when `children` holds no text or the action has a better name.
+   * Accessible name of the remove button. Default `labels.remove`, `Remove {text}`, with the text
+   * read from `children`; set it when `children` holds no text or the action has a better name.
    */
   removeLabel?: string;
+  /** The texts it writes (the remove button's name), over `LabelsProvider`'s `tag` and the English defaults. */
+  labels?: Partial<TagLabels>;
   /** Makes the tag a link. Wins over `onClick`, which still runs on click. */
   href?: string;
   /** Makes the tag a button. */
@@ -116,11 +120,13 @@ export const Tag = ({
   disabled = false,
   onRemove,
   removeLabel,
+  labels: ownLabels,
   href,
   onClick,
   ref,
   className,
 }: TagProps) => {
+  const labels = useLabels('tag', TAG_LABELS, ownLabels);
   const style = INTENT_STYLE[intent];
   const sizing = SIZE[size];
   const interactive = !disabled && (href !== undefined || onClick !== undefined);
@@ -197,7 +203,7 @@ export const Tag = ({
           type="button"
           disabled={disabled}
           onClick={() => onRemove()}
-          aria-label={removeLabel ?? (name ? `Remove ${name}` : 'Remove')}
+          aria-label={removeLabel ?? labels.remove(name)}
           className={clsx(
             'focus-visible:focus-indicator relative inline-flex shrink-0 items-center justify-center rounded-sm before:absolute before:content-[""]',
             'enabled:cursor-pointer enabled:hover:bg-black/10 enabled:dark:hover:bg-white/15',

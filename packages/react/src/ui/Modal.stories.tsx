@@ -23,6 +23,7 @@ import { Input } from '../forms/Input';
 import { Select } from '../forms/Select';
 import { Textarea } from '../forms/Textarea';
 import { SectionCard } from '../templates/SectionCard';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Overlays/Modal',
@@ -291,7 +292,7 @@ export const AlertInfo: Story = {
           intent="info"
           title="Maintenance scheduled"
           message="The platform will be unavailable on Sunday from 02:00 to 04:00 UTC for upgrades."
-          confirmLabel="Got it"
+          labels={{ confirm: 'Got it' }}
         />
       </Wrap>
     );
@@ -312,7 +313,7 @@ export const AlertWarning: Story = {
           intent="warning"
           title="Unsaved changes"
           message="You have unsaved changes. Continue without saving?"
-          confirmLabel="Continue"
+          labels={{ confirm: 'Continue' }}
           cancelLabel="Stay"
         />
       </Wrap>
@@ -336,7 +337,7 @@ export const AlertDanger: Story = {
           intent="danger"
           title="Delete your account?"
           message="This action is permanent. All your data, dashboards and integrations will be removed and cannot be recovered."
-          confirmLabel="Delete forever"
+          labels={{ confirm: 'Delete forever' }}
           cancelLabel="Cancel"
         />
       </Wrap>
@@ -358,7 +359,7 @@ export const AlertSuccess: Story = {
           intent="success"
           title="Account created"
           message="A confirmation email has been sent to john@example.com."
-          confirmLabel="Continue"
+          labels={{ confirm: 'Continue' }}
         />
       </Wrap>
     );
@@ -376,7 +377,7 @@ export const AlertLoading: Story = {
           intent="warning"
           title="Saving changes…"
           message="Please wait while we apply the configuration."
-          confirmLabel="Save"
+          labels={{ confirm: 'Save' }}
           cancelLabel="Cancel"
           loading
         />
@@ -404,7 +405,7 @@ export const AlertHorizontalDanger: Story = {
           intent="danger"
           title="Deactivate account"
           message="Are you sure you want to deactivate your account? All of your data will be permanently removed. This action cannot be undone."
-          confirmLabel="Deactivate"
+          labels={{ confirm: 'Deactivate' }}
           cancelLabel="Cancel"
         />
       </Wrap>
@@ -428,7 +429,7 @@ export const AlertCenteredFullWidth: Story = {
           intent="success"
           title="Payment successful"
           message="Lorem ipsum dolor sit amet consectetur adipisicing elit. Consequatur amet labore."
-          confirmLabel="Go back to dashboard"
+          labels={{ confirm: 'Go back to dashboard' }}
           fullWidthAction
         />
       </Wrap>
@@ -448,7 +449,7 @@ export const HorizontalLayoutHasGrayFooter: Story = {
       intent="danger"
       title="X"
       message="y"
-      confirmLabel="Go"
+      labels={{ confirm: 'Go' }}
       cancelLabel="No"
     />
   ),
@@ -492,7 +493,7 @@ export const FullWidthActionMakesButtonFull: Story = {
       onClose={() => {}}
       intent="success"
       title="X"
-      confirmLabel="Continue"
+      labels={{ confirm: 'Continue' }}
       fullWidthAction
     />
   ),
@@ -842,7 +843,7 @@ export const AlertDangerConfirmIsRed: Story = {
       onClose={() => {}}
       intent="danger"
       title="Delete it?"
-      confirmLabel="Delete"
+      labels={{ confirm: 'Delete' }}
       cancelLabel="Keep"
     />
   ),
@@ -866,7 +867,7 @@ export const AlertOtherIntentsConfirmWithTheAccent: Story = {
       layout="horizontal"
       intent="warning"
       title="Careful"
-      confirmLabel="Continue"
+      labels={{ confirm: 'Continue' }}
     />
   ),
   play: async () => {
@@ -928,7 +929,7 @@ export const HorizontalAlertFollowsTheDirection: Story = {
       intent="danger"
       title="Deactivate (3 of 5)."
       message="Cannot be undone."
-      confirmLabel="Go"
+      labels={{ confirm: 'Go' }}
       cancelLabel="No"
     />
   ),
@@ -1146,5 +1147,51 @@ export const AlertTakesTheBackdropProp: Story = {
       colour: themeColor('--color-scrim-blur-dark'),
       filter: 'blur(8px)',
     });
+  },
+};
+
+/** The provider names the close button of `Modal.Header`, and the modal's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ modal: { close: 'Fermer la fenêtre', confirm: 'Compris' } }}>
+      <Modal open onClose={fn()}>
+        <Modal.Header title="Serveur" onClose={fn()} />
+        <Modal.Body>Contenu</Modal.Body>
+      </Modal>
+    </LabelsProvider>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('dialog', { name: 'Serveur' });
+    await expect(within(dialog).getByRole('button', { name: 'Fermer la fenêtre' })).toBeVisible();
+  },
+};
+
+/** `Modal.Alert`'s primary button reads the provider, its own `labels` win, and `confirmLabel` over both. */
+export const AlertTranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ modal: { close: 'Fermer la fenêtre', confirm: 'Compris' } }}>
+      <Modal.Alert open onClose={fn()} title="Suppression" labels={{ confirm: 'Entendu' }} />
+    </LabelsProvider>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('alertdialog', { name: 'Suppression' });
+    await expect(within(dialog).getByRole('button', { name: 'Entendu' })).toBeVisible();
+    await expect(within(dialog).queryByRole('button', { name: 'Compris' })).toBeNull();
+  },
+};
+
+/** The provider's `confirm` reaches an alert that gives no `labels` of its own. */
+export const AlertReadsTheProvider: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ modal: { confirm: 'Compris' } }}>
+      <Modal.Alert open onClose={fn()} title="Suppression" />
+    </LabelsProvider>
+  ),
+  play: async () => {
+    const dialog = await within(document.body).findByRole('alertdialog', { name: 'Suppression' });
+    await expect(within(dialog).getByRole('button', { name: 'Compris' })).toBeVisible();
   },
 };

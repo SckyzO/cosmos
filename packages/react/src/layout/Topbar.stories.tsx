@@ -11,6 +11,7 @@ import {
   portalDocsParams,
   startOffset,
 } from '../storybook-helpers';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Layout/Topbar',
@@ -393,5 +394,34 @@ export const BarFollowsTheReadingDirection: Story = {
     // The title is an island: its own direction, whatever the bar's.
     await expect(title.tagName).toBe('BDI');
     await expect(getComputedStyle(title).unicodeBidi).toBe('isolate');
+  },
+};
+
+/** The provider names the button that holds `moreActions` below `sm`. */
+export const TranslatedByLabels: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ topbar: { moreActions: "Plus d'actions" } }}>
+      <Topbar moreActions={<Menu.Item>Exporter</Menu.Item>} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: "Plus d'actions" })).toBeVisible();
+  },
+};
+
+/** The Topbar's own `labels` win over the provider's. */
+export const OwnLabelsWinOverTheProvider: Story = {
+  globals: mobileViewport,
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ topbar: { moreActions: "Plus d'actions" } }}>
+      <Topbar moreActions={<Menu.Item>Imprimer</Menu.Item>} labels={{ moreActions: 'Autres' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Autres' })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: "Plus d'actions" })).toBeNull();
   },
 };

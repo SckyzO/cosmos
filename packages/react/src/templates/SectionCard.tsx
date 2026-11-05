@@ -2,6 +2,7 @@ import { type ComponentType, type ReactNode, type Ref, useId } from 'react';
 import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
 import { Sk } from '../feedback/Skeleton';
@@ -10,6 +11,7 @@ import { Fold } from '../ui/Fold';
 import { iconButtonClass } from '../ui/IconButton';
 import { INTENT_STYLE, type Intent } from '../ui/intent';
 import { SOLID, SOLID_TILE } from '../ui/solidIntent';
+import { SECTION_CARD_LABELS, type SectionCardLabels } from './labels';
 
 export type SectionCardIconTone = 'brand' | 'blue' | 'violet' | 'green' | 'amber' | 'red' | 'gray';
 
@@ -284,8 +286,7 @@ export type SectionCardProps = {
   onRetry?: () => void;
   /** There is nothing to show: a compact `EmptyState` replaces the body. */
   empty?: boolean;
-  /** Title of the empty state. Default 'No data'. For a richer one, pass your own `EmptyState` as `children`. */
-  emptyMessage?: string;
+  /** For a richer empty state than `labels.empty`, pass your own `EmptyState` as `children`. */
   /** Under the empty message: the way to fill the card (a button, a link). */
   emptyAction?: ReactNode;
   /**
@@ -354,8 +355,10 @@ export type SectionCardProps = {
    * says it.
    */
   stale?: boolean;
-  /** What the label by the title says. Default 'Stale'; say how old: 'Stale · 4 min ago'. */
+  /** What the label by the title says. Default `labels.stale`, 'Stale'; say how old: 'Stale · 4 min ago'. */
   staleLabel?: string;
+  /** The texts it writes (the loading and toggle names, the empty and stale defaults), over `LabelsProvider`'s `sectionCard` and the English defaults. */
+  labels?: Partial<SectionCardLabels>;
   /**
    * A toggle at the end of the header folds the body away, and the footer with it: the header,
    * with its `badge` and `action`, stays. The toggle is a button named "Toggle" and the title,
@@ -414,7 +417,6 @@ export const SectionCard = ({
   errorDescription,
   onRetry,
   empty = false,
-  emptyMessage = 'No data',
   emptyAction,
   minBodyHeight,
   intent = 'neutral',
@@ -426,7 +428,8 @@ export const SectionCard = ({
   footer,
   flush = false,
   stale = false,
-  staleLabel = 'Stale',
+  staleLabel,
+  labels: ownLabels,
   collapsible = false,
   open: openProp,
   defaultOpen = true,
@@ -435,6 +438,7 @@ export const SectionCard = ({
   children,
   className,
 }: SectionCardProps) => {
+  const labels = useLabels('sectionCard', SECTION_CARD_LABELS, ownLabels);
   const titleId = useId();
   const solid = variant === 'solid';
   const tonePreset = iconTone ? TONE_CLASSES[iconTone] : null;
@@ -515,7 +519,7 @@ export const SectionCard = ({
         {loading ? (
           <>
             <p role="status" className="sr-only">
-              {title ? `Loading ${title}…` : 'Loading…'}
+              {labels.loading(title)}
             </p>
             <Sk h="h-auto" round="rounded-lg" className="min-h-40 flex-1" />
           </>
@@ -528,7 +532,7 @@ export const SectionCard = ({
             className="flex-1"
           />
         ) : empty ? (
-          <EmptyState compact title={emptyMessage} action={emptyAction} className="flex-1" />
+          <EmptyState compact title={labels.empty} action={emptyAction} className="flex-1" />
         ) : (
           children
         )}
@@ -642,7 +646,7 @@ export const SectionCard = ({
                         : STALE_LABEL_COLOR
                     )}
                   >
-                    {staleLabel}
+                    {staleLabel ?? labels.stale}
                   </span>
                 )}
               </div>
@@ -671,7 +675,7 @@ export const SectionCard = ({
               type="button"
               aria-expanded={open}
               aria-controls={bodyId}
-              aria-label={`Toggle ${title}`}
+              aria-label={labels.toggle(title)}
               onClick={() => setOpen(!open)}
               className={
                 solid

@@ -1,10 +1,12 @@
 import { clsx } from 'clsx';
 import { AlertTriangle, CheckCircle2, Info, X, XCircle, type LucideIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { Button, type ButtonIntent } from './Button';
 import type { BackdropVariant } from './Backdrop';
 import { Dialog } from './Dialog';
 import type { Intent } from './intent';
+import { MODAL_LABELS, type ModalLabels } from './labels';
 import { useDialogTitleId } from './overlayA11y';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
@@ -25,10 +27,19 @@ export type ModalProps = {
    * automatically and this is unnecessary.
    */
   ariaLabel?: string;
+  /** The texts it writes (the close button of `Modal.Header`), over `LabelsProvider`'s `modal` and the English defaults. */
+  labels?: Partial<ModalLabels>;
   children: ReactNode;
 };
 
-const Root = (props: ModalProps) => <Dialog {...props} />;
+// What the root's `labels` prop gave, for `Modal.Header`.
+const ModalLabelsContext = createContext<Partial<ModalLabels> | undefined>(undefined);
+
+const Root = ({ labels, ...props }: ModalProps) => (
+  <ModalLabelsContext value={labels}>
+    <Dialog {...props} />
+  </ModalLabelsContext>
+);
 
 export type ModalHeaderProps = {
   title?: ReactNode;
@@ -39,6 +50,7 @@ export type ModalHeaderProps = {
 };
 
 const Header = ({ title, description, onClose, className, children }: ModalHeaderProps) => {
+  const labels = useLabels('modal', MODAL_LABELS, useContext(ModalLabelsContext));
   const titleId = useDialogTitleId();
   return (
     <div
@@ -64,7 +76,7 @@ const Header = ({ title, description, onClose, className, children }: ModalHeade
         <button
           type="button"
           onClick={() => onClose()}
-          aria-label="Close modal"
+          aria-label={labels.close}
           className="focus-visible:focus-indicator h-ctrl-32 w-ctrl-32 flex shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >
           <X className="h-4 w-4" />
@@ -123,8 +135,6 @@ export type ModalAlertProps = {
   intent?: ModalAlertIntent;
   title: string;
   message?: ReactNode;
-  /** Primary action label. Default `OK`. */
-  confirmLabel?: string;
   /** Cancel action label. When omitted, no cancel button is rendered. */
   cancelLabel?: string;
   /** Called when the primary action is clicked. Defaults to `onClose`. */
@@ -148,6 +158,8 @@ export type ModalAlertProps = {
   fullWidthAction?: boolean;
   /** The scrim behind the alert, as `Modal`'s `backdrop`. Default `dim`. */
   backdrop?: BackdropVariant;
+  /** The texts it writes (the primary button), over `LabelsProvider`'s `modal` and the English defaults. */
+  labels?: Partial<ModalLabels>;
 };
 
 const Alert = ({
@@ -156,7 +168,6 @@ const Alert = ({
   intent = 'info',
   title,
   message,
-  confirmLabel = 'OK',
   cancelLabel,
   onConfirm,
   onCancel,
@@ -164,7 +175,9 @@ const Alert = ({
   layout = 'centered',
   fullWidthAction = false,
   backdrop,
+  labels: ownLabels,
 }: ModalAlertProps) => {
+  const labels = useLabels('modal', MODAL_LABELS, ownLabels);
   const Icon = ALERT_ICON[intent];
   const buttonIntent = ALERT_BUTTON_INTENT[intent];
   const handleConfirm = () => (onConfirm ? onConfirm() : onClose());
@@ -210,7 +223,7 @@ const Alert = ({
             disabled={loading}
             onClick={handleConfirm}
           >
-            {confirmLabel}
+            {labels.confirm}
           </Button>
         </div>
       </Dialog>
@@ -262,7 +275,7 @@ const Alert = ({
             onClick={handleConfirm}
             className={clsx(fullWidthAction && 'w-full')}
           >
-            {confirmLabel}
+            {labels.confirm}
           </Button>
         </div>
       </div>

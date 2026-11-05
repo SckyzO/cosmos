@@ -12,6 +12,7 @@ import { isFading, tokenMs, transitionMs, transitionValues } from '../storybook-
 import { Button } from './Button';
 import { CookieBanner } from './CookieBanner';
 import { Link } from './Link';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Feedback/Cookie Banner',
@@ -322,7 +323,7 @@ const AllPlaces = () => {
           position={position}
           title={`${position} banner`}
           message="We use cookies."
-          acceptLabel={`Accept ${position}`}
+          labels={{ accept: `Accept ${position}` }}
           open={open[position] ?? false}
           onOpenChange={(next) => setOpen((now) => ({ ...now, [position]: next }))}
           onAccept={() => undefined}
@@ -447,5 +448,39 @@ export const BannerSkipsMotionWhenReduced: Story = {
     await userEvent.click(within(banner).getByRole('button', { name: /accept all/i }));
     await expect(canvas.queryByRole('dialog')).toBeNull();
     await expect(banner).not.toBeInTheDocument();
+  },
+};
+
+/** The provider writes the banner's texts, and the banner's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        cookieBanner: {
+          title: 'Nous utilisons des cookies',
+          settings: 'Réglages',
+          deny: 'Tout refuser',
+          accept: 'Tout accepter',
+        },
+      }}
+    >
+      <CookieBanner
+        position="floating"
+        message="Pour mesurer l'audience."
+        onSettings={fn()}
+        onDeny={fn()}
+        onAccept={fn()}
+        labels={{ accept: "J'accepte" }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const banner = canvas.getByRole('dialog', { name: 'Nous utilisons des cookies' });
+    await expect(banner).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Réglages' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Tout refuser' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: "J'accepte" })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'Tout accepter' })).toBeNull();
   },
 };

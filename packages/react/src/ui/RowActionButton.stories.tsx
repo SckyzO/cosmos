@@ -3,6 +3,7 @@ import { createRef } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { bothDirections, expectMirrored, expectRefFocuses } from '../storybook-helpers';
 import { RowActionButton } from './RowActionButton';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Actions/Row Action Button',
@@ -47,5 +48,22 @@ export const ChevronFollowsTheReadingDirection: Story = {
     const { ltr, rtl } = expectMirrored(canvasElement, (box) => box.querySelector('svg'));
     expect(getComputedStyle(ltr).scale).toBe('none');
     expect(getComputedStyle(rtl).scale).toBe('-1 1');
+  },
+};
+
+/** The provider writes the text, the button's own `labels` win over it, and `children` over both. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ rowActionButton: { view: 'Voir' } }}>
+      <RowActionButton />
+      <RowActionButton labels={{ view: 'Ouvrir' }} />
+      <RowActionButton>Détails</RowActionButton>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Voir' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Ouvrir' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Détails' })).toBeVisible();
   },
 };

@@ -26,6 +26,7 @@ import { reduceMotion, scrimLook, themeColor } from '../storybook-motion';
 import { Button } from './Button';
 import { CommandPalette } from './CommandPalette';
 import { Modal } from './Modal';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Overlays/Command Palette',
@@ -801,5 +802,29 @@ export const BackdropPropPicksTheScrim: Story = {
         })
       );
     }
+  },
+};
+
+/** The provider names the dialog and its close button, and the palette's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{ commandPalette: { dialog: 'Palette de commandes', close: 'Fermer' } }}
+    >
+      <CommandPalette open onOpenChange={fn()} hotkey={null} labels={{ close: 'Quitter' }}>
+        <CommandPalette.Input placeholder="Rechercher" onClose={fn()} />
+        <CommandPalette.List>
+          <CommandPalette.Item>Ouvrir un projet</CommandPalette.Item>
+        </CommandPalette.List>
+      </CommandPalette>
+    </LabelsProvider>
+  ),
+  play: async () => {
+    const body = within(document.body);
+    // The dialog's name is the provider's, the close button's the palette's own.
+    await expect(await body.findByRole('dialog', { name: 'Palette de commandes' })).toBeVisible();
+    await expect(body.getByRole('button', { name: 'Quitter' })).toBeVisible();
+    await expect(body.queryByRole('button', { name: 'Fermer' })).toBeNull();
   },
 };

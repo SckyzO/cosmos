@@ -1,5 +1,7 @@
 import { clsx } from 'clsx';
 import { MapPin } from 'lucide-react';
+import { useLabels } from '../labels/labelsContext';
+import { MAP_MARKER_LIST_LABELS, type MapMarkerListLabels } from './labels';
 import type { MapMarker } from './types';
 
 export type MapMarkerListProps = {
@@ -9,8 +11,10 @@ export type MapMarkerListProps = {
   selectedId?: string | null;
   /** A row was chosen: set the map's `selectedId` to it. */
   onSelect?: (id: string) => void;
-  /** Names the list. Default `Places`. */
+  /** Names the list. Default `labels.places`, `Places`. */
   ariaLabel?: string;
+  /** The texts it writes, over `LabelsProvider`'s `mapMarkerList` and the English defaults. */
+  labels?: Partial<MapMarkerListLabels>;
   className?: string;
 };
 
@@ -23,47 +27,51 @@ export const MapMarkerList = ({
   markers,
   selectedId = null,
   onSelect,
-  ariaLabel = 'Places',
+  ariaLabel,
+  labels: ownLabels,
   className,
-}: MapMarkerListProps) => (
-  <ul aria-label={ariaLabel} className={clsx('flex flex-col gap-1', className)}>
-    {markers.map(({ id, label, description }) => {
-      const selected = id === selectedId;
-      return (
-        <li key={id}>
-          <button
-            type="button"
-            aria-pressed={selected}
-            onClick={() => onSelect?.(id)}
-            className={clsx(
-              'focus-visible:focus-indicator py-row-8 flex w-full cursor-pointer items-start gap-3 rounded-lg border px-3 text-start text-sm',
-              selected
-                ? 'border-brand-300 bg-brand-50 dark:border-brand-500/40 dark:bg-brand-500/10'
-                : 'border-transparent hover:bg-gray-100 dark:hover:bg-white/5'
-            )}
-          >
-            <MapPin
+}: MapMarkerListProps) => {
+  const labels = useLabels('mapMarkerList', MAP_MARKER_LIST_LABELS, ownLabels);
+  return (
+    <ul aria-label={ariaLabel ?? labels.places} className={clsx('flex flex-col gap-1', className)}>
+      {markers.map(({ id, label, description }) => {
+        const selected = id === selectedId;
+        return (
+          <li key={id}>
+            <button
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onSelect?.(id)}
               className={clsx(
-                'mt-0.5 size-4 shrink-0',
+                'focus-visible:focus-indicator py-row-8 flex w-full cursor-pointer items-start gap-3 rounded-lg border px-3 text-start text-sm',
                 selected
-                  ? 'text-brand-600 dark:text-brand-400'
-                  : 'text-[var(--color-text-secondary)]'
+                  ? 'border-brand-300 bg-brand-50 dark:border-brand-500/40 dark:bg-brand-500/10'
+                  : 'border-transparent hover:bg-gray-100 dark:hover:bg-white/5'
               )}
-              aria-hidden="true"
-            />
-            <span className="min-w-0">
-              <span className="block font-medium text-[var(--color-text-base)]">
-                <bdi>{label}</bdi>
-              </span>
-              {description != null && (
-                <span className="block text-xs text-[var(--color-text-secondary)]">
-                  {description}
+            >
+              <MapPin
+                className={clsx(
+                  'mt-0.5 size-4 shrink-0',
+                  selected
+                    ? 'text-brand-600 dark:text-brand-400'
+                    : 'text-[var(--color-text-secondary)]'
+                )}
+                aria-hidden="true"
+              />
+              <span className="min-w-0">
+                <span className="block font-medium text-[var(--color-text-base)]">
+                  <bdi>{label}</bdi>
                 </span>
-              )}
-            </span>
-          </button>
-        </li>
-      );
-    })}
-  </ul>
-);
+                {description != null && (
+                  <span className="block text-xs text-[var(--color-text-secondary)]">
+                    {description}
+                  </span>
+                )}
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+};

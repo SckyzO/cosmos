@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { bothDirections, directionBox } from '../storybook-helpers';
 import { VideoEmbed } from './VideoEmbed';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 // Real YouTube embed for the showcase stories. The interaction tests
 // (RendersIframeByDefault / NativeRendersVideo) target the structural
@@ -216,5 +217,20 @@ export const PlayTriangleDoesNotTurnAround: Story = {
       expect(getComputedStyle(triangle).scale, `${dir}: not mirrored`).toBe('none');
       expect(getComputedStyle(triangle).marginLeft, `${dir}: offset`).toBe('2px');
     }
+  },
+};
+
+/** The provider names the play button of a facade, and the embed's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <LabelsProvider labels={{ videoEmbed: { play: (title) => `Lire ${title}` } }}>
+      <VideoEmbed {...args} facade title="Présentation" />
+      <VideoEmbed {...args} facade title="Démo" labels={{ play: (title) => `Démarrer ${title}` }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Lire Présentation' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Démarrer Démo' })).toBeVisible();
   },
 };

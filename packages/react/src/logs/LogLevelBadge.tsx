@@ -2,7 +2,9 @@ import { clsx } from 'clsx';
 import { Badge, type BadgeAppearance } from '../ui/Badge';
 import type { Intent } from '../ui/intent';
 import { parseLogLevel } from './log-lines';
+import { LOG_VIEWER_LABELS, type LogViewerLabels } from './labels';
 import type { LogLevelKey } from './types';
+import { useLogViewerLabels } from './useLogLabels';
 
 export type LogTone = 'terminal' | 'surface';
 
@@ -17,18 +19,23 @@ export type LogLevelBadgeProps = {
    * `terminal` is for the dark panel of a `LogViewer`, dark in every theme.
    */
   tone?: LogTone;
+  /** The text of the levels (`labels.warn`), over `LabelsProvider`'s `logViewer` and the English defaults. */
+  labels?: Partial<LogViewerLabels>;
   className?: string;
 };
 
-/** The text of each level: the badge never says it with colour alone. */
+/**
+ * The English text of each level: the badge never says it with colour alone. The badge reads the
+ * `logViewer` labels, which an app translates.
+ */
 export const LOG_LEVEL_LABEL: Record<LogLevelKey, string> = {
-  trace: 'TRACE',
-  debug: 'DEBUG',
-  info: 'INFO',
-  warn: 'WARN',
-  error: 'ERROR',
-  fatal: 'FATAL',
-  unknown: 'UNKNOWN',
+  trace: LOG_VIEWER_LABELS.trace,
+  debug: LOG_VIEWER_LABELS.debug,
+  info: LOG_VIEWER_LABELS.info,
+  warn: LOG_VIEWER_LABELS.warn,
+  error: LOG_VIEWER_LABELS.error,
+  fatal: LOG_VIEWER_LABELS.fatal,
+  unknown: LOG_VIEWER_LABELS.unknown,
 };
 
 // The terminal tone is its own recipe: a dark panel in every theme, so the pairs come from the
@@ -83,14 +90,20 @@ export const LOG_MESSAGE_CLASS: Record<LogTone, Record<LogLevelKey, string>> = {
  * card; `LogViewer` draws it in every row. On the `surface` tone it is a `Badge`, a pill like
  * `StatusBadge`; on the `terminal` tone it keeps the monospace face of the panel.
  */
-export const LogLevelBadge = ({ level, tone = 'surface', className }: LogLevelBadgeProps) => {
+export const LogLevelBadge = ({
+  level,
+  tone = 'surface',
+  labels: ownLabels,
+  className,
+}: LogLevelBadgeProps) => {
+  const labels = useLogViewerLabels(ownLabels);
   const key = parseLogLevel(level);
   if (tone === 'surface')
     return (
       // `data-level` goes on a wrapper: a `Badge` takes no attributes of its own.
       <span data-level={key} className={clsx('inline-flex shrink-0', className)}>
         <Badge size="sm" className="min-w-14 justify-center" {...SURFACE_BADGE[key]}>
-          {LOG_LEVEL_LABEL[key]}
+          {labels[key]}
         </Badge>
       </span>
     );
@@ -103,7 +116,7 @@ export const LogLevelBadge = ({ level, tone = 'surface', className }: LogLevelBa
         className
       )}
     >
-      {LOG_LEVEL_LABEL[key]}
+      {labels[key]}
     </span>
   );
 };

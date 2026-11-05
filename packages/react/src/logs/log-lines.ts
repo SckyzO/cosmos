@@ -1,4 +1,5 @@
 import { LOG_LEVELS, LOG_LEVEL_KEYS, type LogLevel, type LogLevelKey, type LogLine } from './types';
+import { LOG_VIEWER_LABELS } from './labels';
 
 // Pure helpers behind the log components: no DOM, no timer, so the level parsing, the filters,
 // the search, the window maths and the announcement are tested in Node.
@@ -151,7 +152,8 @@ export const newLinesSince = (
 export const announceErrors = (
   lines: readonly LogLine[],
   known: LogLine['id'] | null,
-  limit = 3
+  limit = 3,
+  moreErrors: (count: number) => string = LOG_VIEWER_LABELS.moreErrors
 ): string => {
   if (known === null) return '';
   const at = lastIndexOfId(lines, known);
@@ -169,7 +171,7 @@ export const announceErrors = (
         `${parseLogLevel(line.level)}${line.source ? ` ${line.source}` : ''}: ${line.message}`
     );
   const more = errors.length - spoken.length;
-  return more > 0 ? `${spoken.join('. ')}. And ${more} more.` : spoken.join('. ');
+  return more > 0 ? `${spoken.join('. ')}. ${moreErrors(more)}` : spoken.join('. ');
 };
 
 // ── Fields ──────────────────────────────────────────────────────────────────

@@ -25,8 +25,8 @@ list are the host's to keep (URL or state).
 - Links when `previousHref` / `nextHref` are given (through `LinkProvider`), buttons with
   `onPrevious` / `onNext` otherwise. A side with nowhere to go, or at the first or last record, is a
   disabled button, never a link.
-- `noun` builds the labels ("Previous order"); `labels` (`previous`, `next`, `back`, `count`)
-  replaces any of them, for another language. `count` receives the position and the total as nodes,
+- `noun` builds the labels ("Previous order"); `labels` (`previous` and `next`, functions of the
+  noun, `back`, `count`, `landmark`, `noun`) replaces any of them, for another language. `count` receives the position and the total as nodes,
   already set apart in medium weight as in "12 of 340", so a translation keeps them that way:
   `count: (position, total) => <>{position} sur {total}</>`.
 - `variant="compact"` draws icon buttons (still named) and the count, for a `PageHeader`'s `actions`.
@@ -60,7 +60,7 @@ read carries `aria-current="location"` and the accent tint, and follows the scro
 element that slides from button to button (200ms, easing in and out, as the underline of `Tabs`),
 placed with no transition the first time and after a resize. `topOffset`
 keeps the row below a fixed header, and `onNavigate` replaces the scroll with your own. Below
-`sm` the row becomes a native select named by `jumpLabel` that shows the section being read and
+`sm` the row becomes a native select named by `labels.jump` that shows the section being read and
 goes to the one picked.
 
 ```tsx

@@ -7,7 +7,9 @@ import {
   XCircle,
   type LucideIcon,
 } from 'lucide-react';
+import { useLabels } from '../labels/labelsContext';
 import type { BadgeAppearance, BadgeShape } from '../ui/Badge';
+import { STATUS_BADGE_LABELS, type StatusBadgeLabels } from './labels';
 import { type HealthStatus, STATUS_PILL } from './types';
 
 export type StatusBadgeProps = {
@@ -31,6 +33,8 @@ export type StatusBadgeProps = {
    * right-to-left page.
    */
   label?: string;
+  /** The texts it writes (the status codes), over `LabelsProvider`'s `statusBadge` and the English defaults. */
+  labels?: Partial<StatusBadgeLabels>;
   className?: string;
 };
 
@@ -89,8 +93,10 @@ export const StatusBadge = ({
   appearance = 'light',
   icon = false,
   label,
+  labels: ownLabels,
   className,
 }: StatusBadgeProps) => {
+  const labels = useLabels('statusBadge', STATUS_BADGE_LABELS, ownLabels);
   const Icon = STATUS_ICON[status];
   return (
     <span
@@ -104,7 +110,7 @@ export const StatusBadge = ({
       )}
     >
       {icon && <Icon className={clsx('shrink-0', ICON_CLASS[size])} aria-hidden />}
-      <bdi>{label ?? status}</bdi>
+      <bdi>{label ?? labels[status]}</bdi>
     </span>
   );
 };

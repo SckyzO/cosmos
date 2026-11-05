@@ -6,6 +6,7 @@ import { Textarea } from '../forms/Textarea';
 import { isFading, tokenMs, transitionMs } from '../storybook-motion';
 import { SectionCard } from '../templates';
 import { Clipboard } from './Clipboard';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Atoms/Clipboard',
@@ -495,5 +496,21 @@ export const IconsSwapAtOnceWhenReduced: Story = {
     } finally {
       restore();
     }
+  },
+};
+
+/** The provider names the button, and the button's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ clipboard: { copy: 'Copier', copied: 'Copié !' } }}>
+      <Clipboard value="x" />
+      <Clipboard value="x" variant="button" />
+      <Clipboard value="x" variant="button" labels={{ copy: 'Dupliquer' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('button', { name: 'Copier' })).toHaveLength(2);
+    await expect(canvas.getByRole('button', { name: 'Dupliquer' })).toBeVisible();
   },
 };

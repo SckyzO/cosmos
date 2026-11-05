@@ -10,6 +10,7 @@ import {
 import { bothDirections, directionBox } from '../storybook-helpers';
 import { isFading, tokenMs, transitionMs, transitionValues } from '../storybook-motion';
 import { ThemeToggle } from './ThemeToggle';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Settings/Theme Toggle',
@@ -466,5 +467,24 @@ export const ThemeOutsideTheListKeepsItsIcon: Story = {
       opacity: '0',
       rotate: quarter(button, 'next'),
     });
+  },
+};
+
+/** The provider names what the click does, and the toggle's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{ themeToggle: { light: 'Passer au thème clair', dark: 'Passer au thème sombre' } }}
+    >
+      <ThemeToggle theme="light" onChange={fn()} />
+      <ThemeToggle theme="dark" onChange={fn()} />
+      <ThemeToggle theme="dark" onChange={fn()} labels={{ light: 'Clair' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Passer au thème sombre' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Passer au thème clair' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Clair' })).toBeVisible();
   },
 };

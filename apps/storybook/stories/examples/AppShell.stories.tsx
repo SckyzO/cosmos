@@ -263,7 +263,7 @@ const AppTopbar = ({
         // an icon, and sits at the end of the free space, next to the actions.
         <div className="flex max-w-md max-sm:max-w-none max-sm:justify-end sm:mx-auto">
           <CommandPaletteTrigger
-            placeholder="Search projects, tasks, docs"
+            labels={{ placeholder: 'Search projects, tasks, docs' }}
             onClick={onOpenPalette}
           />
         </div>

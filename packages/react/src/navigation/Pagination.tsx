@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { buildRange } from './pageRange';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
+import { PAGINATION_LABELS, type PaginationLabels } from './labels';
 
 export type PaginationVariant = 'text' | 'compact';
 export type PaginationSize = 'sm' | 'md';
@@ -48,8 +50,10 @@ export type PaginationProps = {
    * and the page buttons. The group wraps when the row is too narrow for all of them.
    */
   controls?: ReactNode;
-  /** Names the landmark. Default `Pagination`; two pagers on one page need distinct names. */
+  /** Names the landmark. Default `labels.landmark`, `Pagination`; two pagers on one page need distinct names. */
   'aria-label'?: string;
+  /** The texts it writes, over `LabelsProvider`'s `pagination` and the English defaults. */
+  labels?: Partial<PaginationLabels>;
   className?: string;
 };
 
@@ -73,9 +77,11 @@ export const Pagination = ({
   showAll = false,
   onShowAllChange,
   controls,
-  'aria-label': ariaLabel = 'Pagination',
+  'aria-label': ariaLabel,
+  labels: ownLabels,
   className,
 }: PaginationProps) => {
+  const labels = useLabels('pagination', PAGINATION_LABELS, ownLabels);
   const [page, setPage] = useControllableState({
     value: pageProp,
     defaultValue: defaultPage,
@@ -104,18 +110,12 @@ export const Pagination = ({
   let infoNode: ReactNode = null;
   if (showInfo && total !== undefined) {
     if (showAll) {
-      infoNode = (
-        <>
-          Showing all <span className={strong}>{total}</span> results
-        </>
-      );
+      infoNode = labels.showingAll(<span className={strong}>{total}</span>);
     } else if (pageSize !== undefined) {
-      infoNode = (
-        <>
-          Showing <span className={strong}>{Math.min(total, (safePage - 1) * pageSize + 1)}</span>{' '}
-          to <span className={strong}>{Math.min(safePage * pageSize, total)}</span> of{' '}
-          <span className={strong}>{total}</span>
-        </>
+      infoNode = labels.showing(
+        <span className={strong}>{Math.min(total, (safePage - 1) * pageSize + 1)}</span>,
+        <span className={strong}>{Math.min(safePage * pageSize, total)}</span>,
+        <span className={strong}>{total}</span>
       );
     }
   }
@@ -124,7 +124,7 @@ export const Pagination = ({
     // Below `sm` the info takes its own row and the controls shrink to
     // "Previous · Page 2 / 9 · Next": the numbered buttons cannot wrap.
     <nav
-      aria-label={ariaLabel}
+      aria-label={ariaLabel ?? labels.landmark}
       className={clsx(
         'flex items-center gap-3',
         infoNode
@@ -153,7 +153,7 @@ export const Pagination = ({
             onClick={() => onShowAllChange(!showAll)}
             className="focus-visible:focus-indicator rounded-sm text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
-            {showAll ? 'Show paginated' : 'Show all'}
+            {showAll ? labels.showPaginated : labels.showAll}
           </button>
         )}
         {!showAll && (
@@ -161,7 +161,7 @@ export const Pagination = ({
             {showEdges && (
               <button
                 type="button"
-                aria-label="First page"
+                aria-label={labels.first}
                 disabled={isFirst}
                 onClick={() => goTo(1)}
                 className={clsx(btnClass, idleClass, 'inline-flex', SIZE_BTN[size])}
@@ -171,28 +171,32 @@ export const Pagination = ({
             )}
             <button
               type="button"
-              aria-label="Previous page"
+              aria-label={labels.previous}
               disabled={isFirst}
               onClick={() => goTo(safePage - 1)}
               className={stepClass}
             >
               <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
-              {withText && 'Previous'}
+              {withText && labels.previousText}
             </button>
 
             {variant === 'compact' ? (
               <span className="px-3 text-xs text-gray-600 dark:text-gray-300">
                 <bdi>
-                  Page <span className="font-medium">{safePage}</span> of{' '}
-                  <span className="font-medium">{Math.max(1, totalPages)}</span>
+                  {labels.pageOf(
+                    <span className="font-medium">{safePage}</span>,
+                    <span className="font-medium">{Math.max(1, totalPages)}</span>
+                  )}
                 </bdi>
               </span>
             ) : (
               <>
                 <span className="px-3 text-xs text-gray-600 sm:hidden dark:text-gray-300">
                   <bdi>
-                    Page <span className="font-medium">{safePage}</span> /{' '}
-                    <span className="font-medium">{Math.max(1, totalPages)}</span>
+                    {labels.pageOfShort(
+                      <span className="font-medium">{safePage}</span>,
+                      <span className="font-medium">{Math.max(1, totalPages)}</span>
+                    )}
                   </bdi>
                 </span>
                 {buildRange(safePage, Math.max(1, totalPages)).map((p, i) =>
@@ -211,7 +215,7 @@ export const Pagination = ({
                     <button
                       key={p}
                       type="button"
-                      aria-label={`Page ${p}`}
+                      aria-label={labels.page(p)}
                       aria-current={p === safePage ? 'page' : undefined}
                       onClick={() => goTo(p)}
                       className={clsx(
@@ -230,18 +234,18 @@ export const Pagination = ({
 
             <button
               type="button"
-              aria-label="Next page"
+              aria-label={labels.next}
               disabled={isLast}
               onClick={() => goTo(safePage + 1)}
               className={stepClass}
             >
-              {withText && 'Next'}
+              {withText && labels.nextText}
               <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
             </button>
             {showEdges && (
               <button
                 type="button"
-                aria-label="Last page"
+                aria-label={labels.last}
                 disabled={isLast}
                 onClick={() => goTo(Math.max(1, totalPages))}
                 className={clsx(btnClass, idleClass, 'inline-flex', SIZE_BTN[size])}

@@ -9,6 +9,7 @@ import {
   startOffset,
 } from '../storybook-helpers';
 import { indicatorGap, indicatorOf, isSliding, tokenMs, transitionMs } from '../storybook-motion';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Navigation/Sticky Scroll Nav',
@@ -510,5 +511,33 @@ export const MarkerFollowsTheReadingDirection: Story = {
       scrollToSection(nav, canvas.getByRole('region', { name }));
       await waitFor(() => sitsOn(marker, canvas.getByRole('button', { name })), { timeout: 3000 });
     }
+  },
+};
+
+/** The provider names the jump menu. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ stickyScrollNav: { jump: 'Aller à la section' } }}>
+      <StickyScrollNav sections={[{ id: 'a', label: 'Général' }]} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    // The select shows below `sm` only: it is found by its name attribute.
+    await expect(canvas.getByLabelText('Aller à la section')).toBeInTheDocument();
+  },
+};
+
+/** The nav's own `labels` win over the provider's. */
+export const OwnLabelsWinOverTheProvider: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ stickyScrollNav: { jump: 'Aller à la section' } }}>
+      <StickyScrollNav sections={[{ id: 'b', label: 'Équipe' }]} labels={{ jump: 'Sauter à' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByLabelText('Sauter à')).toBeInTheDocument();
+    await expect(canvas.queryByLabelText('Aller à la section')).toBeNull();
   },
 };

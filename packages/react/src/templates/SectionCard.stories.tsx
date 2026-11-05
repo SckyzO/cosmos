@@ -41,6 +41,7 @@ import {
   startEdge,
   startOffset,
 } from '../storybook-helpers';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Layout/Section Card',
@@ -195,12 +196,12 @@ export const WithAction: Story = { args: REVENUE };
 /** `loading`: a skeleton in place of the body. The header, action included, stays. */
 export const Loading: Story = { args: { ...REVENUE, loading: true, minBodyHeight: 'min-h-44' } };
 
-/** `empty`: a compact `EmptyState` with `emptyMessage` and, optionally, an `emptyAction`. */
+/** `empty`: a compact `EmptyState` with `labels.empty` as its title and, optionally, an `emptyAction`. */
 export const Empty: Story = {
   args: {
     ...REVENUE,
     empty: true,
-    emptyMessage: 'No revenue yet',
+    labels: { empty: 'No revenue yet' },
     emptyAction: (
       <Button variant="secondary" size="sm">
         Connect your store
@@ -232,7 +233,7 @@ const phone: Story = {
 const SIDE_BY_SIDE = [
   { title: 'Revenue', state: {} },
   { title: 'Orders', state: { loading: true } },
-  { title: 'Subscribers', state: { empty: true, emptyMessage: 'No subscribers yet' } },
+  { title: 'Subscribers', state: { empty: true, labels: { empty: 'No subscribers yet' } } },
   { title: 'Refunds', state: { error: true, errorMessage: "Couldn't load refunds" } },
 ] as const;
 
@@ -2382,5 +2383,41 @@ export const MonitoringChecks: Story = {
     await expect(within(services).getByText('Stale · 4 min ago')).toBeVisible();
     await expect(effectiveOpacity(within(services).getByRole('table'))).toBeCloseTo(0.65, 2);
     await expect(within(services).getByRole('button', { name: 'Retry' })).toBeVisible();
+  },
+};
+
+/** The provider writes the card's texts, its own `labels` win over it, and the text the app passes in over both. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        sectionCard: {
+          empty: 'Aucune donnée',
+          stale: 'Obsolète',
+          loading: (title) => `Chargement de ${title}…`,
+          toggle: (title) => `Basculer ${title}`,
+        },
+      }}
+    >
+      <div className="space-y-4">
+        <SectionCard title="Ventes" empty />
+        <SectionCard title="Stock" loading />
+        <SectionCard title="Clients" collapsible />
+        <SectionCard title="Commandes" stale />
+        <SectionCard title="Archives" empty labels={{ empty: 'Rien' }} />
+        <SectionCard title="Devis" stale staleLabel="Obsolète · 4 min" />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Aucune donnée')).toBeVisible();
+    await expect(canvas.getByText('Chargement de Stock…')).toBeInTheDocument();
+    await expect(canvas.getByRole('button', { name: 'Basculer Clients' })).toBeVisible();
+    await expect(
+      within(canvas.getByRole('region', { name: 'Commandes' })).getByText('Obsolète')
+    ).toBeVisible();
+    await expect(canvas.getByText('Rien')).toBeVisible();
+    await expect(canvas.getByText('Obsolète · 4 min')).toBeVisible();
   },
 };

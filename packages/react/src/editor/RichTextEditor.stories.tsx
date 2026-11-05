@@ -19,6 +19,7 @@ import {
 import { RichTextEditor } from './RichTextEditor';
 import { RICH_TEXT_ACTIONS } from './actions';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Forms/Rich Text Editor',
@@ -1952,5 +1953,44 @@ export const LinkFieldReadsLeftToRight: Story = {
       expect(getComputedStyle(url).direction).toBe('ltr');
       await userEvent.type(url, '{Escape}');
     });
+  },
+};
+
+/** The provider writes the toolbar's and the link field's texts, and the editor's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <LabelsProvider
+      labels={{
+        richTextEditor: {
+          toolbar: 'Mise en forme',
+          bold: 'Gras',
+          link: 'Lien',
+          linkDialog: 'Modifier le lien',
+          linkUrl: 'Adresse du lien',
+          linkPlaceholder: 'https://exemple.fr',
+          linkApply: 'Appliquer',
+        },
+      }}
+    >
+      <RichTextEditor
+        {...args}
+        toolbar={['bold', 'italic', 'link']}
+        labels={{ italic: 'Italique' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const toolbar = within(await canvas.findByRole('toolbar', { name: 'Mise en forme' }));
+    await expect(toolbar.getByRole('button', { name: 'Gras' })).toBeVisible();
+    // The editor's own label wins over the provider's.
+    await expect(toolbar.getByRole('button', { name: 'Italique' })).toBeVisible();
+    await userEvent.click(toolbar.getByRole('button', { name: 'Lien' }));
+    const dialog = await within(document.body).findByRole('dialog', { name: 'Modifier le lien' });
+    await expect(within(dialog).getByRole('textbox', { name: 'Adresse du lien' })).toHaveAttribute(
+      'placeholder',
+      'https://exemple.fr'
+    );
+    await expect(within(dialog).getByRole('button', { name: 'Appliquer' })).toBeVisible();
   },
 };

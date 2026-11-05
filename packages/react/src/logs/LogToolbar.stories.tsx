@@ -16,6 +16,7 @@ import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { LogToolbar } from './LogToolbar';
 import { LogConsole } from './storybook-logs';
 import type { LogLevelKey } from './types';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Monitoring/Log Toolbar',
@@ -254,5 +255,53 @@ export const ControlsFollowTheReadingDirection: Story = {
     }
     expectMirrored(canvasElement, (box) => within(box).getByRole('button', { name: 'Wrap lines' }));
     expectMirrored(canvasElement, (box) => within(box).getByRole('group', { name: 'Levels' }), 0);
+  },
+};
+
+/** The provider writes the toolbar's texts, and the toolbar's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        logViewer: {
+          controls: 'Contrôles du journal',
+          live: 'En direct',
+          paused: 'En pause',
+          pauseStream: 'En direct, suspendre le flux',
+          resumeStream: 'En pause, reprendre le flux',
+          levels: 'Niveaux',
+          error: 'ERREUR',
+          searchLogs: 'Rechercher dans le journal',
+          wrapLines: 'Renvoyer à la ligne',
+          download: 'Télécharger',
+          clear: 'Effacer',
+        },
+      }}
+    >
+      <LogToolbar
+        live
+        onLiveChange={fn()}
+        levels={['info', 'error']}
+        onSearchChange={fn()}
+        search=""
+        onWrapChange={fn()}
+        onDownload={fn()}
+        onClear={fn()}
+        labels={{ clear: 'Vider' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const bar = within(canvas.getByRole('group', { name: 'Contrôles du journal' }));
+    await expect(bar.getByRole('button', { name: 'En direct, suspendre le flux' })).toBeVisible();
+    await expect(bar.getByRole('group', { name: 'Niveaux' })).toBeVisible();
+    await expect(bar.getByRole('button', { name: 'Erreur' })).toBeVisible();
+    await expect(bar.getByLabelText('Rechercher dans le journal')).toBeVisible();
+    await expect(bar.getByRole('button', { name: 'Renvoyer à la ligne' })).toBeVisible();
+    await expect(bar.getByRole('button', { name: 'Télécharger' })).toBeVisible();
+    // The toolbar's own label wins over the provider's.
+    await expect(bar.getByRole('button', { name: 'Vider' })).toBeVisible();
+    await expect(bar.queryByRole('button', { name: 'Effacer' })).toBeNull();
   },
 };

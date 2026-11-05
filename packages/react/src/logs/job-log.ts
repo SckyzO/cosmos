@@ -1,6 +1,7 @@
 import type { DateTimeValue } from '../data/time';
 import { toTimestamp } from '../data/time';
 import { stripAnsi } from './ansi';
+import { JOB_LOG_LABELS } from './labels';
 
 // The model and the pure helpers behind `JobLog`: no DOM and no timer, so the durations, the
 // links, the search across steps and the text of a download are tested in Node.
@@ -44,16 +45,11 @@ export type JobLogControl = 'search' | 'timestamps' | 'wrap' | 'expand' | 'downl
 export const lineText = (line: string | JobLogLine): string =>
   typeof line === 'string' ? line : line.text;
 
-const STATUS_LABEL: Record<JobStatus, string> = {
-  queued: 'Queued',
-  running: 'Running',
-  passed: 'Passed',
-  failed: 'Failed',
-  skipped: 'Skipped',
-};
-
 /** The word for a status: it is never only a colour. */
-export const statusLabel = (status: JobStatus): string => STATUS_LABEL[status];
+export const statusLabel = (
+  status: JobStatus,
+  names: Record<JobStatus, string> = JOB_LOG_LABELS
+): string => names[status];
 
 // ── Durations ───────────────────────────────────────────────────────────────
 
@@ -199,11 +195,14 @@ export const matchRanges = (text: string, expression: RegExp | null): [number, n
  * The log as plain text for a download: each step under a heading with its status and duration,
  * its lines with the ANSI codes stripped, a blank line between steps.
  */
-export const jobLogText = (steps: readonly JobLogStep[]): string =>
+export const jobLogText = (
+  steps: readonly JobLogStep[],
+  names: Record<JobStatus, string> = JOB_LOG_LABELS
+): string =>
   steps
     .map((step) => {
       const duration = step.duration === undefined ? '' : `, ${formatJobDuration(step.duration)}`;
-      const heading = `=== ${step.name} (${statusLabel(step.status).toLowerCase()}${duration}) ===`;
+      const heading = `=== ${step.name} (${statusLabel(step.status, names).toLowerCase()}${duration}) ===`;
       return [heading, ...step.lines.map((line) => stripAnsi(lineText(line)))].join('\n');
     })
     .join('\n\n')

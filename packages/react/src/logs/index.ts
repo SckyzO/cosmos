@@ -29,3 +29,4 @@ export {
   type LogColumn,
   type LogOrder,
 } from './types';
+export type { JobLogLabels, LogViewerLabels } from './labels';

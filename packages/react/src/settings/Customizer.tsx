@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { Check, Copy, RotateCcw } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import type { BackdropVariant } from '../ui/Backdrop';
 import { Drawer, type DrawerSize } from '../ui/Drawer';
 import { Button } from '../ui/Button';
@@ -32,6 +33,16 @@ import {
   type CosmosThemeChoice,
   type CosmosThemeMeta,
 } from './appearance';
+import {
+  nameAccents,
+  nameDensities,
+  nameFonts,
+  nameMotions,
+  nameRadii,
+  nameTextSizes,
+  nameThemes,
+} from './appearanceNames';
+import { APPEARANCE_LABELS, CUSTOMIZER_LABELS, type CustomizerLabels } from './labels';
 
 /** The shell's navigation: a sidebar down the side, or a navbar across the top. */
 export type CustomizerLayout = 'vertical' | 'horizontal';
@@ -107,21 +118,6 @@ export const CUSTOMIZER_DEFAULT_VALUE = {
   container: 'fluid',
 } satisfies CustomizerValue;
 
-const DEFAULT_LABELS: Record<CustomizerSection, string> = {
-  presets: 'Presets',
-  theme: 'Theme',
-  accent: 'Accent color',
-  font: 'Font',
-  textSize: 'Text size',
-  density: 'Density',
-  radius: 'Corner radius',
-  motion: 'Animations',
-  direction: 'Direction',
-  layout: 'Layout',
-  sidebar: 'Sidebar',
-  container: 'Container',
-};
-
 export type CustomizerProps = {
   /** Whether the panel is open. The host owns it, as for a `Drawer`. */
   open: boolean;
@@ -161,11 +157,15 @@ export type CustomizerProps = {
   radii?: CosmosRadiusMeta[];
   /** Motion settings to offer. Default: all of `COSMOS_MOTIONS`. */
   motions?: CosmosMotionMeta[];
-  /** Headings of the sections, by section. Default: English names ("Accent color", "Text size"…). */
-  labels?: Partial<Record<CustomizerSection, string>>;
-  /** Title of the panel. Default `'Customize'`. */
+  /**
+   * The texts it writes (the headings of the sections by section, the buttons, the names of the
+   * shell options), over `LabelsProvider`'s `customizer` and the English defaults. The names of
+   * the default themes, accents, sizes… are the provider's `appearance`.
+   */
+  labels?: Partial<CustomizerLabels>;
+  /** Title of the panel. Default `labels.title`, `'Customize'`. */
   title?: string;
-  /** Line under the title. Default `'Changes apply at once.'`. */
+  /** Line under the title. Default `labels.subtitle`, `'Changes apply at once.'`. */
   subtitle?: string;
   /** Width of the panel. Default `lg`. */
   size?: DrawerSize;
@@ -319,24 +319,26 @@ const optionsOf = <T extends string>(
 ): OptionItem[] =>
   (Object.keys(labels) as T[]).map((id) => ({ id, label: labels[id], preview: preview(id) }));
 
-const LAYOUT_OPTIONS = optionsOf<CustomizerLayout>(
-  { vertical: 'Vertical', horizontal: 'Horizontal' },
-  (id) => LAYOUT_PREVIEW[id]
-);
-const SIDEBAR_OPTIONS = optionsOf<CustomizerSidebar>(
-  { expanded: 'Expanded', collapsed: 'Collapsed', hover: 'On hover', compact: 'Compact' },
-  (id) => SIDEBAR_PREVIEW[id]
-);
-const CONTAINER_OPTIONS = optionsOf<ShellContainer>(
-  { fluid: 'Fluid', boxed: 'Boxed' },
-  (id) => CONTAINER_PREVIEW[id]
-);
-
-/** The two reading directions, in the words of the Direction section. */
-const DIRECTIONS: { value: CosmosDirection; label: string }[] = [
-  { value: 'ltr', label: 'Left to right' },
-  { value: 'rtl', label: 'Right to left' },
-];
+const layoutOptions = (labels: CustomizerLabels) =>
+  optionsOf<CustomizerLayout>(
+    { vertical: labels.layoutVertical, horizontal: labels.layoutHorizontal },
+    (id) => LAYOUT_PREVIEW[id]
+  );
+const sidebarOptions = (labels: CustomizerLabels) =>
+  optionsOf<CustomizerSidebar>(
+    {
+      expanded: labels.sidebarExpanded,
+      collapsed: labels.sidebarCollapsed,
+      hover: labels.sidebarHover,
+      compact: labels.sidebarCompact,
+    },
+    (id) => SIDEBAR_PREVIEW[id]
+  );
+const containerOptions = (labels: CustomizerLabels) =>
+  optionsOf<ShellContainer>(
+    { fluid: labels.containerFluid, boxed: labels.containerBoxed },
+    (id) => CONTAINER_PREVIEW[id]
+  );
 
 const sameValue = (a: unknown, b: unknown) => a === b || JSON.stringify(a) === JSON.stringify(b);
 
@@ -371,20 +373,36 @@ export const Customizer = ({
   defaultValue = CUSTOMIZER_DEFAULT_VALUE,
   presets = [],
   sections = CUSTOMIZER_SECTIONS,
-  themes = COSMOS_THEMES,
-  accents = COSMOS_ACCENTS,
-  fonts = COSMOS_FONTS,
-  textSizes = COSMOS_TEXT_SIZES,
-  densities = COSMOS_DENSITIES,
-  radii = COSMOS_RADII,
-  motions = COSMOS_MOTIONS,
-  labels,
-  title = 'Customize',
-  subtitle = 'Changes apply at once.',
+  themes: themesProp,
+  accents: accentsProp,
+  fonts: fontsProp,
+  textSizes: textSizesProp,
+  densities: densitiesProp,
+  radii: radiiProp,
+  motions: motionsProp,
+  labels: ownLabels,
+  title: titleProp,
+  subtitle: subtitleProp,
   size = 'lg',
   backdrop,
 }: CustomizerProps) => {
-  const [announcement, setAnnouncement] = useState('');
+  const labels = useLabels('customizer', CUSTOMIZER_LABELS, ownLabels);
+  const names = useLabels('appearance', APPEARANCE_LABELS);
+  const themes = nameThemes(themesProp ?? COSMOS_THEMES, names);
+  const accents = nameAccents(accentsProp ?? COSMOS_ACCENTS, names);
+  const fonts = nameFonts(fontsProp ?? COSMOS_FONTS, names);
+  const textSizes = nameTextSizes(textSizesProp ?? COSMOS_TEXT_SIZES, names);
+  const densities = nameDensities(densitiesProp ?? COSMOS_DENSITIES, names);
+  const radii = nameRadii(radiiProp ?? COSMOS_RADII, names);
+  const motions = nameMotions(motionsProp ?? COSMOS_MOTIONS, names);
+  const title = titleProp ?? labels.title;
+  const subtitle = subtitleProp ?? labels.subtitle;
+  const directions: { value: CosmosDirection; label: string }[] = [
+    { value: 'ltr', label: labels.directionLtr },
+    { value: 'rtl', label: labels.directionRtl },
+  ];
+  // What is said once the copy is tried: the clipboard's word, kept apart from its text.
+  const [announcement, setAnnouncement] = useState<'copied' | 'failed' | ''>('');
   const announceTimer = useRef<number | null>(null);
   useEffect(
     () => () => {
@@ -394,7 +412,7 @@ export const Customizer = ({
   );
 
   const shown = (section: CustomizerSection) => sections.includes(section);
-  const label = (section: CustomizerSection) => labels?.[section] ?? DEFAULT_LABELS[section];
+  const label = (section: CustomizerSection) => labels[section];
   const current = { ...CUSTOMIZER_DEFAULT_VALUE, ...value };
   const set = (patch: Partial<CustomizerValue>) => onChange({ ...value, ...patch });
 
@@ -404,7 +422,7 @@ export const Customizer = ({
     )
   );
 
-  const announce = (message: string) => {
+  const announce = (message: 'copied' | 'failed') => {
     setAnnouncement(message);
     if (announceTimer.current !== null) window.clearTimeout(announceTimer.current);
     announceTimer.current = window.setTimeout(() => setAnnouncement(''), ANNOUNCE_MS);
@@ -414,10 +432,10 @@ export const Customizer = ({
     try {
       await navigator.clipboard.writeText(JSON.stringify(value, null, 2));
     } catch {
-      announce('Could not copy');
+      announce('failed');
       return;
     }
-    announce('Copied');
+    announce('copied');
   };
 
   return (
@@ -545,7 +563,7 @@ export const Customizer = ({
                 size="sm"
                 value={current.direction}
                 onChange={(id) => set({ direction: id })}
-                options={DIRECTIONS}
+                options={directions}
               />
             )}
           </Group>
@@ -558,7 +576,7 @@ export const Customizer = ({
                 cols={2}
                 value={current.layout}
                 onChange={(id) => set({ layout: id as CustomizerLayout })}
-                options={LAYOUT_OPTIONS}
+                options={layoutOptions(labels)}
               />
             )}
           </Group>
@@ -571,7 +589,7 @@ export const Customizer = ({
                 cols={4}
                 value={current.sidebar}
                 onChange={(id) => set({ sidebar: id as CustomizerSidebar })}
-                options={SIDEBAR_OPTIONS}
+                options={sidebarOptions(labels)}
               />
             )}
           </Group>
@@ -584,7 +602,7 @@ export const Customizer = ({
                 cols={2}
                 value={current.container}
                 onChange={(id) => set({ container: id as ShellContainer })}
-                options={CONTAINER_OPTIONS}
+                options={containerOptions(labels)}
               />
             )}
           </Group>
@@ -598,19 +616,23 @@ export const Customizer = ({
           icon={RotateCcw}
           onClick={() => onChange(defaultValue)}
         >
-          Reset
+          {labels.reset}
         </Button>
         <Button
           type="button"
           variant="secondary"
           size="sm"
-          icon={announcement === 'Copied' ? Check : Copy}
+          icon={announcement === 'copied' ? Check : Copy}
           onClick={copyConfig}
         >
-          Copy config
+          {labels.copyConfig}
         </Button>
         <span role="status" className="sr-only">
-          {announcement}
+          {announcement === 'copied'
+            ? labels.copied
+            : announcement === 'failed'
+              ? labels.copyFailed
+              : ''}
         </span>
       </Drawer.Footer>
     </Drawer>

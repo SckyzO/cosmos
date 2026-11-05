@@ -3,3 +3,9 @@
 export { MapView, type MapViewProps, type MapViewState } from './MapView';
 export { MapMarkerList, type MapMarkerListProps } from './MapMarkerList';
 export type { MapMarker } from './types';
+export {
+  MAP_MARKER_LIST_LABELS,
+  MAP_VIEW_LABELS,
+  type MapMarkerListLabels,
+  type MapViewLabels,
+} from './labels';

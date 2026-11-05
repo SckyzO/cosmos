@@ -1,9 +1,11 @@
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
-import { Fragment, useEffect, type ReactNode } from 'react';
+import { Fragment, createContext, useContext, useEffect, type ReactNode } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import type { BackdropVariant } from './Backdrop';
 import { isTypingTarget, matchesHotkey } from './hotkey';
+import { HELP_OVERLAY_LABELS, type HelpOverlayLabels } from './labels';
 import { Modal } from './Modal';
 import { SectionLabel } from './SectionLabel';
 
@@ -62,30 +64,38 @@ export type HelpOverlayProps = {
    * to skip registering a hotkey (controlled-only usage).
    */
   hotkey?: string | null;
-  /** Header title. Defaults to `'Keyboard shortcuts'`. */
+  /** Header title. Default `labels.title`, 'Keyboard shortcuts'. */
   title?: ReactNode;
   /** Optional descriptive subtitle below the title. */
   description?: ReactNode;
-  /** Footer hint text. Defaults to `Press Esc to close`. */
+  /** Footer hint text. Default `Press Esc to close`, from `labels`. */
   footer?: ReactNode;
   /** The scrim behind the overlay, as `Modal`'s `backdrop`. Default `dim`. */
   backdrop?: BackdropVariant;
+  /** The texts it writes, over `LabelsProvider`'s `helpOverlay` and the English defaults. */
+  labels?: Partial<HelpOverlayLabels>;
   className?: string;
   children: ReactNode;
 };
+
+// What the root's `labels` prop gave, for `HelpOverlay.Shortcut`.
+const HelpOverlayLabelsContext = createContext<Partial<HelpOverlayLabels> | undefined>(undefined);
 
 const HelpOverlayRoot = ({
   open: controlledOpen,
   defaultOpen = false,
   onOpenChange,
   hotkey = '?',
-  title = 'Keyboard shortcuts',
+  title: titleProp,
   description,
   footer,
   backdrop,
+  labels: ownLabels,
   className,
   children,
 }: HelpOverlayProps) => {
+  const labels = useLabels('helpOverlay', HELP_OVERLAY_LABELS, ownLabels);
+  const title = titleProp ?? labels.title;
   const [open, setOpen] = useControllableState({
     value: controlledOpen,
     defaultValue: defaultOpen,
@@ -116,7 +126,7 @@ const HelpOverlayRoot = ({
       onClose={() => setOpen(false)}
       size="xl"
       backdrop={backdrop}
-      ariaLabel={typeof title === 'string' ? title : 'Keyboard shortcuts'}
+      ariaLabel={typeof title === 'string' ? title : labels.title}
       className={clsx('flex max-h-[80vh] flex-col', className)}
     >
       <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
@@ -133,20 +143,20 @@ const HelpOverlayRoot = ({
         <button
           type="button"
           onClick={() => setOpen(false)}
-          aria-label="Close keyboard shortcuts"
+          aria-label={labels.close}
           className="focus-visible:focus-indicator h-ctrl-32 w-ctrl-32 flex shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
       <div className="grid grid-cols-1 gap-x-8 gap-y-6 overflow-y-auto px-5 py-5 sm:grid-cols-2">
-        {children}
+        <HelpOverlayLabelsContext value={ownLabels}>{children}</HelpOverlayLabelsContext>
       </div>
       {(footer ?? true) && (
         <div className="flex items-center justify-end gap-2 border-t border-gray-200 bg-gray-50 px-5 py-2.5 text-xs text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400">
           {footer ?? (
             <>
-              Press <Kbd>Esc</Kbd> to close
+              {labels.closeHintBefore} <Kbd>{formatKey('esc', false)}</Kbd> {labels.closeHintAfter}
             </>
           )}
         </div>
@@ -186,6 +196,11 @@ export type HelpOverlayShortcutProps = {
 };
 
 const HelpOverlayShortcut = ({ keys, description, className }: HelpOverlayShortcutProps) => {
+  const labels = useLabels(
+    'helpOverlay',
+    HELP_OVERLAY_LABELS,
+    useContext(HelpOverlayLabelsContext)
+  );
   const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform);
   const sequence = Array.isArray(keys) ? keys : [keys];
 
@@ -202,7 +217,7 @@ const HelpOverlayShortcut = ({ keys, description, className }: HelpOverlayShortc
             <Fragment key={`${combo}-${idx}`}>
               {idx > 0 && (
                 <span className="text-3xs px-0.5 text-gray-500 uppercase dark:text-gray-400">
-                  then
+                  {labels.then}
                 </span>
               )}
               <span className="flex items-center gap-1">

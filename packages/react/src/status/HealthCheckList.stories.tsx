@@ -32,6 +32,7 @@ import {
 } from '../storybook-folds';
 import { HealthCheckList } from './HealthCheckList';
 import { StatusBadge } from './StatusBadge';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Monitoring/Health Check List',
@@ -540,5 +541,42 @@ export const WideListKeepsItsColumns: Story = {
     const name = canvas.getByText('Job queue').getBoundingClientRect();
     const message = canvas.getByText('312 jobs waiting (limit 200)').getBoundingClientRect();
     await expect(Math.abs(message.top - name.top)).toBeLessThan(4);
+  },
+};
+
+/** The provider writes the status names of the badges and of the counts. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        healthStatus: {
+          OK: 'OK',
+          WARN: 'Alerte',
+          CRIT: 'Critique',
+          UNKNOWN: 'Inconnu',
+          INFO: 'Info',
+        },
+      }}
+    >
+      <HealthCheckList
+        ariaLabel="Contrôles"
+        groups={[
+          {
+            id: 'g',
+            name: 'Base de données',
+            checks: [
+              { id: 'c1', name: 'Réplication', status: 'WARN' },
+              { id: 'c2', name: 'Sauvegarde', status: 'CRIT' },
+            ],
+          },
+        ]}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByText('Alerte').length).toBeGreaterThan(0);
+    await expect(canvas.getAllByText('Critique').length).toBeGreaterThan(0);
+    await expect(canvas.getByText(/1 Alerte/)).toBeVisible();
   },
 };
