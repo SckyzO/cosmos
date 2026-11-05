@@ -608,7 +608,7 @@ const RADIUS_ALLOWED: { file: string; token: string; in?: string; reason: string
   {
     file: 'packages/react/src/status/HealthMatrix.tsx',
     token: 'rounded-[2px]',
-    reason: 'the 12px cell of the matrix: a 2px corner only softens it',
+    reason: 'the 12 and 14px marks of the matrix: a 2px corner only softens them',
   },
   ...['packages/react/src/ui/Button.tsx', 'packages/react/src/logs/LogToolbar.tsx'].map((file) => ({
     file,

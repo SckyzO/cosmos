@@ -36,6 +36,9 @@ export type HealthMatrixRow = {
   cells: Record<string, HealthMatrixCell | undefined>;
 };
 
+/** The marks of the `dots` grid: a shape per status, or a square with a sign. */
+export type HealthMatrixMarks = 'shapes' | 'squares';
+
 export type HealthMatrixProps = {
   columns: HealthMatrixColumn[];
   rows: HealthMatrixRow[];
@@ -45,6 +48,12 @@ export type HealthMatrixProps = {
    * triangle). `pills` writes the status in each cell. Default `dots`.
    */
   variant?: 'dots' | 'pills';
+  /**
+   * The marks of `dots` and of the legend. `shapes` (default) gives each status a shape of its
+   * own. `squares` draws every status as a square: OK plain, and warning, critical, unknown and info
+   * with a sign in it (–, !, ?, i), so a status still reads without its colour.
+   */
+  marks?: HealthMatrixMarks;
   /** Accessible name of the grid. */
   ariaLabel: string;
   /** A visible title, above the grid. */
@@ -88,17 +97,73 @@ const SHAPE: Record<HealthStatus, string> = {
   INFO: 'size-3 [clip-path:polygon(50%_0,100%_100%,0_100%)]',
 };
 
+// The sign in a square mark, drawn in a 14px box: the mark keeps a meaning without its colour.
+const SIGN: Partial<Record<HealthStatus, ReactNode>> = {
+  WARN: <path d="M3.5 7h7" />,
+  CRIT: (
+    <>
+      <path d="M7 3.25v4.5" />
+      <path d="M7 10.5v.25" />
+    </>
+  ),
+  UNKNOWN: (
+    <>
+      <path d="M5.1 5.1a2 2 0 1 1 2.7 1.85c-.5.2-.8.6-.8 1.1v.2" />
+      <path d="M7 10.5v.25" />
+    </>
+  ),
+  INFO: (
+    <>
+      <path d="M7 6.5v4" />
+      <path d="M7 3.5v.25" />
+    </>
+  ),
+};
+
+// The ink of the sign, 3:1 or more on the fill: dark on amber, and on the light grey of a dark theme.
+const SIGN_INK: Record<HealthStatus, string> = {
+  OK: '',
+  WARN: 'text-gray-900',
+  CRIT: 'text-white',
+  UNKNOWN: 'text-white dark:text-gray-900',
+  INFO: 'text-white',
+};
+
 // The mark of a status. Decorative: the text next to it, or the cell's name, says the status.
-const Shape = ({ status }: { status: HealthStatus }) => (
-  <span
-    aria-hidden="true"
-    className={clsx(
-      'inline-block shrink-0',
-      SHAPE[status],
-      status !== 'UNKNOWN' && STATUS_DOT[status]
-    )}
-  />
-);
+const Shape = ({ status, marks }: { status: HealthStatus; marks: HealthMatrixMarks }) =>
+  marks === 'squares' ? (
+    <span
+      aria-hidden="true"
+      data-mark="square"
+      className={clsx(
+        'inline-flex size-3.5 shrink-0 items-center justify-center rounded-[2px]',
+        STATUS_DOT[status],
+        SIGN_INK[status]
+      )}
+    >
+      {SIGN[status] && (
+        <svg
+          viewBox="0 0 14 14"
+          className="size-3.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+        >
+          {SIGN[status]}
+        </svg>
+      )}
+    </span>
+  ) : (
+    <span
+      aria-hidden="true"
+      className={clsx(
+        'inline-block shrink-0',
+        SHAPE[status],
+        status !== 'UNKNOWN' && STATUS_DOT[status]
+      )}
+    />
+  );
 
 // The legend reads from the good to the bad, as the mockups do.
 const LEGEND_ORDER: HealthStatus[] = ['OK', 'WARN', 'CRIT', 'UNKNOWN', 'INFO'];
@@ -117,6 +182,7 @@ export const HealthMatrix = ({
   columns,
   rows,
   variant = 'dots',
+  marks = 'shapes',
   ariaLabel,
   title,
   rowHeader = 'Service',
@@ -227,7 +293,7 @@ export const HealthMatrix = ({
                   key={status}
                   className="flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)]"
                 >
-                  <Shape status={status} />
+                  <Shape status={status} marks={marks} />
                   {STATUS_NAME[status]}
                 </li>
               ))}
@@ -272,14 +338,14 @@ export const HealthMatrix = ({
                   <span className="sr-only">: </span>
                   {crit > 0 && (
                     <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
-                      <Shape status="CRIT" />
+                      <Shape status="CRIT" marks={marks} />
                       {crit} {STATUS_NAME.CRIT}
                     </span>
                   )}
                   {crit > 0 && warn > 0 && <span className="sr-only">, </span>}
                   {warn > 0 && (
                     <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
-                      <Shape status="WARN" />
+                      <Shape status="WARN" marks={marks} />
                       {warn} {STATUS_NAME.WARN}
                     </span>
                   )}
@@ -365,7 +431,7 @@ export const HealthMatrix = ({
                             —
                           </span>
                         ) : variant === 'dots' ? (
-                          <Shape status={cell.status} />
+                          <Shape status={cell.status} marks={marks} />
                         ) : (
                           <StatusBadge
                             status={cell.status}
