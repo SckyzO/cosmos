@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Building2, Cpu, Server } from 'lucide-react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Breadcrumb } from './Breadcrumb';
@@ -276,6 +276,106 @@ export const MobileWithIconsChecks: Story = {
   tags: ['!dev', '!autodocs'],
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow(canvas.getByRole('navigation', { name: 'Breadcrumb' }));
+  },
+};
+
+// ── Folding on a phone (#634) ───────────────────────────────────────────────
+
+/** Whether a crumb's label is cut: its text is wider than the room the crumb gives it. */
+const isCut = (crumb: Element) => {
+  const label = crumb.querySelector('.truncate')!;
+  return label.scrollWidth > label.clientWidth;
+};
+
+/** The trail in a box `width` px wide, the one `play` resizes through `data-testid="box"`. */
+const inBox =
+  (width: number): Decorator =>
+  (Story) => (
+    <div data-testid="box" style={{ width }}>
+      <Story />
+    </div>
+  );
+
+/** The crumbs of a trail, the current page last: the links and buttons, then the current crumb. */
+const crumbs = (nav: HTMLElement) => [
+  ...nav.querySelectorAll('a, button:not([aria-haspopup]), [aria-current="page"]'),
+];
+
+/**
+ * On a phone (a 375px screen less its 16px gutters), a trail that doesn't fit folds its middle
+ * crumbs into the "…" menu, as few as it needs: the first crumb and the current page read whole.
+ */
+export const PhoneFoldsTheMiddleCrumbs: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  decorators: [inBox(343)],
+  args: { items: PATH },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Breadcrumb' });
+    expectNoHorizontalOverflow(nav);
+    for (const crumb of crumbs(nav)) await expect(isCut(crumb), crumb.textContent!).toBe(false);
+    await expect(within(nav).getByRole('link', { name: 'Home' })).toBeVisible();
+    await expect(nav.querySelector('[aria-current="page"]')).toHaveTextContent('Breadcrumb');
+    await userEvent.click(within(nav).getByRole('button', { name: 'Show 2 more pages' }));
+    const items = await within(document.body).findAllByRole('menuitem');
+    await expect(items.map((item) => item.textContent)).toEqual(['Library', 'Components']);
+  },
+};
+
+/** The crumbs come back when the box grows, and go again when it narrows. */
+export const PhoneUnfoldsWhenTheBoxGrows: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  decorators: [inBox(200)],
+  args: { items: [PATH[0], PATH[1], PATH[3]] },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Breadcrumb' });
+    await expect(within(nav).getByRole('button', { name: 'Show 1 more page' })).toBeVisible();
+    canvas.getByTestId('box').style.width = '343px';
+    await waitFor(() => expect(within(nav).getByRole('link', { name: 'Library' })).toBeVisible());
+    await expect(within(nav).queryByRole('button', { name: /more page/ })).toBeNull();
+    canvas.getByTestId('box').style.width = '200px';
+    await waitFor(() => expect(within(nav).queryByRole('link', { name: 'Library' })).toBeNull());
+  },
+};
+
+/** A trail that fits a phone is drawn whole. */
+export const PhoneKeepsATrailThatFits: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  decorators: [inBox(343)],
+  args: { items: [PATH[0], { label: 'Orders', href: '#' }, { label: '#20431' }] },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Breadcrumb' });
+    await expect(within(nav).queryByRole('button', { name: /more page/ })).toBeNull();
+    await expect(within(nav).getAllByRole('link')).toHaveLength(2);
+    for (const crumb of crumbs(nav)) await expect(isCut(crumb), crumb.textContent!).toBe(false);
+  },
+};
+
+/** A host's `maxItems` wins on a phone: the trail folds what it says, and the labels give way. */
+export const PhoneKeepsTheHostsMaxItems: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  decorators: [inBox(200)],
+  args: { items: PATH, maxItems: PATH.length },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Breadcrumb' });
+    await expect(within(nav).queryByRole('button', { name: /more page/ })).toBeNull();
+    await expect(within(nav).getAllByRole('link')).toHaveLength(3);
+    expectNoHorizontalOverflow(nav);
+  },
+};
+
+/** Above `sm`, a box too narrow for the trail cuts the labels and folds nothing. */
+export const WideScreenNarrowBoxFoldsNothing: Story = {
+  tags: ['!dev', '!autodocs'],
+  decorators: [inBox(200)],
+  args: { items: PATH },
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Breadcrumb' });
+    await expect(within(nav).queryByRole('button', { name: /more page/ })).toBeNull();
+    await expect(within(nav).getAllByRole('link')).toHaveLength(3);
   },
 };
 
