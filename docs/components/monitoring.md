@@ -8,7 +8,11 @@ Storybook: [Health Summary](https://sckyzo.github.io/cosmos/?path=/docs/monitori
 
 `HealthSummary`, `HealthCheckList` and `HealthMatrix` show whether a system and its parts are
 healthy, and why not. They build on `HealthStatus` (`OK`, `WARN`, `CRIT`, `UNKNOWN`, `INFO`) and on
-the dots and badges of the same folder.
+the dots and badges of the same folder: `HealthDot` for a dot next to a name, and `StatusBadge` for
+the status in words, a filled pill by default. `StatusBadge` takes the options of `Badge`
+(`shape="rounded"`, `appearance="outline"`) and `icon`, which leads the label with the icon of the
+status; `<StatusBadge status="OK" shape="rounded" appearance="outline" icon size="lg" />` is the badge
+for a status that is the subject of a page or a card.
 
 A check is plain data. A group holds checks and, below them, other groups: one level per dependency
 reads as a tree. A group has no status of its own, it is the worst status under it.
