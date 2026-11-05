@@ -54,6 +54,7 @@ export const dayPickerLabels = (
         selected: selectable && !!modifiers?.selected,
       });
   const mapped: Partial<Labels> = {
+    ...(given.navigation !== undefined && { labelNav: () => labels.navigation }),
     ...(given.previousMonth !== undefined && { labelPrevious: () => labels.previousMonth }),
     ...(given.nextMonth !== undefined && { labelNext: () => labels.nextMonth }),
     ...(given.monthDropdown !== undefined && { labelMonthDropdown: () => labels.monthDropdown }),

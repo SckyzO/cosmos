@@ -31,6 +31,8 @@ export type AvatarUploaderLabels = {
  * of the `locale` when that has its own.
  */
 export type CalendarLabels = {
+  /** Name of the navigation bar that holds the month buttons. Default `Navigation bar`. */
+  navigation: string;
   /** Name of the button to the month before. Default `Go to the Previous Month`. */
   previousMonth: string;
   /** Name of the button to the month after. Default `Go to the Next Month`. */
@@ -382,6 +384,7 @@ export const AVATAR_UPLOADER_LABELS: AvatarUploaderLabels = {
 };
 
 export const CALENDAR_LABELS: CalendarLabels = {
+  navigation: 'Navigation bar',
   previousMonth: 'Go to the Previous Month',
   nextMonth: 'Go to the Next Month',
   monthDropdown: 'Choose the Month',
