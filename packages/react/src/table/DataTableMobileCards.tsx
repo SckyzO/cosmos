@@ -102,7 +102,7 @@ export const DataTableMobileCards = <T,>({
         </span>
         <ul aria-hidden className={ROW_DIVIDER}>
           {Array.from({ length: loadingRows }, (_, i) => (
-            <li key={i} className="flex flex-col gap-3 px-4 py-4">
+            <li key={i} className="flex flex-col gap-3 px-[var(--cosmos-table-inset,1rem)] py-4">
               <Sk h="h-5" w="w-40" />
               {pairs.map((col) => (
                 <Sk key={col.key} h="h-3" w="w-full" />
@@ -118,7 +118,10 @@ export const DataTableMobileCards = <T,>({
     return (
       <div
         onAnimationEnd={arrive.onAnimationEnd}
-        className={clsx('flex justify-center px-4 sm:hidden', arrive.className)}
+        className={clsx(
+          'flex justify-center px-[var(--cosmos-table-inset,1rem)] sm:hidden',
+          arrive.className
+        )}
       >
         {error ? (
           <ErrorState message={error} onRetry={onRetry} />
@@ -173,7 +176,7 @@ export const DataTableMobileCards = <T,>({
                 : undefined
             }
             className={clsx(
-              'py-row-12 px-4',
+              'py-row-12 px-[var(--cosmos-table-inset,1rem)]',
               selected
                 ? 'bg-brand-50/40 dark:bg-brand-500/5'
                 : open && 'bg-gray-50 dark:bg-white/[0.03]',
