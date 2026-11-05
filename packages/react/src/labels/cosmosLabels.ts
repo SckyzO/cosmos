@@ -1,4 +1,29 @@
 import type { EmptyStateLabels, ErrorStateLabels, LoadingStateLabels } from '../feedback/labels';
+import type {
+  AvatarUploaderLabels,
+  CalendarLabels,
+  CardExpiryInputLabels,
+  CardFieldsLabels,
+  ColorInputLabels,
+  ComboboxLabels,
+  DatePickerLabels,
+  DropzoneLabels,
+  ErrorSummaryLabels,
+  FileInputLabels,
+  FormFooterLabels,
+  LineItemsLabels,
+  MultiSelectLabels,
+  NumberInputLabels,
+  OtpInputLabels,
+  PasswordInputLabels,
+  PasswordPolicyLabels,
+  PhoneInputLabels,
+  SearchInputLabels,
+  SliderLabels,
+  TagInputLabels,
+  UploadQueueLabels,
+  ZoomBarLabels,
+} from '../forms/labels';
 import type { BreadcrumbLabels } from '../navigation/labels';
 
 /**
@@ -9,8 +34,31 @@ import type { BreadcrumbLabels } from '../navigation/labels';
  * `englishLabels` holds the defaults, a starting point for a translation.
  */
 export type CosmosLabels = {
+  avatarUploader: AvatarUploaderLabels;
   breadcrumb: BreadcrumbLabels;
+  calendar: CalendarLabels;
+  cardExpiryInput: CardExpiryInputLabels;
+  cardFields: CardFieldsLabels;
+  colorInput: ColorInputLabels;
+  combobox: ComboboxLabels;
+  datePicker: DatePickerLabels;
+  dropzone: DropzoneLabels;
   emptyState: EmptyStateLabels;
   errorState: ErrorStateLabels;
+  errorSummary: ErrorSummaryLabels;
+  fileInput: FileInputLabels;
+  formFooter: FormFooterLabels;
+  lineItemsEditor: LineItemsLabels;
   loadingState: LoadingStateLabels;
+  multiSelect: MultiSelectLabels;
+  numberInput: NumberInputLabels;
+  otpInput: OtpInputLabels;
+  passwordInput: PasswordInputLabels;
+  passwordPolicyChecker: PasswordPolicyLabels;
+  phoneInput: PhoneInputLabels;
+  searchInput: SearchInputLabels;
+  slider: SliderLabels;
+  tagInput: TagInputLabels;
+  uploadQueue: UploadQueueLabels;
+  zoomBar: ZoomBarLabels;
 };

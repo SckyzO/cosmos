@@ -12,14 +12,15 @@ import {
   type Ref,
 } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { FIELD_PAD_X, FIELD_PLACEHOLDER, fieldClass, type FieldSize } from './fieldRecipe';
 import { FieldMessage } from './FieldMessage';
+import { PHONE_INPUT_LABELS, type PhoneInputLabels } from './labels';
 import { useListboxNavigation } from './listboxNavigation';
 import { PHONE_COUNTRIES } from './phoneCountries';
 import {
-  PHONE_ERROR,
   digitsOf,
   filterCountries,
   flagEmoji,
@@ -89,6 +90,8 @@ export type PhoneInputProps = FieldA11yProps & {
    */
   validate?: (value: string) => string | undefined;
   placeholder?: string;
+  /** The texts it writes, over `LabelsProvider`'s `phoneInput` and the English defaults. */
+  labels?: Partial<PhoneInputLabels>;
   disabled?: boolean;
   /** Merged on the wrapper. */
   className?: string;
@@ -137,11 +140,13 @@ export const PhoneInput = ({
   format,
   validate,
   placeholder,
+  labels: ownLabels,
   disabled = false,
   className,
   ref,
   ...a11y
 }: PhoneInputProps) => {
+  const labels = useLabels('phoneInput', PHONE_INPUT_LABELS, ownLabels);
   const id = useId();
   const inputId = a11y.id ?? `${id}-number`;
   const listboxId = `${id}-listbox`;
@@ -212,7 +217,7 @@ export const PhoneInput = ({
   const [touched, setTouched] = useState(false);
   const invalidMessage =
     touched && text.trim() !== '' && current.value === ''
-      ? (current.message ?? PHONE_ERROR)
+      ? (current.message ?? labels.invalid)
       : undefined;
   const message = error ?? invalidMessage;
   const helper = message ?? description;
@@ -322,7 +327,7 @@ export const PhoneInput = ({
           )}
         >
           {/* The accessible name starts with what the button is for and ends with the visible text. */}
-          <span className="sr-only">Country: {countryName},</span>
+          <span className="sr-only">{labels.country(countryName)}</span>
           <span aria-hidden className="text-base leading-none">
             {flagEmoji(country)}
           </span>
@@ -369,13 +374,13 @@ export const PhoneInput = ({
             <Search className="size-4 shrink-0 text-gray-500 dark:text-gray-400" aria-hidden />
             <input
               role="combobox"
-              aria-label="Search countries"
+              aria-label={labels.searchCountries}
               aria-expanded
               aria-controls={listboxId}
               aria-autocomplete="list"
               aria-activedescendant={filtered[activeIndex] ? `${id}-opt-${activeIndex}` : undefined}
               value={query}
-              placeholder="Search"
+              placeholder={labels.search}
               autoComplete="off"
               spellCheck={false}
               onChange={(e) => {
@@ -392,7 +397,7 @@ export const PhoneInput = ({
           <ul
             id={listboxId}
             role="listbox"
-            aria-label="Countries"
+            aria-label={labels.countries}
             hidden={filtered.length === 0}
             className="max-h-60 overflow-auto p-1.5 text-sm"
           >
@@ -428,7 +433,7 @@ export const PhoneInput = ({
           </ul>
           {filtered.length === 0 && (
             <p role="status" className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-              No matches found.
+              {labels.noMatches}
             </p>
           )}
         </div>

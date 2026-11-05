@@ -1,7 +1,9 @@
 import { clsx } from 'clsx';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { ReactNode, Ref } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
+import { NUMBER_INPUT_LABELS, type NumberInputLabels } from './labels';
 import { useNumberDraft } from './numberDraft';
 import { useControllableState } from '../hooks/useControllableState';
 import {
@@ -54,6 +56,8 @@ export type NumberInputProps = FieldA11yProps & {
    * Use `fullWidth` for form grids where the column should be filled.
    */
   fullWidth?: boolean;
+  /** The texts it writes (the step buttons), over `LabelsProvider`'s `numberInput` and the English defaults. */
+  labels?: Partial<NumberInputLabels>;
   disabled?: boolean;
   className?: string;
   /** Ref to the number `<input>`, not to the step buttons. */
@@ -90,12 +94,14 @@ export const NumberInput = ({
   controls = 'sides',
   width = 'w-20',
   fullWidth = false,
+  labels: ownLabels,
   disabled = false,
   className,
   name,
   ref,
   ...a11y
 }: NumberInputProps) => {
+  const labels = useLabels('numberInput', NUMBER_INPUT_LABELS, ownLabels);
   const fieldA11y = useFieldA11y(a11y);
   const clamp = (v: number) => Math.min(max, Math.max(min, v));
   const [value, setValue] = useControllableState({
@@ -179,7 +185,7 @@ export const NumberInput = ({
                 onClick={() => setValue(clamp(value + step))}
                 disabled={disabled || value >= max}
                 tabIndex={-1}
-                aria-label="Increase"
+                aria-label={labels.increase}
                 className={stackedButton}
               >
                 <ChevronUp className="h-3 w-3" strokeWidth={2.25} aria-hidden />
@@ -189,7 +195,7 @@ export const NumberInput = ({
                 onClick={() => setValue(clamp(value - step))}
                 disabled={disabled || value <= min}
                 tabIndex={-1}
-                aria-label="Decrease"
+                aria-label={labels.decrease}
                 className={clsx('border-t border-gray-200 dark:border-gray-700', stackedButton)}
               >
                 <ChevronDown className="h-3 w-3" strokeWidth={2.25} aria-hidden />
@@ -204,7 +210,7 @@ export const NumberInput = ({
             onClick={() => setValue(clamp(value - step))}
             disabled={disabled || value <= min}
             tabIndex={-1}
-            aria-label="Decrease"
+            aria-label={labels.decrease}
             className={clsx('border-e border-gray-200 dark:border-gray-700', sideButton)}
           >
             <span className="text-base leading-none font-semibold text-gray-500 dark:text-gray-400">
@@ -251,7 +257,7 @@ export const NumberInput = ({
             onClick={() => setValue(clamp(value + step))}
             disabled={disabled || value >= max}
             tabIndex={-1}
-            aria-label="Increase"
+            aria-label={labels.increase}
             className={clsx('border-s border-gray-200 dark:border-gray-700', sideButton)}
           >
             <span className="text-base leading-none font-semibold text-gray-500 dark:text-gray-400">

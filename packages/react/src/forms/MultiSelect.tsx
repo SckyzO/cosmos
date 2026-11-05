@@ -9,12 +9,14 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { mergeRefs } from '../ui/mergeRefs';
 import { Tag } from '../ui/Tag';
 import { useControllableState } from '../hooks/useControllableState';
 import type { ComboboxOption } from './Combobox';
 import { FIELD_LISTBOX_PANEL, FIELD_PAD_END_ICON, type FieldSize } from './fieldRecipe';
+import { MULTI_SELECT_LABELS, type MultiSelectLabels } from './labels';
 import { useFilteredOptions, useListboxNavigation } from './listboxNavigation';
 import { RequiredMark } from './RequiredMark';
 import {
@@ -45,8 +47,10 @@ export type MultiSelectProps = {
   onChange?: (values: string[]) => void;
   options: MultiSelectOption[];
   placeholder?: string;
-  /** Show this when no option matches the typed query. */
+  /** Show this when no option matches the typed query. Default `labels.empty`. */
   emptyMessage?: string;
+  /** The texts it writes, over `LabelsProvider`'s `multiSelect` and the English defaults. */
+  labels?: Partial<MultiSelectLabels>;
   /** The most values that can be chosen: the other options are then unavailable. No limit when omitted. */
   maxItems?: number;
   /** Disable the field: the tags cannot be removed and the list does not open. */
@@ -86,7 +90,8 @@ export const MultiSelect = ({
   onChange,
   options,
   placeholder,
-  emptyMessage = 'No matches found.',
+  emptyMessage,
+  labels: ownLabels,
   maxItems,
   disabled = false,
   helperText,
@@ -99,6 +104,7 @@ export const MultiSelect = ({
   defaultOpen = false,
   onOpenChange,
 }: MultiSelectProps) => {
+  const labels = useLabels('multiSelect', MULTI_SELECT_LABELS, ownLabels);
   const id = useId();
   const listboxId = `${id}-listbox`;
   const descId = `${id}-desc`;
@@ -147,7 +153,7 @@ export const MultiSelect = ({
     const chosen = values.includes(opt.value);
     const next = chosen ? values.filter((v) => v !== opt.value) : [...values, opt.value];
     setValues(next);
-    announce(`${opt.label} ${chosen ? 'removed' : 'added'}, ${next.length} selected`);
+    announce((chosen ? labels.removed : labels.added)(opt.label, next.length));
     // The list stays open on the whole set of options for the next pick.
     setQuery('');
     setActiveIndex(items.indexOf(opt));
@@ -156,7 +162,7 @@ export const MultiSelect = ({
   const remove = (v: string) => {
     const next = values.filter((x) => x !== v);
     setValues(next);
-    announce(`${labelOf(v)} removed, ${next.length} selected`);
+    announce(labels.removed(labelOf(v), next.length));
     inputRef.current?.focus();
   };
 
@@ -174,8 +180,6 @@ export const MultiSelect = ({
     }
     onKeyDown(e);
   };
-
-  const countText = maxItems !== undefined ? `${values.length} of ${maxItems}` : `${values.length}`;
 
   return (
     <div
@@ -212,7 +216,13 @@ export const MultiSelect = ({
             (values.length === 0 || labelHidden) && 'sr-only'
           )}
         >
-          <bdi>{values.length === 0 ? 'None selected' : `${countText} selected`}</bdi>
+          <bdi>
+            {values.length === 0
+              ? labels.none
+              : maxItems !== undefined
+                ? labels.selectedOfMax(values.length, maxItems)
+                : labels.selected(values.length)}
+          </bdi>
         </span>
       </div>
       <div
@@ -267,7 +277,7 @@ export const MultiSelect = ({
         />
         <button
           type="button"
-          aria-label="Toggle options"
+          aria-label={labels.toggle}
           tabIndex={-1}
           disabled={disabled}
           onClick={() => setOpen(!open)}
@@ -351,7 +361,7 @@ export const MultiSelect = ({
             role="status"
             className={noMatch ? 'py-row-8 px-3 text-gray-500 dark:text-gray-400' : 'sr-only'}
           >
-            {noMatch ? emptyMessage : ''}
+            {noMatch ? (emptyMessage ?? labels.empty) : ''}
           </p>
         </div>
       </FloatingPanel>

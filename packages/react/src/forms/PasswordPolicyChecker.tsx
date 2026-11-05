@@ -1,47 +1,40 @@
 import { clsx } from 'clsx';
 import { Check, X } from 'lucide-react';
+import { useLabels } from '../labels/labelsContext';
+import { PASSWORD_POLICY_LABELS, type PasswordPolicyLabels } from './labels';
 
 export type PasswordRule = { label: string; ok: boolean };
 
-/** What a screen reader hears after each rule, since the tick and the cross are drawn. */
-export type PasswordPolicyLabels = {
-  /** Default "met". */
-  met?: string;
-  /** Default "not met". */
-  notMet?: string;
-};
-
 export type PasswordPolicyCheckerProps = {
   rules: PasswordRule[];
-  /** Title shown above the rules list. Pass `null` to hide it. */
+  /** Title shown above the rules list. Default `labels.title`. Pass `null` to hide it. */
   title?: string | null;
   /**
-   * The words said after each rule's label for a screen reader only ("At least 12 characters, not
-   * met"), to translate with the rest of the page.
+   * The texts it writes, over `LabelsProvider`'s `passwordPolicyChecker` and the English
+   * defaults: the title, the line for no rule, and the words said after each rule's label for a
+   * screen reader only ("At least 12 characters, not met"), since the tick and the cross are drawn.
    */
-  labels?: PasswordPolicyLabels;
+  labels?: Partial<PasswordPolicyLabels>;
   className?: string;
 };
 
 export const PasswordPolicyChecker = ({
   rules,
-  title = 'Password requirements',
-  labels,
+  title,
+  labels: ownLabels,
   className,
 }: PasswordPolicyCheckerProps) => {
-  const met = labels?.met ?? 'met';
-  const notMet = labels?.notMet ?? 'not met';
+  const labels = useLabels('passwordPolicyChecker', PASSWORD_POLICY_LABELS, ownLabels);
+  const shownTitle = title === undefined ? labels.title : title;
   if (rules.length === 0) {
     return (
-      <p className={clsx('text-xs text-gray-500 dark:text-gray-400', className)}>
-        No requirements defined.
-      </p>
+      <p className={clsx('text-xs text-gray-500 dark:text-gray-400', className)}>{labels.empty}</p>
     );
   }
   return (
     <div className={className}>
-      {title && (
-        <p className="mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">{title}</p>
+      {shownTitle && (
+        <p className="mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">{shownTitle}</p>
       )}
       <ul className="space-y-1">
         {rules.map((r, i) => {
@@ -56,7 +49,7 @@ export const PasswordPolicyChecker = ({
             >
               <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
               <span>{r.label}</span>
-              <span className="sr-only">, {r.ok ? met : notMet}</span>
+              <span className="sr-only">, {r.ok ? labels.met : labels.notMet}</span>
             </li>
           );
         })}

@@ -46,3 +46,28 @@ export {
 } from './cardFormat';
 // forms/formatBytes (the file size shown by FileInput and Dropzone) is internal: not re-exported.
 export type { FieldSize } from './fieldRecipe';
+export type {
+  AvatarUploaderLabels,
+  CalendarLabels,
+  CardExpiryInputLabels,
+  CardFieldsLabels,
+  ColorInputLabels,
+  ComboboxLabels,
+  DatePickerLabels,
+  DropzoneLabels,
+  ErrorSummaryLabels,
+  FileInputLabels,
+  FormFooterLabels,
+  LineItemsLabels,
+  MultiSelectLabels,
+  NumberInputLabels,
+  OtpInputLabels,
+  PasswordInputLabels,
+  PasswordPolicyLabels,
+  PhoneInputLabels,
+  SearchInputLabels,
+  SliderLabels,
+  TagInputLabels,
+  UploadQueueLabels,
+  ZoomBarLabels,
+} from './labels';

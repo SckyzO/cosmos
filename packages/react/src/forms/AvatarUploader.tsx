@@ -1,9 +1,11 @@
 import { clsx } from 'clsx';
 import { AlertCircle, Camera, Trash2 } from 'lucide-react';
 import { useRef, useState, type ChangeEvent } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { Avatar, type AvatarSize } from '../ui/Avatar';
 import { Button } from '../ui/Button';
 import { Spinner } from '../ui/Spinner';
+import { AVATAR_UPLOADER_LABELS, type AvatarUploaderLabels } from './labels';
 
 export type AvatarUploaderSize = 'md' | 'lg';
 
@@ -29,9 +31,12 @@ export type AvatarUploaderProps = {
   /** File picker accept attribute. Default `image/*`. */
   accept?: string;
   disabled?: boolean;
-  /** Override the upload button label. Default toggles "Upload photo" / "Change photo". */
+  /** Override the upload button label. Default toggles `labels.change` / `labels.upload`. */
   uploadLabel?: string;
+  /** Override the remove button label. Default `labels.remove`. */
   removeLabel?: string;
+  /** The texts it writes, over `LabelsProvider`'s `avatarUploader` and the English defaults. */
+  labels?: Partial<AvatarUploaderLabels>;
   className?: string;
 };
 
@@ -58,9 +63,11 @@ export const AvatarUploader = ({
   accept = 'image/*',
   disabled = false,
   uploadLabel,
-  removeLabel = 'Remove',
+  removeLabel,
+  labels: ownLabels,
   className,
 }: AvatarUploaderProps) => {
+  const labels = useLabels('avatarUploader', AVATAR_UPLOADER_LABELS, ownLabels);
   const inputRef = useRef<HTMLInputElement>(null);
   const [internalLoading, setInternalLoading] = useState(false);
   const [internalError, setInternalError] = useState<string | null>(null);
@@ -69,19 +76,18 @@ export const AvatarUploader = ({
   const error = errorProp ?? internalError;
   const hasAvatar = !!src;
   const isBusy = disabled || loading;
-  const defaultUploadLabel = hasAvatar ? 'Change photo' : 'Upload photo';
-  const defaultHelper = `JPG, PNG or GIF — max ${maxSizeMB} MB`;
+  const defaultUploadLabel = hasAvatar ? labels.change : labels.upload;
 
   const handleFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (inputRef.current) inputRef.current.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setInternalError('Please select an image file');
+      setInternalError(labels.notImage);
       return;
     }
     if (file.size > maxSizeMB * 1024 * 1024) {
-      setInternalError(`File too large — max ${maxSizeMB} MB`);
+      setInternalError(labels.tooLarge(maxSizeMB));
       return;
     }
     setInternalError(null);
@@ -89,7 +95,7 @@ export const AvatarUploader = ({
     try {
       await onUpload(file);
     } catch (err) {
-      setInternalError(err instanceof Error ? err.message : 'Upload failed');
+      setInternalError(err instanceof Error ? err.message : labels.failed);
     } finally {
       setInternalLoading(false);
     }
@@ -113,7 +119,7 @@ export const AvatarUploader = ({
         {loading && (
           <div
             role="status"
-            aria-label="Uploading"
+            aria-label={labels.uploading}
             className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40"
           >
             <Spinner size="sm" onDark />
@@ -127,7 +133,7 @@ export const AvatarUploader = ({
           accept={accept}
           className="hidden"
           onChange={handleFile}
-          aria-label="Upload avatar"
+          aria-label={labels.input}
           disabled={isBusy}
         />
         <div className="flex flex-wrap items-center gap-2">
@@ -151,7 +157,7 @@ export const AvatarUploader = ({
               disabled={isBusy}
               onClick={handleRemove}
             >
-              {removeLabel}
+              {removeLabel ?? labels.remove}
             </Button>
           )}
         </div>
@@ -160,7 +166,9 @@ export const AvatarUploader = ({
             <AlertCircle className="h-3 w-3" /> {error}
           </p>
         ) : (
-          <p className="text-xs text-gray-500 dark:text-gray-400">{helperText ?? defaultHelper}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {helperText ?? labels.helper(maxSizeMB)}
+          </p>
         )}
       </div>
     </div>

@@ -3,6 +3,7 @@ import { Search } from 'lucide-react';
 import type { Ref } from 'react';
 import { useFieldA11y, type FieldA11yProps } from './fieldA11y';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import {
   FIELD_HEIGHT,
   FIELD_ICON_START,
@@ -14,6 +15,7 @@ import {
   fieldClass,
   type FieldSize,
 } from './fieldRecipe';
+import { SEARCH_INPUT_LABELS, type SearchInputLabels } from './labels';
 
 export type SearchInputProps = FieldA11yProps & {
   name?: string;
@@ -22,7 +24,10 @@ export type SearchInputProps = FieldA11yProps & {
   /** Initial text, when uncontrolled. Default empty. */
   defaultValue?: string;
   onChange?: (v: string) => void;
+  /** What the field asks for. Default `labels.placeholder`, "Search…". */
   placeholder?: string;
+  /** The texts it writes, over `LabelsProvider`'s `searchInput` and the English defaults. */
+  labels?: Partial<SearchInputLabels>;
   /** Height and text size, aligned on Button's. Default `md`. */
   size?: FieldSize;
   /** Sets `aria-required` on the input. It has no label of its own to carry an asterisk. */
@@ -36,7 +41,8 @@ export const SearchInput = ({
   value: valueProp,
   defaultValue = '',
   onChange,
-  placeholder = 'Search…',
+  placeholder,
+  labels: ownLabels,
   size = 'md',
   required,
   className,
@@ -44,6 +50,7 @@ export const SearchInput = ({
   ref,
   ...a11y
 }: SearchInputProps) => {
+  const labels = useLabels('searchInput', SEARCH_INPUT_LABELS, ownLabels);
   const fieldA11y = useFieldA11y(a11y);
   const [value, setValue] = useControllableState({
     value: valueProp,
@@ -71,7 +78,7 @@ export const SearchInput = ({
         aria-required={required || undefined}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder={placeholder}
+        placeholder={placeholder ?? labels.placeholder}
         className={clsx(
           'h-full w-full',
           fieldClass({ size, fixedHeight: false }),

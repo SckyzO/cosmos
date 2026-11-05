@@ -1,7 +1,9 @@
 import type { ChangeEvent } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import { CardField, fieldEditOf, showEdit, type CardFieldProps } from './cardField';
 import { editExpiry, formatExpiry } from './cardFormat';
+import { CARD_EXPIRY_INPUT_LABELS, type CardExpiryInputLabels } from './labels';
 
 export type CardExpiryInputProps = CardFieldProps & {
   /** The expiry as `MMYY` (`'1228'` for December 2028), when controlled. `''` is none. */
@@ -13,6 +15,8 @@ export type CardExpiryInputProps = CardFieldProps & {
    * and is not over is `expiryValid`, the page calls it when it chooses to.
    */
   onChange?: (value: string) => void;
+  /** The texts it writes, over `LabelsProvider`'s `cardExpiryInput` and the English defaults. */
+  labels?: Partial<CardExpiryInputLabels>;
 };
 
 /**
@@ -25,9 +29,11 @@ export const CardExpiryInput = ({
   value: valueProp,
   defaultValue = '',
   onChange,
-  placeholder = 'MM / YY',
+  placeholder,
+  labels: ownLabels,
   ...rest
 }: CardExpiryInputProps) => {
+  const labels = useLabels('cardExpiryInput', CARD_EXPIRY_INPUT_LABELS, ownLabels);
   const [value, setValue] = useControllableState({
     value: valueProp,
     defaultValue,
@@ -45,7 +51,7 @@ export const CardExpiryInput = ({
   return (
     <CardField
       {...rest}
-      placeholder={placeholder}
+      placeholder={placeholder ?? labels.placeholder}
       value={text}
       onChange={handleChange}
       inputMode="numeric"

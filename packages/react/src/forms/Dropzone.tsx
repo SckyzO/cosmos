@@ -1,16 +1,9 @@
 import { clsx } from 'clsx';
 import { File as FileIcon, Upload, X } from 'lucide-react';
-import {
-  useCallback,
-  useId,
-  useRef,
-  useState,
-  type DragEvent,
-  type ReactNode,
-  type Ref,
-} from 'react';
-import { formatBytes } from './formatBytes';
+import { useId, useRef, useState, type DragEvent, type ReactNode, type Ref } from 'react';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
+import { DROPZONE_LABELS, type DropzoneLabels } from './labels';
 
 /** A file `Dropzone` turned down, and why, in the words it would have shown. */
 export type DropzoneRejection = {
@@ -51,6 +44,8 @@ export type DropzoneProps = {
   /** Hide the file list rendered below the drop area. Default `false`. */
   hideFileList?: boolean;
   className?: string;
+  /** The texts it writes, over `LabelsProvider`'s `dropzone` and the English defaults. */
+  labels?: Partial<DropzoneLabels>;
   /** Ref to the drop area (`<div role="button">`), the focusable element, not the hidden file input. */
   ref?: Ref<HTMLDivElement>;
 };
@@ -81,9 +76,11 @@ export const Dropzone = ({
   maxSize,
   children,
   hideFileList = false,
+  labels: ownLabels,
   className,
   ref,
 }: DropzoneProps) => {
+  const labels = useLabels('dropzone', DROPZONE_LABELS, ownLabels);
   const fieldId = useId();
   const labelId = useId();
   const contentId = useId();
@@ -99,23 +96,20 @@ export const Dropzone = ({
   const [dragOver, setDragOver] = useState(false);
   const error = errorProp ?? internalError;
 
-  const validate = useCallback(
-    (incoming: File[]): { ok: File[]; error?: string } => {
-      const ok: File[] = [];
-      for (const f of incoming) {
-        if (accept && !matchesAccept(f, accept))
-          return { ok: [], error: `"${f.name}" type not allowed (${accept}).` };
-        if (maxSize !== undefined && f.size > maxSize)
-          return { ok: [], error: `"${f.name}" exceeds ${formatBytes(maxSize)}.` };
-        ok.push(f);
-      }
-      const merged = multiple ? [...files, ...ok] : ok.slice(0, 1);
-      if (multiple && maxFiles !== undefined && merged.length > maxFiles)
-        return { ok: [], error: `Too many files (max ${maxFiles}).` };
-      return { ok: merged };
-    },
-    [accept, files, maxFiles, maxSize, multiple]
-  );
+  const validate = (incoming: File[]): { ok: File[]; error?: string } => {
+    const ok: File[] = [];
+    for (const f of incoming) {
+      if (accept && !matchesAccept(f, accept))
+        return { ok: [], error: labels.notAllowed(f.name, accept) };
+      if (maxSize !== undefined && f.size > maxSize)
+        return { ok: [], error: labels.tooLarge(f.name, labels.fileSize(maxSize)) };
+      ok.push(f);
+    }
+    const merged = multiple ? [...files, ...ok] : ok.slice(0, 1);
+    if (multiple && maxFiles !== undefined && merged.length > maxFiles)
+      return { ok: [], error: labels.tooMany(maxFiles) };
+    return { ok: merged };
+  };
 
   // Per-file validation, for a host that handles `onReject`: nothing rejects the drop as a whole.
   const handleEachFile = (incoming: File[], reject: (rejections: DropzoneRejection[]) => void) => {
@@ -123,16 +117,16 @@ export const Dropzone = ({
     let added: File[] = [];
     for (const file of incoming) {
       if (accept && !matchesAccept(file, accept))
-        rejected.push({ file, reason: `Type not allowed (${accept}).` });
+        rejected.push({ file, reason: labels.reasonNotAllowed(accept) });
       else if (maxSize !== undefined && file.size > maxSize)
-        rejected.push({ file, reason: `Exceeds ${formatBytes(maxSize)}.` });
+        rejected.push({ file, reason: labels.reasonTooLarge(labels.fileSize(maxSize)) });
       else added.push(file);
     }
     if (!multiple) added = added.slice(0, 1);
     else if (maxFiles !== undefined) {
       const room = Math.max(0, maxFiles - files.length);
       for (const file of added.slice(room))
-        rejected.push({ file, reason: `Too many files (max ${maxFiles}).` });
+        rejected.push({ file, reason: labels.reasonTooMany(maxFiles) });
       added = added.slice(0, room);
     }
     setInternalError(null);
@@ -237,9 +231,9 @@ export const Dropzone = ({
               <Upload className="h-7 w-7 text-gray-400 dark:text-gray-500" aria-hidden />
               <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 <span className="text-brand-600 dark:text-brand-400 font-semibold">
-                  Click to upload
+                  {labels.upload}
                 </span>{' '}
-                or drag and drop
+                {labels.orDrop}
               </p>
               {/* A space between the blocks: axe joins their text without one,
                   and then misreads the name as not matching the visible text. */}
@@ -279,7 +273,7 @@ export const Dropzone = ({
                   <bdi>{f.name}</bdi>
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  <bdi>{formatBytes(f.size)}</bdi>
+                  <bdi>{labels.fileSize(f.size)}</bdi>
                 </p>
               </div>
               <button
@@ -288,7 +282,7 @@ export const Dropzone = ({
                   e.stopPropagation();
                   removeAt(idx);
                 }}
-                aria-label={`Remove ${f.name}`}
+                aria-label={labels.remove(f.name)}
                 className="focus-visible:focus-indicator h-ctrl-28 w-ctrl-28 flex shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
               >
                 <X className="h-4 w-4" />

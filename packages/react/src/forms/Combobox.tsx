@@ -3,6 +3,7 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { useId, useRef, useState, type KeyboardEvent, type ReactNode, type Ref } from 'react';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import {
   FIELD_LISTBOX_PANEL,
   FIELD_PAD_START,
@@ -12,6 +13,7 @@ import {
   type FieldSize,
 } from './fieldRecipe';
 import { FieldMessage } from './FieldMessage';
+import { COMBOBOX_LABELS, type ComboboxLabels } from './labels';
 import { useFilteredOptions, useListboxNavigation } from './listboxNavigation';
 import { RequiredMark } from './RequiredMark';
 
@@ -75,10 +77,13 @@ export type ComboboxProps = {
   options: ComboboxOption[];
   placeholder?: string;
   /**
-   * Show this when no option matches the typed query. Default "No matches found."; none with
-   * `allowCustomValue`, where the text is accepted and the empty list stays closed.
+   * Show this when no option matches the typed query. Default `labels.empty`; none with
+   * `allowCustomValue`, where the text is accepted and the empty list stays closed (unless
+   * `labels.emptyCustom` is set).
    */
   emptyMessage?: string;
+  /** The texts it writes, over `LabelsProvider`'s `combobox` and the English defaults. */
+  labels?: Partial<ComboboxLabels>;
   /** Disable the input + dropdown. */
   disabled?: boolean;
   /** Helper text under the input. */
@@ -111,6 +116,7 @@ export const Combobox = ({
   options,
   placeholder,
   emptyMessage,
+  labels: ownLabels,
   disabled = false,
   helperText,
   error,
@@ -122,6 +128,7 @@ export const Combobox = ({
   defaultOpen = false,
   onOpenChange,
 }: ComboboxProps) => {
+  const labels = useLabels('combobox', COMBOBOX_LABELS, ownLabels);
   const id = useId();
   const listboxId = `${id}-listbox`;
   const descId = `${id}-desc`;
@@ -165,7 +172,7 @@ export const Combobox = ({
   const filtered = useFilteredOptions(options, query);
   // With typed text accepted, a list with nothing to suggest is no error: it opens only for a
   // message the host asked for.
-  const emptyText = emptyMessage ?? (allowCustomValue ? undefined : 'No matches found.');
+  const emptyText = emptyMessage ?? (allowCustomValue ? labels.emptyCustom : labels.empty);
   const listOpen = open && (filtered.length > 0 || emptyText !== undefined);
   const noMatch = filtered.length === 0;
 
@@ -248,7 +255,7 @@ export const Combobox = ({
         />
         <button
           type="button"
-          aria-label="Toggle options"
+          aria-label={labels.toggle}
           disabled={disabled}
           onClick={() => setOpen(!open)}
           className="focus-visible:focus-indicator inset-e-0 absolute inset-y-0 flex items-center rounded-e-lg pe-2 text-gray-400 hover:text-gray-500 focus-visible:ring-inset"
