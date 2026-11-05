@@ -10,6 +10,7 @@ import {
   expectReadsLeftToRight,
   mobileViewport,
 } from '../storybook-helpers';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Navigation/Pagination',
@@ -568,5 +569,88 @@ export const PageLabelReadsLeftToRight: Story = {
       expect(getComputedStyle(label).unicodeBidi, dir).toBe('isolate');
       expectReadsLeftToRight(label);
     }
+  },
+};
+
+/** The provider writes the landmark, the buttons and the info, and the pager's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        pagination: {
+          landmark: 'Pagination des résultats',
+          showingAll: (total) => <>Affichage des {total} résultats</>,
+          showing: (from, to, total) => (
+            <>
+              Affichage de {from} à {to} sur {total}
+            </>
+          ),
+          showPaginated: 'Afficher par pages',
+          showAll: 'Tout afficher',
+          first: 'Première page',
+          previous: 'Page précédente',
+          next: 'Page suivante',
+          last: 'Dernière page',
+          previousText: 'Précédente',
+          nextText: 'Suivante',
+          page: (page) => `Page ${page}`,
+          pageOf: (page, total) => (
+            <>
+              Page {page} sur {total}
+            </>
+          ),
+        },
+      }}
+    >
+      <div data-testid="pages" className="space-y-4">
+        <Pagination
+          page={2}
+          totalPages={5}
+          showInfo
+          pageSize={10}
+          total={48}
+          showEdges
+          prevNextLabel="text"
+          onShowAllChange={fn()}
+        />
+        <Pagination
+          page={1}
+          totalPages={5}
+          variant="compact"
+          aria-label="Résultats compacts"
+          labels={{ next: 'Suivante' }}
+        />
+        <Pagination
+          page={1}
+          totalPages={5}
+          showInfo
+          total={48}
+          showAll
+          onShowAllChange={fn()}
+          aria-label="Tous"
+        />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const pages = within(canvas.getByTestId('pages'));
+    const first = within(pages.getByRole('navigation', { name: 'Pagination des résultats' }));
+    await expect(first.getByRole('button', { name: 'Première page' })).toBeVisible();
+    await expect(first.getByRole('button', { name: 'Page précédente' })).toBeVisible();
+    await expect(first.getByRole('button', { name: 'Page 3' })).toBeVisible();
+    await expect(first.getByRole('button', { name: 'Dernière page' })).toBeVisible();
+    await expect(first.getByText('Précédente')).toBeVisible();
+    await expect(first.getByRole('button', { name: 'Tout afficher' })).toBeVisible();
+    await expect(first.getByText(/Affichage de/)).toHaveTextContent('Affichage de 11 à 20 sur 48');
+    // The pager's own label wins over the provider's.
+    await expect(pages.getByRole('button', { name: 'Suivante' })).toBeVisible();
+    await expect(pages.getByRole('navigation', { name: 'Résultats compacts' })).toHaveTextContent(
+      'Page 1 sur 5'
+    );
+    // The text the app passes in (`aria-label`) wins over the landmark's label.
+    const all = within(pages.getByRole('navigation', { name: 'Tous' }));
+    await expect(all.getByText(/Affichage des/)).toHaveTextContent('Affichage des 48 résultats');
+    await expect(all.getByRole('button', { name: 'Afficher par pages' })).toBeVisible();
   },
 };

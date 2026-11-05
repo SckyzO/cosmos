@@ -5,6 +5,7 @@ import { Calendar, FileText, Folder, Home, MessageSquare, Users } from 'lucide-r
 import { VerticalNavigation } from './VerticalNavigation';
 import { bothDirections, directionBox, expectMirrored, startOffset } from '../storybook-helpers';
 import { indicatorGap, indicatorOf, isSliding, tokenMs, transitionMs } from '../storybook-motion';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Navigation/Vertical Navigation',
@@ -462,5 +463,28 @@ export const MarkerIsDecoration: Story = {
     await expect(within(nav).getAllByRole('link')).toHaveLength(PAGES.length);
     // The list holds its items only: a marker among them would break the list for a screen reader.
     await expect(nav.querySelector('ul > [data-slot="indicator"]')).toBeNull();
+  },
+};
+
+/** The provider names the landmark, the navigation's own `labels` win over it, and `aria-label` over both. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ verticalNavigation: { landmark: 'Barre latérale' } }}>
+      <VerticalNavigation>
+        <VerticalNavigation.Item href="#a">Accueil</VerticalNavigation.Item>
+      </VerticalNavigation>
+      <VerticalNavigation labels={{ landmark: 'Menu' }}>
+        <VerticalNavigation.Item href="#b">Projets</VerticalNavigation.Item>
+      </VerticalNavigation>
+      <VerticalNavigation aria-label="Compte">
+        <VerticalNavigation.Item href="#c">Profil</VerticalNavigation.Item>
+      </VerticalNavigation>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('navigation', { name: 'Barre latérale' })).toBeVisible();
+    await expect(canvas.getByRole('navigation', { name: 'Menu' })).toBeVisible();
+    await expect(canvas.getByRole('navigation', { name: 'Compte' })).toBeVisible();
   },
 };

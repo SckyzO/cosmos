@@ -16,6 +16,7 @@ import {
 } from '../storybook-helpers';
 import { Breadcrumb } from './Breadcrumb';
 import { RecordPager } from './RecordPager';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Navigation/Record Pager',
@@ -83,8 +84,8 @@ export const Labels: Story = {
   args: {
     noun: 'ticket',
     labels: {
-      previous: 'Billet précédent',
-      next: 'Billet suivant',
+      previous: () => 'Billet précédent',
+      next: () => 'Billet suivant',
       back: 'Retour à la liste',
       count: (position, total) => (
         <>
@@ -436,8 +437,8 @@ export const LabelsCanBeOverridden: Story = {
           {...args}
           aria-label="Billets"
           labels={{
-            previous: 'Billet précédent',
-            next: 'Billet suivant',
+            previous: () => 'Billet précédent',
+            next: () => 'Billet suivant',
             back: 'Retour à la liste',
             count: (position, total) => (
               <>
@@ -566,5 +567,48 @@ export const MirrorsInRightToLeft: Story = {
       }
       expectReadsLeftToRight(box.querySelector('bdi')!);
     }
+  },
+};
+
+/** The provider writes the buttons, the position and the landmark from the noun, and the pager's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  ...Hidden,
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <LabelsProvider
+      labels={{
+        recordPager: {
+          noun: 'commande',
+          previous: (noun) => `${noun} précédente`,
+          next: (noun) => `${noun} suivante`,
+          back: 'Retour à la liste',
+          count: (position, total) => (
+            <>
+              {position} sur {total}
+            </>
+          ),
+          landmark: (noun) => `Navigation entre commandes (${noun})`,
+        },
+      }}
+    >
+      <div data-testid="provider">
+        <RecordPager {...args} noun={undefined} />
+      </div>
+      <div data-testid="own">
+        <RecordPager {...args} noun={undefined} aria-label="Factures" labels={{ back: 'Liste' }} />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const provider = within(canvas.getByTestId('provider'));
+    await expect(
+      provider.getByRole('navigation', { name: 'Navigation entre commandes (commande)' })
+    ).toBeVisible();
+    await expect(provider.getByRole('link', { name: 'Retour à la liste' })).toBeVisible();
+    await expect(provider.getByText('sur')).toBeVisible();
+    await expect(provider.getAllByText('commande précédente').length).toBeGreaterThan(0);
+    const own = within(canvas.getByTestId('own'));
+    await expect(own.getByRole('navigation', { name: 'Factures' })).toBeVisible();
+    await expect(own.getByRole('link', { name: 'Liste' })).toBeVisible();
   },
 };

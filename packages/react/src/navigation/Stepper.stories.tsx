@@ -12,6 +12,7 @@ import {
 import { finishAnimations, SlowFolds } from '../storybook-folds';
 import { isSliding, tokenMs, transitionDelayMs, transitionMs } from '../storybook-motion';
 import { Stepper, type StepperProps } from './Stepper';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Navigation/Stepper',
@@ -759,5 +760,27 @@ export const ConnectorFillsFromTheStartOfTheLine: Story = {
         );
       }
     }
+  },
+};
+
+/** The provider names the list and numbers the steps of the bars variant, and the stepper's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ stepper: { progress: 'Progression', step: (n) => `Étape ${n}` } }}>
+      <Stepper variant="bars" current={1}>
+        <Stepper.Step>Compte</Stepper.Step>
+        <Stepper.Step>Profil</Stepper.Step>
+      </Stepper>
+      <Stepper variant="bars" labels={{ progress: 'Avancement' }}>
+        <Stepper.Step>Un</Stepper.Step>
+      </Stepper>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const list = canvas.getByRole('list', { name: 'Progression' });
+    await expect(within(list).getByText('Étape 1')).toBeVisible();
+    await expect(within(list).getByText('Étape 2')).toBeVisible();
+    await expect(canvas.getByRole('list', { name: 'Avancement' })).toBeVisible();
   },
 };

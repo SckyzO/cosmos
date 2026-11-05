@@ -6,6 +6,7 @@ import { directionBox, endOffset, expectFocusRing, startOffset } from '../storyb
 import { Navbar } from './Navbar';
 import { Button } from '../ui/Button';
 import { Menu } from '../ui/Menu';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Navigation/Navbar',
@@ -609,5 +610,29 @@ export const BrandItemsAndActionsFollowTheReadingDirection: Story = {
         startOffset(within(box).getByRole('button', { name: 'Invite' }), box)
       );
     }
+  },
+};
+
+/** The provider writes "More" and the mobile button's name, and the navbar's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ navbar: { more: 'Plus', toggleMenu: 'Basculer le menu' } }}>
+      <Navbar labels={{ toggleMenu: 'Menu' }}>
+        <Navbar.Brand>
+          <Navbar.Items>
+            <Navbar.Item href="#accueil">Accueil</Navbar.Item>
+            <Navbar.Item href="#projets">Projets</Navbar.Item>
+          </Navbar.Items>
+        </Navbar.Brand>
+        <Navbar.MobileMenuButton />
+      </Navbar>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    // The mobile button is hidden from `md` up: it is found by its name attribute.
+    await expect(canvas.getByLabelText('Menu')).toBeInTheDocument();
+    await expect(canvas.queryByLabelText('Basculer le menu')).toBeNull();
+    await expect(canvasElement.querySelector('[data-navbar-more]')).toHaveTextContent('Plus');
   },
 };
