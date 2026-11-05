@@ -3,6 +3,7 @@ import { expect } from 'storybook/test';
 import { expectTextContrastOnTint, inEachTheme } from '../storybook-helpers';
 import { LOG_LEVEL_KEYS } from './types';
 import { LogLevelBadge } from './LogLevelBadge';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Monitoring/Log Level Badge',
@@ -94,5 +95,24 @@ export const TerminalKeepsItsLook: Story = {
       expect(parseFloat(style.borderTopLeftRadius)).toBeLessThan(8);
       expect(Math.round(badge.getBoundingClientRect().height)).toBe(18);
     }
+  },
+};
+
+/** The provider writes the text of the levels, and the badge's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider labels={{ logViewer: { error: 'ERREUR', warn: 'ALERTE' } }}>
+      <div className="flex gap-3">
+        <LogLevelBadge level="error" />
+        <LogLevelBadge level="warn" tone="terminal" />
+        <LogLevelBadge level="error" labels={{ error: 'KO' }} />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('ERREUR')).toBeVisible();
+    await expect(canvas.getByText('ALERTE')).toBeVisible();
+    await expect(canvas.getByText('KO')).toBeVisible();
   },
 };

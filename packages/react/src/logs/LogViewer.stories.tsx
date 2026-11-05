@@ -16,6 +16,7 @@ import { SlowFolds, finishAnimations, rotationOf } from '../storybook-folds';
 import { LogViewer } from './LogViewer';
 import { LogConsole, SOURCES, fakeLine, fakeLines } from './storybook-logs';
 import type { LogLevelKey, LogLine } from './types';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Monitoring/Log Viewer',
@@ -869,5 +870,53 @@ export const RecordsKeepTheirOrderInBothDirections: Story = {
     }
     // The gutter is at the same place in both: the log does not mirror.
     expect(numberStarts[1]).toBeCloseTo(numberStarts[0]!, 0);
+  },
+};
+
+/** The provider writes the viewer's texts, and the viewer's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => {
+    const lines = [
+      {
+        id: 1,
+        time: 1768460530000,
+        level: 'error',
+        source: 'api',
+        message: 'Disque plein',
+        fields: { host: 'a01' },
+        stack: 'Error: boom',
+      },
+    ];
+    return (
+      <LabelsProvider
+        labels={{
+          logViewer: {
+            log: 'Journal',
+            noLines: 'Aucune ligne.',
+            showDetails: 'Afficher les détails',
+            hideDetails: 'Masquer les détails',
+            detailsOfLine: (line) => `Détails de la ligne ${line}`,
+            error: 'ERREUR',
+          },
+        }}
+      >
+        <LogViewer lines={lines} height="12rem" />
+        <LogViewer lines={[]} aria-label="Vide" height="6rem" />
+        <LogViewer lines={[]} aria-label="Autre" height="6rem" labels={{ noLines: 'Rien' }} />
+      </LabelsProvider>
+    );
+  },
+  play: async ({ canvas }) => {
+    const log = within(canvas.getByRole('log', { name: 'Journal' }));
+    await expect(log.getByText('ERREUR')).toBeVisible();
+    await userEvent.click(await log.findByRole('button', { name: 'Afficher les détails' }));
+    await expect(await log.findByRole('group', { name: 'Détails de la ligne 1' })).toBeVisible();
+    await expect(
+      within(canvas.getByRole('log', { name: 'Vide' })).getByText('Aucune ligne.')
+    ).toBeVisible();
+    await expect(
+      within(canvas.getByRole('log', { name: 'Autre' })).getByText('Rien')
+    ).toBeVisible();
   },
 };
