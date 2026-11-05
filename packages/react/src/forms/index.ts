@@ -64,6 +64,7 @@ export type {
   OtpInputLabels,
   PasswordInputLabels,
   PasswordPolicyLabels,
+  PasswordStrengthLabels,
   PhoneInputLabels,
   SearchInputLabels,
   SliderLabels,

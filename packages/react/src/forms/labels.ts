@@ -2,6 +2,7 @@
 
 import { createElement, Fragment, type ReactNode } from 'react';
 import { formatBytes } from './formatBytes';
+import type { PasswordStrengthLevels } from './PasswordStrengthMeter';
 
 export type AvatarUploaderLabels = {
   /** The upload button while there is no photo. Default `Upload photo`. */
@@ -264,6 +265,23 @@ export type PasswordPolicyLabels = {
   met: string;
   /** Said after a rule that does not hold, for a screen reader only. Default `not met`. */
   notMet: string;
+  /** The first rule of `defaultPasswordRules`. Default `At least 12 characters`. */
+  minLength: string;
+  /** The second rule of `defaultPasswordRules`. Default `One uppercase letter`. */
+  uppercase: string;
+  /** The third rule of `defaultPasswordRules`. Default `One lowercase letter`. */
+  lowercase: string;
+  /** The fourth rule of `defaultPasswordRules`. Default `One number`. */
+  number: string;
+  /** The fifth rule of `defaultPasswordRules`. Default `One symbol`. */
+  symbol: string;
+};
+
+export type PasswordStrengthLabels = {
+  /** The words before the level, in the visible text and in the announcement. Default `Password strength`. */
+  name: string;
+  /** The level for each score, 0 to 4, from the weakest. Default `Very weak`, `Weak`, `Fair`, `Good`, `Strong`. */
+  levels: PasswordStrengthLevels;
 };
 
 export type PhoneInputLabels = {
@@ -534,6 +552,16 @@ export const PASSWORD_POLICY_LABELS: PasswordPolicyLabels = {
   empty: 'No requirements defined.',
   met: 'met',
   notMet: 'not met',
+  minLength: 'At least 12 characters',
+  uppercase: 'One uppercase letter',
+  lowercase: 'One lowercase letter',
+  number: 'One number',
+  symbol: 'One symbol',
+};
+
+export const PASSWORD_STRENGTH_LABELS: PasswordStrengthLabels = {
+  name: 'Password strength',
+  levels: ['Very weak', 'Weak', 'Fair', 'Good', 'Strong'],
 };
 
 export const PHONE_INPUT_LABELS: PhoneInputLabels = {

@@ -17,6 +17,7 @@ import type {
   OtpInputLabels,
   PasswordInputLabels,
   PasswordPolicyLabels,
+  PasswordStrengthLabels,
   PhoneInputLabels,
   SearchInputLabels,
   SliderLabels,
@@ -64,6 +65,7 @@ export type CosmosLabels = {
   otpInput: OtpInputLabels;
   passwordInput: PasswordInputLabels;
   passwordPolicyChecker: PasswordPolicyLabels;
+  passwordStrengthMeter: PasswordStrengthLabels;
   phoneInput: PhoneInputLabels;
   resetPasswordForm: ResetPasswordFormLabels;
   searchInput: SearchInputLabels;

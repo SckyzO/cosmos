@@ -60,12 +60,20 @@ export const PasswordPolicyChecker = ({
 
 /**
  * Sensible default password policy. Override per-app if stricter/looser
- * rules are needed (i18n, custom min length, blocklists, …).
+ * rules are needed (custom min length, blocklists, …). Its words are the `minLength`, `uppercase`,
+ * `lowercase`, `number` and `symbol` of `PasswordPolicyLabels`: English here, and `SignUpForm` and
+ * `NewPasswordForm` hand it the ones their `LabelsProvider` has. Called by an app, pass it yours.
  */
-export const defaultPasswordRules = (pwd: string): PasswordRule[] => [
-  { label: 'At least 12 characters', ok: pwd.length >= 12 },
-  { label: 'One uppercase letter', ok: /[A-Z]/.test(pwd) },
-  { label: 'One lowercase letter', ok: /[a-z]/.test(pwd) },
-  { label: 'One number', ok: /\d/.test(pwd) },
-  { label: 'One symbol', ok: /[^A-Za-z0-9]/.test(pwd) },
+export const defaultPasswordRules = (
+  pwd: string,
+  words: Pick<
+    PasswordPolicyLabels,
+    'minLength' | 'uppercase' | 'lowercase' | 'number' | 'symbol'
+  > = PASSWORD_POLICY_LABELS
+): PasswordRule[] => [
+  { label: words.minLength, ok: pwd.length >= 12 },
+  { label: words.uppercase, ok: /[A-Z]/.test(pwd) },
+  { label: words.lowercase, ok: /[a-z]/.test(pwd) },
+  { label: words.number, ok: /\d/.test(pwd) },
+  { label: words.symbol, ok: /[^A-Za-z0-9]/.test(pwd) },
 ];

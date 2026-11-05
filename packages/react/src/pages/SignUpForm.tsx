@@ -2,6 +2,7 @@ import { Mail, User } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Checkbox } from '../forms/Checkbox';
 import { Input } from '../forms/Input';
+import { PASSWORD_POLICY_LABELS } from '../forms/labels';
 import { defaultPasswordRules, type PasswordRule } from '../forms/PasswordPolicyChecker';
 import { useLabels } from '../labels/labelsContext';
 import { AlertBanner } from '../ui/AlertBanner';
@@ -60,7 +61,7 @@ export const SignUpForm = ({
   termsHref = '#',
   privacyHref = '#',
   showPolicy = true,
-  rules: rulesOf = defaultPasswordRules,
+  rules: rulesProp,
   strength,
   loading = false,
   error,
@@ -78,7 +79,9 @@ export const SignUpForm = ({
   const [password, setPassword] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  const rules = rulesOf(password);
+  // The default policy is worded by the dictionary's `passwordPolicyChecker` keys.
+  const policy = useLabels('passwordPolicyChecker', PASSWORD_POLICY_LABELS);
+  const rules = (rulesProp ?? ((value) => defaultPasswordRules(value, policy)))(password);
   const allRulesPass = rules.every((r) => r.ok);
   const canSubmit =
     firstName.length > 0 &&

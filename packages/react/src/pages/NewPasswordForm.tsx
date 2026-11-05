@@ -1,6 +1,7 @@
 import { ArrowLeft, CircleCheck, Clock } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { PasswordInput } from '../forms/PasswordInput';
+import { PASSWORD_POLICY_LABELS } from '../forms/labels';
 import { defaultPasswordRules, type PasswordRule } from '../forms/PasswordPolicyChecker';
 import { useFocusOnSwitch } from '../hooks/useFocusOnSwitch';
 import { useLabels } from '../labels/labelsContext';
@@ -67,7 +68,7 @@ export const NewPasswordForm = ({
   signInHref,
   signInLabel,
   continueLabel,
-  rules: rulesOf = defaultPasswordRules,
+  rules: rulesProp,
   strength,
   loading = false,
   error,
@@ -86,7 +87,9 @@ export const NewPasswordForm = ({
   // heading of the new one.
   const heading = useFocusOnSwitch(view);
 
-  const rules = rulesOf(password);
+  // The default policy is worded by the dictionary's `passwordPolicyChecker` keys.
+  const policy = useLabels('passwordPolicyChecker', PASSWORD_POLICY_LABELS);
+  const rules = (rulesProp ?? ((value) => defaultPasswordRules(value, policy)))(password);
   const matches = confirm === password;
   const mismatch = confirmLeft && !matches;
   const canSubmit =
