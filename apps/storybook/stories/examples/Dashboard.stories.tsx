@@ -412,7 +412,7 @@ const RegionsCard = ({ view, state }: { view: View; state: ScreenState }) => {
         aria-label="Top regions by deliveries"
         sort="desc"
         loading={state === 'loading'}
-        emptyMessage="No deliveries yet"
+        labels={{ empty: 'No deliveries yet' }}
         formatValue={abbreviateOrGroup}
         items={items.map((region) => ({
           id: region.name,
