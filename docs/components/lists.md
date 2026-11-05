@@ -3,6 +3,10 @@
 Storybook group: Lists, with the upload components of Forms that go with the file tiles and the
 notifications panel of Overlays that goes with the notification row.
 
+The words these components write ("Select", "Star", "Unread:", "More actions", "Shared") are their
+`labels`: `<StackedList.Item labels={{ star: 'Favori' }} />` for one, or the `stackedList` and `fileTile`
+keys of `LabelsProvider` for every one; see [Translating](../guides/translating.md).
+
 ## Stacked list rows
 
 Storybook: [Stacked List](https://sckyzo.github.io/cosmos/?path=/docs/lists-stacked-list--docs).
@@ -50,8 +54,8 @@ holds no selection, no read flags and no open row of its own.
 - `selected` is the row open in a master-detail layout, not a picked row. The title takes
   `aria-current`, and the row a tint and a 3px bar at its start edge.
 - `checked` / `defaultChecked` / `onCheckedChange` add a checkbox at the start of the row, named
-  "Select" followed by the title. `selectLabel` changes that word when the box does not pick the
-  row: `selectLabel="Mark done:"` on a task list reads "Mark done: Review the copy". A picked row
+  "Select" followed by the title. `labels.select` changes that word when the box does not pick the
+  row: `labels={{ select: 'Mark done:' }}` on a task list reads "Mark done: Review the copy". A picked row
   takes a light accent tint. `starred` /
   `defaultStarred` / `onStarredChange` add a star toggle (`aria-pressed`, named "Star" and the title);
   a set star always shows, an empty one shows when the row is hovered or has focus. All three follow
