@@ -100,7 +100,12 @@ const [open, setOpen] = useState(false);
 
 <Topbar
   pageTitle="Projects"
-  center={<CommandPaletteTrigger placeholder="Search projects" onClick={() => setOpen(true)} />}
+  center={
+    <CommandPaletteTrigger
+      labels={{ placeholder: 'Search projects' }}
+      onClick={() => setOpen(true)}
+    />
+  }
 />
 <CommandPalette open={open} onOpenChange={setOpen}>
   <CommandPalette.Input placeholder="Search…" />
