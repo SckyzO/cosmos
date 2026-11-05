@@ -20,6 +20,7 @@ import {
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { HealthMatrix, type HealthMatrixRow } from './HealthMatrix';
 import type { HealthStatus } from './types';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Monitoring/Health Matrix',
@@ -606,5 +607,55 @@ export const ArrowsFollowTheDirectionOfThePage: Story = {
         cell(canvas, 'API on par-1a: OK').focus();
       });
     }
+  },
+};
+
+/** The provider writes the matrix's texts and the status names, and the matrix's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        healthMatrix: {
+          rowHeader: 'Service',
+          legend: 'Légende',
+          needsAttention: 'À surveiller',
+          attentionRows: (attention, total) => `${attention} ligne sur ${total}`,
+          cell: (row, column, status, stale) =>
+            `${row} sur ${column} : ${status ?? 'sans données'}${stale ? ', obsolète' : ''}`,
+          cellDetail: (row, column) => `${row} sur ${column}`,
+        },
+        healthStatus: {
+          OK: 'OK',
+          WARN: 'Alerte',
+          CRIT: 'Critique',
+          UNKNOWN: 'Inconnu',
+          INFO: 'Info',
+        },
+      }}
+    >
+      <HealthMatrix
+        ariaLabel="Services"
+        attentionStrip
+        columns={[
+          { id: 'prod', label: 'prod' },
+          { id: 'dev', label: 'dev' },
+        ]}
+        rows={[{ id: 'api', label: 'API', cells: { prod: { status: 'CRIT' } } }]}
+        labels={{ legend: 'Clé' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'API sur prod : Critique' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'API sur dev : sans données' })).toBeVisible();
+    await expect(canvas.getByText('À surveiller')).toBeVisible();
+    await expect(canvas.getByText(/1 ligne sur 1/)).toBeVisible();
+    // The matrix's own label wins over the provider's.
+    await expect(canvas.getByRole('list', { name: 'Clé' })).toBeVisible();
+    await expect(canvas.queryByRole('list', { name: 'Légende' })).toBeNull();
+    await expect(
+      within(canvas.getByRole('list', { name: 'Clé' })).getByText('Critique')
+    ).toBeVisible();
   },
 };

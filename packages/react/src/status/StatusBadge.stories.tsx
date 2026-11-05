@@ -3,6 +3,9 @@ import { expect } from 'storybook/test';
 import { bothDirections, expectMirrored, startEdge } from '../storybook-helpers';
 import { StatusBadge } from './StatusBadge';
 import type { HealthStatus } from './types';
+import { LabelsProvider } from '../labels/LabelsProvider';
+import { HealthDot } from './HealthDot';
+import { StaleBadge } from './StaleBadge';
 
 const meta = {
   title: 'Status/Status Badge',
@@ -158,5 +161,42 @@ export const OutlineMirrors: Story = {
     )),
   play: async ({ canvasElement }) => {
     expectMirrored(canvasElement, (box) => box.querySelector('svg'));
+  },
+};
+
+/** The provider writes the status codes and the stale mark; own `labels` and the `label` prop win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        statusBadge: {
+          OK: 'OK',
+          WARN: 'ALERTE',
+          CRIT: 'CRITIQUE',
+          UNKNOWN: 'INCONNU',
+          INFO: 'INFO',
+        },
+        staleBadge: { stale: (since) => <>Obsolète · {since}</> },
+      }}
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <StatusBadge status="WARN" />
+        <StatusBadge status="CRIT" labels={{ CRIT: 'KO' }} />
+        <StatusBadge status="UNKNOWN" label="Perso" />
+        <HealthDot status="CRIT" />
+        <StaleBadge since={Date.now() - 4 * 60_000} />
+        <StaleBadge since={Date.now()} labels={{ stale: () => 'Périmé' }} />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('ALERTE')).toBeVisible();
+    await expect(canvas.getByText('KO')).toBeVisible();
+    await expect(canvas.getByText('Perso')).toBeVisible();
+    // The dot says its status to a screen reader.
+    await expect(canvas.getByText('CRITIQUE')).toBeInTheDocument();
+    await expect(canvas.getByText(/Obsolète ·/)).toBeVisible();
+    await expect(canvas.getByText('Périmé')).toBeVisible();
   },
 };
