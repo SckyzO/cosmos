@@ -3,7 +3,9 @@ import { Check, Lock, X } from 'lucide-react';
 import { useId, useMemo, useRef, useState, type FocusEvent, type KeyboardEvent } from 'react';
 import { directionOf } from '../hooks/direction';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import { Checkbox } from './Checkbox';
+import { PERMISSION_GRID_LABELS, type PermissionGridLabels } from './labels';
 import {
   cellKey,
   clampPosition,
@@ -11,7 +13,6 @@ import {
   gridCells,
   gridRowLengths,
   moveFocus,
-  resolveLabels,
   tallyGrid,
   toggleCell,
   toggleScope,
@@ -20,14 +21,14 @@ import {
   type GridCell,
   type PermissionGridColumn,
   type PermissionGridGroup,
-  type PermissionGridLabels,
   type Position,
   type Scope,
   type Tally,
 } from './permissionGridModel';
 
 export { cellKey };
-export type { PermissionGridColumn, PermissionGridGroup, PermissionGridLabels };
+export type { PermissionGridColumn, PermissionGridGroup };
+export type { PermissionGridLabels } from './labels';
 export type { PermissionGridRow } from './permissionGridModel';
 
 export type PermissionGridProps = {
@@ -112,7 +113,7 @@ export const PermissionGrid = ({
     onChange,
     name: 'PermissionGrid.value',
   });
-  const labels = useMemo(() => resolveLabels(labelOverrides), [labelOverrides]);
+  const labels = useLabels('permissionGrid', PERMISSION_GRID_LABELS, labelOverrides);
   const gridRef = useRef<HTMLTableElement>(null);
   const errorId = useId();
   const [active, setActive] = useState<Position>({ row: 0, col: 0 });

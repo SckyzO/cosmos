@@ -45,6 +45,7 @@ import type {
   PasswordInputLabels,
   PasswordPolicyLabels,
   PasswordStrengthLabels,
+  PermissionGridLabels,
   PhoneInputLabels,
   SearchInputLabels,
   SliderLabels,
@@ -228,6 +229,7 @@ export type CosmosLabels = {
   passwordInput: PasswordInputLabels;
   passwordPolicyChecker: PasswordPolicyLabels;
   passwordStrengthMeter: PasswordStrengthLabels;
+  permissionGrid: PermissionGridLabels;
   phoneInput: PhoneInputLabels;
   pipelineStages: PipelineStagesLabels;
   planCard: PlanCardLabels;
