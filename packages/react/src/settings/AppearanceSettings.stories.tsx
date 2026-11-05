@@ -16,7 +16,7 @@ import {
   type CosmosTheme,
   type CosmosThemeChoice,
 } from './appearance';
-import { keyToEnd } from '../storybook-helpers';
+import { keyToEnd, mobileViewport } from '../storybook-helpers';
 import { tokenMs } from '../storybook-motion';
 
 const meta = {
@@ -142,6 +142,57 @@ export const WithSystemThemeChecks: Story = {
     await expect(canvas.getByRole('radio', { name: 'Deep Blue' })).toBeChecked();
     await userEvent.click(canvas.getByRole('radio', { name: 'System' }));
     await expect(canvas.getByRole('radio', { name: 'System' })).toBeChecked();
+  },
+};
+
+// The theme cards each get a column from `sm` up: five with the System card, four without.
+const cardRows = (canvas: ReturnType<typeof within>) => {
+  const group = canvas.getByRole('radiogroup', { name: 'Theme' });
+  const tops = within(group)
+    .getAllByRole('radio')
+    .map((card) => Math.round(card.getBoundingClientRect().top));
+  return [...new Set(tops)];
+};
+
+export const ThemeCardsShareOneRowWithSystem: Story = {
+  ...WithSystemTheme,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const group = canvas.getByRole('radiogroup', { name: 'Theme' });
+    await expect(within(group).getAllByRole('radio')).toHaveLength(5);
+    await expect(cardRows(canvas), 'Deep Blue sits alone on a second row').toHaveLength(1);
+  },
+};
+
+export const ThemeCardsShareOneRowWithoutSystem: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const group = canvas.getByRole('radiogroup', { name: 'Theme' });
+    await expect(within(group).getAllByRole('radio')).toHaveLength(4);
+    await expect(cardRows(canvas)).toHaveLength(1);
+  },
+};
+
+/** A short list keeps four columns: its cards keep their width instead of filling the row. */
+export const FewThemeCardsKeepFourColumns: Story = {
+  ...RestrictedChoices,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvas }) => {
+    const group = canvas.getByRole('radiogroup', { name: 'Theme' });
+    const cards = within(group).getAllByRole('radio');
+    await expect(cards.length).toBeLessThan(4);
+    const width = (node: Element) => node.getBoundingClientRect().width;
+    await expect(width(cards[0]!)).toBeLessThan(width(group) / 3);
+  },
+};
+
+/** Below `sm` the grid stays two wide, however many cards there are. */
+export const ThemeCardsStayTwoWideOnAPhone: Story = {
+  ...WithSystemTheme,
+  tags: ['!dev', '!autodocs'],
+  globals: mobileViewport,
+  play: async ({ canvas }) => {
+    await expect(cardRows(canvas)).toHaveLength(3);
   },
 };
 
