@@ -60,10 +60,20 @@ first column (`DataTable` pins columns with `pin`, below). `TableIdentityCell`, 
 
 `DataTable`'s column filters can be controlled: `filters`, `defaultFilters` and
 `onFiltersChange(filters)` hold a record of column `key` to the set of selected
-values. `filterTabs` (`{ columnKey, options: [{ value, label, count }], allLabel,
-allCount }`) puts underlined status tabs at the top of the card, each setting
-that column's filter ("All" clears it) and staying in sync with the active
-filters bar; the counts come from you, the table never computes them.
+values. `filterTabs` (`{ columnKey, options: [{ value, label, count }], allCount }`)
+puts underlined status tabs at the top of the card, each setting that column's
+filter ("All" clears it) and staying in sync with the active filters bar; the
+counts come from you, the table never computes them.
+
+The words the table writes itself (the search placeholder and names, "Clear",
+"Export", "Columns", the views menu, the names of the row checkboxes and
+expanders, the pager's name, "All" on the status tabs, the editing buttons…) are
+its `labels`: `<DataTable labels={{ searchPlaceholder: 'Search users…' }} />`
+for one table, or the `dataTable` key of `LabelsProvider` for every table (see
+[Translating](../guides/translating.md)). `ColumnHeader`, `ColumnFilterDropdown`,
+`ActiveFiltersBar` and `RowActionsMenu` have a key of their own, read from the
+provider when `DataTable` draws them. `emptyTitle` stays a prop and wins over
+`labels.emptyTitle`.
 
 `DataTable` takes `mobileLayout="cards"` to show each row as a block below `sm`
 instead of scrolling: the checkbox, the column marked `mobile: 'title'` and the
