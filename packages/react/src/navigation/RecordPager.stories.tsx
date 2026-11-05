@@ -86,7 +86,11 @@ export const Labels: Story = {
       previous: 'Billet précédent',
       next: 'Billet suivant',
       back: 'Retour à la liste',
-      count: (position, total) => `${position} sur ${total}`,
+      count: (position, total) => (
+        <>
+          {position} sur {total}
+        </>
+      ),
     },
   },
 };
@@ -373,6 +377,51 @@ export const ShortcutsAreRemovedOnUnmount: Story = {
   },
 };
 
+/**
+ * The count sets its numbers apart in any language: the pager hands `labels.count` the position
+ * and the total already wrapped in the medium-weight span of the English "12 of 340".
+ */
+export const CountSetsItsNumbersApartInAnyLanguage: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <div className="flex flex-col gap-4">
+      <div data-testid="english">
+        <RecordPager {...args} />
+      </div>
+      <div data-testid="french">
+        <RecordPager
+          {...args}
+          aria-label="Billets"
+          labels={{
+            count: (position, total) => (
+              <>
+                {position} sur {total}
+              </>
+            ),
+          }}
+        />
+      </div>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    for (const [id, word, text] of [
+      ['english', 'of', '12 of 340'],
+      ['french', 'sur', '12 sur 340'],
+    ] as const) {
+      const box = within(canvas.getByTestId(id));
+      const count = box.getByText(word).parentElement!;
+      await expect(count).toHaveTextContent(text);
+      // The words around them are regular; the numbers are medium (their color is the primary one,
+      // which a theme such as sand draws the same as the text around it).
+      await expect(getComputedStyle(count).fontWeight).toBe('400');
+      for (const number of ['12', '340']) {
+        const style = getComputedStyle(box.getByText(number, { exact: true }));
+        await expect(style.fontWeight, `${id}: ${number} weight`).toBe('500');
+      }
+    }
+  },
+};
+
 /** `noun` builds the labels, `labels` replaces any of them, and the compact buttons keep the name. */
 export const LabelsCanBeOverridden: Story = {
   ...Hidden,
@@ -390,7 +439,11 @@ export const LabelsCanBeOverridden: Story = {
             previous: 'Billet précédent',
             next: 'Billet suivant',
             back: 'Retour à la liste',
-            count: (position, total) => `${position} sur ${total}`,
+            count: (position, total) => (
+              <>
+                {position} sur {total}
+              </>
+            ),
           }}
         />
       </div>
@@ -410,7 +463,7 @@ export const LabelsCanBeOverridden: Story = {
     await expect(labels.getByRole('link', { name: 'Billet précédent' })).toBeVisible();
     await expect(labels.getByRole('link', { name: 'Billet suivant' })).toBeVisible();
     await expect(labels.getByRole('link', { name: 'Retour à la liste' })).toBeVisible();
-    await expect(labels.getByText('12 sur 340')).toBeVisible();
+    await expect(labels.getByText('sur').parentElement).toHaveTextContent('12 sur 340');
 
     // Compact: icon only, so the name is the aria-label and no word is drawn.
     const compact = within(canvas.getByTestId('compact'));

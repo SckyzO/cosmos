@@ -44,7 +44,11 @@ export type AppearanceSettingsProps<T extends CosmosThemeChoice = CosmosTheme> =
   themes?: (CosmosThemeMeta | CosmosSystemThemeMeta)[];
   /** Accents to offer. Default: all of `COSMOS_ACCENTS`. */
   accents?: CosmosAccentMeta[];
-  /** Columns of the theme grid. Default 4; use 2 in narrow containers. */
+  /**
+   * Columns of the theme grid from `sm` up (below it the grid is 2 wide). Default: 4, or one per
+   * theme card when there are more, so the 5 with the System one share a row and a short list
+   * keeps cards of the usual width. Use 2 in narrow containers.
+   */
   themeColumns?: number;
   /** Selected font. Default `'outfit'`. */
   font?: CosmosFont;
@@ -128,7 +132,7 @@ export const AppearanceSettings = <T extends CosmosThemeChoice = CosmosTheme>({
   accentLabel = 'Accent color',
   themes = COSMOS_THEMES,
   accents = COSMOS_ACCENTS,
-  themeColumns = 4,
+  themeColumns = Math.max(4, themes.length),
   font = 'outfit',
   onFontChange,
   textSize = 'md',

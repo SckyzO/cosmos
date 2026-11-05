@@ -17,13 +17,13 @@ A `CRIT` badge and an "Error" badge are both red but say different things: the f
 of a machine, the second a state of a record. Pick the component by what the value is, not by its
 color.
 
-| You show                                    | Use           | Takes                            |
-| ------------------------------------------- | ------------- | -------------------------------- |
-| A machine's health, as a pill in a table    | `StatusBadge` | `status`, `size`, `label`        |
-| A machine's health, as a hero or a summary  | `HealthBadge` | `status`, `label`                |
-| A machine's health, next to a name or a row | `HealthDot`   | `status`, `pulse`, `label`       |
-| A row of a list that ends with a health     | `Row`         | `status` (renders a StatusBadge) |
-| A workflow state or a category              | `Badge`       | `intent`, `appearance`, a label  |
+| You show                                    | Use           | Takes                                   |
+| ------------------------------------------- | ------------- | --------------------------------------- |
+| A machine's health, as a pill in a table    | `StatusBadge` | `status`, `size`, `label`               |
+| A machine's health, as a hero or a summary  | `StatusBadge` | `appearance="outline"`, `shape`, `icon` |
+| A machine's health, next to a name or a row | `HealthDot`   | `status`, `pulse`, `label`              |
+| A row of a list that ends with a health     | `Row`         | `status` (renders a StatusBadge)        |
+| A workflow state or a category              | `Badge`       | `intent`, `appearance`, a label         |
 
 ## StatusBadge
 
@@ -32,11 +32,12 @@ rows, `md` by default, `lg` for a prominent display. `label` replaces the text w
 color ("Healthy" on an `OK`). `Row` with a `status` ends with one, so a list of machines and a table of
 machines show the same pill.
 
-## HealthBadge
-
-A larger, bordered badge with an icon and the label. Use it where the status is the subject of the
-page or the card: a "System health" header, a dashboard summary. Its icon means the status is not
-carried by color alone.
+The same badge takes the options of `Badge`. `shape="rounded"` swaps the pill for a rounded
+rectangle, `appearance="outline"` draws a light tint with a border of the same hue, and `icon` leads
+the label with the icon of the status (a check, a warning triangle, a cross, a question mark, an
+info mark). Together, `shape="rounded" appearance="outline" icon size="lg"` is the badge for a
+status that is the subject of the page or the card: a "System health" header, a dashboard summary.
+Its icon means the status is not carried by color alone.
 
 ## HealthDot
 

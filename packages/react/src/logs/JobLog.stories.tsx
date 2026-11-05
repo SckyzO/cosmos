@@ -4,6 +4,7 @@ import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
   bothDirections,
   directionBox,
+  expectEdgeFade,
   expectMirrored,
   expectNoHorizontalOverflow,
   mobileViewport,
@@ -248,6 +249,15 @@ export const FailedBuildMobileChecks: Story = {
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+export const FailedBuildMobileScrollsWithAnEdgeFadeChecks: Story = {
+  ...failedBuildMobile,
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    // The lines of the open step scroll sideways on their own, and fade where there is more.
+    await expectEdgeFade(canvasElement.querySelector<HTMLElement>('[data-lines]')!);
   },
 };
 

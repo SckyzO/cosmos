@@ -8,7 +8,11 @@ Storybook: [Health Summary](https://sckyzo.github.io/cosmos/?path=/docs/monitori
 
 `HealthSummary`, `HealthCheckList` and `HealthMatrix` show whether a system and its parts are
 healthy, and why not. They build on `HealthStatus` (`OK`, `WARN`, `CRIT`, `UNKNOWN`, `INFO`) and on
-the dots and badges of the same folder.
+the dots and badges of the same folder: `HealthDot` for a dot next to a name, and `StatusBadge` for
+the status in words, a filled pill by default. `StatusBadge` takes the options of `Badge`
+(`shape="rounded"`, `appearance="outline"`) and `icon`, which leads the label with the icon of the
+status; `<StatusBadge status="OK" shape="rounded" appearance="outline" icon size="lg" />` is the badge
+for a status that is the subject of a page or a card.
 
 A check is plain data. A group holds checks and, below them, other groups: one level per dependency
 reads as a tree. A group has no status of its own, it is the worst status under it.
@@ -67,8 +71,9 @@ nothing in it is `UNKNOWN`.
   instead: OK plain, warning, critical, unknown and info with a sign in it (–, !, ?, i, 3:1 or more
   on the fill), so a status still reads without its color. `variant="pills"` writes the status in
   each cell. The
-  grid scrolls in its own box when it is wider than the screen; `maxHeight` also scrolls it
-  vertically. `rowHeader` names the first header cell ("Service" by default; a cluster says "Rack").
+  grid scrolls in its own box when it is wider than the screen, and fades its end edge where there
+  is more to see (the first column stays pinned, so the start edge never fades); `maxHeight` also
+  scrolls it vertically. `rowHeader` names the first header cell ("Service" by default; a cluster says "Rack").
   `attentionStrip` adds a "Needs attention" strip above the grid: one chip per row that holds a
   warning or a critical cell, with its counts in words ("2 Critical, 1 Warning"), the worst rows
   first. Picking a chip scrolls its row into view, in the grid's own box when `maxHeight` is set,
@@ -336,7 +341,8 @@ a word, not only a color. Each level color holds 4.5:1 on both tones in the four
   browser skips the ones out of view with `content-visibility`). Keep the buffer to a few
   thousand lines with `wrap` on, as rackscope does with 2,000. Newest first and paused, wrapped
   lines do not stay put when new ones arrive.
-- Without `wrap` a long line scrolls sideways: the scroll width is that of the widest row drawn.
+- Without `wrap` a long line scrolls sideways: the scroll width is that of the widest row drawn,
+  and the log fades its edges on the side that has more, as `Table` does.
 - The labels ("Jump to latest", "Filters"…) are English.
 - Not here: the log volume chart (stacked `BarChart` of `@sckyzo/cosmos-charts`, as the lines per
   level over time) and a structured logs table. The output of a job is `JobLog`: see [Job logs](#job-logs).
@@ -422,7 +428,8 @@ and the lines of an open step a named group. A line number is a link named "Line
 - The windowing needs a row of a fixed height, so it is off with `wrap`: all the lines of an open
   step are then drawn (the browser skips the ones out of view). Keep a step to a few thousand lines
   with `wrap` on. A line link that scrolls out of the window loses the focus.
-- Without `wrap`, the lines of a step scroll sideways inside the step, under its header.
+- Without `wrap`, the lines of a step scroll sideways inside the step, under its header, and fade
+  at the edge that has more.
 - A search compiles the plain text of every line of every step: for logs of hundreds of thousands
   of lines, filter on the host.
 - The labels ("Jump to latest", "More options"…) are English.

@@ -3,6 +3,7 @@ import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'rea
 import { RelativeTime } from '../data/RelativeTime';
 import type { DateTimeValue } from '../data/time';
 import { directionOf } from '../hooks/direction';
+import { useScrollFade } from '../hooks/useScrollFade';
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { STATUS_NAME, formatLatency } from './health';
 import { rowsNeedingAttention } from './matrixAttention';
@@ -194,6 +195,9 @@ export const HealthMatrix = ({
   className,
 }: HealthMatrixProps) => {
   const gridRef = useRef<HTMLTableElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  // The first column is pinned to the start, so only the end edge fades.
+  const fade = useScrollFade(scrollerRef, { start: false });
   const triggerRef = useRef<HTMLElement | null>(null);
   const [active, setActive] = useState<Position>({ row: 0, col: 0 });
   const [open, setOpen] = useState<Position | null>(null);
@@ -356,11 +360,12 @@ export const HealthMatrix = ({
         </div>
       )}
       <div
+        ref={scrollerRef}
         className={clsx(
           'scroll-ps-28 scroll-pt-12 overflow-auto sm:scroll-ps-40',
           isStale && 'grayscale'
         )}
-        style={{ maxHeight }}
+        style={{ maxHeight, ...fade }}
       >
         <table
           ref={gridRef}

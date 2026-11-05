@@ -182,7 +182,9 @@ the attributes in its root layout instead, as the
 - **`AppearanceSettings`** renders the theme and accent pickers, plus the font, text size, density
   and animations ones (normal or reduced) when their `on…Change` handlers are set. It holds
   nothing: you keep the state and apply it. It has no radius or direction picker; `Customizer` has
-  both.
+  both. The theme cards sit in one row from `sm` up, whether the list has 4 themes or 5 with
+  `COSMOS_SYSTEM_THEME` (two columns below `sm`), and a shorter list keeps four columns, so its
+  cards keep their width; `themeColumns` sets another count.
 - **`AppearanceMenu`** takes the same props and puts the pickers in a panel behind an icon button,
   for example in `Topbar`'s `endActions`. Set `onReset` to add a Reset button under the groups.
 - **`Customizer`** is a panel on the end side (a `Drawer`) with every choice above, plus the
