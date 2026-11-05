@@ -1,4 +1,5 @@
 import { toTimestamp, type DateTimeValue } from '../data/time';
+import { HEALTH_STATUS_LABELS } from './labels';
 import type { HealthStatus } from './types';
 
 /**
@@ -61,14 +62,11 @@ export const worstStatus = (statuses: Iterable<HealthStatus>): HealthStatus => {
   return worst ?? 'UNKNOWN';
 };
 
-/** The reading of each status, for badges, cell names and legends. */
-export const STATUS_NAME: Record<HealthStatus, string> = {
-  OK: 'OK',
-  WARN: 'Warning',
-  CRIT: 'Critical',
-  UNKNOWN: 'Unknown',
-  INFO: 'Info',
-};
+/**
+ * The English reading of each status, for badges, cell names and legends. The components read it
+ * from the `healthStatus` labels, which an app translates.
+ */
+export const STATUS_NAME: Record<HealthStatus, string> = HEALTH_STATUS_LABELS;
 
 export type HealthCounts = Record<HealthStatus, number>;
 
@@ -79,9 +77,12 @@ export const countStatuses = (checks: readonly HealthCheck[]): HealthCounts => {
 };
 
 /** "1 Warning · 2 OK": the statuses present, worst first. */
-export const countsText = (counts: HealthCounts): string =>
+export const countsText = (
+  counts: HealthCounts,
+  names: Record<HealthStatus, string> = STATUS_NAME
+): string =>
   SEVERITY_ORDER.filter((status) => counts[status] > 0)
-    .map((status) => `${counts[status]} ${STATUS_NAME[status]}`)
+    .map((status) => `${counts[status]} ${names[status]}`)
     .join(' · ');
 
 /** How many checks need a look: warning, critical or unknown. */

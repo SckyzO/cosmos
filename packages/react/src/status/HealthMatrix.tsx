@@ -4,8 +4,10 @@ import { RelativeTime } from '../data/RelativeTime';
 import type { DateTimeValue } from '../data/time';
 import { directionOf } from '../hooks/direction';
 import { useScrollFade } from '../hooks/useScrollFade';
+import { useLabels } from '../labels/labelsContext';
 import { FloatingPanel } from '../ui/FloatingPanel';
-import { STATUS_NAME, formatLatency } from './health';
+import { formatLatency } from './health';
+import { HEALTH_MATRIX_LABELS, HEALTH_STATUS_LABELS, type HealthMatrixLabels } from './labels';
 import { rowsNeedingAttention } from './matrixAttention';
 import { StaleBadge } from './StaleBadge';
 import { StatusBadge } from './StatusBadge';
@@ -60,8 +62,8 @@ export type HealthMatrixProps = {
   /** A visible title, above the grid. */
   title?: ReactNode;
   /**
-   * The text of the first header cell, above the row names. Default "Service"; a cluster says
-   * "Rack".
+   * The text of the first header cell, above the row names. Default `labels.rowHeader`, "Service";
+   * a cluster says "Rack".
    */
   rowHeader?: ReactNode;
   /**
@@ -86,6 +88,11 @@ export type HealthMatrixProps = {
   maxHeight?: number | string;
   /** Freezes the "checked" texts of the popovers at this moment. For stories and tests. */
   now?: Date | number;
+  /**
+   * The texts it writes (the legend, the strip, the names of the cells), over `LabelsProvider`'s
+   * `healthMatrix` and the English defaults. The status names are the provider's `healthStatus`.
+   */
+  labels?: Partial<HealthMatrixLabels>;
   className?: string;
 };
 
@@ -186,14 +193,17 @@ export const HealthMatrix = ({
   marks = 'shapes',
   ariaLabel,
   title,
-  rowHeader = 'Service',
+  rowHeader,
   attentionStrip = false,
   stale,
   legend,
   maxHeight,
   now,
+  labels: ownLabels,
   className,
 }: HealthMatrixProps) => {
+  const labels = useLabels('healthMatrix', HEALTH_MATRIX_LABELS, ownLabels);
+  const names = useLabels('healthStatus', HEALTH_STATUS_LABELS);
   const gridRef = useRef<HTMLTableElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   // The first column is pinned to the start, so only the end edge fades.
@@ -286,7 +296,7 @@ export const HealthMatrix = ({
           {isStale && <StaleBadge since={stale} now={now} />}
           {showLegend && (
             <ul
-              aria-label="Legend"
+              aria-label={labels.legend}
               className={clsx(
                 'm-0 ms-auto flex list-none flex-wrap gap-x-4 gap-y-1 p-0',
                 isStale && 'grayscale'
@@ -298,7 +308,7 @@ export const HealthMatrix = ({
                   className="flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)]"
                 >
                   <Shape status={status} marks={marks} />
-                  {STATUS_NAME[status]}
+                  {names[status]}
                 </li>
               ))}
             </ul>
@@ -312,13 +322,13 @@ export const HealthMatrix = ({
               id={attentionId}
               className="m-0 text-sm font-semibold text-[var(--color-text-primary)]"
             >
-              Needs attention
+              {labels.needsAttention}
             </p>
             <span className="text-sm text-[var(--color-text-secondary)]">
               {[
-                `${attention.length} of ${rows.length} ${rows.length === 1 ? 'row' : 'rows'}`,
-                attentionCrit > 0 && `${attentionCrit} ${STATUS_NAME.CRIT}`,
-                attentionWarn > 0 && `${attentionWarn} ${STATUS_NAME.WARN}`,
+                labels.attentionRows(attention.length, rows.length),
+                attentionCrit > 0 && `${attentionCrit} ${names.CRIT}`,
+                attentionWarn > 0 && `${attentionWarn} ${names.WARN}`,
               ]
                 .filter(Boolean)
                 .join(' · ')}
@@ -343,14 +353,14 @@ export const HealthMatrix = ({
                   {crit > 0 && (
                     <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
                       <Shape status="CRIT" marks={marks} />
-                      {crit} {STATUS_NAME.CRIT}
+                      {crit} {names.CRIT}
                     </span>
                   )}
                   {crit > 0 && warn > 0 && <span className="sr-only">, </span>}
                   {warn > 0 && (
                     <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
                       <Shape status="WARN" marks={marks} />
-                      {warn} {STATUS_NAME.WARN}
+                      {warn} {names.WARN}
                     </span>
                   )}
                 </button>
@@ -380,7 +390,7 @@ export const HealthMatrix = ({
                 scope="col"
                 className="py-row-10 inset-s-0 sticky top-0 z-20 min-w-28 border-e border-b border-[var(--color-border)] bg-gray-50 px-4 text-start text-sm font-semibold text-[var(--color-text-primary)] sm:min-w-40 dark:bg-gray-800"
               >
-                <bdi>{rowHeader}</bdi>
+                <bdi>{rowHeader ?? labels.rowHeader}</bdi>
               </th>
               {columns.map((column) => (
                 <th
@@ -416,7 +426,12 @@ export const HealthMatrix = ({
                         data-row={r}
                         data-col={c}
                         tabIndex={tab.row === r && tab.col === c ? 0 : -1}
-                        aria-label={`${row.label} on ${column.label}: ${cell ? STATUS_NAME[cell.status] : 'no data'}${isStale ? ', stale' : ''}`}
+                        aria-label={labels.cell(
+                          row.label,
+                          column.label,
+                          cell ? names[cell.status] : null,
+                          isStale
+                        )}
                         aria-haspopup={cell ? 'dialog' : undefined}
                         aria-expanded={cell ? isOpen : undefined}
                         onFocus={() => setActive({ row: r, col: c })}
@@ -438,11 +453,7 @@ export const HealthMatrix = ({
                         ) : variant === 'dots' ? (
                           <Shape status={cell.status} marks={marks} />
                         ) : (
-                          <StatusBadge
-                            status={cell.status}
-                            size="sm"
-                            label={STATUS_NAME[cell.status]}
-                          />
+                          <StatusBadge status={cell.status} size="sm" label={names[cell.status]} />
                         )}
                       </button>
                     </td>
@@ -459,7 +470,9 @@ export const HealthMatrix = ({
         triggerRef={triggerRef}
         placement={{ side: 'bottom', align: 'center', offset: 6 }}
         role="dialog"
-        aria-label={openRow && openCol ? `${openRow.label} on ${openCol.label}` : undefined}
+        aria-label={
+          openRow && openCol ? labels.cellDetail(openRow.label, openCol.label) : undefined
+        }
         tabIndex={-1}
         className="w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-panel)] p-3.5 text-sm shadow-xl outline-none"
       >
@@ -475,7 +488,7 @@ export const HealthMatrix = ({
               <StatusBadge
                 status={openCell.status}
                 size="sm"
-                label={STATUS_NAME[openCell.status]}
+                label={names[openCell.status]}
                 className="ms-auto"
               />
             </div>
@@ -487,11 +500,8 @@ export const HealthMatrix = ({
             {(openCell.checkedAt !== undefined || openCell.latency !== undefined) && (
               <p className="m-0 mt-1 text-xs text-[var(--color-text-secondary)]">
                 <bdi>
-                  {openCell.checkedAt !== undefined && (
-                    <>
-                      Checked <RelativeTime value={openCell.checkedAt} now={now} />
-                    </>
-                  )}
+                  {openCell.checkedAt !== undefined &&
+                    labels.checked(<RelativeTime value={openCell.checkedAt} now={now} />)}
                   {openCell.checkedAt !== undefined && openCell.latency !== undefined && ' · '}
                   {openCell.latency !== undefined && formatLatency(openCell.latency)}
                 </bdi>

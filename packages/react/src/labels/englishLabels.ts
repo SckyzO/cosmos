@@ -83,6 +83,14 @@ import {
   CUSTOMIZER_LABELS,
 } from '../settings/labels';
 import {
+  HEALTH_MATRIX_LABELS,
+  HEALTH_STATUS_LABELS,
+  HEALTH_SUMMARY_LABELS,
+  NODE_GRID_LABELS,
+  STALE_BADGE_LABELS,
+  STATUS_BADGE_LABELS,
+} from '../status/labels';
+import {
   ACTIVE_FILTERS_BAR_LABELS,
   COLUMN_FILTER_DROPDOWN_LABELS,
   COLUMN_HEADER_LABELS,
@@ -188,6 +196,9 @@ export const englishLabels: EnglishLabels = {
   fileInput: FILE_INPUT_LABELS,
   fileTile: FILE_TILE_LABELS,
   formFooter: FORM_FOOTER_LABELS,
+  healthMatrix: HEALTH_MATRIX_LABELS,
+  healthStatus: HEALTH_STATUS_LABELS,
+  healthSummary: HEALTH_SUMMARY_LABELS,
   helpOverlay: HELP_OVERLAY_LABELS,
   integrationCard: INTEGRATION_CARD_LABELS,
   kanbanBoard: KANBAN_BOARD_LABELS,
@@ -200,6 +211,7 @@ export const englishLabels: EnglishLabels = {
   multiSelect: MULTI_SELECT_LABELS,
   navbar: NAVBAR_LABELS,
   newPasswordForm: NEW_PASSWORD_FORM_LABELS,
+  nodeGrid: NODE_GRID_LABELS,
   notificationCard: NOTIFICATION_CARD_LABELS,
   notificationRow: NOTIFICATION_ROW_LABELS,
   notificationsPanel: NOTIFICATIONS_PANEL_LABELS,
@@ -232,7 +244,9 @@ export const englishLabels: EnglishLabels = {
   socialAuthButtons: SOCIAL_AUTH_BUTTONS_LABELS,
   spinner: SPINNER_LABELS,
   stackedList: STACKED_LIST_LABELS,
+  staleBadge: STALE_BADGE_LABELS,
   statefulSaveButton: STATEFUL_SAVE_BUTTON_LABELS,
+  statusBadge: STATUS_BADGE_LABELS,
   stepper: STEPPER_LABELS,
   stickyScrollNav: STICKY_SCROLL_NAV_LABELS,
   tag: TAG_LABELS,

@@ -3,10 +3,10 @@ import { ChevronRight } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
 import { RelativeTime } from '../data/RelativeTime';
 import { useControllableState } from '../hooks/useControllableState';
+import { useLabels } from '../labels/labelsContext';
 import { CodeBlock } from '../ui/CodeBlock';
 import { Fold } from '../ui/Fold';
 import {
-  STATUS_NAME,
   countStatuses,
   countsText,
   flattenChecks,
@@ -17,7 +17,8 @@ import {
   type HealthCheck,
   type HealthCheckGroup,
 } from './health';
-import { StatusBadge } from './StatusBadge';
+import { HEALTH_STATUS_LABELS } from './labels';
+import { StatusBadge, type StatusBadgeProps } from './StatusBadge';
 import type { HealthStatus } from './types';
 
 export type HealthCheckListProps = {
@@ -118,6 +119,12 @@ const Output = ({
     </Fold>
   );
 
+// A status badge that says the status in full, as the dictionary has it.
+const NamedStatus = (props: Omit<StatusBadgeProps, 'label'>) => {
+  const names = useLabels('healthStatus', HEALTH_STATUS_LABELS);
+  return <StatusBadge {...props} label={names[props.status]} />;
+};
+
 const Dash = () => (
   <span aria-hidden="true" className="text-[var(--color-text-muted)] @max-[48rem]:hidden">
     —
@@ -136,7 +143,7 @@ const CheckRow = ({ check, open, onToggle, outputId, now }: CheckProps) => (
         takes the rest, so in a tight row the target gives way first. */}
     <div className="flex flex-col gap-1.5 @min-[48rem]:grid @min-[48rem]:grid-cols-[6.5rem_minmax(6rem,10rem)_minmax(0,12rem)_minmax(12rem,1fr)_5rem_7rem] @min-[48rem]:items-center @min-[48rem]:gap-3">
       <span>
-        <StatusBadge status={check.status} label={STATUS_NAME[check.status]} />
+        <NamedStatus status={check.status} />
       </span>
       <CheckName check={check} open={open} onToggle={onToggle} outputId={outputId} />
       {check.target ? (
@@ -189,7 +196,7 @@ const CheckCard = ({ check, open, onToggle, outputId, now }: CheckProps) => (
       <div className="min-w-0 flex-1">
         <CheckName check={check} open={open} onToggle={onToggle} outputId={outputId} />
       </div>
-      <StatusBadge status={check.status} size="sm" label={STATUS_NAME[check.status]} />
+      <NamedStatus status={check.status} size="sm" />
     </div>
     {check.target && (
       <span className="font-mono text-xs break-all text-[var(--color-text-secondary)]">
@@ -233,6 +240,7 @@ export const HealthCheckList = ({
   now,
   className,
 }: HealthCheckListProps) => {
+  const names = useLabels('healthStatus', HEALTH_STATUS_LABELS);
   const uid = useId();
   const [collapsed, setCollapsed] = useControllableState<string[]>({
     value: collapsedGroups,
@@ -310,9 +318,9 @@ export const HealthCheckList = ({
           <span className="min-w-0 break-words">
             <bdi>{group.name}</bdi>
           </span>
-          <StatusBadge status={groupWorst(group)} label={STATUS_NAME[groupWorst(group)]} />
+          <NamedStatus status={groupWorst(group)} />
           <span className="text-xs font-normal text-[var(--color-text-secondary)]">
-            <bdi>{countsText(counts)}</bdi>
+            <bdi>{countsText(counts, names)}</bdi>
           </span>
         </button>
         <Fold id={panelId} open={!isCollapsed}>

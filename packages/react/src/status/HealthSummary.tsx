@@ -9,10 +9,10 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { RelativeTime } from '../data/RelativeTime';
+import { useLabels } from '../labels/labelsContext';
 import { toTimestamp, type DateTimeValue } from '../data/time';
 import { RefreshButton, type RefreshButtonProps } from '../ui/RefreshButton';
 import {
-  STATUS_NAME,
   SEVERITY_ORDER,
   attentionCount,
   countStatuses,
@@ -20,6 +20,7 @@ import {
   worstStatus,
   type HealthCheck,
 } from './health';
+import { HEALTH_STATUS_LABELS, HEALTH_SUMMARY_LABELS, type HealthSummaryLabels } from './labels';
 import { StaleBadge } from './StaleBadge';
 import { StatusBadge } from './StatusBadge';
 import { HealthDot } from './HealthDot';
@@ -34,11 +35,13 @@ export type HealthSummaryProps = {
    */
   status?: HealthStatus;
   /**
-   * The headline of each status. Defaults: "All systems operational" (OK), "Degraded
-   * performance" (WARN), "Major outage" (CRIT), "Status unknown" (UNKNOWN) and "Operational,
-   * with notices" (INFO). Give only the ones to change.
+   * The headline of each status, keyed by status ("All systems operational" for OK, "Degraded
+   * performance" for WARN, "Major outage" for CRIT, "Status unknown" for UNKNOWN, "Operational,
+   * with notices" for INFO), and the other texts it writes, over `LabelsProvider`'s
+   * `healthSummary` and the English defaults. The status names of the counts are the provider's
+   * `healthStatus`.
    */
-  labels?: Partial<Record<HealthStatus, string>>;
+  labels?: Partial<HealthSummaryLabels>;
   /**
    * `banner` is full width and tinted by the status, with the counts as badges. `compact` is
    * one line, for a card or a topbar. Default `banner`.
@@ -55,21 +58,13 @@ export type HealthSummaryProps = {
   /** Draws a `RefreshButton` with these props. Without it there is no refresh action. */
   refresh?: RefreshButtonProps;
   /**
-   * Accessible name of the group. Default "System health". It is a group, not a landmark, so
+   * Accessible name of the group. Default `labels.group`, "System health". It is a group, not a landmark, so
    * several summaries on a page need no distinct name.
    */
   ariaLabel?: string;
   /** Freezes the "last check" text at this moment. For stories and tests. */
   now?: Date | number;
   className?: string;
-};
-
-const DEFAULT_SUMMARY_LABELS: Record<HealthStatus, string> = {
-  OK: 'All systems operational',
-  WARN: 'Degraded performance',
-  CRIT: 'Major outage',
-  UNKNOWN: 'Status unknown',
-  INFO: 'Operational, with notices',
 };
 
 // The separator of a line of facts stays with the fact before it, so a line that wraps ends with it
@@ -125,46 +120,48 @@ const TONE: Record<HealthStatus, { surface: string; chip: string; text: string }
 export const HealthSummary = ({
   checks,
   status,
-  labels,
+  labels: ownLabels,
   variant = 'banner',
   checkedAt,
   stale,
   refresh,
-  ariaLabel = 'System health',
+  ariaLabel,
   now,
   className,
 }: HealthSummaryProps) => {
+  const labels = useLabels('healthSummary', HEALTH_SUMMARY_LABELS, ownLabels);
+  const names = useLabels('healthStatus', HEALTH_STATUS_LABELS);
   const counts = countStatuses(checks);
   const shown = status ?? worstStatus(checks.map((check) => check.status));
-  const headline = labels?.[shown] ?? DEFAULT_SUMMARY_LABELS[shown];
+  const headline = labels[shown];
   const present = SEVERITY_ORDER.filter((status) => counts[status] > 0);
   const attention = attentionCount(counts);
   const detail =
     checks.length === 0
-      ? 'No checks'
+      ? labels.noChecks
       : attention === 0
-        ? `${checks.length} ${checks.length === 1 ? 'check' : 'checks'}, none need attention`
-        : `${attention} of ${checks.length} ${checks.length === 1 ? 'check needs' : 'checks need'} attention`;
+        ? labels.allClear(checks.length)
+        : labels.needAttention(attention, checks.length);
   const last = checkedAt !== undefined ? toTimestamp(checkedAt) : latestCheck(checks);
   const lastCheck =
     last !== undefined && Number.isFinite(last) ? (
       <>
         <Separator />
-        {' last check '}
+        {labels.lastCheck}
         <RelativeTime value={last} now={now} />
       </>
     ) : null;
   const isStale = stale !== undefined;
   // Stale data is not a status of its own: the surface goes neutral, the status stays.
   const tone = TONE[isStale ? 'UNKNOWN' : shown];
-  const staleNote = isStale && <span className="sr-only">, stale data</span>;
+  const staleNote = isStale && <span className="sr-only">{labels.staleNote}</span>;
   const staleBadge = isStale && <StaleBadge since={stale} now={now} />;
 
   if (variant === 'compact') {
     return (
       <div
         role="group"
-        aria-label={ariaLabel}
+        aria-label={ariaLabel ?? labels.group}
         className={clsx(
           'flex min-h-12 flex-wrap items-center gap-x-2.5 gap-y-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-panel)] px-3.5 py-2 text-sm',
           className
@@ -183,7 +180,7 @@ export const HealthSummary = ({
               <Fragment key={status}>
                 {index > 0 && <Separator />}
                 {index > 0 && ' '}
-                <span className="whitespace-nowrap">{`${counts[status]} ${STATUS_NAME[status]}`}</span>
+                <span className="whitespace-nowrap">{`${counts[status]} ${names[status]}`}</span>
               </Fragment>
             ))}
             {lastCheck}
@@ -199,7 +196,7 @@ export const HealthSummary = ({
   return (
     <div
       role="group"
-      aria-label={ariaLabel}
+      aria-label={ariaLabel ?? labels.group}
       className={clsx(
         'flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border px-5 py-4',
         tone.surface,
@@ -231,7 +228,7 @@ export const HealthSummary = ({
       {staleBadge}
       <div className={clsx('flex flex-wrap gap-1.5', isStale && 'grayscale')}>
         {SEVERITY_ORDER.filter((s) => counts[s] > 0).map((s) => (
-          <StatusBadge key={s} status={s} label={`${counts[s]} ${STATUS_NAME[s]}`} />
+          <StatusBadge key={s} status={s} label={`${counts[s]} ${names[s]}`} />
         ))}
       </div>
       {refresh && <RefreshButton {...refresh} />}

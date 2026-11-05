@@ -83,6 +83,14 @@ import type {
   CustomizerLabels,
 } from '../settings/labels';
 import type {
+  HealthMatrixLabels,
+  HealthStatusLabels,
+  HealthSummaryLabels,
+  NodeGridLabels,
+  StaleBadgeLabels,
+  StatusBadgeLabels,
+} from '../status/labels';
+import type {
   ActiveFiltersBarLabels,
   ColumnFilterDropdownLabels,
   ColumnHeaderLabels,
@@ -187,6 +195,9 @@ export type CosmosLabels = {
   fileInput: FileInputLabels;
   fileTile: FileTileLabels;
   formFooter: FormFooterLabels;
+  healthMatrix: HealthMatrixLabels;
+  healthStatus: HealthStatusLabels;
+  healthSummary: HealthSummaryLabels;
   helpOverlay: HelpOverlayLabels;
   integrationCard: IntegrationCardLabels;
   kanbanBoard: KanbanBoardLabels;
@@ -199,6 +210,7 @@ export type CosmosLabels = {
   multiSelect: MultiSelectLabels;
   navbar: NavbarLabels;
   newPasswordForm: NewPasswordFormLabels;
+  nodeGrid: NodeGridLabels;
   notificationCard: NotificationCardLabels;
   notificationRow: NotificationRowLabels;
   notificationsPanel: NotificationsPanelLabels;
@@ -231,7 +243,9 @@ export type CosmosLabels = {
   socialAuthButtons: SocialAuthButtonsLabels;
   spinner: SpinnerLabels;
   stackedList: StackedListLabels;
+  staleBadge: StaleBadgeLabels;
   statefulSaveButton: StatefulSaveButtonLabels;
+  statusBadge: StatusBadgeLabels;
   stepper: StepperLabels;
   stickyScrollNav: StickyScrollNavLabels;
   tag: TagLabels;
