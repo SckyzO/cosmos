@@ -43,7 +43,7 @@ export const Matrix: Story = {
 
 export const CustomLabel: Story = { args: { status: 'OK', label: 'Healthy' } };
 
-/** The outlined badge with an icon: the look the old `HealthBadge` had, for a status that is the subject of the page. */
+/** The bordered badge with an icon, for a status that is the subject of a page or a card. */
 export const Outline: Story = {
   args: { status: 'OK', shape: 'rounded', appearance: 'outline', icon: true, size: 'lg' },
 };
