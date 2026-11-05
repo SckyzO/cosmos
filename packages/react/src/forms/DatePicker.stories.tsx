@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRef, useState } from 'react';
+import { fr } from 'react-day-picker/locale';
 import { expect, fn, screen, userEvent, waitFor, within } from 'storybook/test';
 import { LabelsProvider } from '../labels/LabelsProvider';
 import {
@@ -953,5 +954,27 @@ export const LabelsFromProviderAndProp: Story = {
     await expect(within(range).getByRole('button', { name: 'OK' })).toBeVisible();
     await expect(within(range).queryByRole('button', { name: 'Terminé' })).toBeNull();
     await expect(within(range).getByRole('group', { name: 'Périodes prédéfinies' })).toBeVisible();
+  },
+};
+
+/**
+ * The field writes the date in the provider's `locale`, and `calendarLocale` names the months and
+ * weekdays of its calendar.
+ */
+export const LocaleWritesTheDateAndNamesTheMonths: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider locale="fr-FR">
+      <DatePicker label="Échéance" defaultValue={new Date(2026, 4, 7)} calendarLocale={fr} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const trigger = canvas.getByRole('button', { name: 'Échéance' });
+    await expect(trigger).toHaveTextContent('07 mai 2026');
+    await userEvent.click(trigger);
+    const dialog = await screen.findByRole('dialog');
+    await expect(within(dialog).getByRole('combobox', { name: /mois/i })).toHaveDisplayValue(/mai/);
+    await expect(within(dialog).getByText('lu')).toBeVisible();
+    await userEvent.keyboard('{Escape}');
   },
 };
