@@ -210,6 +210,79 @@ error.
 The title is 16px and the description 14px (they were 14px and 12px up to 0.5.0), with 16px
 between the header and the body.
 
+### Surface, header and behavior
+
+All of these are options and none changes a card that does not use them. A `SectionCard` without
+them is the card it was.
+
+```tsx
+<SectionCard
+  title="Critical alerts"
+  desc="+1 in the last hour"
+  icon={Bell}
+  intent="danger"
+  halo
+  flush
+  size="md"
+  badge={<StatusBadge status="CRIT" label="4" />}
+  footer={
+    <>
+      <span>4 critical, 6 warning</span>
+      <Button variant="link" size="sm">
+        Show all 15 alerts
+      </Button>
+    </>
+  }
+>
+  <Table aria-label="Critical alerts firing now">…</Table>
+</SectionCard>
+```
+
+- `intent` is what the card means, `neutral` (default), `brand`, `info`, `success`, `warning` or
+  `danger`, and `variant` is its surface. `outline` (default) is the plain card with the intent
+  coloring its border. `tinted` gives the card a tint of the intent as its background, in a
+  colored border. `solid` fills it with the intent and writes in white; a neutral solid card is
+  dark in the light themes and light, with dark ink, in the dark ones. Solid is for simple
+  content, a figure and a sentence: a `Table`, a chart or a form keeps its own colors and does
+  not read on a fill. The icon tile follows the intent unless `iconTone`, `iconColor` or
+  `iconBg` say otherwise; on a solid card it is drawn in the card's ink and ignores them.
+- `halo` draws the card's edge in a gradient of two hues of its intent (brand to violet, info to
+  brand, success to cyan, warning to yellow, danger to pink, two grays for neutral) and a blurred
+  copy of the gradient behind it. It works on any variant, is static, takes no room and does not
+  move the card. It is drawn outside the card, so leave `haloSize` of space around it: an
+  ancestor with `overflow-hidden` cuts it. `haloSize` is `sm`, `md` (default) or `lg`: how far
+  the glow reaches and how much it is blurred (2px and 8px, 4px and 16px, 8px and 24px).
+- `accent` puts a band of 4px on one side of the card and `accentSide` picks it: `top`
+  (default), `bottom`, `start` or `end`, the last two following the reading direction. The rest
+  of the card keeps its colors, and `accent` takes any intent, whatever the card's own.
+- `iconPosition` places the icon tile before the title (`start`, default), at the end of the
+  title block, before the `action` (`end`), or above the title (`top`). `iconShape` is a rounded
+  `square` (default) or a `round`.
+- `badge` stands next to the title: a `StatusBadge`, a count. It wraps under the title when the
+  row is too narrow.
+- `footer` goes under the body, full width, set off by a line. Its children share one row, the
+  first at the start and the last at the end. It stays at the bottom of the card in a grid, and
+  in every state, like `action`.
+- `flush` runs the body edge to edge under the header, with a line above it and no padding, down
+  to the bottom edge of the card or to its footer: for a `Table` or a list. A `Table` or
+  `DataTable` put directly in it gives up its own border and corners, the card draws them. In
+  `loading`, `error` and `empty` the state is padded as usual.
+- `size` is the padding of the card: `sm` (16px), `md` (20px) or `lg` (24px, default). The gap
+  between the header and the body goes from 16px to 12px with `sm` and `md`.
+- `collapsible` adds a toggle at the end of the header that folds the body, and the footer with
+  it; the header, its badge and its action stay. The toggle is a button named "Toggle" and the
+  title, with `aria-expanded` and `aria-controls`, and the folded body is out of the tab order.
+  `defaultOpen` (default `true`) starts it folded when `false`; `open` and `onOpenChange(open)`
+  are the usual controlled pair, and only read with `collapsible`. Below `sm` the toggle stays
+  on the title's row and the action goes under it.
+- `stale` dims the body to 65% and shows `staleLabel` ("Stale" by default; say how old:
+  `staleLabel="Stale · 4 min ago"`) by the title. That is all it does. What to show of the last
+  data under a failure is yours: the cause in `desc` and a "Retry" in `action` keep the header
+  telling what happened, and neither is dimmed. Inside the dimmed body the secondary and muted
+  text colors read as the primary one, because their own would drop under 4.5:1; a color you set
+  with your own class is only dimmed. A `solid` card is not dimmed (white ink over its fill
+  cannot be), and neither is a `loading`, `error` or `empty` state: the label says it.
+
 ## Site footer
 
 Storybook: [Site Footer](https://sckyzo.github.io/cosmos/?path=/docs/layout-site-footer--docs).

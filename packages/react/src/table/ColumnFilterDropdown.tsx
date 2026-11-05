@@ -71,7 +71,7 @@ export const ColumnFilterDropdown = ({
         <div className="border-t border-gray-100 p-2 dark:border-gray-800">
           <button
             type="button"
-            onClick={onClear}
+            onClick={() => onClear()}
             className="focus-visible:focus-indicator py-row-6 w-full rounded-lg px-2 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
           >
             Clear ({selected.size} selected)

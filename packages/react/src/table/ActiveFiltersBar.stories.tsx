@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { ActiveFiltersBar, type ActiveFilter } from './ActiveFiltersBar';
 import { expectTextContrast, inEachTheme } from '../storybook-helpers';
 
@@ -34,6 +34,17 @@ const Demo = () => {
 /** Each filter is a removable brand Tag, named "Clear {label} filter". */
 export const Default: Story = {
   render: () => <Demo />,
+};
+
+export const ClearAllGetsNoEvent: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { onClearAll: fn() },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Clear all' }));
+    await expect(args.onClearAll).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onClearAll).toHaveBeenCalledWith();
+  },
 };
 
 export const DefaultChecks: Story = {

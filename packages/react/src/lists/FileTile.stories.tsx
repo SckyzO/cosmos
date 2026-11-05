@@ -357,6 +357,8 @@ export const NameIsTheOnlyButton: Story = {
     await expect(args.onOpen).not.toHaveBeenCalled();
     await userEvent.click(name);
     await expect(args.onOpen).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onOpen).toHaveBeenCalledWith();
   },
 };
 

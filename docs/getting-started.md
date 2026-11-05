@@ -114,7 +114,9 @@ export default function App() {
 ```
 
 Every component outside the [optional entries](guides/optional-entries.md) is a named export of
-`@sckyzo/cosmos-react`, with its types. The
+`@sckyzo/cosmos-react`, with its types. Import them from the package itself: each component is
+a file of its own in the build, and your bundler keeps the files your imports reach and leaves
+the rest out. An app that renders only a `Button` ships about 1.4 kB of Cosmos code, gzipped. The
 [Storybook](https://sckyzo.github.io/cosmos/) documents each one, with its props and examples;
 [docs/components](README.md#components) adds notes on the larger ones.
 
@@ -258,9 +260,9 @@ add.
 
 ### Server and client components
 
-Both packages start every file of their build with `"use client"`, so a component such as
-`Badge` or `Button` imports into a Server Component and renders on the server, as in `page.tsx`
-above. Two things still need a client file (`'use client'` at its top, as `demo.tsx` has):
+Both packages start every file of their build that holds code with `"use client"` (the entry
+files, which only re-export the others, go without), so a component such as `Badge` or `Button`
+imports into a Server Component and renders on the server, as in `page.tsx` above. Two things still need a client file (`'use client'` at its top, as `demo.tsx` has):
 
 - **The compound components.** `Card.Header`, `Card.Body`, `Modal.Body`, `Tabs.List`,
   `Menu.Item`, `Sidebar.Item` and the others written `Component.Part` are properties of a client

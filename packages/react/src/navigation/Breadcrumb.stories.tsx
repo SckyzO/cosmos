@@ -161,6 +161,8 @@ export const ClickHandlersMakeButtons: Story = {
     const [home, library] = args.items;
     await userEvent.click(canvas.getByRole('button', { name: 'Home' }));
     await expect(home.onClick).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(home.onClick).toHaveBeenCalledWith();
     // `onClick` wins over `href`.
     await expect(canvas.queryByRole('link', { name: 'Library' })).toBeNull();
     await userEvent.click(canvas.getByRole('button', { name: 'Library' }));

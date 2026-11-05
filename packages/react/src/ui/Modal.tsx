@@ -63,7 +63,7 @@ const Header = ({ title, description, onClose, className, children }: ModalHeade
       {onClose && (
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => onClose()}
           aria-label="Close modal"
           className="focus-visible:focus-indicator h-ctrl-32 w-ctrl-32 flex shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >

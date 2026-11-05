@@ -5,6 +5,18 @@ All notable changes to `@sckyzo/cosmos-charts` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.8.0...@sckyzo/cosmos-charts@0.8.1) (2026-11-04)
+
+
+### Bug Fixes
+
+* **charts:** draw the SemiCircleGauge target above the arc ([f9352af](https://github.com/SckyzO/cosmos/commit/f9352afb737a70564cdd3dc56928312b5d4d0ab9))
+
+
+### Performance Improvements
+
+* **charts:** keep the SunburstChart partition and indexes out of a hover ([88038b4](https://github.com/SckyzO/cosmos/commit/88038b4234cba4ca9337e63b70c425d9b7a5a806))
+
 ## [0.8.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.7.0...@sckyzo/cosmos-charts@0.8.0) (2026-11-03)
 
 

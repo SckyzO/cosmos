@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 import { expect } from 'storybook/test';
 import { bothDirections, endOffset, directionBox, expectMirrored } from '../storybook-helpers';
@@ -17,11 +18,29 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const Card = ({ children }: { children: React.ReactNode }) => (
-  // Up to 16rem, narrower in a narrow column; the content starts under the corner ribbons.
-  <div className="relative h-44 w-full max-w-64 overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 pt-12 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+const Card = ({
+  children,
+  title = 'Pro plan',
+  corner,
+}: {
+  children: React.ReactNode;
+  title?: string;
+  /**
+   * The edge of an angled banner, which reaches 80px into the card along each side: the content
+   * starts under it (`top`) or stops above it (`bottom`). Without it, room for a flat ribbon.
+   */
+  corner?: 'top' | 'bottom';
+}) => (
+  // Up to 16rem, narrower in a narrow column; the content starts under the top ribbons.
+  <div
+    className={clsx(
+      'relative h-44 w-full max-w-64 overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800',
+      corner === undefined && 'pt-12',
+      corner === 'top' && 'pt-16'
+    )}
+  >
     {children}
-    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Pro plan</h4>
+    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h4>
     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">29 € / month</p>
     <p className="mt-3 text-xs text-gray-700 dark:text-gray-300">
       Unlimited members, priority support, and 1 TB of storage.
@@ -75,13 +94,15 @@ export const Intents: Story = {
   ),
 };
 
+// The label is short on purpose: the banner shows only what fits across its corner, about 90px, so
+// a position name such as `bottom-start` is cut at both ends. The card names the corner instead.
 export const AngledPositions: Story = {
   render: () => (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
       {(['top-start', 'top-end', 'bottom-start', 'bottom-end'] as RibbonPosition[]).map((pos) => (
-        <Card key={pos}>
+        <Card key={pos} title={pos} corner={pos.startsWith('bottom') ? 'bottom' : 'top'}>
           <Ribbon shape="angled" position={pos} intent="success">
-            {pos}
+            NEW
           </Ribbon>
         </Card>
       ))}

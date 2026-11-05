@@ -235,6 +235,19 @@ export const PaletteCardForwardsRef: Story = {
   },
 };
 
+const onCardClick = fn();
+
+export const PaletteCardCallsOnClick: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <PaletteCard meta={COSMOS_THEMES[0]} onClick={onCardClick} />,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('radio', { name: 'Light' }));
+    await expect(onCardClick).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(onCardClick).toHaveBeenCalledWith();
+  },
+};
+
 // ── Controlled or not (#151) ─────────────────────────────────────────────────
 // Only `undefined` means uncontrolled. The uncontrolled instance starts from its
 // default and moves on its own; the controlled one, held at a fixed value, reports

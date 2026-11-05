@@ -156,7 +156,7 @@ export const RecordPager = ({
         <AppLink
           ref={setRef}
           href={href}
-          onClick={onClick}
+          onClick={onClick && (() => onClick())}
           aria-label={compact ? label : undefined}
           className={cls}
         >
@@ -169,7 +169,7 @@ export const RecordPager = ({
         ref={setRef}
         type="button"
         disabled={!enabled}
-        onClick={onClick}
+        onClick={onClick && (() => onClick())}
         aria-label={compact ? label : undefined}
         className={cls}
       >

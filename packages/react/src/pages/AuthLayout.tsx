@@ -1,5 +1,7 @@
 import { clsx } from 'clsx';
 import type { ComponentType, ReactNode } from 'react';
+import { Card } from '../ui/Card';
+import { IconBox } from '../ui/IconBox';
 
 export type AuthLayoutVariant = 'card' | 'split' | 'cover';
 
@@ -89,26 +91,17 @@ export const AuthLayout = ({
       brand // includes `null` → renders nothing
     ) : showBuiltInBrand ? (
       <div className="mb-8 flex flex-col items-center gap-2 text-center">
-        {Logo && (
-          <div className="bg-brand-500 flex h-12 w-12 items-center justify-center rounded-xl text-white">
-            <Logo className="h-6 w-6" />
-          </div>
-        )}
+        {Logo && <IconBox icon={Logo} size="xl" bg="bg-brand-500" color="text-white" />}
         {title && <p className="text-xl font-bold text-gray-900 dark:text-white">{title}</p>}
         {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>}
       </div>
     ) : null;
 
   const cardBox = (
-    <div
-      className={clsx(
-        'rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900',
-        size === 'md' ? 'p-8' : 'p-6 sm:p-8'
-      )}
-    >
+    <Card padding="none" className={clsx('shadow-sm', size === 'md' ? 'p-8' : 'p-6 sm:p-8')}>
       {renderBrand}
       {children}
-    </div>
+    </Card>
   );
 
   if (variant === 'split') {
@@ -118,11 +111,7 @@ export const AuthLayout = ({
         aside
       ) : Logo || title || subtitle ? (
         <div className="flex max-w-sm flex-col items-center gap-3.5 text-center text-white">
-          {Logo && (
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/14">
-              <Logo className="h-7 w-7" />
-            </div>
-          )}
+          {Logo && <IconBox icon={Logo} size="2xl" bg="bg-white/14" color="text-white" />}
           {title && <p className="text-3xl font-bold">{title}</p>}
           {subtitle && <p className="text-base leading-normal">{subtitle}</p>}
         </div>

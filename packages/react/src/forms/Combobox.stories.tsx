@@ -38,7 +38,7 @@ const PEOPLE = [
 // TUI Plus pattern "Simple" — label + input + dropdown of plain names.
 export const Simple: Story = {
   render: () => {
-    const [v, setV] = useState('');
+    const [v, setV] = useState('michael');
     return (
       <div className="max-w-md bg-white p-8 dark:bg-gray-900">
         <Combobox label="Assigned to" value={v} onChange={setV} options={PEOPLE} />
@@ -68,7 +68,13 @@ export const WithStatusIndicator: Story = {
     }));
     return (
       <div className="max-w-md bg-white p-8 dark:bg-gray-900">
-        <Combobox label="Assigned to" value={v} onChange={setV} options={opts} />
+        <Combobox
+          label="Assigned to"
+          value={v}
+          onChange={setV}
+          options={opts}
+          placeholder="Select a person"
+        />
       </div>
     );
   },
@@ -91,6 +97,7 @@ export const WithSecondaryText: Story = {
           value={v}
           onChange={setV}
           options={PEOPLE.map((p) => ({ ...p, secondary: `@${p.value}` }))}
+          placeholder="Search by name or handle"
         />
       </div>
     );
@@ -101,7 +108,12 @@ export const WithSecondaryText: Story = {
 export const WithError: Story = {
   render: () => (
     <div className="max-w-md bg-white p-8 dark:bg-gray-900">
-      <Combobox label="Assigned to" options={PEOPLE} error="This field is required." />
+      <Combobox
+        label="Assigned to"
+        options={PEOPLE}
+        placeholder="Select a person"
+        error="This field is required."
+      />
     </div>
   ),
 };

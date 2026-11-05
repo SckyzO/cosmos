@@ -197,6 +197,8 @@ export const ResetCallsOnReset: Story = {
     await waitFor(() => expect(panel()).toBeVisible());
     await userEvent.click(within(panel()).getByRole('button', { name: 'Reset' }));
     await expect(args.onReset).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onReset).toHaveBeenCalledWith();
     await expect(panel()).toBeVisible();
   },
 };

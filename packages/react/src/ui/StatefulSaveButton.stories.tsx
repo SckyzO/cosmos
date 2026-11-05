@@ -49,7 +49,8 @@ export const IdleClickFiresOnClick: Story = {
   args: { state: 'idle', onClick: fn() },
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button'));
-    await expect(args.onClick).toHaveBeenCalled();
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onClick).toHaveBeenCalledWith();
   },
 };
 

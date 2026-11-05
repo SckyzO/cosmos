@@ -692,6 +692,10 @@ export const CloseTriggers: Story = {
     await expect(args.onClose).toHaveBeenCalledTimes(2);
     await userEvent.keyboard('{Escape}');
     await expect(args.onClose).toHaveBeenCalledTimes(3);
+    // The prop is `() => void`: the backdrop, the button and Escape all call it with no argument.
+    await expect(args.onClose).toHaveBeenNthCalledWith(1);
+    await expect(args.onClose).toHaveBeenNthCalledWith(2);
+    await expect(args.onClose).toHaveBeenNthCalledWith(3);
   },
 };
 
@@ -1162,6 +1166,8 @@ export const BottomSheetFillsTheWidthAndFollowsItsContent: Story = {
     await expect(above).toBe(scrim());
     await userEvent.click(above!);
     await expect(args.onClose).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the scrim.
+    await expect(args.onClose).toHaveBeenCalledWith();
   },
 };
 
@@ -1243,6 +1249,8 @@ export const BottomSheetCloseOutsideSitsAboveTheSheet: Story = {
     await expect(button.right).toBeLessThanOrEqual(box.right);
     await userEvent.click(close);
     await expect(args.onClose).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onClose).toHaveBeenCalledWith();
   },
 };
 

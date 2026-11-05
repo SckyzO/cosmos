@@ -65,7 +65,7 @@ export const ChatMessageActions = ({
         <button
           type="button"
           aria-label="Regenerate"
-          onClick={onRegenerate}
+          onClick={() => onRegenerate()}
           className={clsx(BUTTON, IDLE)}
         >
           <RefreshCw className="h-3.5 w-3.5" aria-hidden />

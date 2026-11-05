@@ -145,14 +145,14 @@ const ConfirmationContent = ({
           shape="circle"
           size="sm"
           icon={X}
-          onClick={onClose}
+          onClick={() => onClose()}
           aria-label="Close"
           className="-me-2 -mt-1 shrink-0"
         />
       </div>
 
       <div className="flex flex-nowrap items-center justify-end gap-2 border-t border-gray-100 px-6 py-4 dark:border-gray-800">
-        <Button variant="secondary" onClick={onClose} className="shrink-0">
+        <Button variant="secondary" onClick={() => onClose()} className="shrink-0">
           {stayLabel}
         </Button>
         {onDiscard && (
@@ -160,14 +160,19 @@ const ConfirmationContent = ({
             variant={danger ? 'primary' : 'secondary'}
             intent="danger"
             disabled={!confirmed}
-            onClick={onDiscard}
+            onClick={() => onDiscard()}
             className="shrink-0"
           >
             {discardLabel}
           </Button>
         )}
         {!hideSave && onSave && (
-          <Button icon={icon ?? undefined} loading={saving} onClick={onSave} className="shrink-0">
+          <Button
+            icon={icon ?? undefined}
+            loading={saving}
+            onClick={() => onSave()}
+            className="shrink-0"
+          >
             {saveLabel}
           </Button>
         )}

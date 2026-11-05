@@ -54,7 +54,11 @@ export const WithHamburger: Story = {
           }
         />
         <p className="px-4 py-3 text-xs text-[var(--color-text-muted)]">
-          Click the hamburger to toggle: collapsed = {String(collapsed)}
+          The sidebar is{' '}
+          <strong className="font-semibold text-[var(--color-text-secondary)]">
+            {collapsed ? 'collapsed' : 'expanded'}
+          </strong>
+          . Click the hamburger to {collapsed ? 'expand' : 'collapse'} it.
         </p>
       </Wrap>
     );
@@ -277,7 +281,7 @@ export const PageTitleAsHeading: Story = {
 
 // ── Narrow screens (#291) ────────────────────────────────────────────────────
 
-const MobileTopbar = ({ onSelect }: { onSelect?: () => void }) => (
+const MobileTopbar = ({ onSelect, page }: { onSelect?: () => void; page?: React.ReactNode }) => (
   <Wrap>
     <Topbar
       sidebarCollapsed={false}
@@ -302,7 +306,18 @@ const MobileTopbar = ({ onSelect }: { onSelect?: () => void }) => (
         </>
       }
     />
+    {page}
   </Wrap>
+);
+
+// What the page under the bar says: its own heading, since the bar's title is gone on a phone.
+const PagePreview = () => (
+  <div className="px-4 py-6">
+    <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">Revenue this month</h1>
+    <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+      Orders, refunds and the plans that grew since last month.
+    </p>
+  </div>
 );
 
 /**
@@ -312,7 +327,7 @@ const MobileTopbar = ({ onSelect }: { onSelect?: () => void }) => (
 export const Mobile: Story = {
   globals: mobileViewport,
   parameters: { ...portalDocsParams.lg(), layout: 'fullscreen' },
-  render: () => <MobileTopbar onSelect={fn()} />,
+  render: () => <MobileTopbar onSelect={fn()} page={<PagePreview />} />,
 };
 
 export const MobileChecks: Story = {

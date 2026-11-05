@@ -206,6 +206,8 @@ export const DismissCallsOnDismiss: Story = {
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Dismiss alert' }));
     await expect(args.onDismiss).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onDismiss).toHaveBeenCalledWith();
   },
 };
 
@@ -344,6 +346,7 @@ export const AccentKeepsAlertRoleAndDismiss: Story = {
     await expect(canvas.getByRole('link', { name: 'Retry' })).toBeVisible();
     await userEvent.click(canvas.getByRole('button', { name: 'Dismiss alert' }));
     await expect(args.onDismiss).toHaveBeenCalledTimes(1);
+    await expect(args.onDismiss).toHaveBeenCalledWith();
   },
 };
 

@@ -273,7 +273,7 @@ export function Comment({
                 </Button>
               )}
               {onDelete && (
-                <Button variant="ghost" intent="danger" size="xs" onClick={onDelete}>
+                <Button variant="ghost" intent="danger" size="xs" onClick={() => onDelete()}>
                   {labels.delete}
                 </Button>
               )}

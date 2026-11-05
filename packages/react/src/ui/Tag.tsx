@@ -143,7 +143,7 @@ export const Tag = ({
       <AppLink
         ref={ref as Ref<HTMLAnchorElement>}
         href={href}
-        onClick={onClick}
+        onClick={onClick && (() => onClick())}
         className={clsx(mainClass, interactiveClass, 'underline underline-offset-2')}
       >
         {content}
@@ -154,7 +154,7 @@ export const Tag = ({
       <button
         ref={ref as Ref<HTMLButtonElement>}
         type="button"
-        onClick={onClick}
+        onClick={onClick && (() => onClick())}
         className={clsx(mainClass, interactiveClass)}
       >
         {content}
@@ -196,7 +196,7 @@ export const Tag = ({
           ref={interactive ? undefined : (ref as Ref<HTMLButtonElement>)}
           type="button"
           disabled={disabled}
-          onClick={onRemove}
+          onClick={() => onRemove()}
           aria-label={removeLabel ?? (name ? `Remove ${name}` : 'Remove')}
           className={clsx(
             'focus-visible:focus-indicator relative inline-flex shrink-0 items-center justify-center rounded-sm before:absolute before:content-[""]',

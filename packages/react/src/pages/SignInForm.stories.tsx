@@ -3,6 +3,7 @@ import { Activity } from 'lucide-react';
 import { useState } from 'react';
 import { expect, fn, userEvent } from 'storybook/test';
 import { portalDocsParams } from '../storybook-helpers';
+import { Toaster, toast } from '../ui/Toast';
 import { AuthLayout } from './AuthLayout';
 import { SignInForm } from './SignInForm';
 
@@ -48,7 +49,6 @@ export const Interactive: Story = {
   render: () => {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | undefined>();
-    const [signedIn, setSignedIn] = useState<string | null>(null);
     return (
       <>
         <SignInForm
@@ -64,16 +64,12 @@ export const Interactive: Story = {
               if (password === 'wrong') {
                 setError('Incorrect password. Try `letmein`.');
               } else {
-                setSignedIn(email);
+                toast.success(`Signed in as ${email}`);
               }
             }, 1200);
           }}
         />
-        {signedIn && (
-          <div className="inset-s-4 fixed bottom-4 rounded-md bg-green-500 px-3 py-1.5 text-sm text-white shadow-lg">
-            Signed in as {signedIn}
-          </div>
-        )}
+        <Toaster />
       </>
     );
   },
@@ -111,6 +107,8 @@ export const ForgotFiresHandler: Story = {
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: /forgot password/i }));
     await expect(args.onForgotPassword).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onForgotPassword).toHaveBeenCalledWith();
   },
 };
 

@@ -54,7 +54,7 @@ const PROBLEMS: Record<string, { message: string; latency?: number }> = {
   'cn-a02-07': { message: 'Load average 97 on 64 cores for 15 minutes', latency: 640 },
   'cn-a03-05': { message: 'Memory 93% used, swapping', latency: 410 },
   'cn-a03-12': { message: 'node_exporter did not answer: context deadline exceeded' },
-  'cn-a04-11': { message: 'Added to Prometheus 2 minutes ago, no sample yet' },
+  'cn-a04-11': { message: 'No sample from node_exporter for 30 minutes' },
   'gpu-b01-04': { message: 'Xid 79: GPU 3 has fallen off the bus' },
   'gpu-b02-02': { message: 'GPU 5 at 86 °C, above 83 °C', latency: 120 },
   'oss-c01-03': { message: 'Lustre OST0012 is not responding' },
@@ -377,20 +377,356 @@ export const EXTREME_EVENTS: LogLine[] = [
   },
 ];
 
-// ── The incident ─────────────────────────────────────────────────────────────
+// ── Alerts ───────────────────────────────────────────────────────────────────
 
-export const INCIDENT = {
-  id: 'INC-2041',
-  title: 'Lustre OST0012 is offline on oss-c01-03',
-  detail: '14 jobs are stalled. Started 09:41.',
+export type AlertSeverity = 'Critical' | 'Warning' | 'Info' | 'Unknown';
+
+export type Alert = {
+  id: string;
+  severity: AlertSeverity;
+  /** The name of the alerting rule. */
+  name: string;
+  summary: string;
+  /** What fired: a node, a service, a path. */
+  target: string;
+  /** When it started firing. */
+  startedAt: number;
+  acknowledged: boolean;
 };
 
-export const EXTREME_INCIDENT = {
-  id: 'INC-2041',
-  title:
-    'parallel filesystem metadata servers lost quorum after the 03:12 power-feed failover on halls B and C, 300 nodes are unreachable and the scheduler is draining every partition except debug-short',
-  detail: 'Started 03:12.',
+/** The order of the filters and of the panels. */
+export const ALERT_SEVERITIES: AlertSeverity[] = ['Critical', 'Warning', 'Info', 'Unknown'];
+
+// The table lists the alerts by severity, with the ones nobody can classify before the
+// informational ones, then the oldest first.
+const SEVERITY_RANK: Record<AlertSeverity, number> = {
+  Critical: 0,
+  Warning: 1,
+  Unknown: 2,
+  Info: 3,
 };
+
+const sortAlerts = (alerts: Alert[]) =>
+  [...alerts].sort(
+    (a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] || a.startedAt - b.startedAt
+  );
+
+/** Today at `HH:MM` UTC, the day of `NOW`. */
+const today = (time: string) => {
+  const [hours, minutes] = time.split(':').map(Number);
+  return Date.UTC(2026, 9, 29, hours, minutes);
+};
+
+type AlertSpec = [
+  severity: AlertSeverity,
+  name: string,
+  summary: string,
+  target: string,
+  startedAt: string,
+  acknowledged?: true,
+];
+
+const alertsOf = (specs: AlertSpec[]): Alert[] =>
+  specs.map(([severity, name, summary, target, startedAt, acknowledged]) => ({
+    id: `${name}:${target}`,
+    severity,
+    name,
+    summary,
+    target,
+    startedAt: today(startedAt),
+    acknowledged: acknowledged === true,
+  }));
+
+// The nodes are those of the matrix: the same names, the same problems.
+const NODE_ALERTS: AlertSpec[] = [
+  ['Critical', 'LustreOSTOffline', 'OST0012 is offline, 14 jobs stalled', 'oss-c01-03', '09:41'],
+  [
+    'Critical',
+    'LustreSpaceCritical',
+    '/scratch is 93 % full, critical at 90 %',
+    'lustre · /scratch',
+    '11:05',
+  ],
+  ['Critical', 'NodeDown', 'No heartbeat for 1 h 14 min', 'cn-a03-12', '13:18'],
+  ['Critical', 'GPUXidError', 'Xid 79: GPU fell off the bus', 'gpu-b01-04 · GPU 3', '14:05', true],
+  [
+    'Warning',
+    'InletTempHigh',
+    'Inlet at 29 °C, warning at 27 °C',
+    'oss-c01-04 · rack C01',
+    '12:40',
+  ],
+  ['Warning', 'FanSpeedLow', 'Fan 3 below its minimum speed', 'cn-a02-07 · fan 3', '13:12', true],
+  [
+    'Warning',
+    'DiskSmartWarning',
+    'Reallocated sectors rising on /dev/sdb',
+    'gpu-b02-02',
+    '13:47',
+    true,
+  ],
+  ['Warning', 'NTPClockSkew', 'Clock 410 ms off the reference', 'mds-c02-09', '14:10'],
+  [
+    'Warning',
+    'ClusterMemoryHigh',
+    '86 % of the memory in use, warning at 80 %',
+    'cluster · 96 nodes',
+    '14:15',
+  ],
+  ['Warning', 'MemoryECCErrors', '12 corrected errors in 10 minutes', 'cn-a03-05', '14:21'],
+  ['Unknown', 'ExporterDown', 'node_exporter does not answer', 'cn-a04-11', '14:02'],
+];
+
+// Four informational alerts: the table lists them last, behind the other eleven.
+const INFO_ALERTS: AlertSpec[] = [
+  [
+    'Info',
+    'CertificateExpiring',
+    'The TLS certificate of prom-01 expires in 21 days',
+    'prom-01.rc.halden.example',
+    '00:00',
+  ],
+  ['Info', 'ConfigReloaded', 'Prometheus reloaded its configuration', 'prom-01', '12:15'],
+  [
+    'Info',
+    'JobQueueDeep',
+    '316 jobs pending, above the usual 250',
+    'slurmctld · gpu-long',
+    '13:05',
+  ],
+  [
+    'Info',
+    'MaintenanceScheduled',
+    'Maintenance window tomorrow at 06:00',
+    'slurmctld · all partitions',
+    '08:00',
+  ],
+];
+
+/** The 15 alerts of Atlas: 4 critical, 6 warning, 4 informational and 1 unknown. */
+export const ALERTS: Alert[] = sortAlerts(alertsOf([...NODE_ALERTS, ...INFO_ALERTS]));
+
+/** Three alerts with names, targets and summaries that do not fit. */
+const EXTREME_SPECIAL_ALERTS: AlertSpec[] = [
+  [
+    'Critical',
+    'LustreMDTQuorumLostAfterThePowerFeedFailoverOnHallsBAndC',
+    'atlas-MDT0000 lost quorum after the 03:12 power-feed failover on halls B and C, 300 clients evicted; in-flight jobs will be requeued by slurmctld',
+    'mds-c02-001.fs.atlas.rc.halden-university.example · atlas-MDT0000',
+    '03:12',
+  ],
+  [
+    'Critical',
+    'SchedulerPartitionsDrained',
+    'slurmctld is draining every partition except debug-short',
+    'slurmctld-backup-primary-failover.atlas.rc.halden-university.example',
+    '03:14',
+  ],
+  [
+    'Critical',
+    'NodeDown',
+    'No heartbeat for 11 h 20 min',
+    'gpu-b01-04.rack-b01.hall-north.atlas.rc.halden-university.example',
+    '03:12',
+    true,
+  ],
+];
+
+const NODE_RULE = {
+  CRIT: ['Critical', 'NodeDown', 'No heartbeat'],
+  WARN: ['Warning', 'LoadHigh', 'Load average above 120 % of the cores'],
+  UNKNOWN: ['Unknown', 'ExporterDown', 'node_exporter does not answer'],
+} as const;
+
+// One alert per node that is not fine: 616 nodes, 616 alerts, 300 of them critical, plus the three
+// above and the four informational ones. They started in the last 8 hours, after the three above,
+// which are the oldest and so lead the table.
+const extremeAlerts = (): Alert[] => {
+  const random = seeded(2043);
+  const nodes = EXTREME_CLUSTER.checks.filter(
+    (check): check is typeof check & { status: keyof typeof NODE_RULE } =>
+      check.status === 'CRIT' || check.status === 'WARN' || check.status === 'UNKNOWN'
+  );
+  const perNode = nodes.map((check): Alert => {
+    const [severity, name, summary] = NODE_RULE[check.status];
+    const minutes = 5 + Math.floor(random() * 8 * 60);
+    return {
+      id: `${name}:${check.id}`,
+      severity,
+      name,
+      summary: severity === 'Critical' ? `${summary} for ${minutes} min` : summary,
+      target: check.id,
+      startedAt: NOW - minutes * 60_000,
+      acknowledged: random() < 0.15,
+    };
+  });
+  return sortAlerts([...alertsOf([...EXTREME_SPECIAL_ALERTS, ...INFO_ALERTS]), ...perNode]);
+};
+
+export const EXTREME_ALERTS = extremeAlerts();
+
+/** How long ago, as a table cell writes it: `27 min`, `4 h 51 min`, `3 h`. */
+export const since = (startedAt: number) => {
+  const minutes = Math.floor((NOW - startedAt) / 60_000);
+  if (minutes < 60) return `${minutes} min`;
+  const rest = minutes % 60;
+  return rest === 0 ? `${Math.floor(minutes / 60)} h` : `${Math.floor(minutes / 60)} h ${rest} min`;
+};
+
+/** The line under the count of the panels that say nothing a count does not: written, not computed. */
+export const PANEL_NOTES = {
+  normal: { Info: 'Maintenance tomorrow 06:00', Unknown: 'An exporter stopped answering' },
+  extreme: { Info: 'Maintenance tomorrow 06:00', Unknown: '102 exporters stopped answering' },
+};
+
+// ── Gauges ───────────────────────────────────────────────────────────────────
+
+export type GaugeSpec = {
+  id: string;
+  title: string;
+  /** What the gauge measures, at the end of its title line. */
+  scope: string;
+  value: number;
+  max: number;
+  /** From this value the gauge is in warning, and from `critAt` critical. */
+  warnAt: number;
+  critAt: number;
+  /** The center value, and the thresholds in the name of the gauge. */
+  format: (value: number) => string;
+  /** Under the gauge, after its status. */
+  note: string;
+};
+
+const percent = (value: number) => `${value} %`;
+const kilowatts = (value: number) => `${value.toLocaleString('en-US')} kW`;
+
+export const GAUGES: GaugeSpec[] = [
+  {
+    id: 'cpu',
+    title: 'CPU load',
+    scope: '96 nodes',
+    value: 72,
+    max: 100,
+    warnAt: 80,
+    critAt: 90,
+    format: percent,
+    note: 'warning at 80 %',
+  },
+  {
+    id: 'memory',
+    title: 'Memory',
+    scope: '96 nodes',
+    value: 86,
+    max: 100,
+    warnAt: 80,
+    critAt: 90,
+    format: percent,
+    note: '33.0 of 38.4 TB',
+  },
+  {
+    id: 'power',
+    title: 'Power',
+    scope: 'of 550 kW',
+    value: 452,
+    max: 550,
+    warnAt: 480,
+    critAt: 520,
+    format: kilowatts,
+    note: 'warning at 480 kW',
+  },
+  {
+    id: 'scratch',
+    title: 'Lustre /scratch',
+    scope: '2.0 PB',
+    value: 93,
+    max: 100,
+    warnAt: 80,
+    critAt: 90,
+    format: percent,
+    note: '1.86 of 2.0 PB',
+  },
+];
+
+/** 2,048 nodes: everything is full, and one title is a path that does not fit. */
+export const EXTREME_GAUGES: GaugeSpec[] = [
+  {
+    id: 'cpu',
+    title: 'CPU load',
+    scope: '2,048 nodes',
+    value: 100,
+    max: 100,
+    warnAt: 80,
+    critAt: 90,
+    format: percent,
+    note: 'every core of 131,072 is busy',
+  },
+  {
+    id: 'memory',
+    title: 'Memory',
+    scope: '2,048 nodes',
+    value: 98,
+    max: 100,
+    warnAt: 80,
+    critAt: 90,
+    format: percent,
+    note: '802.8 of 819.2 TB',
+  },
+  {
+    id: 'power',
+    title: 'Power',
+    scope: 'of 10,500 kW',
+    value: 10_240,
+    max: 10_500,
+    warnAt: 9600,
+    critAt: 10_000,
+    format: kilowatts,
+    note: 'critical at 10,000 kW',
+  },
+  {
+    id: 'scratch',
+    title: 'Lustre /scratch/atlas/hall-c/projects/halden-university',
+    scope: '40.0 PB',
+    value: 100,
+    max: 100,
+    warnAt: 80,
+    critAt: 90,
+    format: percent,
+    note: '40.0 of 40.0 PB, writes are failing',
+  },
+];
+
+// ── Jobs ─────────────────────────────────────────────────────────────────────
+
+export const JOBS = { Running: 1284, Pending: 316, Stalled: 14 };
+
+export const EXTREME_JOBS = { Running: 48_612, Pending: 12_904, Stalled: 1031 };
+
+// ── Inlet temperature ────────────────────────────────────────────────────────
+
+/** The inlet temperature of each rack, in °C: C01 is over the warning. */
+export const INLET_TEMPS: { rack: string; celsius: number }[] = [
+  { rack: 'A01', celsius: 22 },
+  { rack: 'A02', celsius: 26 },
+  { rack: 'A03', celsius: 24 },
+  { rack: 'A04', celsius: 23 },
+  { rack: 'B01', celsius: 25 },
+  { rack: 'B02', celsius: 23 },
+  { rack: 'C01', celsius: 29 },
+  { rack: 'C02', celsius: 24 },
+];
+
+/** Above this the rack is in warning. */
+export const INLET_WARNING = 27;
+
+// The racks that lost their power feed run hot; the others sit between 20 and 28 °C.
+export const EXTREME_INLET_TEMPS: { rack: string; celsius: number }[] = (() => {
+  const random = seeded(2044);
+  return EXTREME_CLUSTER.rows.map((row, index) => ({
+    rack: row.label,
+    celsius:
+      index >= 40 && index <= 49 ? 36 + Math.floor(random() * 7) : 20 + Math.floor(random() * 9),
+  }));
+})();
 
 // ── One node, for the phone ──────────────────────────────────────────────────
 

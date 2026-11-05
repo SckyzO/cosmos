@@ -73,7 +73,7 @@ belongs to a story, unless it can take the element as a parameter (as `applyAppe
 stand-in object with the few members it touches is enough in Node. Logic buried in a component moves
 to a module of its own first, in a separate `refactor` commit that changes nothing else.
 
-`*.test.ts` files stay out of the published packages (tsup bundles from `src/index.ts` only) and
+`*.test.ts` files stay out of the published packages (tsup builds what `src/index.ts` reaches) and
 are type-checked by `apps/storybook`, which compiles the packages from source: `vitest` is mapped in
 its `tsconfig.json` because the packages do not depend on it.
 
@@ -332,6 +332,15 @@ The same prop means the same thing on every component.
   `onChange(value)`, `onCollapsedChange(collapsed)`, `onChange(isDark)`. A callback that reports a
   state change carries the state to move to, never a bare `onToggle()` that makes the host work it
   out.
+- **A callback with no payload is called with no argument.** A prop typed `() => void` (`onRetry`,
+  `onDismiss`, `onCancel`, `onClose`, `onOpen`, a card's or a row's `onClick`) is wired from the
+  control that fires it as `onClick={() => onRetry()}`, never `onClick={onRetry}`: handed over as it
+  is, the host's function receives the click event, and a handler with an optional parameter
+  (`reload(force?: boolean)`) takes it for its own while the type promises it gets nothing. A prop
+  that reports the event on purpose says so in its type (`MouseEventHandler`, `onChange(event)`).
+  The story that clicks the control checks `toHaveBeenCalledWith()`, and `void-callbacks.spec.ts`
+  reads the package with the type checker and fails on `onClick={onRetry}` when `onRetry` is a
+  `() => void` that comes from outside the component.
 - **State the host may own comes in a controlled/uncontrolled pair.** The value (`value`,
   `checked`, `page`, `collapsed`, `open`…), its default (`defaultValue`, `defaultChecked`,
   `defaultPage`, `defaultCollapsed`, `defaultOpen`…) and its change callback. Only `undefined`
@@ -449,7 +458,7 @@ The wrappers of `packages/charts` draw with Recharts and are built on the intern
 - **Tests**: one `<Name>.stories.tsx` per wrapper, with the helpers of `src/storybook-recharts.tsx`.
   Each keeps a `HtmlInLabelsRendersAsText` story, one that repaints with the theme and one for the
   empty state. `tests/e2e/specs/charts-dist.spec.ts` guards the build: one file per wrapper, Recharts
-  external, `"use client"` on every file.
+  external, `"use client"` on every file but the entry, which only re-exports them.
 
 ## PR checklist
 

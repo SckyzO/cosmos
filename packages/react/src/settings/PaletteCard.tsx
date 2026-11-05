@@ -59,7 +59,7 @@ export const PaletteCard = ({
     <button
       ref={ref}
       type="button"
-      onClick={onClick}
+      onClick={onClick && (() => onClick())}
       role="radio"
       aria-checked={active}
       tabIndex={tabIndex}

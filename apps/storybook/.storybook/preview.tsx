@@ -70,7 +70,9 @@ const setThemeClass = (id: string) => {
 };
 
 type DocsPreview = {
-  __STORYBOOK_PREVIEW__?: { storyStore: { userGlobals: { get: () => { theme?: unknown } } } };
+  __STORYBOOK_PREVIEW__?: {
+    storyStoreValue?: { userGlobals: { get: () => { theme?: unknown } } };
+  };
 };
 
 /**
@@ -80,13 +82,16 @@ type DocsPreview = {
  * not to the manager. The page is of the same origin, so its preview is in reach. Its own globals
  * are read, not its channel, which also carries what its frames report. A toolbar change renders
  * the page again, frames included, so reading once per render is enough. In the manager, or on a
- * story alone, the parent is not a preview.
+ * story alone, the parent is not a preview. The preview's `storyStore` is a deprecated proxy that
+ * warns on every read; `storyStoreValue` is the store itself, which the preview reads too, and is
+ * `undefined` until it has initialised.
  */
 const docsPageTheme = (): string | undefined => {
   try {
     const host = window.parent as unknown as DocsPreview;
     if (host === (window as unknown)) return undefined;
-    return host.__STORYBOOK_PREVIEW__?.storyStore.userGlobals.get().theme as string | undefined;
+    const globals = host.__STORYBOOK_PREVIEW__?.storyStoreValue?.userGlobals.get();
+    return globals?.theme as string | undefined;
   } catch {
     // A parent of another origin.
     return undefined;
@@ -202,7 +207,23 @@ const deviceViewports = {
   desktop: { name: 'Desktop (1920×1080)', styles: { width: '1920px', height: '1080px' } },
 };
 
+/**
+ * Take the deprecated `window.__STORYBOOK_STORY_STORE__` away. The Vite builder's entry sets it to a
+ * proxy that warns "Accessing the Story Store is deprecated" on any read, for tools that predate
+ * `storyStoreValue`; nothing here reads it. The Actions panel logs the arguments of a named mock by
+ * walking them (telejson), and an event dispatched by user-event carries `view` as an own property
+ * of the native event: the walk goes through `window`, finds the proxy and trips it, once per page.
+ * A person's own click does not (`view` sits on the prototype), a story's play function does, in
+ * every story whose control hands its event to a mock. With the alias gone the walk finds nothing
+ * to read, the Actions panel logs the same, and the preview's own `storyStoreValue` is untouched.
+ * It runs once the entry has set the alias, which it does right after creating the preview.
+ */
+const dropDeprecatedStoryStore = () => {
+  delete (window as unknown as { __STORYBOOK_STORY_STORE__?: unknown }).__STORYBOOK_STORY_STORE__;
+};
+
 const preview: Preview = {
+  beforeAll: dropDeprecatedStoryStore,
   globalTypes: {
     theme: {
       description: 'Color theme',

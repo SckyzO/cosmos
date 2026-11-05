@@ -827,7 +827,7 @@ const SidebarBrand = ({
       <button
         ref={ref as Ref<HTMLButtonElement>}
         type="button"
-        onClick={onClick}
+        onClick={() => onClick()}
         className={clsx(baseClass, 'w-full text-start')}
         style={brandStyle}
         data-sidebar-brand={marker}

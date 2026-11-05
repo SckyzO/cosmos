@@ -296,8 +296,21 @@ export const ClickableChecks: Story = {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole('button', { name: 'Filter' }));
     await expect(args.onClick).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onClick).toHaveBeenCalledWith();
     await userEvent.keyboard('{Enter}');
     await expect(args.onClick).toHaveBeenCalledTimes(2);
+  },
+};
+
+export const RemoveCallsOnRemove: Story = {
+  tags: ['!dev', '!autodocs'],
+  args: { children: 'Filter', intent: 'brand', onRemove: fn() },
+  play: async ({ args, canvasElement }) => {
+    await userEvent.click(within(canvasElement).getByRole('button', { name: 'Remove Filter' }));
+    await expect(args.onRemove).toHaveBeenCalledTimes(1);
+    // The prop is `() => void`: the click event stays with the button.
+    await expect(args.onRemove).toHaveBeenCalledWith();
   },
 };
 

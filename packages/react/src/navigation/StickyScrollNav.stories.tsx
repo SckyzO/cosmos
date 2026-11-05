@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { clsx } from 'clsx';
 import { expect, fn, spyOn, userEvent, waitFor, within } from 'storybook/test';
 import { StickyScrollNav, type StickyScrollNavProps } from './StickyScrollNav';
 import {
@@ -20,25 +21,67 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+type Setting = { id: string; label: string; text: string; rows: [name: string, value: string][] };
+
 // A settings page: each section heading matches the button that goes to it.
-const SETTINGS = [
+const SETTINGS: Setting[] = [
   {
     id: 'profile',
     label: 'Profile',
     text: 'Your name, your photo and the address people see on your public page.',
+    rows: [
+      ['Name', 'Tom Cook'],
+      ['Email', 'tom@example.com'],
+      ['Public page', 'cosmos.example.com/tom'],
+    ],
   },
   {
     id: 'notifications',
     label: 'Notifications',
     text: 'Choose what reaches you by email and what stays in the app.',
+    rows: [
+      ['Weekly digest', 'By email'],
+      ['Mentions', 'In the app and by email'],
+      ['Alerts', 'Critical only'],
+    ],
   },
   {
     id: 'security',
     label: 'Security',
     text: 'Your password, two-step verification and the devices signed in to your account.',
+    rows: [
+      ['Password', 'Changed 3 months ago'],
+      ['Two-step verification', 'On'],
+      ['Signed-in devices', '3'],
+    ],
   },
-  { id: 'billing', label: 'Billing', text: 'Your plan, the card on file and your past invoices.' },
+  {
+    id: 'billing',
+    label: 'Billing',
+    text: 'Your plan, the card on file and your past invoices.',
+    rows: [
+      ['Plan', 'Team, 29 € a month'],
+      ['Card', 'Visa ending 4242'],
+      ['Next invoice', '1 December'],
+    ],
+  },
 ];
+
+// One section of that page: its heading, a line about it and the settings it holds.
+const SettingsSection = ({ id, label, text, rows, className }: Setting & { className: string }) => (
+  <section id={id} aria-label={label} className={clsx(className, 'pt-6')}>
+    <h2 className="text-lg font-semibold">{label}</h2>
+    <p className="mt-2 text-sm text-[var(--color-text-muted)]">{text}</p>
+    <dl className="mt-4 max-w-xl divide-y divide-gray-200 text-sm dark:divide-gray-800">
+      {rows.map(([name, value]) => (
+        <div key={name} className="flex justify-between gap-4 py-2">
+          <dt className="text-[var(--color-text-muted)]">{name}</dt>
+          <dd className="text-end">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  </section>
+);
 
 /**
  * A settings page in a scroll box. The row of buttons stays pinned at the top while the page
@@ -49,11 +92,8 @@ export const Default: Story = {
     <div className="bg-[var(--color-bg-base)] p-6">
       <div className="h-[360px] overflow-y-auto rounded-xl border border-gray-200 p-4 dark:border-gray-800">
         <StickyScrollNav sections={SETTINGS} topOffset={8} />
-        {SETTINGS.map(({ id, label, text }) => (
-          <section key={id} id={id} aria-label={label} className="min-h-[240px] pt-6">
-            <h2 className="text-lg font-semibold">{label}</h2>
-            <p className="mt-2 text-sm text-[var(--color-text-muted)]">{text}</p>
-          </section>
+        {SETTINGS.map((section) => (
+          <SettingsSection key={section.id} {...section} className="min-h-[240px]" />
         ))}
       </div>
     </div>
@@ -220,12 +260,21 @@ export const OnNavigateReplacesTheScroll: Story = {
 /** Below `sm` the row of buttons folds into a menu that names the current section. */
 export const MobileJumpMenu: Story = {
   globals: mobileViewport,
-  render: () => <LongPage topOffset={0} />,
+  render: () => (
+    <div className="bg-[var(--color-bg-base)] p-6">
+      <StickyScrollNav sections={SETTINGS} topOffset={0} />
+      {SETTINGS.map((section) => (
+        <SettingsSection key={section.id} {...section} className="min-h-[50vh]" />
+      ))}
+    </div>
+  ),
 };
 
 export const MobileJumpMenuChecks: Story = {
   ...MobileJumpMenu,
   tags: ['!dev', '!autodocs'],
+  // Sections taller than the screen, so each one has room to reach the top.
+  render: () => <LongPage topOffset={0} />,
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const menu = canvas.getByRole('combobox', { name: 'Jump to section' });
@@ -447,11 +496,8 @@ export const MarkerFollowsTheReadingDirection: Story = {
     <div dir="rtl" data-direction="rtl" className="bg-[var(--color-bg-base)] p-6">
       <div className="h-[360px] overflow-y-auto rounded-xl border border-gray-200 p-4 dark:border-gray-800">
         <StickyScrollNav sections={SETTINGS} topOffset={8} />
-        {SETTINGS.map(({ id, label, text }) => (
-          <section key={id} id={id} aria-label={label} className="min-h-[240px] pt-6">
-            <h2 className="text-lg font-semibold">{label}</h2>
-            <p className="mt-2 text-sm text-[var(--color-text-muted)]">{text}</p>
-          </section>
+        {SETTINGS.map((section) => (
+          <SettingsSection key={section.id} {...section} className="min-h-[240px]" />
         ))}
       </div>
     </div>

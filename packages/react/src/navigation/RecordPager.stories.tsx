@@ -244,6 +244,9 @@ export const DisabledAtEndsInCallbackMode: Story = {
     await expect(args.onNext).toHaveBeenCalledTimes(1);
     await userEvent.click(last.getByRole('button', { name: 'Previous order' }));
     await expect(args.onPrevious).toHaveBeenCalledTimes(1);
+    // The props are `() => void`: the click event stays with the button.
+    await expect(args.onNext).toHaveBeenCalledWith();
+    await expect(args.onPrevious).toHaveBeenCalledWith();
   },
 };
 

@@ -46,6 +46,7 @@ import {
   TableCell,
   TableHead,
   TableHeaderCell,
+  TableIdentityCell,
   TableRow,
   TagInput,
   Toggle,
@@ -449,23 +450,11 @@ const SettingsScreen = ({
                     {members.map((m) => (
                       <TableRow key={m.id}>
                         <TableCell>
-                          <div className="flex min-w-0 items-center gap-3">
-                            <Avatar name={m.name} size="sm" />
-                            <div className="min-w-0">
-                              <p
-                                title={m.name}
-                                className="max-w-56 truncate font-medium text-[var(--color-text-primary)]"
-                              >
-                                <bdi>{m.name}</bdi>
-                              </p>
-                              <p
-                                title={m.email}
-                                className="max-w-56 truncate text-xs text-[var(--color-text-secondary)]"
-                              >
-                                <bdi>{m.email}</bdi>
-                              </p>
-                            </div>
-                          </div>
+                          <TableIdentityCell
+                            title={m.name}
+                            subtitle={m.email}
+                            className="max-w-56"
+                          />
                         </TableCell>
                         <TableCell>
                           <span title={m.gym} className="block max-w-44 truncate">
@@ -840,9 +829,7 @@ export const ExtremeContentTruncatesChecks: Story = {
     await expect(
       within(canvas.getByRole('table', { name: 'Member list' })).getAllByRole('row')
     ).toHaveLength(61);
-    const name = canvas
-      .getByText('Maximilian-Alexander Featherstonehaugh-Delacroix')
-      .closest('p') as HTMLElement;
+    const name = canvas.getByText('Maximilian-Alexander Featherstonehaugh-Delacroix');
     await expect(name.scrollWidth).toBeGreaterThan(name.clientWidth);
     await expect(
       within(canvas.getByRole('alert')).getByRole('link', { name: 'Member roles (6)' })

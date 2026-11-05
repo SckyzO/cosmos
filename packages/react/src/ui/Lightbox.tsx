@@ -464,7 +464,7 @@ function Viewer({
             <button
               type="button"
               aria-label={closeLabel}
-              onClick={onClose}
+              onClick={() => onClose()}
               className={clsx(CONTROL, 'ms-auto')}
             >
               <X className="size-4" aria-hidden />
