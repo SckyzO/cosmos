@@ -43,7 +43,6 @@ import {
   DateTime,
   DescriptionList,
   EmptyState,
-  HealthBadge,
   HealthCheckList,
   HealthMatrix,
   HeartbeatBar,
@@ -847,7 +846,16 @@ const Scheduler = () => (
     as="h2"
     size="md"
     title="Scheduler · slurmctld"
-    action={<HealthBadge status="OK" label="Healthy" />}
+    action={
+      <StatusBadge
+        status="OK"
+        label="Healthy"
+        shape="rounded"
+        appearance="outline"
+        icon
+        size="lg"
+      />
+    }
     className="min-w-0"
   >
     <div className="flex flex-col gap-5">

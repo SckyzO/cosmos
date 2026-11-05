@@ -10,7 +10,6 @@ export {
   type HealthMatrixColumn,
   type HealthMatrixRow,
 } from './HealthMatrix';
-export { HealthBadge, type HealthBadgeProps } from './HealthBadge';
 export { NodeGrid, type NodeGridProps, type NodeGridLabels } from './NodeGrid';
 export type { NodeGridGroup, NodeGridMark, NodeGridNode, NodeGridShow } from './nodeGridModel';
 export { type HealthStatus, STATUS_PILL, STATUS_DOT } from './types';

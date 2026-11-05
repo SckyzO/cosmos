@@ -1,4 +1,4 @@
-/** Health status — used by StatusBadge, HealthDot, HealthBadge, and lists. */
+/** Health status — used by StatusBadge, HealthDot, and lists. */
 export type HealthStatus = 'OK' | 'WARN' | 'CRIT' | 'UNKNOWN' | 'INFO';
 
 /** Tailwind class string per status — pill background + text color. */
