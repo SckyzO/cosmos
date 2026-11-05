@@ -1050,3 +1050,51 @@ export const DrawerScrimIsDimByDefault: Story = {
     });
   },
 };
+
+// A page taller than the window that ends on text for screen readers only: `sr-only` is absolute,
+// and with no positioned parent it is placed against the document.
+const TallPage = ({ note }: { note: string }) => (
+  <div className="p-10">
+    {Array.from({ length: 40 }, (_, i) => (
+      <p key={i} className="py-4">
+        Row {i + 1}
+      </p>
+    ))}
+    <button type="button" className="underline">
+      Back to top
+    </button>
+    <span className="sr-only">{note}</span>
+  </div>
+);
+
+const TallShell = () => (
+  <Shell
+    topbar={<Topbar pageTitle="Long page" />}
+    sidebar={
+      <Sidebar>
+        <NavItems />
+      </Sidebar>
+    }
+  >
+    <TallPage note="Updated 12 s ago" />
+  </Shell>
+);
+
+/**
+ * The page scrolls inside the Shell, never the document: once it is at its end there is no more
+ * to scroll into, whatever absolute element it holds.
+ */
+export const TallPageScrollsOnlyInTheShell: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => <TallShell />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Row 40')).toBeInTheDocument();
+    await expect(document.scrollingElement!.scrollHeight).toBeLessThanOrEqual(window.innerHeight);
+  },
+};
+
+/** The same on a phone, where the box that scrolls is the one around the page. */
+export const TallPageOnAPhoneScrollsOnlyInTheShell: Story = {
+  ...TallPageScrollsOnlyInTheShell,
+  globals: mobileViewport,
+};
