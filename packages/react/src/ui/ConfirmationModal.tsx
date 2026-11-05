@@ -42,8 +42,6 @@ export type ConfirmationModalProps = {
    * time the dialog opens.
    */
   requireText?: string;
-  /** Label of the `requireText` field. Default `labels.requireText`, `Type "<requireText>" to confirm`. */
-  requireTextLabel?: string;
   /** The texts it writes, over `LabelsProvider`'s `confirmationModal` and the English defaults. */
   labels?: Partial<ConfirmationModalLabels>;
   /**
@@ -99,7 +97,6 @@ const ConfirmationContent = ({
   hideSave = false,
   intent = 'warning',
   requireText,
-  requireTextLabel,
   messageId,
 }: Omit<ConfirmationModalProps, 'open'> & { messageId: string }) => {
   const labels = useLabels('confirmationModal', CONFIRMATION_MODAL_LABELS, ownLabels);
@@ -135,7 +132,7 @@ const ConfirmationContent = ({
           {requireText !== undefined && (
             <div className="mt-4">
               <Input
-                label={requireTextLabel ?? labels.requireText(requireText)}
+                label={labels.requireText(requireText)}
                 value={typed}
                 onChange={(e) => setTyped(e.target.value)}
                 onKeyDown={(e) => {

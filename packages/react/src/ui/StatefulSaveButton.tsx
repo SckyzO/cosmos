@@ -29,10 +29,6 @@ const STATE_CONFIG: Record<SaveState, StateConfig> = {
 export type StatefulSaveButtonProps = {
   state: SaveState;
   onClick: () => void;
-  /** Text of the `idle` and `dirty` states. Default `labels.save`. */
-  label?: string;
-  /** Text of the `saved` state. Default `labels.saved`. */
-  savedLabel?: string;
   /** The texts it writes, over `LabelsProvider`'s `statefulSaveButton` and the English defaults. */
   labels?: Partial<StatefulSaveButtonLabels>;
   className?: string;
@@ -47,17 +43,12 @@ export type StatefulSaveButtonProps = {
 export const StatefulSaveButton = ({
   state,
   onClick,
-  label,
-  savedLabel,
   labels: ownLabels,
   className,
   ref,
 }: StatefulSaveButtonProps) => {
   const labels = useLabels('statefulSaveButton', STATEFUL_SAVE_BUTTON_LABELS, ownLabels);
   const cfg = STATE_CONFIG[state];
-  let text = labels[cfg.label];
-  if (label && (state === 'idle' || state === 'dirty')) text = label;
-  if (savedLabel && state === 'saved') text = savedLabel;
   const inactive = state === 'saving' || state === 'saved';
 
   return (
@@ -71,7 +62,7 @@ export const StatefulSaveButton = ({
       onClick={inactive ? undefined : () => onClick()}
       className={clsx(cfg.cls, className)}
     >
-      {text}
+      {labels[cfg.label]}
     </Button>
   );
 };

@@ -54,22 +54,6 @@ export type LightboxProps = {
   thumbnails?: boolean;
   /** Accessible name of the viewer. Default `labels.viewer`, "Picture viewer". */
   ariaLabel?: string;
-  /** Default `labels.previous`, "Previous picture". */
-  prevLabel?: string;
-  /** Default `labels.next`, "Next picture". */
-  nextLabel?: string;
-  /** Default `labels.close`, "Close". */
-  closeLabel?: string;
-  /** What is read out when the picture changes, from the 1-based `position`. Default `labels.counter`, "Picture 3 of 12". */
-  counterLabel?: (position: number, total: number) => string;
-  /** Accessible name of the thumbnail strip. Default `labels.thumbnails`, "Picture thumbnails". */
-  thumbnailsLabel?: string;
-  /** Accessible name of the thumbnail of the 1-based `position`. Default `labels.thumbnail`, "Go to picture 3". */
-  thumbnailLabel?: (position: number, total: number) => string;
-  /** Shown when a picture can't be loaded. Default `labels.error`, "This picture could not be loaded." */
-  errorLabel?: string;
-  /** The button that loads the picture again. Default `labels.retry`, "Try again". */
-  retryLabel?: string;
   /**
    * The texts it writes (the names of the viewer and its controls, what is read out when the
    * picture changes, the error), over `LabelsProvider`'s `lightbox` and the English defaults.
@@ -562,28 +546,10 @@ export const Lightbox = ({
   onIndexChange,
   thumbnails = false,
   ariaLabel,
-  prevLabel,
-  nextLabel,
-  closeLabel,
-  counterLabel,
-  thumbnailsLabel,
-  thumbnailLabel,
-  errorLabel,
-  retryLabel,
   labels: ownLabels,
 }: LightboxProps) => {
   const resolved = useLabels('lightbox', LIGHTBOX_LABELS, ownLabels);
-  const labels: LightboxLabels = {
-    viewer: ariaLabel ?? resolved.viewer,
-    previous: prevLabel ?? resolved.previous,
-    next: nextLabel ?? resolved.next,
-    close: closeLabel ?? resolved.close,
-    counter: counterLabel ?? resolved.counter,
-    thumbnails: thumbnailsLabel ?? resolved.thumbnails,
-    thumbnail: thumbnailLabel ?? resolved.thumbnail,
-    error: errorLabel ?? resolved.error,
-    retry: retryLabel ?? resolved.retry,
-  };
+  const labels = ariaLabel === undefined ? resolved : { ...resolved, viewer: ariaLabel };
   const [current, setIndex] = useControllableState<number>({
     value: index,
     defaultValue: defaultIndex,

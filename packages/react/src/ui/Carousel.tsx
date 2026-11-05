@@ -165,18 +165,9 @@ export type CarouselControlsProps = {
   /** Place buttons. `inside` overlays them on the viewport edges; `outside` puts them above the indicators. Default `inside`. */
   position?: 'inside' | 'outside';
   className?: string;
-  /** Name of the previous arrow. Default `labels.previous`. */
-  prevLabel?: string;
-  /** Name of the next arrow. Default `labels.next`. */
-  nextLabel?: string;
 };
 
-const CarouselControls = ({
-  position = 'inside',
-  className,
-  prevLabel,
-  nextLabel,
-}: CarouselControlsProps) => {
+const CarouselControls = ({ position = 'inside', className }: CarouselControlsProps) => {
   const { scrollPrev, scrollNext, canScrollPrev, canScrollNext, labels: ownLabels } = useCtx();
   const labels = useLabels('carousel', CAROUSEL_LABELS, ownLabels);
   const baseBtn =
@@ -190,7 +181,7 @@ const CarouselControls = ({
       <div className={clsx('mt-3 flex items-center justify-center gap-2', className)}>
         <button
           type="button"
-          aria-label={prevLabel ?? labels.previous}
+          aria-label={labels.previous}
           disabled={!canScrollPrev}
           onClick={() => scrollPrev()}
           className={baseBtn}
@@ -199,7 +190,7 @@ const CarouselControls = ({
         </button>
         <button
           type="button"
-          aria-label={nextLabel ?? labels.next}
+          aria-label={labels.next}
           disabled={!canScrollNext}
           onClick={() => scrollNext()}
           className={baseBtn}
@@ -213,7 +204,7 @@ const CarouselControls = ({
     <>
       <button
         type="button"
-        aria-label={prevLabel ?? labels.previous}
+        aria-label={labels.previous}
         disabled={!canScrollPrev}
         onClick={() => scrollPrev()}
         className={clsx('inset-s-4 absolute top-1/2 z-10 -translate-y-1/2', overlayBtn, className)}
@@ -222,7 +213,7 @@ const CarouselControls = ({
       </button>
       <button
         type="button"
-        aria-label={nextLabel ?? labels.next}
+        aria-label={labels.next}
         disabled={!canScrollNext}
         onClick={() => scrollNext()}
         className={clsx('inset-e-4 absolute top-1/2 z-10 -translate-y-1/2', overlayBtn, className)}
@@ -313,12 +304,10 @@ export type CarouselThumbnailsProps = {
    * carries the name ("Go to slide N"), so an image takes `alt=""` unless it says more.
    */
   children: ReactNode;
-  /** Accessible name of the strip. Default `labels.thumbnails`, "Slide thumbnails". */
-  label?: string;
   className?: string;
 };
 
-const CarouselThumbnails = ({ children, label, className }: CarouselThumbnailsProps) => {
+const CarouselThumbnails = ({ children, className }: CarouselThumbnailsProps) => {
   const { selectedIndex, scrollTo, labels: ownLabels } = useCtx();
   const labels = useLabels('carousel', CAROUSEL_LABELS, ownLabels);
   const strip = useRef<HTMLDivElement>(null);
@@ -336,7 +325,7 @@ const CarouselThumbnails = ({ children, label, className }: CarouselThumbnailsPr
     <div
       ref={strip}
       role="group"
-      aria-label={label ?? labels.thumbnails}
+      aria-label={labels.thumbnails}
       // The padding leaves room for the selected ring and its halo, which the scroll container
       // would clip.
       className={clsx(

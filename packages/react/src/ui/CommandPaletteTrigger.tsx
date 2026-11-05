@@ -8,8 +8,6 @@ import { ariaKeyShortcuts, hotkeyLabel, isApplePlatform } from './hotkey';
 import { COMMAND_PALETTE_TRIGGER_LABELS, type CommandPaletteTriggerLabels } from './labels';
 
 export type CommandPaletteTriggerProps = Omit<ComponentPropsWithRef<'button'>, 'children'> & {
-  /** Text of the field-like button. Default `labels.placeholder`, `Search…`. Below `sm` it is read by assistive technology only. */
-  placeholder?: string;
   /** The texts it writes, over `LabelsProvider`'s `commandPaletteTrigger` and the English defaults. */
   labels?: Partial<CommandPaletteTriggerLabels>;
   /**
@@ -45,7 +43,6 @@ const subscribeNothing = () => () => {};
  * Below `sm` it shrinks to a square icon button; the placeholder stays as its accessible name.
  */
 export const CommandPaletteTrigger = ({
-  placeholder,
   labels: ownLabels,
   shortcut = 'mod+k',
   size = 'md',
@@ -76,7 +73,7 @@ export const CommandPaletteTrigger = ({
     >
       <Search aria-hidden className={clsx('shrink-0 text-gray-400', FIELD_ICON_SIZE[size])} />
       <span className="min-w-0 flex-1 truncate text-start max-sm:sr-only">
-        <bdi>{placeholder ?? labels.placeholder}</bdi>
+        <bdi>{labels.placeholder}</bdi>
       </span>
       {shortcut && (
         <Kbd size="sm" className="max-sm:hidden">

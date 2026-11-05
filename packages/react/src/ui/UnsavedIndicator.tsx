@@ -4,8 +4,6 @@ import { UNSAVED_INDICATOR_LABELS, type UnsavedIndicatorLabels } from './labels'
 
 export type UnsavedIndicatorProps = {
   visible: boolean;
-  /** The text. Default `labels.unsaved`, 'Unsaved changes'. */
-  label?: string;
   /** The texts it writes, over `LabelsProvider`'s `unsavedIndicator` and the English defaults. */
   labels?: Partial<UnsavedIndicatorLabels>;
   className?: string;
@@ -17,7 +15,6 @@ export type UnsavedIndicatorProps = {
  */
 export const UnsavedIndicator = ({
   visible,
-  label,
   labels: ownLabels,
   className,
 }: UnsavedIndicatorProps) => {
@@ -25,7 +22,7 @@ export const UnsavedIndicator = ({
   if (!visible) return null;
   return (
     <span className={clsx('text-xs font-medium text-amber-700 dark:text-amber-400', className)}>
-      {label ?? labels.unsaved}
+      {labels.unsaved}
     </span>
   );
 };

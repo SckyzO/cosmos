@@ -158,8 +158,6 @@ export type ModalAlertProps = {
   fullWidthAction?: boolean;
   /** The scrim behind the alert, as `Modal`'s `backdrop`. Default `dim`. */
   backdrop?: BackdropVariant;
-  /** Primary action label. Default `labels.confirm`, `OK`. */
-  confirmLabel?: string;
   /** The texts it writes (the primary button), over `LabelsProvider`'s `modal` and the English defaults. */
   labels?: Partial<ModalLabels>;
 };
@@ -170,7 +168,6 @@ const Alert = ({
   intent = 'info',
   title,
   message,
-  confirmLabel,
   cancelLabel,
   onConfirm,
   onCancel,
@@ -226,7 +223,7 @@ const Alert = ({
             disabled={loading}
             onClick={handleConfirm}
           >
-            {confirmLabel ?? labels.confirm}
+            {labels.confirm}
           </Button>
         </div>
       </Dialog>
@@ -278,7 +275,7 @@ const Alert = ({
             onClick={handleConfirm}
             className={clsx(fullWidthAction && 'w-full')}
           >
-            {confirmLabel ?? labels.confirm}
+            {labels.confirm}
           </Button>
         </div>
       </div>

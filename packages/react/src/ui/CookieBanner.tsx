@@ -37,16 +37,10 @@ export type CookieBannerProps = {
   message: ReactNode;
   /** Render the Settings button. Hidden if no handler. */
   onSettings?: () => void;
-  /** Text of the Settings button. Default `labels.settings`. */
-  settingsLabel?: string;
   /** Render the Deny All button. Hidden if no handler. */
   onDeny?: () => void;
-  /** Text of the Deny button. Default `labels.deny`. */
-  denyLabel?: string;
   /** Required Accept handler — primary action. */
   onAccept: () => void;
-  /** Text of the Accept button. Default `labels.accept`. */
-  acceptLabel?: string;
   /** Show the Cookie icon next to the title. Default `true`. */
   showIcon?: boolean;
   /** The texts it writes, over `LabelsProvider`'s `cookieBanner` and the English defaults. */
@@ -63,11 +57,8 @@ export const CookieBanner = ({
   ariaLabel,
   message,
   onSettings,
-  settingsLabel,
   onDeny,
-  denyLabel,
   onAccept,
-  acceptLabel,
   showIcon = true,
   labels: ownLabels,
   className,
@@ -144,16 +135,16 @@ export const CookieBanner = ({
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {onSettings && (
             <Button variant="ghost" size="sm" onClick={handleSettings}>
-              {settingsLabel ?? labels.settings}
+              {labels.settings}
             </Button>
           )}
           {onDeny && (
             <Button variant="secondary" size="sm" onClick={handleDeny}>
-              {denyLabel ?? labels.deny}
+              {labels.deny}
             </Button>
           )}
           <Button variant="primary" size="sm" onClick={handleAccept}>
-            {acceptLabel ?? labels.accept}
+            {labels.accept}
           </Button>
         </div>
       </div>
