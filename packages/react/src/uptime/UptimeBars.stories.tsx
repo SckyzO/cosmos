@@ -13,6 +13,7 @@ import {
 } from '../storybook-helpers';
 import { UptimeBars } from './UptimeBars';
 import { dayName, fitCount, formatUptime, thresholdLegend } from './uptime';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Monitoring/Uptime Bars',
@@ -133,7 +134,7 @@ export const KeepsTheNewestDaysWhenNarrow: Story = {
     await waitFor(() => expect(daysOf(canvasElement)).toHaveLength(fitCount(30 * 6, 4, 2)));
     const kept = daysOf(canvasElement);
     await expect(kept.map((d) => d.getAttribute('aria-label'))).toEqual(
-      API_DAYS.slice(-kept.length).map(dayName)
+      API_DAYS.slice(-kept.length).map((day) => dayName(day))
     );
     await expect(kept.at(-1)).toHaveAccessibleName(dayName(API_DAYS.at(-1)!));
     await expect(canvas.getByText(`${kept.length} days ago`)).toBeVisible();
@@ -344,5 +345,61 @@ export const ArrowsFollowTheScreen: Story = {
         await expect(days().at(-1)).toHaveFocus();
       });
     }
+  },
+};
+
+/** The provider writes the bars' header, captions and legend, and the bars' own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        uptime: {
+          up: 'En ligne',
+          down: 'Hors ligne',
+          paused: 'En pause',
+          noData: 'Pas de données',
+          noChecks: 'Aucun contrôle',
+          lastChecks: (count, summary) => `${count} derniers contrôles : ${summary}`,
+          legend: 'Légende',
+          downBars: 'barre plus haute',
+          downLegend: (name, shape) => `${name} (${shape})`,
+          uptimeOf: (uptime) => `${uptime} de disponibilité`,
+          noDays: 'Aucune disponibilité',
+          dailyUptime: (count) => `Disponibilité sur ${count} jours`,
+          daysAgo: (count) => `Il y a ${count} jours`,
+          today: "Aujourd'hui",
+          limitBelow: (limit) => `Moins de ${limit}`,
+          uptimeGroup: 'Disponibilité',
+          uptimeCard: (period) => `Disponibilité, ${period}`,
+          dailyUptimeCard: (period) => `Disponibilité par jour, ${period}`,
+          avgResponse: 'Réponse moy.',
+          certificate: 'Certificat',
+          warning: 'Avertissement',
+          daysLeft: (days) => `${days} jours restants`,
+          uptime24h: 'Disponibilité 24 h',
+          latency: 'Latence',
+          recentChecks: (name) => `${name} : derniers contrôles`,
+        },
+      }}
+    >
+      <UptimeBars
+        days={[
+          { date: '2026-01-14', uptime: 0.9995 },
+          { date: '2026-01-15', uptime: 0.97, incidents: 2 },
+        ]}
+        legend
+        title="API"
+      />
+      <UptimeBars days={[]} labels={{ noDays: 'Rien' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByLabelText('Disponibilité sur 2 jours')).toBeVisible();
+    await expect(canvas.getByText(/de disponibilité/)).toBeVisible();
+    await expect(canvas.getByText('Il y a 2 jours')).toBeVisible();
+    await expect(canvas.getByText("Aujourd'hui")).toBeVisible();
+    await expect(canvas.getByRole('list', { name: 'Légende' })).toHaveTextContent('Moins de 99%');
+    await expect(canvas.getByLabelText('Rien')).toBeVisible();
   },
 };

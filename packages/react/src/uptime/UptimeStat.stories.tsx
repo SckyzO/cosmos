@@ -11,6 +11,7 @@ import {
   startOffset,
 } from '../storybook-helpers';
 import { UptimeStat, type UptimePeriod } from './UptimeStat';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const DAY = 24 * 3_600_000;
 
@@ -294,5 +295,71 @@ export const CertificateFigureNeverWraps: Story = {
       box.style.width = `${width}px`;
       expect(range.getClientRects().length, `${width}px: the figure wraps`).toBe(1);
     }
+  },
+};
+
+/** The provider writes the figures' labels, and the stat's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        uptime: {
+          up: 'En ligne',
+          down: 'Hors ligne',
+          paused: 'En pause',
+          noData: 'Pas de données',
+          noChecks: 'Aucun contrôle',
+          lastChecks: (count, summary) => `${count} derniers contrôles : ${summary}`,
+          legend: 'Légende',
+          downBars: 'barre plus haute',
+          downLegend: (name, shape) => `${name} (${shape})`,
+          uptimeOf: (uptime) => `${uptime} de disponibilité`,
+          noDays: 'Aucune disponibilité',
+          dailyUptime: (count) => `Disponibilité sur ${count} jours`,
+          daysAgo: (count) => `Il y a ${count} jours`,
+          today: "Aujourd'hui",
+          limitBelow: (limit) => `Moins de ${limit}`,
+          uptimeGroup: 'Disponibilité',
+          uptimeCard: (period) => `Disponibilité, ${period}`,
+          dailyUptimeCard: (period) => `Disponibilité par jour, ${period}`,
+          avgResponse: 'Réponse moy.',
+          certificate: 'Certificat',
+          warning: 'Avertissement',
+          daysLeft: (days) => `${days} jours restants`,
+          uptime24h: 'Disponibilité 24 h',
+          latency: 'Latence',
+          recentChecks: (name) => `${name} : derniers contrôles`,
+        },
+      }}
+    >
+      <UptimeStat
+        periods={[
+          { label: '24 h', uptime: 0.999 },
+          { label: '7 j', uptime: null },
+        ]}
+        responseTime={182}
+        certificate={{ daysLeft: 3 }}
+      />
+      <UptimeStat
+        variant="card"
+        periods={[{ label: '30 jours', uptime: 0.999, duration: 30 * 24 * 3_600_000 }]}
+        days={[
+          { date: '2026-01-14', uptime: 0.9995 },
+          { date: '2026-01-15', uptime: 0.97, incidents: 2 },
+        ]}
+        labels={{ avgResponse: 'Réponse' }}
+      />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const row = within(canvas.getByRole('group', { name: 'Disponibilité' }));
+    await expect(row.getByText('Réponse moy.')).toBeVisible();
+    await expect(row.getByText('Certificat')).toBeVisible();
+    await expect(row.getByRole('img', { name: 'Avertissement' })).toBeVisible();
+    await expect(row.getByText('3 jours restants')).toBeVisible();
+    await expect(row.getByText('Pas de données')).toBeInTheDocument();
+    await expect(canvas.getByText('Disponibilité, 30 jours')).toBeVisible();
+    await expect(canvas.getByLabelText('Disponibilité par jour, 30 jours')).toBeVisible();
   },
 };

@@ -18,6 +18,7 @@ import {
 import { HeartbeatBar } from './HeartbeatBar';
 import { BEAT_NAME, type BeatStatus } from './types';
 import { beatName, fitCount, formatBeatTime } from './uptime';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Monitoring/Heartbeat Bar',
@@ -180,7 +181,7 @@ export const KeepsTheNewestBeatsWhenNarrow: Story = {
     const kept = marksOf(canvasElement);
     // The beats that stay are the last ones of the history, in order, ending on the newest.
     const names = kept.map((mark) => mark.getAttribute('aria-label'));
-    await expect(names).toEqual(MIXED_BEATS.slice(-kept.length).map(beatName));
+    await expect(names).toEqual(MIXED_BEATS.slice(-kept.length).map((beat) => beatName(beat)));
     await expect(strip).toHaveAccessibleName(new RegExp(`^Last ${kept.length} checks: `));
     await expect(strip.scrollWidth).toBeLessThanOrEqual(strip.clientWidth);
 
@@ -423,5 +424,61 @@ export const ArrowsFollowTheScreen: Story = {
         await expect(marks.at(-1)).toHaveFocus();
       });
     }
+  },
+};
+
+/** The provider writes the bar's name and legend, and the bar's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        uptime: {
+          up: 'En ligne',
+          down: 'Hors ligne',
+          paused: 'En pause',
+          noData: 'Pas de données',
+          noChecks: 'Aucun contrôle',
+          lastChecks: (count, summary) => `${count} derniers contrôles : ${summary}`,
+          legend: 'Légende',
+          downBars: 'barre plus haute',
+          downLegend: (name, shape) => `${name} (${shape})`,
+          uptimeOf: (uptime) => `${uptime} de disponibilité`,
+          noDays: 'Aucune disponibilité',
+          dailyUptime: (count) => `Disponibilité sur ${count} jours`,
+          daysAgo: (count) => `Il y a ${count} jours`,
+          today: "Aujourd'hui",
+          limitBelow: (limit) => `Moins de ${limit}`,
+          uptimeGroup: 'Disponibilité',
+          uptimeCard: (period) => `Disponibilité, ${period}`,
+          dailyUptimeCard: (period) => `Disponibilité par jour, ${period}`,
+          avgResponse: 'Réponse moy.',
+          certificate: 'Certificat',
+          warning: 'Avertissement',
+          daysLeft: (days) => `${days} jours restants`,
+          uptime24h: 'Disponibilité 24 h',
+          latency: 'Latence',
+          recentChecks: (name) => `${name} : derniers contrôles`,
+        },
+      }}
+    >
+      <HeartbeatBar
+        beats={[
+          { time: '2026-01-15T10:00:00Z', status: 'up' as const },
+          { time: '2026-01-15T10:01:00Z', status: 'down' as const },
+        ]}
+        legend
+      />
+      <HeartbeatBar beats={[]} labels={{ noChecks: 'Rien encore' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(
+      canvas.getByLabelText('2 derniers contrôles : 1 en ligne, 1 hors ligne')
+    ).toBeVisible();
+    await expect(canvas.getByRole('list', { name: 'Légende' })).toHaveTextContent(
+      'Hors ligne (barre plus haute)'
+    );
+    await expect(canvas.getByLabelText('Rien encore')).toBeVisible();
   },
 };

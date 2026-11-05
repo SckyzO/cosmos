@@ -13,6 +13,7 @@ import {
 } from '../storybook-helpers';
 import { InEachDensity, expectDensitySteps } from '../storybook-density';
 import { MonitorRow, type MonitorRowProps } from './MonitorRow';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const ALL_UP = beatsFrom('u'.repeat(60));
 
@@ -382,5 +383,62 @@ export const RowFollowsTheReadingDirection: Story = {
     }
     expectMirrored(canvasElement, (box) => within(box).getByText('API'));
     expectMirrored(canvasElement, (box) => within(box).getByText('99.95%'));
+  },
+};
+
+/** The provider writes the row's labels, and the row's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        uptime: {
+          up: 'En ligne',
+          down: 'Hors ligne',
+          paused: 'En pause',
+          noData: 'Pas de données',
+          noChecks: 'Aucun contrôle',
+          lastChecks: (count, summary) => `${count} derniers contrôles : ${summary}`,
+          legend: 'Légende',
+          downBars: 'barre plus haute',
+          downLegend: (name, shape) => `${name} (${shape})`,
+          uptimeOf: (uptime) => `${uptime} de disponibilité`,
+          noDays: 'Aucune disponibilité',
+          dailyUptime: (count) => `Disponibilité sur ${count} jours`,
+          daysAgo: (count) => `Il y a ${count} jours`,
+          today: "Aujourd'hui",
+          limitBelow: (limit) => `Moins de ${limit}`,
+          uptimeGroup: 'Disponibilité',
+          uptimeCard: (period) => `Disponibilité, ${period}`,
+          dailyUptimeCard: (period) => `Disponibilité par jour, ${period}`,
+          avgResponse: 'Réponse moy.',
+          certificate: 'Certificat',
+          warning: 'Avertissement',
+          daysLeft: (days) => `${days} jours restants`,
+          uptime24h: 'Disponibilité 24 h',
+          latency: 'Latence',
+          recentChecks: (name) => `${name} : derniers contrôles`,
+        },
+      }}
+    >
+      <MonitorRow
+        name="API"
+        beats={[
+          { time: '2026-01-15T10:00:00Z', status: 'up' as const },
+          { time: '2026-01-15T10:01:00Z', status: 'down' as const },
+        ]}
+        paused
+        uptime={0.999}
+        variant="card"
+      />
+      <MonitorRow name="Base" beats={[]} labels={{ latency: 'Délai' }} variant="card" />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByText('En pause').length).toBeGreaterThan(0);
+    await expect(canvas.getAllByText('Disponibilité 24 h').length).toBeGreaterThan(0);
+    await expect(canvas.getByLabelText('API : derniers contrôles')).toBeVisible();
+    // The row's own label wins over the provider's.
+    await expect(canvas.getByText('Délai')).toBeVisible();
   },
 };
