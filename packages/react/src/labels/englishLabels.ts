@@ -137,7 +137,12 @@ import {
 import { UPTIME_LABELS } from '../uptime/labels';
 import type { CosmosLabels } from './cosmosLabels';
 
-export type EnglishLabels = CosmosLabels;
+/**
+ * What `englishLabels` holds: every key but the ones of the optional entries (`@sckyzo/cosmos-react/editor`,
+ * `@sckyzo/cosmos-react/map`), which are built apart from this file and bring their own English
+ * (`RICH_TEXT_EDITOR_LABELS`, `MAP_VIEW_LABELS`…).
+ */
+export type EnglishLabels = Omit<CosmosLabels, 'mapMarkerList' | 'mapView'>;
 
 /**
  * The English every component writes by default: the start of a translation. Each component reads

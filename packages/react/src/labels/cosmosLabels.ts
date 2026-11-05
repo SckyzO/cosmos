@@ -60,6 +60,7 @@ import type {
 } from '../layout/labels';
 import type { FileTileLabels, StackedListLabels } from '../lists/labels';
 import type { JobLogLabels, LogViewerLabels } from '../logs/labels';
+import type { MapMarkerListLabels, MapViewLabels } from '../map/labels';
 import type {
   BreadcrumbLabels,
   NavbarLabels,
@@ -209,6 +210,8 @@ export type CosmosLabels = {
   lineItemsEditor: LineItemsLabels;
   loadingState: LoadingStateLabels;
   logViewer: LogViewerLabels;
+  mapMarkerList: MapMarkerListLabels;
+  mapView: MapViewLabels;
   miniCalendar: MiniCalendarLabels;
   modal: ModalLabels;
   multiSelect: MultiSelectLabels;

@@ -468,9 +468,6 @@ test('the package uses logical utilities only', () => {
 const TEXT_DEFERRED: string[] = [
   'packages/react/src/editor/ImageForm.tsx',
   'packages/react/src/editor/LinkForm.tsx',
-  'packages/react/src/map/MapMarkerList.tsx',
-  'packages/react/src/map/MapPin.tsx',
-  'packages/react/src/map/MapView.tsx',
 ];
 
 /**
