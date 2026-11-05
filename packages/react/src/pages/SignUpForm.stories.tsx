@@ -288,3 +288,43 @@ export const LabelsFromProviderAndProp: Story = {
     await expect(own.getByRole('textbox', { name: 'Prénom' })).toBeVisible();
   },
 };
+
+/** The rules and the strength meter are worded by the provider's `passwordPolicyChecker` and `passwordStrengthMeter`. */
+export const PolicyAndStrengthFollowTheProvider: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        signUpForm: { password: 'Mot de passe' },
+        passwordPolicyChecker: {
+          title: 'Exigences',
+          minLength: 'Au moins 12 caractères',
+          uppercase: 'Une majuscule',
+          lowercase: 'Une minuscule',
+          number: 'Un chiffre',
+          symbol: 'Un symbole',
+          met: 'respectée',
+          notMet: 'non respectée',
+        },
+        passwordStrengthMeter: {
+          name: 'Robustesse',
+          levels: ['Très faible', 'Faible', 'Moyen', 'Bon', 'Fort'],
+        },
+      }}
+    >
+      <SignUpForm onSubmit={fn()} strength={estimateStrength} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const password = canvas.getByLabelText(/^Mot de passe/, { selector: 'input' });
+    await userEvent.type(password, 'Correct-Horse-9');
+    await expect(canvas.getByText('Exigences')).toBeVisible();
+    await expect(canvas.getByText('Au moins 12 caractères')).toBeVisible();
+    await expect(canvas.getByText('Un symbole').closest('li')).toHaveTextContent(
+      'Un symbole, respectée'
+    );
+    await expect(canvas.queryByText('At least 12 characters')).toBeNull();
+    await expect(canvas.getByText(/Robustesse/)).toHaveTextContent('Robustesse: Bon');
+    await expect(password).toHaveAccessibleDescription('Robustesse: Bon');
+  },
+};

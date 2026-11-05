@@ -14,6 +14,7 @@ import { Button } from '../ui/Button';
 import { PasswordInput } from './PasswordInput';
 import { defaultPasswordRules, PasswordPolicyChecker } from './PasswordPolicyChecker';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Forms/Password Strength Meter',
@@ -321,5 +322,30 @@ export const SaysNothingWhenTheLevelComesBack: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Score 2' }));
     await pause(1200);
     expect(status).toBeEmptyDOMElement();
+  },
+};
+
+/** The provider's French words the name and the levels; the meter's own `labels` win, key by key. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        passwordStrengthMeter: {
+          name: 'Robustesse',
+          levels: ['Très faible', 'Faible', 'Moyen', 'Bon', 'Fort'],
+        },
+      }}
+    >
+      <div className="space-y-4">
+        <PasswordStrengthMeter score={3} id="provider" />
+        <PasswordStrengthMeter score={1} id="own" labels={{ name: 'Sécurité' }} />
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvasElement }) => {
+    const page = within(canvasElement);
+    await expect(page.getByText(/^Robustesse/)).toHaveTextContent('Robustesse: Bon');
+    await expect(page.getByText(/^Sécurité/)).toHaveTextContent('Sécurité: Faible');
   },
 };
