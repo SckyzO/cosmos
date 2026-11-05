@@ -23,11 +23,6 @@ export type StickyScrollNavProps = {
    * above. A jump lands the section below the nav, so below that header too.
    */
   topOffset?: number;
-  /**
-   * Name of the jump menu shown below `sm`, in place of the row of buttons. Default
-   * `labels.jump`, 'Jump to section'.
-   */
-  jumpLabel?: string;
   /** The texts it writes, over `LabelsProvider`'s `stickyScrollNav` and the English defaults. */
   labels?: Partial<StickyScrollNavLabels>;
   className?: string;
@@ -63,7 +58,6 @@ export const StickyScrollNav = ({
   sections,
   onNavigate,
   topOffset = 0,
-  jumpLabel,
   labels: ownLabels,
   className,
 }: StickyScrollNavProps) => {
@@ -169,7 +163,7 @@ export const StickyScrollNav = ({
       </div>
       <div className="sm:hidden">
         <Select
-          aria-label={jumpLabel ?? labels.jump}
+          aria-label={labels.jump}
           value={current}
           onChange={(e) => {
             setCurrent(e.target.value);

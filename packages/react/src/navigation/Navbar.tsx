@@ -226,10 +226,7 @@ const NavbarMenu = ({
 
 // ── Items (the horizontal main nav, hidden on mobile by default) ────────────
 
-export type NavbarItemsProps = HTMLAttributes<HTMLDivElement> & {
-  /** Label of the menu that takes the items that do not fit. Default `labels.more`, `More`. */
-  moreLabel?: string;
-};
+export type NavbarItemsProps = HTMLAttributes<HTMLDivElement>;
 
 type Movable = ReactElement<NavbarItemProps> | ReactElement<NavbarMenuProps>;
 
@@ -267,7 +264,7 @@ function countHidden(
   return hidden;
 }
 
-const Items = ({ className, children, moreLabel, ...rest }: NavbarItemsProps) => {
+const Items = ({ className, children, ...rest }: NavbarItemsProps) => {
   const labels = useLabels('navbar', NAVBAR_LABELS, useContext(NavbarLabelsContext));
   const theme = useContext(NavbarThemeContext);
   const setHasItems = useContext(BrandContext);
@@ -352,7 +349,7 @@ const Items = ({ className, children, moreLabel, ...rest }: NavbarItemsProps) =>
             )}
           >
             <Menu>
-              <NavbarTrigger label={moreLabel ?? labels.more} active={moreActive} theme={theme} />
+              <NavbarTrigger label={labels.more} active={moreActive} theme={theme} />
               <Menu.Content>
                 {overflow.map((entry) => (
                   <OverflowEntry key={entry.key} entry={entry} />
