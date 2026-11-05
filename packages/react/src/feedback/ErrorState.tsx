@@ -14,8 +14,6 @@ export type ErrorStateProps = {
   message?: string;
   /** Optional retry callback. If set, a retry button appears. */
   onRetry?: () => void;
-  /** Label of the retry button. Default `labels.retry`, 'Try again'. */
-  retryLabel?: string;
   /**
    * A way out that is not a retry ("Back to tickets" on a record that does not exist), next to
    * the retry button, which comes first. Alone when there is no `onRetry`.
@@ -40,7 +38,6 @@ export const ErrorState = ({
   description,
   message,
   onRetry,
-  retryLabel,
   action,
   compact,
   labels: ownLabels,
@@ -58,7 +55,7 @@ export const ErrorState = ({
           <div className="flex flex-wrap items-center justify-center gap-2">
             {onRetry && (
               <Button variant="secondary" size="sm" icon={RotateCw} onClick={() => onRetry()}>
-                {retryLabel ?? labels.retry}
+                {labels.retry}
               </Button>
             )}
             {action}
