@@ -218,13 +218,17 @@ export const Shell = ({
         data-shell-panel={floating ? '' : undefined}
       >
         {topbar && <div className="shrink-0">{topbar}</div>}
-        {/* Below `lg` the secondary panel stacks under main, and the two scroll together. */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-auto lg:flex-row lg:overflow-visible">
-          <main className="min-w-0 flex-1 lg:overflow-auto">{children}</main>
+        {/* Below `lg` the secondary panel stacks under main, and the two scroll together. Each box
+            that scrolls is positioned: an absolute element of the page with no positioned parent
+            (the `sr-only` text of a component is one) is placed against the box that scrolls
+            and clipped by it, instead of stretching the document, which would scroll on into
+            empty space once the page is at its end. */}
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-auto lg:flex-row lg:overflow-visible">
+          <main className="relative min-w-0 flex-1 lg:overflow-auto">{children}</main>
           {secondary && (
             <aside
               className={clsx(
-                'shrink-0 border-t border-[var(--color-border)] lg:overflow-auto lg:border-s lg:border-t-0',
+                'relative shrink-0 border-t border-[var(--color-border)] lg:overflow-auto lg:border-s lg:border-t-0',
                 // `max-lg:` sorts after the plain width utility: full width while stacked.
                 secondaryWidthClassName,
                 'max-lg:w-full'
