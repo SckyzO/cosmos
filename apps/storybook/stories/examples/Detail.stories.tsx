@@ -306,7 +306,7 @@ const Conversation = ({
         label="Message"
         modes={modesFor(ticket)}
         onSubmit={onSubmit}
-        placeholder="Write a reply…"
+        labels={{ placeholder: 'Write a reply…' }}
       />
     }
   >
