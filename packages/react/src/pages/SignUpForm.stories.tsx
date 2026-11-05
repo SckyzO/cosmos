@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { expectNoHorizontalOverflow, mobileViewport, portalDocsParams } from '../storybook-helpers';
 import { estimateStrength } from '../storybook-strength';
 import { Toaster, toast } from '../ui/Toast';
@@ -211,5 +212,79 @@ export const NameFieldsShareARowWhenWide: Story = {
     const first = canvas.getByLabelText(/First name/).getBoundingClientRect();
     const last = canvas.getByLabelText(/Last name/).getBoundingClientRect();
     await expect(last.top).toBeCloseTo(first.top, 0);
+  },
+};
+
+/** The provider's French words the form and its sentence round the links; `labels` wins. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        signUpForm: {
+          title: 'Créer votre compte',
+          description: 'Quelques informations pour commencer.',
+          firstName: 'Prénom',
+          firstNamePlaceholder: 'Jean',
+          lastName: 'Nom',
+          lastNamePlaceholder: 'Dupont',
+          email: 'E-mail',
+          emailPlaceholder: 'jean@exemple.fr',
+          password: 'Mot de passe',
+          terms: 'conditions',
+          privacy: 'politique de confidentialité',
+          agree: (terms, privacy) => (
+            <>
+              J’accepte les {terms} et la {privacy}.
+            </>
+          ),
+          submit: 'Créer le compte',
+          haveAccount: 'Déjà un compte ?',
+          signIn: 'Se connecter',
+        },
+      }}
+    >
+      <div className="space-y-10">
+        <div role="group" aria-label="Fournisseur">
+          <SignUpForm onSubmit={fn()} signInHref="#" />
+        </div>
+        <div role="group" aria-label="Propre">
+          <SignUpForm onSubmit={fn()} labels={{ submit: 'Valider' }} />
+        </div>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const provided = within(canvas.getByRole('group', { name: 'Fournisseur' }));
+    await expect(provided.getByRole('heading', { name: 'Créer votre compte' })).toBeVisible();
+    await expect(provided.getByRole('textbox', { name: 'Prénom' })).toHaveAttribute(
+      'placeholder',
+      'Jean'
+    );
+    await expect(provided.getByRole('textbox', { name: 'Nom' })).toHaveAttribute(
+      'placeholder',
+      'Dupont'
+    );
+    await expect(provided.getByRole('textbox', { name: 'E-mail' })).toHaveAttribute(
+      'placeholder',
+      'jean@exemple.fr'
+    );
+    await expect(provided.getByLabelText(/^Mot de passe/, { selector: 'input' })).toBeVisible();
+    await expect(
+      provided.getByRole('checkbox', {
+        name: /^J’accepte les conditions et la politique de confidentialité/,
+      })
+    ).toBeVisible();
+    await expect(provided.getByRole('link', { name: 'conditions' })).toBeVisible();
+    await expect(
+      provided.getByRole('link', { name: 'politique de confidentialité' })
+    ).toBeVisible();
+    await expect(provided.getByRole('button', { name: 'Créer le compte' })).toBeVisible();
+    await expect(provided.getByText(/^Déjà un compte \?/)).toBeVisible();
+    await expect(provided.getByRole('link', { name: 'Se connecter' })).toBeVisible();
+
+    const own = within(canvas.getByRole('group', { name: 'Propre' }));
+    await expect(own.getByRole('button', { name: 'Valider' })).toBeVisible();
+    await expect(own.getByRole('textbox', { name: 'Prénom' })).toBeVisible();
   },
 };

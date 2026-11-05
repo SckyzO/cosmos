@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Activity } from 'lucide-react';
 import { useState } from 'react';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import { LabelsProvider } from '../labels/LabelsProvider';
 import { portalDocsParams } from '../storybook-helpers';
 import { Toaster, toast } from '../ui/Toast';
 import { AuthLayout } from './AuthLayout';
@@ -121,5 +122,58 @@ export const LoadingDisablesSubmit: Story = {
     await expect(submit).toBeDisabled();
     await userEvent.click(submit).catch(() => undefined);
     await expect(args.onSubmit).not.toHaveBeenCalled();
+  },
+};
+
+/** The provider's French words the form; the form's own `labels` and the app's `title` win. */
+export const LabelsFromProviderAndProp: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: () => (
+    <LabelsProvider
+      labels={{
+        signInForm: {
+          title: 'Connexion',
+          description: 'Bon retour — saisissez vos identifiants.',
+          email: 'E-mail',
+          emailPlaceholder: 'jean@exemple.fr',
+          password: 'Mot de passe',
+          remember: 'Rester connecté',
+          forgot: 'Mot de passe oublié ?',
+          submit: 'Se connecter',
+          noAccount: 'Pas de compte ?',
+          signUp: 'En créer un',
+        },
+      }}
+    >
+      <div className="space-y-10">
+        <div role="group" aria-label="Fournisseur">
+          <SignInForm onSubmit={fn()} onForgotPassword={fn()} signUpHref="#" />
+        </div>
+        <div role="group" aria-label="Propre">
+          <SignInForm onSubmit={fn()} title="Mon titre" labels={{ submit: 'Entrer' }} />
+        </div>
+      </div>
+    </LabelsProvider>
+  ),
+  play: async ({ canvas }) => {
+    const provided = within(canvas.getByRole('group', { name: 'Fournisseur' }));
+    await expect(provided.getByRole('heading', { name: 'Connexion' })).toBeVisible();
+    await expect(provided.getByText('Bon retour — saisissez vos identifiants.')).toBeVisible();
+    await expect(provided.getByRole('textbox', { name: 'E-mail' })).toHaveAttribute(
+      'placeholder',
+      'jean@exemple.fr'
+    );
+    await expect(provided.getByLabelText(/^Mot de passe/, { selector: 'input' })).toBeVisible();
+    await expect(provided.getByRole('checkbox', { name: 'Rester connecté' })).toBeVisible();
+    await expect(provided.getByRole('button', { name: 'Mot de passe oublié ?' })).toBeVisible();
+    await expect(provided.getByRole('button', { name: 'Se connecter' })).toBeVisible();
+    await expect(provided.getByText(/^Pas de compte \?/)).toBeVisible();
+    await expect(provided.getByRole('link', { name: 'En créer un' })).toBeVisible();
+
+    // The app's `title` wins over every label, and the form's own `submit` over the provider's.
+    const own = within(canvas.getByRole('group', { name: 'Propre' }));
+    await expect(own.getByRole('heading', { name: 'Mon titre' })).toBeVisible();
+    await expect(own.getByRole('button', { name: 'Entrer' })).toBeVisible();
+    await expect(own.getByRole('textbox', { name: 'E-mail' })).toBeVisible();
   },
 };
