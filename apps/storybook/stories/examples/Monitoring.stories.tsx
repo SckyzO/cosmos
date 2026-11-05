@@ -412,38 +412,47 @@ const SeverityPanels = ({
 );
 
 // The status a gauge is in, from its value and its two thresholds: the same rule as its arc.
-const gaugeStatus = (gauge: GaugeSpec): { status: HealthStatus; label: string } =>
+const gaugeStatus = (
+  gauge: GaugeSpec
+): { status: HealthStatus; label: string; intent: 'success' | 'warning' | 'danger' } =>
   gauge.value >= gauge.critAt
-    ? { status: 'CRIT', label: 'Critical' }
+    ? { status: 'CRIT', label: 'Critical', intent: 'danger' }
     : gauge.value >= gauge.warnAt
-      ? { status: 'WARN', label: 'Warning' }
-      : { status: 'OK', label: 'OK' };
+      ? { status: 'WARN', label: 'Warning', intent: 'warning' }
+      : { status: 'OK', label: 'OK', intent: 'success' };
 
-// A gauge with its zones on the track and its arc in the color of the zone the value is in: the
-// zone is also written, as a status, under the arc.
+// A gauge with its zones on the track and its arc in the color of the zone the value is in. The
+// card says the zone too: its border takes the status's intent, and the status stands by the title.
+// No icon: four cards share the row, and the title needs the room (a path can be long).
 const GaugePanel = ({ gauge, loading }: { gauge: GaugeSpec; loading?: boolean }) => {
-  const { status, label } = gaugeStatus(gauge);
+  const { status, label, intent } = gaugeStatus(gauge);
   return (
     <SectionCard
       as="h2"
+      size="md"
       title={gauge.title}
-      action={<Aside>{gauge.scope}</Aside>}
+      desc={gauge.scope}
+      // No status before there is a value to give it.
+      intent={loading ? 'neutral' : intent}
+      badge={loading ? undefined : <StatusBadge status={status} label={label} />}
       loading={loading}
       className="min-w-0"
     >
-      <SemiCircleGauge
-        ariaLabel={gauge.title}
-        value={gauge.value}
-        max={gauge.max}
-        warnAt={gauge.warnAt}
-        critAt={gauge.critAt}
-        showZones
-        formatValue={gauge.format}
-      />
-      <p className="m-0 mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-xs text-[var(--color-text-secondary)]">
-        <StatusBadge status={status} label={label} />
-        <bdi>{gauge.note}</bdi>
-      </p>
+      {/* At the bottom of the card: the gauges of a row line up when a title takes two lines. */}
+      <div className="flex h-full flex-col justify-end">
+        <SemiCircleGauge
+          ariaLabel={gauge.title}
+          value={gauge.value}
+          max={gauge.max}
+          warnAt={gauge.warnAt}
+          critAt={gauge.critAt}
+          showZones
+          formatValue={gauge.format}
+        />
+        <p className="m-0 mt-3 text-center text-xs text-[var(--color-text-secondary)]">
+          <bdi>{gauge.note}</bdi>
+        </p>
+      </div>
     </SectionCard>
   );
 };
@@ -508,8 +517,11 @@ const NodeStates = ({ cluster, stale }: { cluster: Cluster; stale?: boolean }) =
   return (
     <SectionCard
       as="h2"
+      size="md"
       title="Node states"
-      action={stale ? <Aside>{STALE_TEXT}</Aside> : undefined}
+      // The last counts received: dimmed, and their age by the title.
+      stale={stale}
+      staleLabel={STALE_TEXT}
       className="min-w-0 flex-[1_1_15rem]"
     >
       <DonutChart
@@ -719,6 +731,7 @@ const Temperatures = ({
 }) => (
   <SectionCard
     as="h2"
+    size="md"
     title="Inlet temperature by rack"
     action={<Aside>{`Warning above ${celsius(INLET_WARNING)}`}</Aside>}
     className="min-w-0 flex-[2_1_35rem]"
@@ -752,7 +765,7 @@ const Jobs = ({
 }) => {
   const total = jobs.Running + jobs.Pending + jobs.Stalled;
   return (
-    <SectionCard as="h2" title="Jobs" className="min-w-0 flex-[1_1_18rem]">
+    <SectionCard as="h2" size="md" title="Jobs" className="min-w-0 flex-[1_1_18rem]">
       <div className="flex flex-col gap-3">
         <DonutChart
           series={[jobs.Running, jobs.Pending, jobs.Stalled]}
@@ -784,6 +797,7 @@ const Services = ({ services, stale }: { services: Service[]; stale?: boolean })
   return (
     <SectionCard
       as="h2"
+      size="md"
       title="Services"
       action={<Aside>{`${healthy} of ${services.length} healthy`}</Aside>}
       className="min-w-0"
@@ -797,6 +811,7 @@ const Services = ({ services, stale }: { services: Service[]; stale?: boolean })
               beats={service.beats}
               uptime={service.uptime}
               latency={service.latency}
+              // Each row says it is stale, by its state too: no card-wide label on top of them.
               stale={stale ? STALE_SINCE : undefined}
               now={NOW}
             />
@@ -810,6 +825,7 @@ const Services = ({ services, stale }: { services: Service[]; stale?: boolean })
 const Scheduler = () => (
   <SectionCard
     as="h2"
+    size="md"
     title="Scheduler · slurmctld"
     action={<HealthBadge status="OK" label="Healthy" />}
     className="min-w-0"
@@ -833,6 +849,7 @@ const Power = () => {
   return (
     <SectionCard
       as="h2"
+      size="md"
       title="Cluster power"
       action={
         <Aside>
@@ -880,6 +897,7 @@ const Events = ({
   return (
     <SectionCard
       as="h2"
+      size="md"
       title="Events"
       action={failed ? undefined : <Aside>updated 12 s ago</Aside>}
       // The stream is lost: the card keeps its header and says so, with the way back.
@@ -1100,10 +1118,10 @@ const LoadingPage = () => (
       <SeverityPanels alerts={[]} loading />
       <Gauges gauges={GAUGES} loading />
       <div className="flex flex-wrap items-stretch gap-6">
-        <SectionCard as="h2" title="Nodes by rack" className="min-w-0 flex-[3_1_52.5rem]">
+        <SectionCard as="h2" size="md" title="Nodes by rack" className="min-w-0 flex-[3_1_52.5rem]">
           <SkeletonTable rows={8} cols={12} />
         </SectionCard>
-        <SectionCard as="h2" title="Node states" className="min-w-0 flex-[1_1_15rem]">
+        <SectionCard as="h2" size="md" title="Node states" className="min-w-0 flex-[1_1_15rem]">
           <DonutChart series={[]} labels={[]} loading height={220} ariaLabel="Node states" />
         </SectionCard>
       </div>
@@ -1119,7 +1137,7 @@ const LoadingPage = () => (
         <Temperatures temps={INLET_TEMPS} loading />
         <Jobs jobs={JOBS} stalledOn="" loading />
       </div>
-      <SectionCard as="h2" title="Events">
+      <SectionCard as="h2" size="md" title="Events">
         <SkeletonList rows={6} showAction={false} />
       </SectionCard>
     </div>
@@ -1149,7 +1167,7 @@ const NodePage = () => (
         </DescriptionList.Item>
       ))}
     </DescriptionList>
-    <SectionCard as="h2" title="Health checks" action={<Aside>2 need attention</Aside>}>
+    <SectionCard as="h2" size="md" title="Health checks" action={<Aside>2 need attention</Aside>}>
       <HealthCheckList
         groups={NODE_CHECKS}
         sort="severity"
