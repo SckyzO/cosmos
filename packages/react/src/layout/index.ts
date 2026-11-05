@@ -47,3 +47,10 @@ export {
   type SiteFooterBottomProps,
   type SiteFooterBottomLink,
 } from './SiteFooter';
+export type {
+  ShellLabels,
+  SidebarLabels,
+  SidebarToggleLabels,
+  SiteFooterLabels,
+  TopbarLabels,
+} from './labels';

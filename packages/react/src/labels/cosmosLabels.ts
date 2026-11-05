@@ -51,6 +51,13 @@ import type {
   UploadQueueLabels,
   ZoomBarLabels,
 } from '../forms/labels';
+import type {
+  ShellLabels,
+  SidebarLabels,
+  SidebarToggleLabels,
+  SiteFooterLabels,
+  TopbarLabels,
+} from '../layout/labels';
 import type { FileTileLabels, StackedListLabels } from '../lists/labels';
 import type { BreadcrumbLabels } from '../navigation/labels';
 import type {
@@ -191,8 +198,12 @@ export type CosmosLabels = {
   rowActionsMenu: RowActionsMenuLabels;
   searchInput: SearchInputLabels;
   secretValue: SecretValueLabels;
+  shell: ShellLabels;
+  sidebar: SidebarLabels;
+  sidebarToggle: SidebarToggleLabels;
   signInForm: SignInFormLabels;
   signUpForm: SignUpFormLabels;
+  siteFooter: SiteFooterLabels;
   slider: SliderLabels;
   socialAuthButtons: SocialAuthButtonsLabels;
   spinner: SpinnerLabels;
@@ -203,6 +214,7 @@ export type CosmosLabels = {
   themeToggle: ThemeToggleLabels;
   toaster: ToasterLabels;
   tooltipHelp: TooltipHelpLabels;
+  topbar: TopbarLabels;
   trendDelta: TrendDeltaLabels;
   twoStepVerificationForm: TwoStepVerificationLabels;
   unsavedIndicator: UnsavedIndicatorLabels;

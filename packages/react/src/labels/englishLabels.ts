@@ -51,6 +51,13 @@ import {
   UPLOAD_QUEUE_LABELS,
   ZOOM_BAR_LABELS,
 } from '../forms/labels';
+import {
+  SHELL_LABELS,
+  SIDEBAR_LABELS,
+  SIDEBAR_TOGGLE_LABELS,
+  SITE_FOOTER_LABELS,
+  TOPBAR_LABELS,
+} from '../layout/labels';
 import { FILE_TILE_LABELS, STACKED_LIST_LABELS } from '../lists/labels';
 import { BREADCRUMB_LABELS } from '../navigation/labels';
 import {
@@ -190,8 +197,12 @@ export const englishLabels: CosmosLabels = {
   rowActionsMenu: ROW_ACTIONS_MENU_LABELS,
   searchInput: SEARCH_INPUT_LABELS,
   secretValue: SECRET_VALUE_LABELS,
+  shell: SHELL_LABELS,
+  sidebar: SIDEBAR_LABELS,
+  sidebarToggle: SIDEBAR_TOGGLE_LABELS,
   signInForm: SIGN_IN_FORM_LABELS,
   signUpForm: SIGN_UP_FORM_LABELS,
+  siteFooter: SITE_FOOTER_LABELS,
   slider: SLIDER_LABELS,
   socialAuthButtons: SOCIAL_AUTH_BUTTONS_LABELS,
   spinner: SPINNER_LABELS,
@@ -202,6 +213,7 @@ export const englishLabels: CosmosLabels = {
   themeToggle: THEME_TOGGLE_LABELS,
   toaster: TOASTER_LABELS,
   tooltipHelp: TOOLTIP_HELP_LABELS,
+  topbar: TOPBAR_LABELS,
   trendDelta: TREND_DELTA_LABELS,
   twoStepVerificationForm: TWO_STEP_VERIFICATION_FORM_LABELS,
   unsavedIndicator: UNSAVED_INDICATOR_LABELS,

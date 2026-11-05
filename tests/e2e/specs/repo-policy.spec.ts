@@ -468,11 +468,6 @@ test('the package uses logical utilities only', () => {
 const TEXT_DEFERRED: string[] = [
   'packages/react/src/editor/ImageForm.tsx',
   'packages/react/src/editor/LinkForm.tsx',
-  'packages/react/src/layout/Divider.tsx',
-  'packages/react/src/layout/MediaObject.tsx',
-  'packages/react/src/layout/Sidebar.tsx',
-  'packages/react/src/layout/SiteFooter.tsx',
-  'packages/react/src/layout/Topbar.tsx',
   'packages/react/src/logs/JobLogToolbar.tsx',
   'packages/react/src/logs/JobLog.tsx',
   'packages/react/src/logs/LogEntryDetail.tsx',
@@ -525,6 +520,16 @@ const TEXT_ALLOWED: { file: string; text: string; reason: string }[] = [
     file: 'packages/react/src/ui/ProgressBar.tsx',
     text: 'none',
     reason: "`label` says where the percentage is drawn ('none', 'inside' or 'outside'), not text",
+  },
+  {
+    file: 'packages/react/src/layout/Divider.tsx',
+    text: 'size-5 text-gray-400 dark:text-gray-500',
+    reason: 'the default of `iconClassName`, Tailwind classes and not text',
+  },
+  {
+    file: 'packages/react/src/layout/MediaObject.tsx',
+    text: 'gap-x-4',
+    reason: 'the default of `gapClassName`, a Tailwind class and not text',
   },
 ];
 

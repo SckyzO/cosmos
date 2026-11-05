@@ -8,7 +8,9 @@ import {
   type ComponentPropsWithRef,
   type ReactNode,
 } from 'react';
+import { useLabels } from '../labels/labelsContext';
 import { AppLink } from '../ui/AppLink';
+import { SITE_FOOTER_LABELS, type SiteFooterLabels } from './labels';
 
 export type SiteFooterVariant = 'full' | 'compact';
 export type SiteFooterTheme = 'light' | 'dark';
@@ -49,7 +51,12 @@ const LINK_CURRENT: Record<SiteFooterTheme, string> = {
 };
 
 // What the parts read from their `<SiteFooter>`: parts rendered outside one take the defaults.
-type SiteFooterContextValue = { variant: SiteFooterVariant; theme: SiteFooterTheme };
+type SiteFooterContextValue = {
+  variant: SiteFooterVariant;
+  theme: SiteFooterTheme;
+  /** What the root's `labels` prop gave, for `SiteFooter.Bottom`. */
+  labels?: Partial<SiteFooterLabels>;
+};
 const SiteFooterContext = createContext<SiteFooterContextValue>({
   variant: 'full',
   theme: 'light',
@@ -71,6 +78,8 @@ export type SiteFooterProps = ComponentPropsWithRef<'footer'> & {
   theme?: SiteFooterTheme;
   /** Constrain the content to a max-width column, as `Navbar` does. Default `7xl`. */
   maxWidth?: 'none' | '7xl';
+  /** The texts its parts write (the name of the legal links), over `LabelsProvider`'s `siteFooter` and the English defaults. */
+  labels?: Partial<SiteFooterLabels>;
   /**
    * The parts, in the order they are read: `SiteFooter.Banner`, `Brand`, `Column`, `Aside` and
    * `Bottom`. The banner goes above and the bottom row below whatever the order.
@@ -82,12 +91,13 @@ function SiteFooterRoot({
   variant = 'full',
   theme = 'light',
   maxWidth = '7xl',
+  labels,
   className,
   children,
   ref,
   ...rest
 }: SiteFooterProps) {
-  const context = useMemo(() => ({ variant, theme }), [variant, theme]);
+  const context = useMemo(() => ({ variant, theme, labels }), [variant, theme, labels]);
   return (
     <footer
       ref={ref}
@@ -303,7 +313,7 @@ export type SiteFooterBottomLink = Omit<ComponentPropsWithRef<'a'>, 'children' |
 export type SiteFooterBottomProps = ComponentPropsWithRef<'div'> & {
   /** Legal links (terms, privacy, cookie settings), in a `nav` after the text. */
   links?: SiteFooterBottomLink[];
-  /** Name of the legal links' `nav`. Default `Legal`. */
+  /** Name of the legal links' `nav`. Default `labels.legalLinks`, `Legal`. */
   linksLabel?: string;
 };
 
@@ -313,13 +323,14 @@ export type SiteFooterBottomProps = ComponentPropsWithRef<'div'> & {
  */
 function SiteFooterBottom({
   links,
-  linksLabel = 'Legal',
+  linksLabel,
   className,
   children,
   ref,
   ...rest
 }: SiteFooterBottomProps) {
-  const { variant, theme } = useContext(SiteFooterContext);
+  const { variant, theme, labels: ownLabels } = useContext(SiteFooterContext);
+  const labels = useLabels('siteFooter', SITE_FOOTER_LABELS, ownLabels);
   const full = variant === 'full';
   return (
     <div
@@ -338,7 +349,7 @@ function SiteFooterBottom({
     >
       {children}
       {links && links.length > 0 && (
-        <nav aria-label={linksLabel}>
+        <nav aria-label={linksLabel ?? labels.legalLinks}>
           <ul className="flex flex-wrap gap-x-5 gap-y-1.5">
             {links.map(({ label, ...link }, index) => (
               <li key={`${index}-${link.href}`}>

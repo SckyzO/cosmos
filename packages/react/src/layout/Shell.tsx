@@ -5,6 +5,8 @@ import { Drawer } from '../ui/Drawer';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { useControllableState } from '../hooks/useControllableState';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import { useLabels } from '../labels/labelsContext';
+import { SHELL_LABELS, type ShellLabels } from './labels';
 import { ShellContext } from './shellContext';
 
 /**
@@ -99,6 +101,8 @@ export type ShellProps = {
    * blurs the page by 8px under a light veil, `blur-dark` under a dark one. See `Backdrop`.
    */
   drawerBackdrop?: BackdropVariant;
+  /** The texts it writes (the name of the drawer), over `LabelsProvider`'s `shell` and the English defaults. */
+  labels?: Partial<ShellLabels>;
   /** Optional className override on the root element. */
   className?: string;
 };
@@ -143,8 +147,10 @@ export const Shell = ({
   sidebarOpen: controlledOpen,
   onSidebarOpenChange,
   drawerBackdrop,
+  labels: ownLabels,
   className,
 }: ShellProps) => {
+  const labels = useLabels('shell', SHELL_LABELS, ownLabels);
   // Every SidebarToggle passes the state to move to.
   const [collapsed, setCollapsed] = useControllableState({
     value: controlledCollapsed,
@@ -202,7 +208,7 @@ export const Shell = ({
             size="sm"
             backdrop={drawerBackdrop}
             swipeToClose
-            ariaLabel="Navigation menu"
+            ariaLabel={labels.navigationMenu}
           >
             {sidebar}
           </Drawer>
