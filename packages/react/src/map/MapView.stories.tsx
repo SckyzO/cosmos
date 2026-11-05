@@ -25,6 +25,7 @@ import {
   WORLD_SITES,
 } from './storybook-map';
 import type { MapMarker } from './types';
+import { LabelsProvider } from '../labels/LabelsProvider';
 
 const meta = {
   title: 'Media/Map View',
@@ -498,5 +499,35 @@ export const ControlsAndPopupFollowThePage: Story = {
         );
       });
     }
+  },
+};
+
+/** The provider writes the map's texts, and the map's own `labels` win over it. */
+export const TranslatedByLabels: Story = {
+  tags: ['!dev', '!autodocs'],
+  render: (args) => (
+    <LabelsProvider
+      labels={{
+        mapView: { map: 'Carte', zoomIn: 'Zoom avant', zoomOut: 'Zoom arrière', close: 'Fermer' },
+        mapMarkerList: { places: 'Lieux' },
+      }}
+    >
+      <MapView
+        {...args}
+        ariaLabel={undefined}
+        defaultSelectedId={args.markers[0]?.id}
+        labels={{ zoomOut: 'Dézoomer' }}
+      />
+      <MapMarkerList markers={args.markers} />
+      <MapMarkerList markers={args.markers} labels={{ places: 'Adresses' }} />
+    </LabelsProvider>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    await expect(await canvas.findByRole('button', { name: 'Zoom avant' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Dézoomer' })).toBeVisible();
+    await expect(await canvas.findByRole('button', { name: 'Fermer' })).toBeVisible();
+    await expect(canvasElement.querySelector('canvas')).toHaveAttribute('aria-label', 'Carte');
+    await expect(canvas.getByRole('list', { name: 'Lieux' })).toBeVisible();
+    await expect(canvas.getByRole('list', { name: 'Adresses' })).toBeVisible();
   },
 };
