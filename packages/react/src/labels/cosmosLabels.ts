@@ -83,6 +83,7 @@ import type {
   DataTableLabels,
   RowActionsMenuLabels,
 } from '../table/labels';
+import type { SectionCardLabels } from '../templates/labels';
 import type {
   AlertBannerLabels,
   AnnouncementBarLabels,
@@ -209,6 +210,7 @@ export type CosmosLabels = {
   rowActionsMenu: RowActionsMenuLabels;
   searchInput: SearchInputLabels;
   secretValue: SecretValueLabels;
+  sectionCard: SectionCardLabels;
   shell: ShellLabels;
   sidebar: SidebarLabels;
   sidebarToggle: SidebarToggleLabels;

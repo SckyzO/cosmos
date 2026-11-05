@@ -83,6 +83,7 @@ import {
   DATA_TABLE_LABELS,
   ROW_ACTIONS_MENU_LABELS,
 } from '../table/labels';
+import { SECTION_CARD_LABELS } from '../templates/labels';
 import {
   ALERT_BANNER_LABELS,
   ANNOUNCEMENT_BAR_LABELS,
@@ -120,12 +121,14 @@ import {
 } from '../ui/labels';
 import type { CosmosLabels } from './cosmosLabels';
 
+export type EnglishLabels = CosmosLabels;
+
 /**
- * The English every component writes by default, the whole `CosmosLabels`: the start of a
- * translation. Each component reads its own defaults from its group's `labels` module, so an app
- * that never imports this object ships none of the others.
+ * The English every component writes by default: the start of a translation. Each component reads
+ * its own defaults from its group's `labels` module, so an app that never imports this object
+ * ships none of the others.
  */
-export const englishLabels: CosmosLabels = {
+export const englishLabels: EnglishLabels = {
   activeFiltersBar: ACTIVE_FILTERS_BAR_LABELS,
   alertBanner: ALERT_BANNER_LABELS,
   announcementBar: ANNOUNCEMENT_BAR_LABELS,
@@ -208,6 +211,7 @@ export const englishLabels: CosmosLabels = {
   rowActionsMenu: ROW_ACTIONS_MENU_LABELS,
   searchInput: SEARCH_INPUT_LABELS,
   secretValue: SECRET_VALUE_LABELS,
+  sectionCard: SECTION_CARD_LABELS,
   shell: SHELL_LABELS,
   sidebar: SIDEBAR_LABELS,
   sidebarToggle: SIDEBAR_TOGGLE_LABELS,

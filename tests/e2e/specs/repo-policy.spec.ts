@@ -483,7 +483,6 @@ const TEXT_DEFERRED: string[] = [
   'packages/react/src/status/HealthSummary.tsx',
   'packages/react/src/status/NodeGrid.tsx',
   'packages/react/src/status/StaleBadge.tsx',
-  'packages/react/src/templates/SectionCard.tsx',
   'packages/react/src/uptime/HeartbeatBar.tsx',
   'packages/react/src/uptime/MonitorRow.tsx',
   'packages/react/src/uptime/UptimeBars.tsx',
