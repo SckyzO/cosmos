@@ -36,6 +36,11 @@ const fr: LabelsInput = {
   one's others.
 - **Your own text stays yours.** What you pass in (`title`, `items`, a column's `header`) is shown as
   it is and wins over the label that stands in for it when you pass nothing.
+- **Locale.** `locale` is the language's BCP 47 tag, the default of every component that writes a
+  date, a time, a number or an amount (`<LabelsProvider labels={fr} locale="fr-FR">`). A
+  component's own `locale` wins, and a nested provider that gives none keeps the outer one's. With
+  no locale anywhere, the components format as the browser does, and the few that always used
+  `en-US` (`BarList`, `PipelineStages`, `TrendDelta`) still do.
 
 The provider holds one language. To switch languages, pass it the dictionary of the language on
 show, from your own i18n library or a plain object per locale.
