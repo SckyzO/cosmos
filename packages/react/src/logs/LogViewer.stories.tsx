@@ -584,13 +584,19 @@ export const OpeningDetailsPausesFollow: Story = {
     const box = log.getBoundingClientRect();
     const middle = box.top + box.height / 2;
     const distance = (button: HTMLElement) => Math.abs(button.getBoundingClientRect().top - middle);
-    const chevron = canvas
-      .getAllByRole('button', { name: 'Show details' })
-      .filter((button) => {
-        const { top, bottom } = button.getBoundingClientRect();
-        return top >= box.top && bottom <= box.bottom;
-      })
-      .sort((a, b) => distance(a) - distance(b))[0]!;
+    // The windowed list can still be drawing the rows of the end it has just scrolled to: wait for
+    // one that is in view.
+    const chevron = await waitFor(() => {
+      const found = canvas
+        .getAllByRole('button', { name: 'Show details' })
+        .filter((button) => {
+          const { top, bottom } = button.getBoundingClientRect();
+          return top >= box.top && bottom <= box.bottom;
+        })
+        .sort((a, b) => distance(a) - distance(b))[0];
+      expect(found).toBeDefined();
+      return found!;
+    });
     const before = chevron.getBoundingClientRect().top;
     await userEvent.click(chevron);
     const details = await canvas.findByRole('group', { name: /Details of line/ });
