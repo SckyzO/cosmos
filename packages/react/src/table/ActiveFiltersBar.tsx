@@ -29,7 +29,7 @@ export const ActiveFiltersBar = ({
   return (
     <div
       className={clsx(
-        'bg-brand-50/50 dark:bg-brand-500/5 flex shrink-0 flex-wrap items-center gap-1.5 border-b border-gray-100 px-4 py-2 dark:border-gray-800',
+        'bg-brand-50/50 dark:bg-brand-500/5 flex shrink-0 flex-wrap items-center gap-1.5 border-b border-gray-100 px-[var(--cosmos-table-inset,1rem)] py-2 dark:border-gray-800',
         className
       )}
     >

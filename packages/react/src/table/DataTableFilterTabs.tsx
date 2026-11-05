@@ -66,7 +66,7 @@ export const DataTableFilterTabsStrip = ({
       onChange={(next) => onSelect(next === ALL ? undefined : next.slice(OPTION.length))}
       className="shrink-0"
     >
-      <Tabs.List className="px-4">
+      <Tabs.List className="px-[var(--cosmos-table-inset,1rem)]">
         <Tabs.Trigger value={ALL}>
           {allLabel}
           {allCount !== undefined && <Count active={active === ALL}>{allCount}</Count>}

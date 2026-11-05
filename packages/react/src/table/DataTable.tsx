@@ -1263,7 +1263,7 @@ export const DataTable = <T,>({
         <DataTableSelectionBar open={selectionBar}>
           {selectionBar ? (
             <div className="bg-brand-50 dark:bg-brand-500/10 @container border-b border-gray-100 dark:border-gray-800 print:hidden">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-[var(--cosmos-table-inset,1rem)] py-2">
                 <div
                   className={clsx(
                     // The actions go to the next line when the count leaves them too little room.
@@ -1319,7 +1319,7 @@ export const DataTable = <T,>({
         {selectionBar ? null : searchEnabled ? (
           <div
             className={clsx(
-              'border-b border-gray-100 px-4 py-2 dark:border-gray-800 print:hidden',
+              'border-b border-gray-100 px-[var(--cosmos-table-inset,1rem)] py-2 dark:border-gray-800 print:hidden',
               hasToolbarControls && 'flex items-center gap-2'
             )}
           >
@@ -1333,7 +1333,7 @@ export const DataTable = <T,>({
         ) : hasToolbarControls ? (
           <div
             className={clsx(
-              'flex justify-end border-b border-gray-100 px-4 py-2 dark:border-gray-800 print:hidden',
+              'flex justify-end border-b border-gray-100 px-[var(--cosmos-table-inset,1rem)] py-2 dark:border-gray-800 print:hidden',
               mobileCards && 'max-sm:hidden'
             )}
           >
@@ -1343,7 +1343,7 @@ export const DataTable = <T,>({
       </div>
 
       {mobileCards && (mobileSortable || hasToolbarControls || showFilters) && (
-        <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-2 sm:hidden dark:border-gray-800 print:hidden">
+        <div className="flex items-center gap-2 border-b border-gray-100 px-[var(--cosmos-table-inset,1rem)] py-2 sm:hidden dark:border-gray-800 print:hidden">
           {showFilters && (
             <DataTableFiltersButton
               count={activeFilterCount}
@@ -1621,7 +1621,7 @@ export const DataTable = <T,>({
               <PageSizeSelect value={pageSize} options={pageSizeOptions} onChange={setPageSize} />
             ) : undefined
           }
-          className="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-800 print:hidden"
+          className="shrink-0 border-t border-gray-100 px-[var(--cosmos-table-inset,1rem)] py-3 dark:border-gray-800 print:hidden"
         />
       )}
 

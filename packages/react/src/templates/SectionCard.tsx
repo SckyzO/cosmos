@@ -78,7 +78,8 @@ const INTENT_TONE: Partial<Record<Intent, SectionCardIconTone>> = {
 // margin on the header); `bleed` takes a part (a footer, a flush body) out to the card's edges,
 // `inset` pads it back, and `padBleed` is the padding of a card whose last part ends on its edge.
 // `tableInset` pads the first and last cells of a flush table to the card's own padding, as a
-// `Table` or `DataTable` pads its cells by 16px: `sm` is the same, so it has nothing to add.
+// `Table` or `DataTable` pads its cells by 16px, and sets `--cosmos-table-inset`, the padding of a
+// `DataTable`'s tabs, toolbar and pager: `sm` is the same, so it has nothing to add.
 const SIZE: Record<
   SectionCardSize,
   {
@@ -107,7 +108,7 @@ const SIZE: Record<
     gapTop: 'mt-3',
     bleed: '-mx-5',
     inset: 'px-5',
-    tableInset: '[&_tr>:first-child]:ps-5 [&_tr>:last-child]:pe-5',
+    tableInset: '[--cosmos-table-inset:1.25rem] [&_tr>:first-child]:ps-5 [&_tr>:last-child]:pe-5',
   },
   lg: {
     pad: 'p-6',
@@ -116,7 +117,7 @@ const SIZE: Record<
     gapTop: 'mt-4',
     bleed: '-mx-6',
     inset: 'px-6',
-    tableInset: '[&_tr>:first-child]:ps-6 [&_tr>:last-child]:pe-6',
+    tableInset: '[--cosmos-table-inset:1.5rem] [&_tr>:first-child]:ps-6 [&_tr>:last-child]:pe-6',
   },
 };
 
