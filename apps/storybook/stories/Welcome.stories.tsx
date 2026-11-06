@@ -424,7 +424,7 @@ export const PhoneDisclosures: Story = {
     expectNoHorizontalOverflow();
 
     const news = () =>
-      within(canvas.getByRole('region', { name: /Commerce, sign-in flows/ }))
+      within(canvas.getByRole('region', { name: /Every word translatable/ }))
         .getAllByRole('heading', { level: 3 })
         .filter((h) => h.offsetParent);
     await expect(news()).toHaveLength(4);

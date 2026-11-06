@@ -196,7 +196,8 @@ export const Hero = ({ components }: { components: CatalogComponent[] | null }) 
         <p className="mt-4 max-w-prose text-base leading-relaxed text-[var(--color-text-secondary)]">
           Components, a theme and chart wrappers for dashboards, admin tools and monitoring. Every
           component follows the theme, the accent, the density, the corner radius and the reading
-          direction you set on <code className="font-mono text-[0.9em]">&lt;html&gt;</code>.
+          direction you set on <code className="font-mono text-[0.9em]">&lt;html&gt;</code>, and
+          writes its own words in your language: English by default, French included.
         </p>
         <div className="mt-6 flex flex-wrap gap-2.5">
           <a href="#get-started" className={CTA_VARIANT.primary}>
