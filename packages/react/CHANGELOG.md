@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **react:** add size to SectionCard ([2d36288](https://github.com/SckyzO/cosmos/commit/2d36288acfea7df109fc55beb8c815680f78ac1a))
 * **react:** add stale and staleLabel to SectionCard ([b61e3df](https://github.com/SckyzO/cosmos/commit/b61e3df157ca2699f7d1e90dde1afcc981a095f3))
 * **react:** add titleRef to SectionCard ([5bdec0a](https://github.com/SckyzO/cosmos/commit/5bdec0a94fc772736fed3ba92d6b9acb89c16323))
+* **react:** choose the ConfirmationModal confirm icon ([7756209](https://github.com/SckyzO/cosmos/commit/7756209426fb9be9ccee2af8ee1ca436905f5de8))
 * **react:** fold a Breadcrumb trail that doesn't fit on a phone ([e628188](https://github.com/SckyzO/cosmos/commit/e628188f9147f1dfa93b42ea9ef295fb21dec0b5)), closes [#634](https://github.com/SckyzO/cosmos/issues/634)
 * **react:** fold CommentComposer's flat text props into labels ([94f6016](https://github.com/SckyzO/cosmos/commit/94f6016b8e1094aa55afd8e4e5f91760ebffe829)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
 * **react:** fold DataTable's search and tab text props into labels ([27910c0](https://github.com/SckyzO/cosmos/commit/27910c08b7cca09b9faf2759133b13f6001d7376)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
