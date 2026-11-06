@@ -4,8 +4,8 @@ Design system for dashboards and monitoring tools: a Tailwind 4 theme, React 19 
 Recharts-based chart wrappers, documented in Storybook 10.
 
 The [live Storybook](https://sckyzo.github.io/cosmos/) has every component with its docs and
-stories (more than 4,700), in four themes, twelve accent colors, three densities, four corner radii
-and both reading directions.
+stories (more than 5,000), in four themes, twelve accent colors, three densities, four corner radii,
+both reading directions, and in English or French.
 
 <table>
   <tr>
@@ -133,7 +133,9 @@ export default () => <Button>Hello Cosmos</Button>;
 ```
 
 The theme, the accent, the font, the text size, the density, the corner radius and the reading
-direction are all a class or an attribute on `<html>`.
+direction are all a class or an attribute on `<html>`. The words the components write are English
+by default; `LabelsProvider` takes your dictionary, and French ships with the packages
+([Translating](docs/guides/translating.md)).
 
 ## Documentation
 
