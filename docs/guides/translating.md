@@ -71,6 +71,23 @@ const switchTo = async (code: string) => setLanguage({ code, labels: await dicti
 </LabelsProvider>;
 ```
 
+`LanguageMenu` is the button for that choice in a top bar: the code of the language on show next to
+a globe, and a menu of the languages, each named in its own language ("Deutsch", "Español") by the
+browser. `{ value, label }` gives one a name of yours, and `languageName('fr')` ("Français") names
+the options of a `Select` or a `SegmentedControl` the same way. Like `ThemeToggle`, it only calls
+`onChange`: showing the page in the language picked is the app's, with the dictionaries above and
+the `lang` of `<html>` (and `dir="rtl"` for a language written from right to left):
+
+```tsx
+<Topbar
+  endActions={<LanguageMenu value={language.code} languages={['en', 'fr']} onChange={switchTo} />}
+/>;
+
+useEffect(() => {
+  document.documentElement.lang = language.code;
+}, [language.code]);
+```
+
 Storybook has a **Language** menu in its toolbar (`&globals=language:fr`): it shows every story under
 `frenchLabels`, `fr-FR` and `frenchChartLabels`, so the whole catalogue can be read in French.
 
