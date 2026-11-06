@@ -96,6 +96,11 @@ export type AppearanceMenuLabels = {
   reset: string;
 };
 
+export type LanguageMenuLabels = {
+  /** The trigger's tooltip, the start of its name, the menu's name and the heading of its list. Default `Language`. */
+  label: string;
+};
+
 /** The headings of the sections of the panel, by section, then the rest of its texts. */
 export type CustomizerLabels = Record<CustomizerSection, string> & {
   /** Title of the panel when the host gives no `title`. Default `Customize`. */
@@ -179,6 +184,10 @@ export const APPEARANCE_SETTINGS_LABELS: AppearanceSettingsLabels = {
 export const APPEARANCE_MENU_LABELS: AppearanceMenuLabels = {
   label: 'Appearance',
   reset: 'Reset',
+};
+
+export const LANGUAGE_MENU_LABELS: LanguageMenuLabels = {
+  label: 'Language',
 };
 
 export const CUSTOMIZER_LABELS: CustomizerLabels = {

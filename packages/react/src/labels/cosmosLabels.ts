@@ -85,6 +85,7 @@ import type {
   AppearanceMenuLabels,
   AppearanceSettingsLabels,
   CustomizerLabels,
+  LanguageMenuLabels,
 } from '../settings/labels';
 import type {
   HealthMatrixLabels,
@@ -208,6 +209,7 @@ export type CosmosLabels = {
   jobLog: JobLogLabels;
   kanbanBoard: KanbanBoardLabels;
   kpiCard: KpiCardLabels;
+  languageMenu: LanguageMenuLabels;
   lightbox: LightboxLabels;
   lineItemsEditor: LineItemsLabels;
   loadingState: LoadingStateLabels;

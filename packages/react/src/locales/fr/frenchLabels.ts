@@ -617,6 +617,9 @@ export const frenchLabels: CosmosLabels = {
     exactValue: 'Valeur exacte',
     exactValueHint: ', valeur exacte',
   },
+  languageMenu: {
+    label: 'Langue',
+  },
   lightbox: {
     viewer: 'Visionneuse d’images',
     previous: 'Image précédente',

@@ -83,6 +83,7 @@ import {
   APPEARANCE_MENU_LABELS,
   APPEARANCE_SETTINGS_LABELS,
   CUSTOMIZER_LABELS,
+  LANGUAGE_MENU_LABELS,
 } from '../settings/labels';
 import {
   HEALTH_MATRIX_LABELS,
@@ -212,6 +213,7 @@ export const englishLabels: EnglishLabels = {
   jobLog: JOB_LOG_LABELS,
   kanbanBoard: KANBAN_BOARD_LABELS,
   kpiCard: KPI_CARD_LABELS,
+  languageMenu: LANGUAGE_MENU_LABELS,
   lightbox: LIGHTBOX_LABELS,
   lineItemsEditor: LINE_ITEMS_LABELS,
   loadingState: LOADING_STATE_LABELS,
