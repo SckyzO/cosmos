@@ -319,43 +319,42 @@ export const GetStarted = ({ components }: { components: CatalogComponent[] | nu
 
 const NEWS = [
   {
-    title: 'Commerce',
+    title: 'Translation',
     text: (
       <>
-        Totals and amounts with <Code>formatMoney</Code>, plan cards, a line items editor and card
-        fields.
+        Every word the components write is a label: <Code>LabelsProvider</Code> takes your
+        dictionary and a locale, and French ships in <Code>/locales/fr</Code>.
       </>
     ),
   },
   {
-    title: 'Sign-in flows',
-    text: 'A new password step, a strength meter, backup codes and a wait before resending.',
+    title: 'Language menu',
+    text: 'LanguageMenu puts a globe and the language code in the top bar, each language named in its own.',
   },
   {
-    title: 'Permission grid',
-    text: 'Roles against permissions, in groups, with select-all boxes per row, column and group.',
+    title: 'SectionCard',
+    text: 'Intents, variants, a halo and an accent, a badge and a footer, sizes, folding and a stale state.',
   },
   {
-    title: 'Calendar',
-    text: 'EventCalendar adds week and day views, timed events on an hour grid.',
+    title: 'Status badges',
+    text: 'StatusBadge takes a pill or rounded shape, an outline and an icon, and replaces HealthBadge.',
   },
   {
-    title: 'Charts',
-    text: 'Loading skeletons, a gauge dial, mirrored bars, SunburstChart, and markers and routes on WorldMap.',
+    title: 'Dashboard cards',
+    text: 'KpiCard gets a solid variant; HealthMatrix can draw its marks as squares with a sign.',
   },
   {
-    title: 'Media and editor',
-    text: (
-      <>
-        Lightbox, QrCode in a <Code>/qr</Code> entry, and alignment and images in RichTextEditor.
-      </>
-    ),
+    title: 'On a phone',
+    text: 'Breadcrumb folds the middle of a trail that does not fit.',
   },
   {
-    title: 'Lists and cards',
-    text: 'StackedList rows that select, star and show unread, NotificationRow, SectionCard states.',
+    title: 'Dialogs',
+    text: 'ConfirmationModal lets you choose the icon of its confirm button.',
   },
-  { title: 'Public pages', text: 'SiteFooter, with columns, a compact line or a banner.' },
+  {
+    title: 'Storybook',
+    text: 'A Language menu in the toolbar shows every story in French.',
+  },
 ];
 
 // Cards shown at first on a phone; the others wait behind a button.
@@ -368,8 +367,8 @@ export const WhatsNew = () => {
   return (
     <Section
       id="new"
-      eyebrow="What's new in 0.6.0"
-      title="Commerce, sign-in flows, a week view and new charts"
+      eyebrow="What's new in 0.9.0"
+      title="Every word translatable, French included, and a richer SectionCard"
       action={
         <a href={`${REPO}/releases`} target="_blank" rel="noreferrer" className={TEXT_LINK}>
           Full release notes <ArrowRight aria-hidden className="inline size-4 rtl:rotate-180" />
@@ -399,10 +398,12 @@ export const WhatsNew = () => {
       >
         {all ? 'Show fewer' : `Show the ${others} others`}
       </Button>
-      <AlertBanner intent="info" title="Coming from 0.5?" className="mt-6">
-        <Code>onClick</Code> on a <Code>StackedList.Item</Code> now belongs to its title, and{' '}
-        <Code>EventCalendar</Code> takes <Code>date</Code>, <Code>defaultDate</Code> and{' '}
-        <Code>onDateChange</Code> instead of the month props. The release notes list each change.
+      <AlertBanner intent="info" title="Coming from 0.8?" className="mt-6">
+        Text props such as <Code>retryLabel</Code>, <Code>emptyMessage</Code> or{' '}
+        <Code>cancelLabel</Code> moved into each component&apos;s <Code>labels</Code>,{' '}
+        <Code>HealthBadge</Code> is now <Code>StatusBadge</Code>, and KpiCard&apos;s{' '}
+        <Code>featured</Code> is <Code>variant=&quot;tinted&quot;</Code>. The release notes list
+        each change.
       </AlertBanner>
     </Section>
   );
@@ -465,7 +466,7 @@ const PACKAGES = [
   {
     name: '@sckyzo/cosmos-react',
     version: reactPkg.version,
-    what: 'React 19 components. ESM, CJS and types, with optional code, editor, map and QR entries.',
+    what: 'React 19 components. ESM, CJS and types, with optional code, editor, map and QR entries, and French.',
   },
   {
     name: '@sckyzo/cosmos-charts',
