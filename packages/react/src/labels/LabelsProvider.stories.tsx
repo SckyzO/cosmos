@@ -3,6 +3,7 @@ import { expect, fn, within } from 'storybook/test';
 import { EmptyState } from '../feedback/EmptyState';
 import { ErrorState } from '../feedback/ErrorState';
 import { LoadingState } from '../feedback/LoadingState';
+import { DatePicker } from '../forms/DatePicker';
 import { Amount } from '../data/Amount';
 import { BarList } from '../data/BarList';
 import { DateTime } from '../data/DateTime';
@@ -233,5 +234,33 @@ export const NoLocaleKeepsTheEnglishDigits: Story = {
   ),
   play: async ({ canvas }) => {
     await expect(canvas.getByText('12,480')).toBeVisible();
+  },
+};
+
+const DUE = new Date(2026, 0, 15);
+
+/**
+ * The Language menu of the toolbar (`&globals=language:fr`) wraps the story in the French
+ * providers: these components have none of their own, and write French names and a French date.
+ */
+export const LanguageMenuTranslatesTheStory: Story = {
+  tags: ['!dev', '!autodocs'],
+  globals: { language: 'fr' },
+  render: () => (
+    <div className="flex flex-col gap-4">
+      <Breadcrumb items={TRAIL} maxItems={3} homeIcon />
+      <ErrorState onRetry={fn()} />
+      <DatePicker label="Échéance" value={DUE} onChange={fn()} />
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const nav = canvas.getByRole('navigation', { name: 'Fil d’Ariane' });
+    await expect(within(nav).getByRole('img', { name: 'Accueil' })).toBeInTheDocument();
+    await expect(
+      within(nav).getByRole('button', { name: 'Afficher 1 autre page' })
+    ).toBeInTheDocument();
+    await expect(canvas.getByRole('alert')).toHaveTextContent('Une erreur est survenue.');
+    await expect(canvas.getByRole('button', { name: 'Réessayer' })).toBeVisible();
+    await expect(canvas.getByText('15 janv. 2026')).toBeVisible();
   },
 };

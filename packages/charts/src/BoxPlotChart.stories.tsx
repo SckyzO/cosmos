@@ -29,7 +29,7 @@ import {
   tooltipCard,
 } from './storybook-recharts';
 import { ChartLabelsProvider } from './ChartLabelsProvider';
-import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
+import { frenchChartLabels } from './locales/fr';
 
 const SERVICES = ['api-gateway', 'auth', 'catalog', 'checkout', 'search', 'payment'];
 const DCS = ['DC1 Paris', 'DC2 Frankfurt', 'DC3 London', 'DC4 Tokyo'];
@@ -565,7 +565,7 @@ export const LabelsFromProviderAndProp: Story = {
     labels: { median: 'Milieu' },
   },
   render: (args) => (
-    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+    <ChartLabelsProvider labels={frenchChartLabels}>
       <BoxPlotChart {...args} />
     </ChartLabelsProvider>
   ),
@@ -573,7 +573,7 @@ export const LabelsFromProviderAndProp: Story = {
     await waitFor(() =>
       expect(surface(canvasElement)).toHaveAttribute(
         'aria-label',
-        'Boîte à moustaches : Response time'
+        'Boîte à moustaches\u202f: Response time'
       )
     );
     await openTooltip(canvasElement);

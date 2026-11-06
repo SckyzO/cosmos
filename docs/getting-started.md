@@ -282,5 +282,6 @@ The root layout can stay a Server Component: the appearance is plain attributes 
 - [Links and your router](guides/refs-and-routing.md#links-and-your-router): send the links of the
   components through React Router, Next.js's `Link` or any other.
 - [Right to left](guides/right-to-left.md).
-- [Translating](guides/translating.md): the text the components write, in your language.
+- [Translating](guides/translating.md): the text the components write, in your language; French
+  ships with the packages.
 - [Components](README.md#components): notes per group of components.

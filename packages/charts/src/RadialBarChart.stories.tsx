@@ -16,7 +16,7 @@ import {
   surface,
 } from './storybook-recharts';
 import { ChartLabelsProvider } from './ChartLabelsProvider';
-import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
+import { frenchChartLabels } from './locales/fr';
 
 const RING_COLORS = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 const points = (v: number) => `${v} pts`;
@@ -237,7 +237,7 @@ export const LabelsFromProviderAndProp: Story = {
   tags: ['!dev', '!autodocs'],
   args: { series: [60, 40], names: ['CPU', 'Mém'] },
   render: (args) => (
-    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+    <ChartLabelsProvider labels={frenchChartLabels}>
       <div data-testid="provider">
         <RadialBarChart {...args} />
       </div>
@@ -250,7 +250,10 @@ export const LabelsFromProviderAndProp: Story = {
     const chart = (id: string) =>
       canvasElement.querySelector(`[data-testid="${id}"]`) as HTMLElement;
     await waitFor(() =>
-      expect(surface(chart('provider'))).toHaveAttribute('aria-label', 'Barres radiales : CPU, Mém')
+      expect(surface(chart('provider'))).toHaveAttribute(
+        'aria-label',
+        'Barres radiales\u202f: CPU, Mém'
+      )
     );
     await expect(centerText(chart('provider'))?.label).toBe('Moy.');
     await expect(centerText(chart('own'))?.label).toBe('Moyenne');

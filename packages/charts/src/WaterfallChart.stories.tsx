@@ -22,7 +22,7 @@ import {
   openTooltip,
 } from './storybook-recharts';
 import { ChartLabelsProvider } from './ChartLabelsProvider';
-import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
+import { frenchChartLabels } from './locales/fr';
 
 const k = (value: number) => `${value}k`;
 
@@ -726,7 +726,7 @@ export const LabelsFromProviderAndProp: Story = {
     labels: { runningTotal: 'Solde' },
   },
   render: (args) => (
-    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+    <ChartLabelsProvider labels={frenchChartLabels}>
       <WaterfallChart {...args} />
     </ChartLabelsProvider>
   ),
@@ -734,7 +734,7 @@ export const LabelsFromProviderAndProp: Story = {
     await waitFor(() =>
       expect(surface(canvasElement)).toHaveAttribute(
         'aria-label',
-        'Cascade : Départ, Ventes, Remises'
+        'Cascade\u202f: Départ, Ventes, Remises'
       )
     );
     const rows = () =>

@@ -21,7 +21,7 @@ import {
   tooltipCard,
 } from './storybook-recharts';
 import { ChartLabelsProvider } from './ChartLabelsProvider';
-import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
+import { frenchChartLabels } from './locales/fr';
 
 // Recorded traces, replayed in a loop: the wrapper's default generator is
 // random, which would make every render different.
@@ -498,7 +498,7 @@ export const LabelsFromProviderAndProp: Story = {
   // No new sample during the test.
   args: { labels: { crit: 'Critique !' }, intervalMs: 60_000 },
   render: (args) => (
-    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+    <ChartLabelsProvider labels={frenchChartLabels}>
       <Replay {...args} trace={DISK} />
     </ChartLabelsProvider>
   ),

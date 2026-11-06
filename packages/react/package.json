@@ -66,6 +66,16 @@
         "default": "./dist/qr/index.cjs"
       }
     },
+    "./locales/fr": {
+      "import": {
+        "types": "./dist/locales/fr/index.d.ts",
+        "default": "./dist/locales/fr/index.js"
+      },
+      "require": {
+        "types": "./dist/locales/fr/index.d.cts",
+        "default": "./dist/locales/fr/index.cjs"
+      }
+    },
     "./calendar.css": "./calendar.css",
     "./package.json": "./package.json"
   },
@@ -82,6 +92,9 @@
       ],
       "qr": [
         "./dist/qr/index.d.ts"
+      ],
+      "locales/fr": [
+        "./dist/locales/fr/index.d.ts"
       ]
     }
   },

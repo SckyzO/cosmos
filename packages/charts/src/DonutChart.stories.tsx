@@ -21,7 +21,7 @@ import {
   surface,
 } from './storybook-recharts';
 import { ChartLabelsProvider } from './ChartLabelsProvider';
-import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
+import { frenchChartLabels } from './locales/fr';
 
 const SEVERITIES = ['CRIT', 'WARN', 'OK', 'INFO', 'UNK'];
 const REGIONS = ['eu-west', 'eu-central', 'us-east', 'us-west', 'ap-south'];
@@ -584,7 +584,7 @@ export const LabelsFromProviderAndProp: Story = {
   tags: ['!dev', '!autodocs'],
   args: { series: [44, 23], names: ['Critique', 'Mineur'] },
   render: (args) => (
-    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+    <ChartLabelsProvider labels={frenchChartLabels}>
       <div data-testid="own">
         <DonutChart {...args} labels={{ total: 'Somme' }} />
       </div>
@@ -600,8 +600,14 @@ export const LabelsFromProviderAndProp: Story = {
     const chart = (id: string) =>
       canvasElement.querySelector(`[data-testid="${id}"]`) as HTMLElement;
     await waitFor(() => {
-      expect(surface(chart('provider'))).toHaveAttribute('aria-label', 'Anneau : Critique, Mineur');
-      expect(surface(chart('pie'))).toHaveAttribute('aria-label', 'Camembert : Critique, Mineur');
+      expect(surface(chart('provider'))).toHaveAttribute(
+        'aria-label',
+        'Anneau\u202f: Critique, Mineur'
+      );
+      expect(surface(chart('pie'))).toHaveAttribute(
+        'aria-label',
+        'Camembert\u202f: Critique, Mineur'
+      );
     });
     await expect(centerText(chart('provider'))?.label).toBe('Total');
     await expect(centerText(chart('own'))?.label).toBe('Somme');

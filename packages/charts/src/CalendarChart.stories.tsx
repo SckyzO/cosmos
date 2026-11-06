@@ -10,7 +10,7 @@ import {
   themeColor,
 } from './storybook-recharts';
 import { ChartLabelsProvider } from './ChartLabelsProvider';
-import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
+import { frenchChartLabels } from './locales/fr';
 
 const DAY_MS = 86_400_000;
 
@@ -760,7 +760,7 @@ export const LabelsFromProviderAndProp: Story = {
     labels: { more: 'Beaucoup' },
   },
   render: (args) => (
-    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+    <ChartLabelsProvider labels={frenchChartLabels}>
       <CalendarChart {...args} />
     </ChartLabelsProvider>
   ),
@@ -776,7 +776,7 @@ export const LabelsFromProviderAndProp: Story = {
       'MoinsBeaucoup'
     );
     await expect(
-      canvasElement.querySelector('[role="gridcell"][aria-label$=" : 5"]')
-    ).toHaveAttribute('aria-label', 'Friday, January 2, 2026 : 5');
+      canvasElement.querySelector('[role="gridcell"][aria-label$="\u202f: 5"]')
+    ).toHaveAttribute('aria-label', 'Friday, January 2, 2026\u202f: 5');
   },
 };

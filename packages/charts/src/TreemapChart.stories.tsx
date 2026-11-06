@@ -12,7 +12,7 @@ import {
   themeColor,
 } from './storybook-recharts';
 import { ChartLabelsProvider } from './ChartLabelsProvider';
-import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
+import { frenchChartLabels } from './locales/fr';
 
 const BLUE_RAMP = ['#1e3a8a', '#2563eb', '#93c5fd', '#dbeafe'];
 const tb = (v: number) => `${v} TB`;
@@ -541,7 +541,7 @@ export const LabelsFromProviderAndProp: Story = {
     labels: { series: (n) => `Lot ${n}` },
   },
   render: (args) => (
-    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+    <ChartLabelsProvider labels={frenchChartLabels}>
       <TreemapChart {...args} />
     </ChartLabelsProvider>
   ),
@@ -549,13 +549,13 @@ export const LabelsFromProviderAndProp: Story = {
     await waitFor(() => expect(tilesOf(canvasElement)).toHaveLength(3));
     await expect(canvasElement.querySelector('[role="group"]')).toHaveAttribute(
       'aria-label',
-      'Carte arborescente : api, web, db'
+      'Carte arborescente\u202f: api, web, db'
     );
     // A series with no name is the group the chart numbers; a tile is named from its group.
     await expect(tilesOf(canvasElement).map((tile) => tile.getAttribute('aria-label'))).toEqual([
-      'Lot 1, api : 5',
-      'Lot 1, web : 3',
-      'Fixe, db : 4',
+      'Lot 1, api\u202f: 5',
+      'Lot 1, web\u202f: 3',
+      'Fixe, db\u202f: 4',
     ]);
   },
 };

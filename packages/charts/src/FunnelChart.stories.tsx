@@ -11,7 +11,7 @@ import {
   themeColor,
 } from './storybook-recharts';
 import { ChartLabelsProvider } from './ChartLabelsProvider';
-import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
+import { frenchChartLabels } from './locales/fr';
 
 const CHECKOUT = [
   { label: 'Visits', value: 48210 },
@@ -690,7 +690,7 @@ export const LabelsFromProviderAndProp: Story = {
     labels: { ofPrevious: 'Depuis la précédente' },
   },
   render: (args) => (
-    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+    <ChartLabelsProvider labels={frenchChartLabels}>
       <FunnelChart {...args} />
     </ChartLabelsProvider>
   ),
@@ -698,11 +698,11 @@ export const LabelsFromProviderAndProp: Story = {
     await waitFor(() => expect(stagesOf(canvasElement)).toHaveLength(3));
     await expect(canvasElement.querySelector('[role="list"]')).toHaveAttribute(
       'aria-label',
-      'Entonnoir : Visites, Inscriptions, Achats'
+      'Entonnoir\u202f: Visites, Inscriptions, Achats'
     );
-    await expect(stagesOf(canvasElement)[0]).toHaveAccessibleName('Visites : 1000');
+    await expect(stagesOf(canvasElement)[0]).toHaveAccessibleName('Visites\u202f: 1000');
     await expect(stagesOf(canvasElement)[1]).toHaveAccessibleName(
-      "Inscriptions : 400, 40.0% de l'étape précédente, 40.0% de Visites"
+      'Inscriptions\u202f: 400, 40.0% de l’étape précédente, 40.0% de Visites'
     );
     await expect(noteOf(canvasElement, 1)).toHaveTextContent('40.0% de Visites');
     await userEvent.hover(stagesOf(canvasElement)[2]);

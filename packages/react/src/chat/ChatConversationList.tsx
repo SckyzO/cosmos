@@ -133,8 +133,10 @@ export const ChatConversationList = ({
                     </span>
                     {unread > 0 && (
                       <span className="bg-brand-500 text-2xs min-w-5 shrink-0 rounded-full px-1.5 text-center leading-5 font-semibold text-white">
-                        <bdi>{unread}</bdi>
-                        <span className="sr-only"> {labels.unread}</span>
+                        {/* The badge shows the number; a screen reader hears the words, whose
+                            plural agrees with it. */}
+                        <bdi aria-hidden>{unread}</bdi>
+                        <span className="sr-only"> {labels.unread(unread)}</span>
                       </span>
                     )}
                   </span>

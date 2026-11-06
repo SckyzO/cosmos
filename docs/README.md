@@ -24,7 +24,8 @@ explain.
 - [Right to left](guides/right-to-left.md): what to set, what mirrors, and what stays as it is.
 - [Refs and routing](guides/refs-and-routing.md): `ref` as a prop, and sending the links of the
   components through your router.
-- [Translating](guides/translating.md): `LabelsProvider`, for the text the components write.
+- [Translating](guides/translating.md): `LabelsProvider`, for the text the components write, and
+  the French dictionary that ships with the packages.
 
 ## Components
 

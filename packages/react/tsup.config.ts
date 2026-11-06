@@ -4,8 +4,10 @@ import { prependUseClient } from '../../config/tsup/use-client';
 
 // Each sub-path entry of the package is a folder of src/ built next to the root one:
 // `@sckyzo/cosmos-react/code` is dist/code/index.*. Its optional peers stay external: shiki for
-// `code`, Tiptap for `editor`, maplibre-gl for `map`, qr for `qr`.
-const SUBPATHS = ['code', 'editor', 'map', 'qr'];
+// `code`, Tiptap for `editor`, maplibre-gl for `map`, qr for `qr`. `locales/fr`, the French
+// dictionary, has none: it is an entry of its own so that an app loads it when it shows French,
+// with `import()`, and ships it to no one else.
+const SUBPATHS = ['code', 'editor', 'map', 'qr', 'locales/fr'];
 const subpathEntries = Object.fromEntries(
   SUBPATHS.map((dir) => [`${dir}/index`, `src/${dir}/index.ts`])
 );

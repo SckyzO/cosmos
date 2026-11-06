@@ -19,7 +19,7 @@ import {
   themeColor,
 } from './storybook-recharts';
 import { ChartLabelsProvider } from './ChartLabelsProvider';
-import { FRENCH_CHART_LABELS } from './storybook-chart-labels';
+import { frenchChartLabels } from './locales/fr';
 
 const celsius = (v: number) => `${v} °C`;
 const watts = (v: number) => `${v} W`;
@@ -1565,7 +1565,7 @@ export const GaugesAreNamedImages: Story = {
 export const LabelsFromProviderAndProp: Story = {
   tags: ['!dev', '!autodocs'],
   render: () => (
-    <ChartLabelsProvider labels={FRENCH_CHART_LABELS}>
+    <ChartLabelsProvider labels={frenchChartLabels}>
       <div data-testid="gradient">
         <GradientRadial value={84} height={160} />
       </div>
@@ -1596,13 +1596,13 @@ export const LabelsFromProviderAndProp: Story = {
         'aria-label'
       );
     await waitFor(() => {
-      expect(name('gradient')).toBe('Note : 84%');
-      expect(name('own')).toBe('Santé : 84%');
+      expect(name('gradient')).toBe('Note\u202f: 84%');
+      expect(name('own')).toBe('Santé\u202f: 84%');
       // The `label` the app passes in wins over both.
-      expect(name('label')).toBe('CPU : 84%');
-      expect(name('stroked')).toBe('Jauge : 92%');
+      expect(name('label')).toBe('CPU\u202f: 84%');
+      expect(name('stroked')).toBe('Jauge\u202f: 92%');
       expect(name('semi')).toBe(
-        'Jauge : 67%, cible 80%, alerte à partir de 70%, critique à partir de 90%'
+        'Jauge\u202f: 67%, cible 80%, alerte à partir de 70%, critique à partir de 90%'
       );
     });
   },

@@ -207,6 +207,9 @@ charts ───────────── storybook      (charts imports ne
   `qr` ships ESM only and stays external in the CJS build too: `/qr`'s `.cjs` `require`s it, which
   Node does from 20.19 and 22.12 (what `qr` itself asks for), and the spec loads that build. Its
   peer range is `~0.7.2`, since a `qr` minor can break below 1.0 (`dependabot.yml` skips its minors).
+  `/locales/fr` (`frenchLabels`, `src/locales/fr/`) is one too, with no peer: the French dictionary,
+  an entry of its own so an app loads it with `import()` when it shows French and ships it to no
+  one else. `charts` has the same entry (`frenchChartLabels`, its `LOCALES` in `tsup.config.ts`).
 - **`packages/charts`** — chart wrappers drawn with Recharts 3 (`recharts` pinned in `package.json`; a
   consumer who adds Recharts for `children` must use the same version, two copies don't share a chart's
   context). **Deliberately standalone** so `cosmos-react` consumers who don't need charts don't ship a
@@ -257,7 +260,9 @@ registered in `labels/cosmosLabels.ts` and `labels/englishLabels.ts`, read with 
 DEFAULTS, labels)` (defaults, then the app's `LabelsProvider`, then the `labels` prop). Text props
 such as `closeLabel` fold into `labels`. `repo-policy.spec.ts` refuses English written in place in
 both packages (#502); `charts` has its own `ChartLabelsProvider` (`core/labels.ts`). The defaults
-of `/map` and `/editor` live in those entries, not in `englishLabels`.
+of `/map` and `/editor` live in those entries, not in `englishLabels`. The French of every key is
+in `locales/fr/` of each package, typed as the whole `CosmosLabels` and `ChartLabels`: a new label
+adds its French there, or the typecheck fails.
 
 ### Consuming the theme — `@source` is mandatory
 
@@ -316,7 +321,10 @@ theme CSS), applied by the `withAppearanceAttributes` decorator as `data-accent`
 context (`(_args, { globals }) => …`); `Foundations/Appearance` and the Welcome page apply a picked
 combination with `applyAppearance` and remount when the toolbar changes. The **Direction** menu
 (`direction` global, `ltr` | `rtl`, `&globals=direction:rtl`) is Storybook's own: the `withDirection`
-decorator sets the native `dir` attribute on `<html>` (none for `ltr`).
+decorator sets the native `dir` attribute on `<html>` (none for `ltr`). The **Language** menu
+(`language` global, `en` | `fr`, `&globals=language:fr`) shows the stories in French: the
+`withLanguage` decorator wraps the story in `LabelsProvider` with `frenchLabels` and `fr-FR`, and in
+`ChartLabelsProvider` with `frenchChartLabels`; `en` renders it with no provider.
 
 Stories are grouped **by responsibility, not by file location** — a component in `src/ui/` may be
 titled `Overlays/Modal`. Set `title:` to `<Group>/<Component>` using a group that already exists in

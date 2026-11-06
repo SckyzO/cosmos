@@ -1,5 +1,7 @@
 import type { Decorator, Loader, Preview } from '@storybook/react-vite';
 
+import { ChartLabelsProvider } from '../../../packages/charts/src/ChartLabelsProvider';
+import { frenchChartLabels } from '../../../packages/charts/src/locales/fr';
 import {
   COSMOS_ACCENTS,
   COSMOS_DENSITIES,
@@ -8,7 +10,9 @@ import {
   COSMOS_RADII,
   COSMOS_TEXT_SIZES,
   COSMOS_THEMES,
+  LabelsProvider,
 } from '../../../packages/react/src';
+import { frenchLabels } from '../../../packages/react/src/locales/fr';
 import { CosmosDocsContainer } from './CosmosDocsContainer';
 import { DEFAULT_THEME } from './cosmos-theme';
 
@@ -170,6 +174,28 @@ const withDirection: Decorator = (Story, ctx) => {
   return <Story />;
 };
 
+/** The Language menu: what the components write themselves, in English (their own) or French. */
+const LANGUAGES = [
+  { id: 'en', label: 'English' },
+  { id: 'fr', label: 'Français' },
+];
+
+/**
+ * Apply the `language` toolbar global: for `fr`, the story renders under the French dictionaries of
+ * the components and the charts, and the French locale for its dates and numbers; `en` renders it
+ * with no provider, as it was before the menu. The text a story passes in stays as it wrote it.
+ */
+const withLanguage: Decorator = (Story, ctx) => {
+  if (ctx.globals.language !== 'fr') return <Story />;
+  return (
+    <LabelsProvider labels={frenchLabels} locale="fr-FR">
+      <ChartLabelsProvider labels={frenchChartLabels}>
+        <Story />
+      </ChartLabelsProvider>
+    </LabelsProvider>
+  );
+};
+
 /**
  * maplibre-gl 6 looks for its worker next to its own module, where no bundle puts it: without
  * this, a map draws nothing in the built Storybook. A story that sets `parameters.maplibre` gets
@@ -297,6 +323,15 @@ const preview: Preview = {
         dynamicTitle: true,
       },
     },
+    language: {
+      description: 'Language of the text the components write',
+      toolbar: {
+        title: 'Language',
+        icon: 'globe',
+        items: menuItems('Language', LANGUAGES),
+        dynamicTitle: true,
+      },
+    },
   },
   // `theme` set here so stories and the manager always read a value.
   initialGlobals: {
@@ -308,6 +343,7 @@ const preview: Preview = {
     radius: 'default',
     motion: 'full',
     direction: 'ltr',
+    language: 'en',
   },
   parameters: {
     controls: {
@@ -368,6 +404,7 @@ const preview: Preview = {
     withCosmosSurface,
     withAppearanceAttributes,
     withDirection,
+    withLanguage,
     // The manager and the docs chrome follow the same global (manager.ts,
     // CosmosDocsContainer.tsx).
     withThemeClass,

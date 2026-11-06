@@ -37,14 +37,24 @@ const esmOnlyExternalInEsm: EsbuildPlugin = {
   },
 };
 
+// `@sckyzo/cosmos-charts/locales/fr`, the French dictionary, is an entry of
+// its own (dist/locales/fr/index.*): an app loads it when it shows French,
+// with `import()`, and ships it to no one else.
+const LOCALES = { 'locales/fr/index': 'src/locales/fr/index.ts' };
+
 // Splitting puts the code the wrappers share (the frame, the colors, the
 // legend…) in chunks, once. With `sideEffects: false` in package.json, a
 // bundler leaves out the files of the wrappers a consumer doesn't import.
 export default defineConfig({
-  entry: ['src/index.ts', ...modules.map((name) => `src/${name}.{ts,tsx}`)],
+  // The entries share src/ as their base: dist/BarChart.js, dist/locales/fr/index.js.
+  entry: [
+    'src/index.ts',
+    ...modules.map((name) => `src/${name}.{ts,tsx}`),
+    ...Object.values(LOCALES),
+  ],
   format: ['esm', 'cjs'],
-  // The published types stay a single index.d.ts / index.d.cts.
-  dts: { entry: 'src/index.ts' },
+  // The published types: index.d.ts / index.d.cts, and one pair per locale.
+  dts: { entry: { index: 'src/index.ts', ...LOCALES } },
   sourcemap: true,
   clean: true,
   // In both formats: with `treeshake`, esbuild emits ESM and Rollup converts
