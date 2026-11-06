@@ -5,6 +5,19 @@ All notable changes to `@sckyzo/cosmos-charts` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.8.1...@sckyzo/cosmos-charts@0.9.0) (2026-11-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* **charts:** ChartEmptyProps is no longer exported.
+
+### Features
+
+* **charts:** add ChartLabelsProvider for the text the charts write ([4d344e2](https://github.com/SckyzO/cosmos/commit/4d344e2879f43c2a9cf12ec2dee84de1f1e42feb)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **charts:** fold emptyMessage and the text props into labels ([16200b0](https://github.com/SckyzO/cosmos/commit/16200b0bcbb05ea5e0cf77143d457e6c74e46718)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **charts:** ship a French dictionary of the charts ([90dce7a](https://github.com/SckyzO/cosmos/commit/90dce7a8dba541d942e1b6b7b101e2a269681c9e)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+
 ## [0.8.1](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-charts@0.8.0...@sckyzo/cosmos-charts@0.8.1) (2026-11-04)
 
 

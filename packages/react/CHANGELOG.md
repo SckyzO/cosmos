@@ -5,6 +5,110 @@ All notable changes to `@sckyzo/cosmos-react` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.8.1...@sckyzo/cosmos-react@0.9.0) (2026-11-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* **react:** Tag's removeLabel is gone; write labels={{ remove: (name) => … }}.
+* **react:** MapView's unavailableMessage is gone; write labels={{ unavailable: … }}.
+* **react:** LogViewer's emptyMessage is gone; write labels={{ noLines: … }}.
+* **react:** NodeGrid's labels.counts and labels.statuses are gone; write labels={{ OK: …, WARN: …, CRIT: … }} on LabelsProvider's statusBadge for the words after the counts and its healthStatus for the status in full.
+* **react:** Customizer's labels now holds more than the section headings: its keys for those are unchanged.
+* **react:** SectionCard's emptyMessage is gone; write labels={{ empty: … }}.
+* **react:** RecordPager's labels.previous and labels.next are functions of the noun, (noun) => string, and a labels.count, labels.back, labels.landmark or labels.noun keeps the meaning it had; write labels={{ previous: (noun) => `${noun} précédent` }}.
+* **react:** SiteFooter.Bottom's linksLabel is gone; write labels={{ legalLinks: … }} on SiteFooter.
+* **react:** UnsavedIndicator's label is gone; write labels={{ unsaved: … }}.
+* **react:** Chatbot's launcherLabel is gone; write labels={{ launcher: … }}.
+* **react:** CommentComposer's cancelLabel is gone; write labels={{ cancel: … }}.
+* **react:** StackedList.Item's selectLabel is gone; write labels={{ select: … }}.
+* **react:** Countdown's shortLabels is gone; write labels={{ shortDays, shortHours, shortMinutes, shortSeconds }}.
+* **react:** DataTable's filterTabs.allLabel is gone; write labels={{ filterAll: … }}.
+* **react:** SignInForm's signUpLabel, emailLabel, passwordLabel, rememberLabel, submitLabel and forgotLabel are gone; write labels={{ signUp, email, password, remember, submit, forgot }}. SignUpForm's signInLabel and submitLabel are gone; write labels={{ signIn, submit }}. ResetPasswordForm's signInLabel, submitLabel, resendLabel and resendLabels are gone; write labels={{ signIn, submit, resend, resent, ready, availableIn }}. NewPasswordForm's requestLabel, signInLabel, continueLabel and submitLabel are gone; write labels={{ request, signIn, continue, submit }}. SocialAuthButtons' dividerLabel and labelFor are gone; write labels={{ divider, continueWith }}. TwoStepVerificationForm's cancelLabel, submitLabel and resendLabel are gone; write labels={{ cancel, submit, resend }}.
+* **react:** AvatarUploader's uploadLabel and removeLabel are gone; write labels={{ upload, change, remove }}. Combobox's emptyMessage is gone; write labels={{ empty }}, or labels={{ emptyCustom }} with allowCustomValue. DatePicker's presetsLabel is gone; write labels={{ presets }}. ErrorSummary's message is gone; write labels={{ message }}. FileInput's buttonLabel is gone; write labels={{ browse }}. FormFooter's cancelLabel and submitLabel are gone; write labels={{ cancel, submit }}. PasswordInput's showLabel and hideLabel are gone; write labels={{ show, hide }}. TagInput's countLabel and limitLabel are gone; write labels={{ count, limit }}.
+* **react:** labels.count receives the two numbers as nodes, not numbers: (position: ReactNode, total: ReactNode) => ReactNode. A count that returned a template string with them must return a fragment.
+* **react:** HealthBadge is gone; write <StatusBadge shape="rounded" appearance="outline" icon size="lg" />.
+* **react:** ErrorState's retryLabel is gone; write labels={{ retry: 'Reload' }}.
+* **react:** `featured` is gone; write `variant="tinted"`.
+
+### Features
+
+* **react:** add badge, footer and flush to SectionCard ([20016a1](https://github.com/SckyzO/cosmos/commit/20016a1e1516384de4745f63bd53bb26e8f9cc16))
+* **react:** add collapsible, open and onOpenChange to SectionCard ([d02cc19](https://github.com/SckyzO/cosmos/commit/d02cc1962d6f6a9e910e007cc913bb297ea381ac))
+* **react:** add iconPosition and iconShape to SectionCard ([f1b1b44](https://github.com/SckyzO/cosmos/commit/f1b1b44afd889c3d61c01156f17f5adbeaf35e7a))
+* **react:** add intent, variant, halo and accent to SectionCard ([e243deb](https://github.com/SckyzO/cosmos/commit/e243deb4ab2268e29fa365f5320e7ee93d43d40a))
+* **react:** add LabelsProvider for the text the components write ([af93bf3](https://github.com/SckyzO/cosmos/commit/af93bf3a2c519d26f72dd8229c9665ebd1b061f6)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** add LanguageMenu, a language picker for the top bar ([386f1d3](https://github.com/SckyzO/cosmos/commit/386f1d3f787f99c5351b124ce793c792476815bf))
+* **react:** add size to SectionCard ([2d36288](https://github.com/SckyzO/cosmos/commit/2d36288acfea7df109fc55beb8c815680f78ac1a))
+* **react:** add stale and staleLabel to SectionCard ([b61e3df](https://github.com/SckyzO/cosmos/commit/b61e3df157ca2699f7d1e90dde1afcc981a095f3))
+* **react:** add titleRef to SectionCard ([5bdec0a](https://github.com/SckyzO/cosmos/commit/5bdec0a94fc772736fed3ba92d6b9acb89c16323))
+* **react:** choose the ConfirmationModal confirm icon ([7756209](https://github.com/SckyzO/cosmos/commit/7756209426fb9be9ccee2af8ee1ca436905f5de8))
+* **react:** fold a Breadcrumb trail that doesn't fit on a phone ([e628188](https://github.com/SckyzO/cosmos/commit/e628188f9147f1dfa93b42ea9ef295fb21dec0b5)), closes [#634](https://github.com/SckyzO/cosmos/issues/634)
+* **react:** fold CommentComposer's flat text props into labels ([94f6016](https://github.com/SckyzO/cosmos/commit/94f6016b8e1094aa55afd8e4e5f91760ebffe829)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** fold DataTable's search and tab text props into labels ([27910c0](https://github.com/SckyzO/cosmos/commit/27910c08b7cca09b9faf2759133b13f6001d7376)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** fold ErrorState's retryLabel into labels ([79a3618](https://github.com/SckyzO/cosmos/commit/79a3618f5ca7a0fbc251078e3f9287981c6e7e0c))
+* **react:** fold HealthBadge into StatusBadge ([a52587e](https://github.com/SckyzO/cosmos/commit/a52587ed4464949be465d54ea3b96f83595aa737))
+* **react:** fold LogViewer's emptyMessage into labels ([270cefe](https://github.com/SckyzO/cosmos/commit/270cefe398672648e0cdaf51e5da6e5c0d0e1ba2)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** fold MapView's unavailableMessage into labels ([77719b6](https://github.com/SckyzO/cosmos/commit/77719b608ca2e150b939bc78ec433239f5864b00)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** fold SectionCard's emptyMessage into labels ([97fb535](https://github.com/SckyzO/cosmos/commit/97fb5351313f61aeac48a57b519521183e1d2f40)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** fold SiteFooter.Bottom's linksLabel into labels ([f447d27](https://github.com/SckyzO/cosmos/commit/f447d2760617781d8bbee24a636fa7e9373bda78)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** fold StackedList.Item's selectLabel into labels ([9f03981](https://github.com/SckyzO/cosmos/commit/9f03981033df28b6786b1f012209de63713e355f)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** fold the chat components' flat text props into labels ([0cf9514](https://github.com/SckyzO/cosmos/commit/0cf9514f4a510c2cd6142b2c6b716429c573406c)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** fold the data components' flat text props into labels ([6569b07](https://github.com/SckyzO/cosmos/commit/6569b07889566f51c8a0d1c3c7f5cedfa963d389)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** fold the last text props into labels ([db74c74](https://github.com/SckyzO/cosmos/commit/db74c74e08be57262001f48be2e0aedd358c8fca)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** fold the navigation flat text props into labels ([23a749d](https://github.com/SckyzO/cosmos/commit/23a749d3a9cb6cc01a1dbc282a97c574b32c5fc4)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** fold the settings flat text props into labels ([6e9425d](https://github.com/SckyzO/cosmos/commit/6e9425ddbcdb405163f1a937df7521f78b4bd885)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** fold the text props of the form components into labels ([5d4caf1](https://github.com/SckyzO/cosmos/commit/5d4caf153c9aed3eac0235b663ed30357c08b6d9)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** fold the text props of the pages components into labels ([16fd233](https://github.com/SckyzO/cosmos/commit/16fd233cf72b2a57696e0988427cf9024e357e7c)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** fold the ui flat text props into labels ([45e2c0b](https://github.com/SckyzO/cosmos/commit/45e2c0b62862761aeb86ca26ef3ed62bb1cd1c3a)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** give DatePicker the locale of its field and calendar ([6314cac](https://github.com/SckyzO/cosmos/commit/6314cacdf08d3a7bf59f82a41e956658b076f258)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** give KpiCard a variant, with a solid surface ([e9e2363](https://github.com/SckyzO/cosmos/commit/e9e2363381e755b2d23d1811658ebb7ed15dda09))
+* **react:** give LabelsProvider the locale the components format with ([d5063a1](https://github.com/SckyzO/cosmos/commit/d5063a17f67ec09e7ebf3c480befb938a80d4a82)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** give StatusBadge a shape, an outline and an icon ([b7e27b5](https://github.com/SckyzO/cosmos/commit/b7e27b585c16d2cc512314bed1395b3c0d6085e7))
+* **react:** let a StackedList row name its checkbox with selectLabel ([b365dd3](https://github.com/SckyzO/cosmos/commit/b365dd3a9c478b01387c00c9e6976b014091ea5b))
+* **react:** let HealthMatrix draw its marks as squares with a sign ([949fe6d](https://github.com/SckyzO/cosmos/commit/949fe6db474efefcf82c9e1227271461a4691333))
+* **react:** let the strength meter's separator be translated ([5a030ed](https://github.com/SckyzO/cosmos/commit/5a030ed19c8ae6a922f9d3bc6c562b10d99200e3)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** line a flush DataTable's tabs, toolbar and pager up with the card ([307f3ff](https://github.com/SckyzO/cosmos/commit/307f3ff1d2a4aae8312627fad704c578bcf5867f))
+* **react:** move the rich text editor's labels onto the mechanism ([bc35cc7](https://github.com/SckyzO/cosmos/commit/bc35cc74619fb9bfda38c3169e5d752c3235ea00)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** read PermissionGrid's labels through LabelsProvider ([c808e7c](https://github.com/SckyzO/cosmos/commit/c808e7cbef6a81d92a6241c861c55332dfe66b42)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** ship a French dictionary of the components ([d4fcbf4](https://github.com/SckyzO/cosmos/commit/d4fcbf499363f4ae2860890570abe1a4757c5746)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate SectionCard through labels ([044e587](https://github.com/SckyzO/cosmos/commit/044e5876ae350eecf69f63908f0f65900488b8a0)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the chat components through labels ([291d6b9](https://github.com/SckyzO/cosmos/commit/291d6b9a94054d3618ebc77d8708cd3915d0a671)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the comment components through labels ([e3ea155](https://github.com/SckyzO/cosmos/commit/e3ea155cc8d7129bc1c7e45fd6a90b7d47a11229)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the data components through labels ([a74da9a](https://github.com/SckyzO/cosmos/commit/a74da9a1f56f58d4fc7306a85c050380a8f2b195)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the forms components through labels ([097befd](https://github.com/SckyzO/cosmos/commit/097befd915ec67b5b73256830f43cfa73600d3ba)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the layout components through labels ([da2b316](https://github.com/SckyzO/cosmos/commit/da2b316563c398769a8bfb1e63c08a5cec4773bc)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the list components through labels ([3f72e1f](https://github.com/SckyzO/cosmos/commit/3f72e1f6837d22e0bd2cacae430c57758c593f77)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the log components through labels ([7ea136f](https://github.com/SckyzO/cosmos/commit/7ea136f07e8f73d9c8eb04d4d49c75e6f57565bc)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the map components through labels ([3135d82](https://github.com/SckyzO/cosmos/commit/3135d826b50f6fa2b1b729651c8dce5e51f20513)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the name of the calendar's navigation bar ([fb6acfb](https://github.com/SckyzO/cosmos/commit/fb6acfb76ec29fa6721b195dcab8bdced85d6aa7)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the navigation components through labels ([515a5de](https://github.com/SckyzO/cosmos/commit/515a5def5732b9fe646bc19f3cf7c0602adcef23)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the pages components through labels ([0ccaeb3](https://github.com/SckyzO/cosmos/commit/0ccaeb396937025e8fcf9e5cf2b6ff76af97be8a)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the password strength meter and default rules ([f51dcfe](https://github.com/SckyzO/cosmos/commit/f51dcfe53e05b6fe12cb85f4ba9218d299484df0)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the settings components through labels ([979be5c](https://github.com/SckyzO/cosmos/commit/979be5c3a1de49b1e2684ead0a11c4275e3b62f7)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the status components through labels ([b36576e](https://github.com/SckyzO/cosmos/commit/b36576e861eb9ea71dd5fbec23ad3b378e161dcb)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the table components through labels ([f13d333](https://github.com/SckyzO/cosmos/commit/f13d333c5c58f60e5a1b04b46551c3157c9df24e)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the ui components through labels ([253ef59](https://github.com/SckyzO/cosmos/commit/253ef5941bba73d7087ef911b78725bc18fa1541)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** translate the uptime components through labels ([5f6bc02](https://github.com/SckyzO/cosmos/commit/5f6bc02f97675c15de07f1e7e466f1803b2d656b)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+
+
+### Bug Fixes
+
+* **react:** draw ProgressRing in ProgressBar's shades ([0388549](https://github.com/SckyzO/cosmos/commit/03885492ab84322514301c27a9c82168f34f8f12))
+* **react:** fade the sideways edge of HealthMatrix, LogViewer and JobLog ([bd92b64](https://github.com/SckyzO/cosmos/commit/bd92b6412a7a2d1361b2496365339ac522abcd45))
+* **react:** fill a solid warning card with the theme's warning orange ([fb1b82b](https://github.com/SckyzO/cosmos/commit/fb1b82b179d1bbf3df93976d79a47e758c9792f3))
+* **react:** give AppearanceSettings one column per theme card ([6fe4e31](https://github.com/SckyzO/cosmos/commit/6fe4e317b001376e55f2fbe70468fafc4914d2ac))
+* **react:** keep DataTable's empty views line readable in the dark ([0691faa](https://github.com/SckyzO/cosmos/commit/0691faa17aeef6ff3f7104bf923aeaf140b3ba4c)), closes [#502](https://github.com/SckyzO/cosmos/issues/502)
+* **react:** line VerticalNavigation's section up with its items ([60a3b24](https://github.com/SckyzO/cosmos/commit/60a3b245327b1700740ce80371612ecf307d79cd))
+* **react:** name a single folded Breadcrumb crumb "1 more page" ([c8bb127](https://github.com/SckyzO/cosmos/commit/c8bb127abea887d89f91d7b06e7fc1c9d9a948d8))
+* **react:** set the RecordPager count apart in any language ([68f4a55](https://github.com/SckyzO/cosmos/commit/68f4a555e6609def4fea07e43726fabf23542a52))
+* **react:** stop a Shell page from scrolling the document into empty space ([e657c2d](https://github.com/SckyzO/cosmos/commit/e657c2dc60518ca47acd7170074e9872d7cb07dc))
+
+
+### Performance Improvements
+
+* **react:** build one file per module so apps ship what they import ([19b7a48](https://github.com/SckyzO/cosmos/commit/19b7a48f001dfe7865e4f9c4711eddc0a21c9a65))
+
 ## [0.8.1](https://github.com/SckyzO/cosmos/compare/@sckyzo/cosmos-react@0.8.0...@sckyzo/cosmos-react@0.8.1) (2026-11-04)
 
 
