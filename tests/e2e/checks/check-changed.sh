@@ -139,7 +139,10 @@ parallel_passes() {
 
 # A file the branch adds, against the base: a new module can break the tsup build while every
 # test passes ("Detected cycle while resolving import").
-added=$(git diff --name-only --diff-filter=A "$base" -- packages; git ls-files --others --exclude-standard -- packages)
+mapfile -t added < <(
+  git diff --name-only --diff-filter=A "$base" -- packages
+  git ls-files --others --exclude-standard -- packages
+)
 
 if [[ $quick == 1 && ${#unscoped[@]} -gt 0 ]]; then
   echo "Changed outside the react and charts sources and the Storybook stories: ${unscoped[*]}"
@@ -185,8 +188,8 @@ if [[ ${#code[@]} -gt 0 ]]; then
         pnpm --filter @cosmos/storybook exec vitest run --project=storybook "${filters[@]}"
     fi
   fi
-  if [[ $quick == 1 && -n $added ]]; then
-    echo "Added: $(echo $added)"
+  if [[ $quick == 1 && ${#added[@]} -gt 0 ]]; then
+    echo "Added: ${added[*]}"
     step build pnpm build
   fi
 fi
