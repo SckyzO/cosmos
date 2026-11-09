@@ -470,7 +470,10 @@ its `GITHUB_TOKEN` don't re-trigger `publish.yml` either, so after merging the r
   `feat`/`fix` twice. The repo setting can't do it (GitHub rejects `MERGE_MESSAGE` + `BLANK`).
 - `pre-commit` runs on the **host** (Python), the one exception to the container-first rule. It
   does not run Prettier, and `make ci` does (`format:check`): before committing, run
-  `./devctl run pnpm exec prettier --check --ignore-unknown <files>`.
+  `./devctl run pnpm exec prettier --check --ignore-unknown <files>`. On a machine without the
+  hooks installed, nothing runs at commit and the PR's "Run all hooks" check catches it (ShellCheck
+  and shfmt on scripts, markdownlint): run `uvx pre-commit run --files <files>` before pushing a
+  shell script, YAML or Markdown change.
 - After a dependency change (`make install`, a new dependency), the first
   story-test run can fail in dozens of unrelated files: Vite re-optimizes deps mid-run ("optimized
   dependencies changed. reloading", "Failed to fetch dynamically imported module"). Re-run once.
