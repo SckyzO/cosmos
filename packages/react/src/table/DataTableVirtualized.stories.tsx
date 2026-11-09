@@ -10,7 +10,8 @@ const meta = {
   title: 'Tables/DataTable virtualised',
   component: DataTable,
   parameters: { layout: 'padded' },
-  tags: ['autodocs'],
+  // A feature, guide or provider page: not counted as a component (Welcome, README).
+  tags: ['autodocs', 'not-a-component'],
   args: { rows: [], columns: [], rowKey: () => '' },
 } satisfies Meta<typeof DataTable>;
 

@@ -25,7 +25,8 @@ import { TimePicker } from './TimePicker';
 const meta = {
   title: 'Forms/Field errors',
   parameters: { layout: 'padded' },
-  tags: ['autodocs'],
+  // A feature, guide or provider page: not counted as a component (Welcome, README).
+  tags: ['autodocs', 'not-a-component'],
 } satisfies Meta;
 
 export default meta;

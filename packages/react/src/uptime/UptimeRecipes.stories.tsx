@@ -17,7 +17,8 @@ const meta = {
       },
     },
   },
-  tags: ['autodocs'],
+  // A feature, guide or provider page: not counted as a component (Welcome, README).
+  tags: ['autodocs', 'not-a-component'],
 } satisfies Meta;
 
 export default meta;

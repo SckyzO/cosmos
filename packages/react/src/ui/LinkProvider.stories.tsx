@@ -26,7 +26,8 @@ const meta = {
   title: 'Navigation/LinkProvider',
   component: LinkProvider,
   parameters: { layout: 'padded' },
-  tags: ['autodocs'],
+  // A feature, guide or provider page: not counted as a component (Welcome, README).
+  tags: ['autodocs', 'not-a-component'],
   argTypes: { component: { control: false }, children: { control: false } },
   // The stories below build their own tree: these only satisfy the required props.
   args: { component: () => null, children: null },
