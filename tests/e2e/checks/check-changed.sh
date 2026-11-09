@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
-# Pre-push check of a branch: `make check-changed`.
+# Pre-push check of a branch: `make check-quick` (CHECK_QUICK=1) and `make check-changed`.
+#
+# `make check-quick` runs before every push, in a few minutes, what fails most often: Prettier and
+# ESLint on the changed files, the typecheck, the unit tests, the story files that use what changed
+# in the default pass only, and the package build when the branch adds a file (a new module can
+# break it while every test passes). Outside the sources it runs lint, format, typecheck and the
+# build. The contrast and direction passes, the Storybook build and the e2e specs are left to the
+# PR's CI, which runs them all on every push and is the merge gate.
+#
+# `make check-changed` is the longer check below, to reproduce a CI failure or check a change
+# that crosses the whole suite before pushing it:
 #
 # Runs the steps of `make ci` that the changed files can break, on those files:
 #
@@ -21,6 +31,7 @@
 #
 #   BASE              ref the branch is compared with (default: origin/main). Uncommitted and
 #                     untracked files count as changed: the checks run on the working tree.
+#   CHECK_QUICK       1 for `make check-quick`.
 #   CHECK_MIN_MEM_GB  available memory, in GB, the parallel passes need (default: 13). Lower it
 #                     to try them on a smaller machine, raise it past the machine's memory to
 #                     test the skip.
@@ -30,6 +41,9 @@
 set -euo pipefail
 cd "$(dirname "$0")/../../.."
 
+quick=${CHECK_QUICK:-0}
+name=check-changed
+[[ $quick == 1 ]] && name=check-quick
 base=$(git merge-base HEAD "${BASE:-origin/main}")
 mapfile -t changed < <(
   {
@@ -51,7 +65,7 @@ step() {
 if printf '%s\n' "${changed[@]}" | tests/e2e/checks/docs-only.sh; then
   echo "Documentation only: ${changed[*]}"
   step "prettier: ${#changed[@]} files" pnpm exec prettier --check --ignore-unknown "${changed[@]}"
-  echo "── check-changed passed in ${SECONDS}s ──"
+  echo "── $name passed in ${SECONDS}s ──"
   exit 0
 fi
 
@@ -123,6 +137,18 @@ parallel_passes() {
   fi
 }
 
+# A file the branch adds, against the base: a new module can break the tsup build while every
+# test passes ("Detected cycle while resolving import").
+added=$(git diff --name-only --diff-filter=A "$base" -- packages; git ls-files --others --exclude-standard -- packages)
+
+if [[ $quick == 1 && ${#unscoped[@]} -gt 0 ]]; then
+  echo "Changed outside the react and charts sources and the Storybook stories: ${unscoped[*]}"
+  echo "Lint, format, typecheck and build; the stories, the Storybook build and the e2e specs run in the PR's CI."
+  step "lint, format, typecheck, build" sh -c "set -e; pnpm lint && pnpm format:check && pnpm typecheck && pnpm build"
+  echo "── $name passed in ${SECONDS}s ──"
+  exit 0
+fi
+
 if [[ ${#unscoped[@]} -gt 0 ]]; then
   echo "Changed outside the react and charts sources and the Storybook stories: ${unscoped[*]}"
   echo "Running every step of make ci; the story passes side by side when the memory allows."
@@ -130,7 +156,7 @@ if [[ ${#unscoped[@]} -gt 0 ]]; then
     pnpm lint && pnpm format:check && pnpm typecheck && pnpm build && pnpm storybook:build && \
     pnpm browsers:install && CI=true pnpm test"
   parallel_passes
-  echo "── check-changed passed in ${SECONDS}s ──"
+  echo "── $name passed in ${SECONDS}s ──"
   exit 0
 fi
 
@@ -148,12 +174,20 @@ if [[ ${#code[@]} -gt 0 ]]; then
     filters=("${stories[@]#apps/storybook/}")
     step browsers pnpm browsers:install
     step "stories, default pass" pnpm --filter @cosmos/storybook exec vitest run --project=storybook "${filters[@]}"
-    for theme in light sand deep-blue; do
-      step "stories, contrast in $theme" env A11Y_THEME="$theme" \
+    if [[ $quick == 1 ]]; then
+      echo "Contrast and right to left: left to the PR's CI."
+    else
+      for theme in light sand deep-blue; do
+        step "stories, contrast in $theme" env A11Y_THEME="$theme" \
+          pnpm --filter @cosmos/storybook exec vitest run --project=storybook "${filters[@]}"
+      done
+      step "stories, right to left" env STORY_DIR=rtl \
         pnpm --filter @cosmos/storybook exec vitest run --project=storybook "${filters[@]}"
-    done
-    step "stories, right to left" env STORY_DIR=rtl \
-      pnpm --filter @cosmos/storybook exec vitest run --project=storybook "${filters[@]}"
+    fi
+  fi
+  if [[ $quick == 1 && -n $added ]]; then
+    echo "Added: $(echo $added)"
+    step build pnpm build
   fi
 fi
-echo "── check-changed passed in ${SECONDS}s ──"
+echo "── $name passed in ${SECONDS}s ──"
