@@ -3,9 +3,9 @@
 Design system for dashboards and monitoring tools: a Tailwind 4 theme, React 19 components and
 Recharts-based chart wrappers, documented in Storybook 10.
 
-The [live Storybook](https://sckyzo.github.io/cosmos/) has every component with its docs and
-stories (more than 5,000), in four themes, twelve accent colors, three densities, four corner radii,
-both reading directions, and in English or French.
+The [live Storybook](https://sckyzo.github.io/cosmos/) has the 174 React components and the 22
+chart wrappers, each with its docs and stories, in four themes, twelve accent colors, three
+densities, four corner radii, both reading directions, and in English or French.
 
 <table>
   <tr>
