@@ -19,7 +19,8 @@ const meta = {
   title: 'Charts/ChartLabelsProvider',
   component: ChartLabelsProvider,
   parameters: { layout: 'padded' },
-  tags: ['autodocs'],
+  // A feature, guide or provider page: not counted as a component (Welcome, README).
+  tags: ['autodocs', 'not-a-component'],
   args: { labels: {}, children: null },
 } satisfies Meta<typeof ChartLabelsProvider>;
 

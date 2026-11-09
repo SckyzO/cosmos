@@ -488,6 +488,10 @@ The wrappers of `packages/charts` draw with Recharts and are built on the intern
 
 ## PR checklist
 
+A new component, or a removed one, changes the counts in the README: run `make counts` (it fails CI
+otherwise). A Storybook page that documents no component of its own (a guide, one feature of a
+component that has its page) takes the `not-a-component` tag, so it isn't counted.
+
 - [ ] `make check-quick` passes locally, and the PR's CI is green
 - [ ] New components have a Storybook story
 - [ ] New or changed props follow the [Component API](#component-api) rules

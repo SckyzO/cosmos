@@ -22,7 +22,8 @@ import {
 import chartsPkg from '../../../../packages/charts/package.json';
 import reactPkg from '../../../../packages/react/package.json';
 import themePkg from '../../../../packages/theme/package.json';
-import { figuresOf, recipeHref, type CatalogComponent } from './catalog';
+import { recipeHref, type CatalogComponent } from './catalog';
+import { CHART_WRAPPERS } from './chartWrappers';
 import { Code, Section } from './parts';
 import { CARD, MONO, PAGE, TEXT_LINK, cx } from './styles';
 
@@ -200,7 +201,7 @@ const peer = (name: string) => `${name} ${peers[name]}`;
 
 type Entry = { name: string; holds: string; install: string };
 
-const entriesOf = (charts: number | null): Entry[] => [
+const entriesOf = (charts: number): Entry[] => [
   {
     name: '@sckyzo/cosmos-react',
     holds: 'Every component',
@@ -228,7 +229,7 @@ const entriesOf = (charts: number | null): Entry[] => [
   },
   {
     name: '@sckyzo/cosmos-charts',
-    holds: `${charts === null ? 'The' : charts} chart wrappers drawn with Recharts`,
+    holds: `${charts} chart wrappers drawn with Recharts`,
     install: 'nothing more: Recharts comes with it',
   },
 ];
@@ -248,8 +249,8 @@ const Step = ({ n, title, children }: { n: number; title: string; children: Reac
   </li>
 );
 
-export const GetStarted = ({ components }: { components: CatalogComponent[] | null }) => {
-  const entries = entriesOf(components && figuresOf(components).charts);
+export const GetStarted = () => {
+  const entries = entriesOf(CHART_WRAPPERS);
   return (
     <Section id="get-started" eyebrow="Get started" title="Three steps to a styled button">
       <ol className="grid gap-5 lg:grid-cols-3">

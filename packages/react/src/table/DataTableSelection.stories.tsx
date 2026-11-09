@@ -21,7 +21,8 @@ const meta = {
   title: 'Tables/DataTable selection and filters',
   component: DataTable,
   parameters: { ...portalDocsParams.lg(), layout: 'padded' },
-  tags: ['autodocs'],
+  // A feature, guide or provider page: not counted as a component (Welcome, README).
+  tags: ['autodocs', 'not-a-component'],
   args: { rows: [], columns: [], rowKey: () => '' },
 } satisfies Meta<typeof DataTable>;
 

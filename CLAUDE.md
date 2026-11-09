@@ -349,6 +349,17 @@ Welcome → Examples → Foundations → Typography → Atoms → Actions → Fo
 Adding a top-level group means updating `storySort`; the Welcome page builds its counts, its group
 cards and its component search from `index.json` (`stories/welcome/catalog.ts`), which follows it.
 
+**Counts.** `figuresOf` (`catalog.ts`) is the one rule for the number of components the Welcome
+page, the README and the GitHub description give: one sidebar entry per React component, outside
+Examples, Foundations and Charts; a variant is a story of its component, not an entry. An entry that
+documents no component of its own (a guide, one feature of a component with its own page such as
+the DataTable pages, a provider) takes the `not-a-component` tag in its meta (`<Meta tags>` in
+MDX). The chart wrappers are the modules `packages/charts/src/index.ts` re-exports, minus types,
+theme and providers (`chartWrappersOf`). `make counts` builds Storybook, rewrites the README's
+sentence ("has the N React components and the N chart wrappers", `tests/e2e/checks/counts.mjs`)
+and the repository description (`SKIP_BUILD=1` reuses the build); `component-counts.spec.ts` fails
+in CI when the README is behind.
+
 Every named export of a `*.stories.tsx` is a story: keep helpers unexported. Test-only stories take
 `tags: ['!dev', '!autodocs']` (hidden from the sidebar and the docs page, still run by vitest). A
 visible story makes no assertion: its play only sets the state it shows, and its checks go to a
@@ -459,7 +470,10 @@ its `GITHUB_TOKEN` don't re-trigger `publish.yml` either, so after merging the r
   `feat`/`fix` twice. The repo setting can't do it (GitHub rejects `MERGE_MESSAGE` + `BLANK`).
 - `pre-commit` runs on the **host** (Python), the one exception to the container-first rule. It
   does not run Prettier, and `make ci` does (`format:check`): before committing, run
-  `./devctl run pnpm exec prettier --check --ignore-unknown <files>`.
+  `./devctl run pnpm exec prettier --check --ignore-unknown <files>`. On a machine without the
+  hooks installed, nothing runs at commit and the PR's "Run all hooks" check catches it (ShellCheck
+  and shfmt on scripts, markdownlint): run `uvx pre-commit run --files <files>` before pushing a
+  shell script, YAML or Markdown change.
 - After a dependency change (`make install`, a new dependency), the first
   story-test run can fail in dozens of unrelated files: Vite re-optimizes deps mid-run ("optimized
   dependencies changed. reloading", "Failed to fetch dynamically imported module"). Re-run once.
