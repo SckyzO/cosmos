@@ -16,11 +16,17 @@ make install              # pnpm install + Playwright browsers, inside the conta
 ```bash
 make storybook            # http://localhost:6006 — component playground
 make test                 # Unit tests (Vitest, Node), story tests (Vitest browser mode), e2e and the theme contrast check
-make check-changed        # Before pushing: the CI cut down to what you changed
+make check-quick          # Before pushing: lint, typecheck, unit tests and the stories you changed
+make check-changed        # To reproduce a CI failure: the CI cut down to what you changed
 make ci                   # Full CI, one step after the other (check-changed runs its steps when a change needs them)
 ```
 
-`make check-changed` runs only what your change can break:
+`make check-quick` takes a few minutes: Prettier and ESLint on the files you changed, the
+typecheck, the unit tests, the stories that use what you changed (default pass), and the build
+when you add a file. The pull request's CI runs the rest on every push: the contrast and
+right-to-left passes, the Storybook build and the e2e specs.
+
+`make check-changed` runs the CI steps your change can break, locally, to reproduce a failure:
 
 - **Documentation only** (Markdown, `docs/`, pictures): Prettier on those files.
 - **Component sources and the stories of `apps/storybook/stories`**: Prettier, ESLint, the
@@ -482,7 +488,7 @@ The wrappers of `packages/charts` draw with Recharts and are built on the intern
 
 ## PR checklist
 
-- [ ] `make check-changed` passes locally (it runs every step of `make ci` when the change needs it; with less than 13 GB of memory it skips the parallel story passes and the PR's CI runs them)
+- [ ] `make check-quick` passes locally, and the PR's CI is green
 - [ ] New components have a Storybook story
 - [ ] New or changed props follow the [Component API](#component-api) rules
 - [ ] New or changed pure logic has a unit test (see [Tests](#tests))
