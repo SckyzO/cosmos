@@ -12,6 +12,7 @@ import {
 } from '../../../../packages/react/src';
 import { LineAreaChart } from '../../../../packages/charts/src';
 import { figuresOf, recipeHref, type CatalogComponent } from './catalog';
+import { CHART_WRAPPERS } from './chartWrappers';
 import { CARD, CTA_VARIANT, MONO, PAGE, TEXT_LINK, cx } from './styles';
 
 // ── The figures ──────────────────────────────────────────────────────────────
@@ -27,10 +28,10 @@ const Figure = ({ value, label }: { value: string; label: string }) => (
 
 // The counts come from the story index; before it has loaded, or without it, a dash.
 const Figures = ({ components }: { components: CatalogComponent[] | null }) => {
-  const figures = components && figuresOf(components);
+  const figures = components && figuresOf(components, CHART_WRAPPERS);
   return (
     <dl className="mt-10 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
-      <Figure value={figures ? String(figures.components) : '—'} label="components and patterns" />
+      <Figure value={figures ? String(figures.components) : '—'} label="components" />
       <Figure value={figures ? String(figures.charts) : '—'} label="chart wrappers" />
       <Figure
         value={`${COSMOS_THEMES.length} × ${COSMOS_ACCENTS.length}`}

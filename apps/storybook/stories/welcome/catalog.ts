@@ -24,12 +24,24 @@ export type CatalogComponent = {
   /** The docs page, or the first story when there is none. */
   href: string;
   stories: CatalogStory[];
+  /** False when the entry carries `NOT_A_COMPONENT`. */
+  counted: boolean;
 };
 
 export type CatalogGroup = { name: string; href: string; components: CatalogComponent[] };
 
 /** The recipes have a section of their own: they are screens, not components. */
 export const SCREENS_GROUP = 'Examples';
+
+/**
+ * The tag of a sidebar entry that documents no component of its own: a guide ("Which one to
+ * use"), one feature of a component that has its own page (the DataTable pages), a provider. The
+ * figures leave it out; the catalog still lists it.
+ */
+export const NOT_A_COMPONENT = 'not-a-component';
+
+/** Groups the component figure leaves out: screens, foundations, and the charts, counted apart. */
+const UNCOUNTED_GROUPS = new Set([SCREENS_GROUP, 'Foundations', 'Charts']);
 
 const storyHref = (id: string) => `./?path=/story/${id}`;
 const docsHref = (id: string) => `./?path=/docs/${id}`;
@@ -39,11 +51,18 @@ const docsHref = (id: string) => `./?path=/docs/${id}`;
 export const catalogComponents = (entries: IndexEntry[]): CatalogComponent[] => {
   const byTitle = new Map<
     string,
-    { docs?: string; first?: string; inSidebar: boolean; stories: CatalogStory[] }
+    {
+      docs?: string;
+      first?: string;
+      inSidebar: boolean;
+      counted: boolean;
+      stories: CatalogStory[];
+    }
   >();
   for (const e of entries) {
     if (e.title === 'Welcome') continue;
-    const item = byTitle.get(e.title) ?? { inSidebar: false, stories: [] };
+    const item = byTitle.get(e.title) ?? { inSidebar: false, counted: true, stories: [] };
+    if (e.tags?.includes(NOT_A_COMPONENT)) item.counted = false;
     // A test-only entry is hidden from the sidebar: it isn't one of the component's stories, and a
     // title made only of them isn't a component.
     const inSidebar = !e.tags || e.tags.includes('dev');
@@ -64,6 +83,7 @@ export const catalogComponents = (entries: IndexEntry[]): CatalogComponent[] => 
       name: rest.join(' / ') || group,
       href: item.docs ? docsHref(item.docs) : storyHref(item.first ?? ''),
       stories: item.stories,
+      counted: item.counted,
     });
   }
   return components;
@@ -83,11 +103,25 @@ export const catalogGroups = (components: CatalogComponent[]): CatalogGroup[] =>
 
 export type Figures = { components: number; charts: number };
 
-/** What the hero counts: components and patterns (not the recipes), and the chart wrappers. */
-export const figuresOf = (components: CatalogComponent[]): Figures => ({
-  components: components.filter((c) => c.group !== SCREENS_GROUP).length,
-  charts: components.filter((c) => c.group === 'Charts').length,
+/**
+ * The figures the Welcome page, the README and the repository description give: the React
+ * components (one sidebar entry each, outside the screens, the foundations, the charts and the
+ * entries tagged `NOT_A_COMPONENT`; a variant is a story of its component), and the chart
+ * wrappers, `charts` being `chartWrappersOf(…).length`.
+ */
+export const figuresOf = (components: CatalogComponent[], charts: number): Figures => ({
+  components: components.filter((c) => c.counted && !UNCOUNTED_GROUPS.has(c.group)).length,
+  charts,
 });
+
+/**
+ * The chart wrappers: the modules `packages/charts/src/index.ts` re-exports (read as its build
+ * reads them), minus its types, its theme helpers and its labels provider.
+ */
+export const chartWrappersOf = (chartsIndexSource: string): string[] =>
+  [...chartsIndexSource.matchAll(/from '\.\/(\w+)'/g)]
+    .map(([, name]) => name)
+    .filter((name) => name !== 'types' && name !== 'theme' && !name.endsWith('Provider'));
 
 // "Date Picker", "date-picker" and "datepicker" are one name.
 const squash = (text: string) => text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');

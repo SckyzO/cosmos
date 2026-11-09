@@ -10,7 +10,8 @@ import { KpiCard, TrendDelta } from '../../../packages/react/src';
 const meta = {
   title: 'Charts/Sparkline in Kpi Cards',
   parameters: { layout: 'padded' },
-  tags: ['autodocs'],
+  // A feature, guide or provider page: not counted as a component (Welcome, README).
+  tags: ['autodocs', 'not-a-component'],
 } satisfies Meta;
 
 export default meta;

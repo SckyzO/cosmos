@@ -349,6 +349,17 @@ Welcome → Examples → Foundations → Typography → Atoms → Actions → Fo
 Adding a top-level group means updating `storySort`; the Welcome page builds its counts, its group
 cards and its component search from `index.json` (`stories/welcome/catalog.ts`), which follows it.
 
+**Counts.** `figuresOf` (`catalog.ts`) is the one rule for the number of components the Welcome
+page, the README and the GitHub description give: one sidebar entry per React component, outside
+Examples, Foundations and Charts; a variant is a story of its component, not an entry. An entry that
+documents no component of its own (a guide, one feature of a component with its own page such as
+the DataTable pages, a provider) takes the `not-a-component` tag in its meta (`<Meta tags>` in
+MDX). The chart wrappers are the modules `packages/charts/src/index.ts` re-exports, minus types,
+theme and providers (`chartWrappersOf`). `make counts` builds Storybook, rewrites the README's
+sentence ("has the N React components and the N chart wrappers", `tests/e2e/checks/counts.mjs`)
+and the repository description (`SKIP_BUILD=1` reuses the build); `component-counts.spec.ts` fails
+in CI when the README is behind.
+
 Every named export of a `*.stories.tsx` is a story: keep helpers unexported. Test-only stories take
 `tags: ['!dev', '!autodocs']` (hidden from the sidebar and the docs page, still run by vitest). A
 visible story makes no assertion: its play only sets the state it shows, and its checks go to a

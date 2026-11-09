@@ -11,6 +11,7 @@ import {
   type CatalogGroup,
   type StoryIndex,
 } from './catalog';
+import { CHART_WRAPPERS } from './chartWrappers';
 import { GroupPreview } from './groupPreviews';
 import { Section } from './parts';
 import { REPO } from './WelcomeSections';
@@ -195,7 +196,7 @@ export const ComponentsSection = ({ index }: { index: StoryIndex }) => {
   const components: CatalogComponent[] | null = Array.isArray(index)
     ? catalogComponents(index)
     : null;
-  const total = components && figuresOf(components).components;
+  const total = components && figuresOf(components, CHART_WRAPPERS);
   const searching = components !== null && query.trim() !== '';
 
   // The arrow keys hand the focus from the field to the matches and along them: each match is a
@@ -223,7 +224,11 @@ export const ComponentsSection = ({ index }: { index: StoryIndex }) => {
     <Section
       id="components"
       eyebrow="Every component"
-      title={total === null ? 'Every component' : `${total} components and patterns`}
+      title={
+        total === null
+          ? 'Every component'
+          : `${total.components} components and ${total.charts} chart wrappers`
+      }
       lead="Grouped as in the sidebar. Search by name, or open a group."
       action={
         components && (

@@ -20,7 +20,7 @@ DOCKER_RUN_IT := docker run -it --rm -v $(PWD):$(WORKSPACE) -v $(PWD)/.git:$(WOR
 export UID := $(HOST_UID)
 export GID := $(HOST_GID)
 
-.PHONY: help build-image rebuild-image install report-update update lint lint-fix format format-check typecheck test test-contrast test-rtl test-e2e screenshots visual-diff audit-captures build storybook storybook-build clean shell ci check-quick check-changed compose-up compose-down
+.PHONY: help build-image rebuild-image install report-update update lint lint-fix format format-check typecheck test test-contrast test-rtl test-e2e screenshots visual-diff audit-captures build storybook storybook-build clean shell ci check-quick check-changed counts compose-up compose-down
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -105,6 +105,11 @@ clean: ## Remove node_modules, dist, build artifacts, screenshots
 
 check-quick: ## Before every push: lint, typecheck, unit tests and the changed stories' default pass, in minutes; the PR's CI runs the rest: [BASE=<ref>]
 	@CHECK_QUICK=1 tests/e2e/checks/check-changed.sh
+
+counts: ## Count the components and chart wrappers, write them into the README and the GitHub description: [SKIP_BUILD=1]
+	$(DOCKER_RUN) $(DEV_IMAGE) sh -c "set -e; [ -n '$(SKIP_BUILD)' ] || pnpm storybook:build; node tests/e2e/checks/counts.mjs --write"
+	gh repo edit --description "$$($(DOCKER_RUN) $(DEV_IMAGE) node tests/e2e/checks/counts.mjs --description)"
+	@gh repo view --json description -q .description
 
 check-changed: ## To reproduce a CI failure: make ci cut down to what the branch changed (the full make ci when it cannot be): [BASE=<ref>]
 	@tests/e2e/checks/check-changed.sh

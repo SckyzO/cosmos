@@ -5,7 +5,13 @@ import {
   expectNoHorizontalOverflow,
   mobileViewport,
 } from '../../../packages/react/src/storybook-helpers';
-import { catalogComponents, type IndexEntry, type StoryIndex } from './welcome/catalog';
+import {
+  catalogComponents,
+  NOT_A_COMPONENT,
+  type IndexEntry,
+  type StoryIndex,
+} from './welcome/catalog';
+import { CHART_WRAPPERS } from './welcome/chartWrappers';
 import { Appearance, type WelcomeAppearance } from './welcome/WelcomeAppearance';
 import { ComponentsSection } from './welcome/WelcomeCatalog';
 import { Hero } from './welcome/WelcomeHero';
@@ -74,7 +80,7 @@ const WelcomePage = ({
         <Appearance initial={appearance} />
         <Examples components={components} />
         <ComponentsSection index={index} />
-        <GetStarted components={components} />
+        <GetStarted />
         <WhatsNew />
         <Quality />
       </main>
@@ -123,6 +129,15 @@ const FIXTURE: IndexEntry[] = [
   { id: 'atoms-badge--default', title: 'Atoms/Badge', type: 'story' },
   // A title with only test-only stories is not in the sidebar, so not in the counts.
   { id: 'atoms-use-hook--test', title: 'Atoms/useHook', type: 'story', tags: ['test'] },
+  // Listed in the catalog, left out of the component figure: a guide, a foundation, a chart.
+  {
+    id: 'feedback-which-one-to-use--docs',
+    title: 'Feedback/Which one to use',
+    type: 'docs',
+    tags: ['dev', NOT_A_COMPONENT],
+  },
+  { id: 'foundations-colors--docs', title: 'Foundations/Colors', type: 'docs' },
+  { id: 'charts-donut--default', title: 'Charts/Donut', type: 'story' },
 ];
 
 /** The catalog groups the index in sidebar order and links each group. Test only. */
@@ -131,9 +146,11 @@ export const CatalogFromIndex: Story = {
   render: () => <ComponentsSection index={FIXTURE} />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    // The recipes have a section of their own: one group, two components.
+    // The figure counts Button and Badge only: the recipes have a section of their own, and the
+    // guide, the foundation and the chart are not React components. The charts are counted from
+    // the package's exports.
     await expect(canvas.getByRole('heading', { level: 2 })).toHaveTextContent(
-      '2 components and patterns'
+      `2 components and ${CHART_WRAPPERS} chart wrappers`
     );
     await expect(canvas.queryByRole('link', { name: /^Examples/ })).toBeNull();
     // A group links its first component's docs page, or its first story when it has none.
@@ -352,6 +369,7 @@ export const CustomizerOpens: Story = {
 // ── Structure and phone ──────────────────────────────────────────────────────
 
 // Ten groups, so a phone has some to hide.
+// Ten groups of three: the component figure leaves the Foundations and the Charts out (24).
 const MANY_GROUPS: IndexEntry[] = [
   'Foundations',
   'Typography',
@@ -400,7 +418,7 @@ export const OneHeading: Story = {
   render: () => <WelcomePage entries={MANY_GROUPS} />,
   play: async ({ canvas }) => {
     await expect(canvas.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    await expect(canvas.getByRole('heading', { level: 2, name: /^30 components/ })).toBeVisible();
+    await expect(canvas.getByRole('heading', { level: 2, name: /^24 components/ })).toBeVisible();
   },
 };
 
@@ -412,7 +430,7 @@ export const PhoneDisclosures: Story = {
   play: async ({ canvas }) => {
     expectNoHorizontalOverflow();
     const groups = () =>
-      within(canvas.getByRole('region', { name: /^30 components/ }))
+      within(canvas.getByRole('region', { name: /^24 components/ }))
         .getAllByRole('listitem')
         .filter((li) => li.offsetParent);
     await expect(groups()).toHaveLength(6);
