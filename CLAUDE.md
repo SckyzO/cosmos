@@ -20,7 +20,8 @@ make help            # every target
 
 ```bash
 make storybook       # Storybook dev server on http://localhost:6006 (docker compose)
-make check-changed   # BEFORE EVERY PUSH: make ci cut down to what the branch changed
+make check-quick     # BEFORE EVERY PUSH: lint, typecheck, unit tests, the changed stories (minutes)
+make check-changed   # to reproduce a CI failure: make ci cut down to what the branch changed
 make ci              # full local pipeline, sequential (check-changed runs its steps when it can't scope a change)
 make test            # pnpm -r test
 make test-e2e        # Playwright against the storybook compose service
@@ -40,6 +41,15 @@ mirrors `.github/workflows/ci.yml`, which runs the same steps as parallel jobs (
 required check, so keep it when touching the workflow. The jobs that open a browser run in
 Playwright's image, pinned by digest, at the version the dev image's `install-deps` uses: CI runs
 no apt. A Playwright bump moves the Dockerfile and the image together (`repo-policy.spec.ts`).
+
+`make check-quick` (`CHECK_QUICK=1` on the same script) is the check before each push, 2 to 4
+minutes: on the sources and stories, Prettier and ESLint on the changed files, the typecheck, the
+unit tests and the default pass of the story files `select-stories.mjs` picks, plus `pnpm build`
+when the branch adds a file under `packages/`; outside them, lint, format, typecheck and build. It
+leaves the contrast and direction passes, the Storybook build and the e2e specs to the PR's CI,
+which runs everything on every push and is the merge gate: running them locally too doubled the
+wait for nothing. `make check-changed` is for reproducing a CI failure, or a change that crosses
+the whole suite.
 
 `make check-changed` (`tests/e2e/checks/check-changed.sh`; `BASE`, default `origin/main`;
 uncommitted and untracked files count) runs the steps of `make ci` the changed files can break, on
@@ -289,7 +299,7 @@ Miss any step and it compiles fine, shows up in Storybook, and is unreachable fr
 Keep a logic module's name apart from its component's: `permissionGrid.ts` next to
 `PermissionGrid.tsx` typechecks and passes every test, then breaks the tsup build ("Detected cycle
 while resolving import"); it is `permissionGridModel.ts`. A scoped `make check-changed` runs no
-build, so run `make build` too on a branch that adds files.
+build (`make check-quick` does when the branch adds a file), so run `make build` too on a branch that adds files.
 
 ### Styling conventions
 
